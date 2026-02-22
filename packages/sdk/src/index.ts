@@ -7,6 +7,28 @@
 
 export const PACKAGE_NAME = "@hacienda-cr/sdk" as const;
 
+// Auth module
+export {
+  AuthError,
+  AuthErrorCode,
+  buildUsername,
+  CredentialInputSchema,
+  Environment,
+  getEnvironmentConfig,
+  IdType,
+  loadCredentials,
+  TokenManager,
+  TokenResponseSchema,
+} from "./auth/index.js";
+export type {
+  AuthCredentials,
+  CredentialInput,
+  EnvironmentConfig,
+  TokenManagerOptions,
+  TokenResponse,
+  TokenState,
+} from "./auth/index.js";
+
 // Clave numerica — 50-digit key generation and parsing
 export {
   buildClave,
@@ -46,7 +68,7 @@ export {
   DEFAULT_BRANCH,
   DEFAULT_POS,
   // Types
-  type Environment,
+  type Environment as ConfigEnvironment,
   type CedulaType,
   type Profile,
   type ConfigFile,
