@@ -58,16 +58,12 @@ describe("buildNotaCreditoXml", () => {
       expect(xml).toContain("<InformacionReferencia>");
       expect(xml).toContain("<TipoDoc>01</TipoDoc>");
       expect(xml).toContain("<Codigo>01</Codigo>");
-      expect(xml).toContain(
-        "<Razon>Devolucion parcial por servicio no completado</Razon>",
-      );
+      expect(xml).toContain("<Razon>Devolucion parcial por servicio no completado</Razon>");
     });
 
     it("should include the referenced document number", () => {
       const xml = buildNotaCreditoXml(SIMPLE_NOTA_CREDITO);
-      expect(xml).toContain(
-        "<Numero>50601072500031012345670010000101000000000119999999</Numero>",
-      );
+      expect(xml).toContain("<Numero>50601072500031012345670010000101000000000119999999</Numero>");
     });
   });
 

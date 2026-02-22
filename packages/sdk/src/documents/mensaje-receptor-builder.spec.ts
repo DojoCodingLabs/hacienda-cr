@@ -51,9 +51,7 @@ describe("buildMensajeReceptorXml", () => {
 
     it("should include FechaEmisionDoc", () => {
       const xml = buildMensajeReceptorXml(MENSAJE_ACEPTACION_TOTAL);
-      expect(xml).toContain(
-        "<FechaEmisionDoc>2025-07-27T10:30:00-06:00</FechaEmisionDoc>",
-      );
+      expect(xml).toContain("<FechaEmisionDoc>2025-07-27T10:30:00-06:00</FechaEmisionDoc>");
     });
 
     it("should include Mensaje code", () => {
@@ -82,9 +80,7 @@ describe("buildMensajeReceptorXml", () => {
   describe("optional elements", () => {
     it("should include DetalleMensaje when present", () => {
       const xml = buildMensajeReceptorXml(MENSAJE_ACEPTACION_TOTAL);
-      expect(xml).toContain(
-        "<DetalleMensaje>Documento aceptado totalmente</DetalleMensaje>",
-      );
+      expect(xml).toContain("<DetalleMensaje>Documento aceptado totalmente</DetalleMensaje>");
     });
 
     it("should include MontoTotalImpuesto when present", () => {
@@ -120,17 +116,13 @@ describe("buildMensajeReceptorXml", () => {
     it("should handle Aceptacion Parcial (code 2)", () => {
       const xml = buildMensajeReceptorXml(MENSAJE_ACEPTACION_PARCIAL);
       expect(xml).toContain("<Mensaje>2</Mensaje>");
-      expect(xml).toContain(
-        "<DetalleMensaje>Aceptado parcialmente",
-      );
+      expect(xml).toContain("<DetalleMensaje>Aceptado parcialmente");
     });
 
     it("should handle Rechazo (code 3)", () => {
       const xml = buildMensajeReceptorXml(MENSAJE_RECHAZO);
       expect(xml).toContain("<Mensaje>3</Mensaje>");
-      expect(xml).toContain(
-        "<DetalleMensaje>Documento rechazado",
-      );
+      expect(xml).toContain("<DetalleMensaje>Documento rechazado");
     });
   });
 

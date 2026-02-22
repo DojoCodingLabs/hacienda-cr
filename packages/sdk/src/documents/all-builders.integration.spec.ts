@@ -46,8 +46,7 @@ const STANDARD_DOCUMENT_CASES: DocumentBuilderTestCase[] = [
   {
     name: "Factura Electronica",
     rootElement: "FacturaElectronica",
-    namespace:
-      "https://cdn.comprobanteselectronicos.go.cr/xml-schemas/v4.4/FacturaElectronica",
+    namespace: "https://cdn.comprobanteselectronicos.go.cr/xml-schemas/v4.4/FacturaElectronica",
     schemaFile: "FacturaElectronica_V.4.4.xsd",
     buildXml: () => buildFacturaXml(SIMPLE_INVOICE),
     hasClave: SIMPLE_INVOICE.clave,
@@ -55,8 +54,7 @@ const STANDARD_DOCUMENT_CASES: DocumentBuilderTestCase[] = [
   {
     name: "Tiquete Electronico",
     rootElement: "TiqueteElectronico",
-    namespace:
-      "https://cdn.comprobanteselectronicos.go.cr/xml-schemas/v4.4/TiqueteElectronico",
+    namespace: "https://cdn.comprobanteselectronicos.go.cr/xml-schemas/v4.4/TiqueteElectronico",
     schemaFile: "TiqueteElectronico_V.4.4.xsd",
     buildXml: () => buildTiqueteXml(SIMPLE_TIQUETE),
     hasClave: SIMPLE_TIQUETE.clave,
@@ -64,8 +62,7 @@ const STANDARD_DOCUMENT_CASES: DocumentBuilderTestCase[] = [
   {
     name: "Nota de Credito Electronica",
     rootElement: "NotaCreditoElectronica",
-    namespace:
-      "https://cdn.comprobanteselectronicos.go.cr/xml-schemas/v4.4/NotaCreditoElectronica",
+    namespace: "https://cdn.comprobanteselectronicos.go.cr/xml-schemas/v4.4/NotaCreditoElectronica",
     schemaFile: "NotaCreditoElectronica_V.4.4.xsd",
     buildXml: () => buildNotaCreditoXml(SIMPLE_NOTA_CREDITO),
     hasClave: SIMPLE_NOTA_CREDITO.clave,
@@ -73,8 +70,7 @@ const STANDARD_DOCUMENT_CASES: DocumentBuilderTestCase[] = [
   {
     name: "Nota de Debito Electronica",
     rootElement: "NotaDebitoElectronica",
-    namespace:
-      "https://cdn.comprobanteselectronicos.go.cr/xml-schemas/v4.4/NotaDebitoElectronica",
+    namespace: "https://cdn.comprobanteselectronicos.go.cr/xml-schemas/v4.4/NotaDebitoElectronica",
     schemaFile: "NotaDebitoElectronica_V.4.4.xsd",
     buildXml: () => buildNotaDebitoXml(SIMPLE_NOTA_DEBITO),
     hasClave: SIMPLE_NOTA_DEBITO.clave,
@@ -100,8 +96,7 @@ const STANDARD_DOCUMENT_CASES: DocumentBuilderTestCase[] = [
   {
     name: "Recibo Electronico de Pago",
     rootElement: "ReciboElectronicoPago",
-    namespace:
-      "https://cdn.comprobanteselectronicos.go.cr/xml-schemas/v4.4/ReciboElectronicoPago",
+    namespace: "https://cdn.comprobanteselectronicos.go.cr/xml-schemas/v4.4/ReciboElectronicoPago",
     schemaFile: "ReciboElectronicoPago_V.4.4.xsd",
     buildXml: () => buildReciboPagoXml(SIMPLE_RECIBO_PAGO),
     hasClave: SIMPLE_RECIBO_PAGO.clave,
