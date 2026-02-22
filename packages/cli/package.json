@@ -26,6 +26,7 @@
   },
   "dependencies": {
     "@hacienda-cr/sdk": "workspace:*",
-    "@hacienda-cr/shared": "workspace:*"
+    "@hacienda-cr/shared": "workspace:*",
+    "citty": "^0.2.1"
   }
 }
