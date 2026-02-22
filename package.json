@@ -1,6 +1,13 @@
 {
   "name": "hacienda-cr",
   "private": true,
+  "license": "MIT",
+  "author": "Dojo Coding Labs <dev@dojocoding.io> (https://dojocoding.io)",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/DojoCodingLabs/hacienda-cr.git"
+  },
+  "homepage": "https://github.com/DojoCodingLabs/hacienda-cr#readme",
   "packageManager": "pnpm@9.15.4",
   "engines": {
     "node": ">=22"

@@ -29,5 +29,13 @@
     "@hacienda-cr/shared": "workspace:*",
     "@modelcontextprotocol/sdk": "^1.26.0",
     "zod": "^4.3.6"
-  }
+  },
+  "license": "MIT",
+  "author": "Dojo Coding Labs <dev@dojocoding.io> (https://dojocoding.io)",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/DojoCodingLabs/hacienda-cr.git",
+    "directory": "packages/mcp"
+  },
+  "homepage": "https://github.com/DojoCodingLabs/hacienda-cr#readme"
 }

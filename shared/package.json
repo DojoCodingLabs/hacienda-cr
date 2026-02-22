@@ -23,5 +23,13 @@
   },
   "dependencies": {
     "zod": "^4.3.6"
-  }
+  },
+  "license": "MIT",
+  "author": "Dojo Coding Labs <dev@dojocoding.io> (https://dojocoding.io)",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/DojoCodingLabs/hacienda-cr.git",
+    "directory": "shared"
+  },
+  "homepage": "https://github.com/DojoCodingLabs/hacienda-cr#readme"
 }
