@@ -35,7 +35,7 @@ import {
 const client = new HaciendaClient({
   environment: "sandbox",
   credentials: {
-    idType: "02",            // Cedula Juridica
+    idType: "02", // Cedula Juridica
     idNumber: "3101234567",
     password: process.env.HACIENDA_PASSWORD!,
   },
@@ -120,17 +120,17 @@ import { HaciendaClient } from "@hacienda-cr/sdk";
 
 const client = new HaciendaClient({
   // Required
-  environment: "sandbox",   // "sandbox" | "production"
+  environment: "sandbox", // "sandbox" | "production"
   credentials: {
-    idType: "02",            // "01"=Fisica, "02"=Juridica, "03"=DIMEX, "04"=NITE
-    idNumber: "3101234567",  // 9-12 digit cedula
+    idType: "02", // "01"=Fisica, "02"=Juridica, "03"=DIMEX, "04"=NITE
+    idNumber: "3101234567", // 9-12 digit cedula
     password: process.env.HACIENDA_PASSWORD!,
   },
 
   // Optional
-  p12Path: "/path/to/certificate.p12",   // For signing
-  p12Pin: process.env.HACIENDA_P12_PIN,  // .p12 password
-  fetchFn: customFetch,                   // Custom fetch implementation
+  p12Path: "/path/to/certificate.p12", // For signing
+  p12Pin: process.env.HACIENDA_P12_PIN, // .p12 password
+  fetchFn: customFetch, // Custom fetch implementation
 });
 ```
 
@@ -156,16 +156,17 @@ await client.authenticate();
 ```
 
 **Token lifecycle:**
+
 - Access tokens expire after ~5 minutes (cached in memory, refreshed 30s before expiry)
 - Refresh tokens last ~10 hours
 - `getAccessToken()` handles refresh transparently
 
 **Environments:**
 
-| Environment | API Base URL | IDP Realm | Client ID |
-|-------------|-------------|-----------|-----------|
-| `sandbox` | `api.comprobanteselectronicos.go.cr/recepcion-sandbox/v1/` | `rut-stag` | `api-stag` |
-| `production` | `api.comprobanteselectronicos.go.cr/recepcion/v1/` | `rut` | `api-prod` |
+| Environment  | API Base URL                                               | IDP Realm  | Client ID  |
+| ------------ | ---------------------------------------------------------- | ---------- | ---------- |
+| `sandbox`    | `api.comprobanteselectronicos.go.cr/recepcion-sandbox/v1/` | `rut-stag` | `api-stag` |
+| `production` | `api.comprobanteselectronicos.go.cr/recepcion/v1/`         | `rut`      | `api-prod` |
 
 ### Creating Documents
 
@@ -186,7 +187,7 @@ import type { LineItemInput } from "@hacienda-cr/sdk";
 const lineItems: LineItemInput[] = [
   {
     numeroLinea: 1,
-    codigoCabys: "8310100000000",  // CABYS code (13 digits)
+    codigoCabys: "8310100000000", // CABYS code (13 digits)
     cantidad: 2,
     unidadMedida: "Unid",
     detalle: "Web development services",
@@ -194,8 +195,8 @@ const lineItems: LineItemInput[] = [
     esServicio: true,
     impuesto: [
       {
-        codigo: "01",         // IVA
-        codigoTarifa: "08",   // 13% general rate
+        codigo: "01", // IVA
+        codigoTarifa: "08", // 13% general rate
         tarifa: 13,
       },
     ],
@@ -258,8 +259,8 @@ const factura = {
     identificacion: { tipo: "02", numero: "3109876543" },
     correoElectronico: "pagos@cliente.co.cr",
   },
-  condicionVenta: "01",  // Contado (cash)
-  medioPago: ["01"],      // Efectivo
+  condicionVenta: "01", // Contado (cash)
+  medioPago: ["01"], // Efectivo
   detalleServicio: calculatedItems,
   resumenFactura: summary,
 };
@@ -269,16 +270,16 @@ const xml = buildFacturaXml(factura);
 
 **Supported document types:**
 
-| Code | Type | Builder |
-|------|------|---------|
-| `01` | Factura Electronica | `buildFacturaXml()` |
-| `02` | Nota de Debito Electronica | `buildNotaDebitoXml()` |
-| `03` | Nota de Credito Electronica | `buildNotaCreditoXml()` |
-| `04` | Tiquete Electronico | `buildTiqueteXml()` |
-| `05` | Factura Electronica de Compra | `buildFacturaCompraXml()` |
-| `06` | Factura Electronica de Exportacion | `buildFacturaExportacionXml()` |
-| `07` | Recibo Electronico de Pago | `buildReciboPagoXml()` |
-| -- | Mensaje Receptor (receiver acknowledgment) | `buildMensajeReceptorXml()` |
+| Code | Type                                       | Builder                        |
+| ---- | ------------------------------------------ | ------------------------------ |
+| `01` | Factura Electronica                        | `buildFacturaXml()`            |
+| `02` | Nota de Debito Electronica                 | `buildNotaDebitoXml()`         |
+| `03` | Nota de Credito Electronica                | `buildNotaCreditoXml()`        |
+| `04` | Tiquete Electronico                        | `buildTiqueteXml()`            |
+| `05` | Factura Electronica de Compra              | `buildFacturaCompraXml()`      |
+| `06` | Factura Electronica de Exportacion         | `buildFacturaExportacionXml()` |
+| `07` | Recibo Electronico de Pago                 | `buildReciboPagoXml()`         |
+| --   | Mensaje Receptor (receiver acknowledgment) | `buildMensajeReceptorXml()`    |
 
 **XML validation:**
 
@@ -298,11 +299,7 @@ if (!result.valid) {
 The SDK provides utilities for computing IVA taxes, line item totals, and invoice summaries following Hacienda requirements. All monetary values are rounded to 5 decimal places.
 
 ```ts
-import {
-  round5,
-  calculateLineItemTotals,
-  calculateInvoiceSummary,
-} from "@hacienda-cr/sdk";
+import { round5, calculateLineItemTotals, calculateInvoiceSummary } from "@hacienda-cr/sdk";
 import type { LineItemInput, CalculatedLineItem, InvoiceSummary } from "@hacienda-cr/sdk";
 
 // Calculate a single line item
@@ -335,18 +332,20 @@ const summary: InvoiceSummary = calculateInvoiceSummary([calculated]);
 ```ts
 const itemWithExoneration: LineItemInput = {
   // ...base fields
-  impuesto: [{
-    codigo: "01",
-    codigoTarifa: "08",
-    tarifa: 13,
-    exoneracion: {
-      tipoDocumento: "01",
-      numeroDocumento: "AL-001-2025",
-      nombreInstitucion: "MEIC",
-      fechaEmision: "2025-01-01T00:00:00",
-      porcentajeExoneracion: 100,
+  impuesto: [
+    {
+      codigo: "01",
+      codigoTarifa: "08",
+      tarifa: 13,
+      exoneracion: {
+        tipoDocumento: "01",
+        numeroDocumento: "AL-001-2025",
+        nombreInstitucion: "MEIC",
+        fechaEmision: "2025-01-01T00:00:00",
+        porcentajeExoneracion: 100,
+      },
     },
-  }],
+  ],
 };
 ```
 
@@ -366,9 +365,9 @@ const clave = buildClave({
   documentType: DocumentType.FACTURA_ELECTRONICA,
   sequence: 42,
   situation: Situation.NORMAL,
-  branch: "001",       // Optional, defaults to "001"
-  pos: "00001",        // Optional, defaults to "00001"
-  securityCode: "12345678",  // Optional, auto-generated if omitted
+  branch: "001", // Optional, defaults to "001"
+  pos: "00001", // Optional, defaults to "00001"
+  securityCode: "12345678", // Optional, auto-generated if omitted
 });
 // => "50615072500310123456700100001010000000042112345678"
 
@@ -384,6 +383,7 @@ const parsed = parseClave(clave);
 ```
 
 **Document type codes:**
+
 - `01` Factura Electronica
 - `02` Nota de Debito Electronica
 - `03` Nota de Credito Electronica
@@ -395,6 +395,7 @@ const parsed = parseClave(clave);
 - `09` Factura de Exportacion
 
 **Situation codes:**
+
 - `1` Normal (standard online submission)
 - `2` Contingencia (system contingency)
 - `3` Sin Internet (offline)
@@ -460,21 +461,25 @@ if (isTerminalStatus(status.status)) {
 ```ts
 import { submitAndWait } from "@hacienda-cr/sdk";
 
-const result = await submitAndWait(httpClient, {
-  clave: "50601...",
-  fecha: new Date().toISOString(),
-  emisor: {
-    tipoIdentificacion: "02",
-    numeroIdentificacion: "3101234567",
+const result = await submitAndWait(
+  httpClient,
+  {
+    clave: "50601...",
+    fecha: new Date().toISOString(),
+    emisor: {
+      tipoIdentificacion: "02",
+      numeroIdentificacion: "3101234567",
+    },
+    comprobanteXml: base64SignedXml,
   },
-  comprobanteXml: base64SignedXml,
-}, {
-  pollIntervalMs: 3000,  // Poll every 3 seconds (default)
-  timeoutMs: 60000,      // Timeout after 60 seconds (default)
-  onPoll: (status, attempt) => {
-    console.log(`Poll attempt ${attempt}: ${status.status}`);
+  {
+    pollIntervalMs: 3000, // Poll every 3 seconds (default)
+    timeoutMs: 60000, // Timeout after 60 seconds (default)
+    onPoll: (status, attempt) => {
+      console.log(`Poll attempt ${attempt}: ${status.status}`);
+    },
   },
-});
+);
 
 if (result.accepted) {
   console.log("Document accepted by Hacienda!");
@@ -505,10 +510,11 @@ const detail = await getComprobante(httpClient, "50601...");
 ```ts
 import { withRetry } from "@hacienda-cr/sdk";
 
-const result = await withRetry(
-  () => submitDocument(httpClient, request),
-  { maxAttempts: 3, delayMs: 1000, backoff: "exponential" },
-);
+const result = await withRetry(() => submitDocument(httpClient, request), {
+  maxAttempts: 3,
+  delayMs: 1000,
+  backoff: "exponential",
+});
 ```
 
 ### Taxpayer Lookup
@@ -519,8 +525,8 @@ Look up taxpayer information using the public Hacienda economic activity API (no
 import { lookupTaxpayer } from "@hacienda-cr/sdk";
 
 const info = await lookupTaxpayer("3101234567");
-console.log(info.nombre);              // "MI EMPRESA S.A."
-console.log(info.tipoIdentificacion);  // "02"
+console.log(info.nombre); // "MI EMPRESA S.A."
+console.log(info.tipoIdentificacion); // "02"
 for (const activity of info.actividades) {
   console.log(`${activity.codigo}: ${activity.descripcion} (${activity.estado})`);
 }
@@ -541,12 +547,15 @@ import {
 } from "@hacienda-cr/sdk";
 
 // Save a profile
-await saveConfig({
-  environment: "sandbox",
-  cedula_type: "02",
-  cedula: "3101234567",
-  p12_path: "/path/to/cert.p12",
-}, "myprofile");
+await saveConfig(
+  {
+    environment: "sandbox",
+    cedula_type: "02",
+    cedula: "3101234567",
+    p12_path: "/path/to/cert.p12",
+  },
+  "myprofile",
+);
 
 // Load a profile
 const config = await loadConfig("myprofile");
@@ -563,6 +572,7 @@ await resetSequence("02", "3101234567", "01", "001", "00001");
 ```
 
 Sensitive values are never stored in config files:
+
 - `HACIENDA_PASSWORD` -- IDP password (environment variable)
 - `HACIENDA_P12_PIN` -- .p12 certificate PIN (environment variable)
 
@@ -575,9 +585,9 @@ import { Logger, LogLevel, noopLogger } from "@hacienda-cr/sdk";
 
 // Create a logger
 const logger = new Logger({
-  level: LogLevel.DEBUG,    // DEBUG, INFO, WARN, ERROR, SILENT
-  format: "text",           // "text" | "json"
-  context: "my-app",        // Logger context label
+  level: LogLevel.DEBUG, // DEBUG, INFO, WARN, ERROR, SILENT
+  format: "text", // "text" | "json"
+  context: "my-app", // Logger context label
 });
 
 logger.debug("Token refreshed", { expiresIn: 300 });
@@ -629,6 +639,7 @@ try {
 ```
 
 **Error codes (`HaciendaErrorCode`):**
+
 - `VALIDATION_FAILED` -- Input failed Zod or business-rule validation
 - `API_ERROR` -- Hacienda REST API returned an error or was unreachable
 - `AUTHENTICATION_FAILED` -- Authentication or token lifecycle failure
@@ -667,6 +678,7 @@ hacienda auth login --cedula-type 02 --cedula 3101234567 --password "secret"
 ```
 
 **Arguments:**
+
 - `--cedula-type` -- `01` (Fisica), `02` (Juridica), `03` (DIMEX), `04` (NITE)
 - `--cedula` -- Identification number
 - `--password` -- IDP password (or set `HACIENDA_PASSWORD`)
@@ -801,10 +813,10 @@ hacienda draft --json
 
 ### Environment Variables
 
-| Variable | Description |
-|----------|-------------|
-| `HACIENDA_PASSWORD` | IDP password for authentication |
-| `HACIENDA_P12_PIN` | PIN for the .p12 certificate file |
+| Variable            | Description                       |
+| ------------------- | --------------------------------- |
+| `HACIENDA_PASSWORD` | IDP password for authentication   |
+| `HACIENDA_P12_PIN`  | PIN for the .p12 certificate file |
 | `HACIENDA_P12_PATH` | Path to the .p12 certificate file |
 
 ---
@@ -852,14 +864,14 @@ hacienda-mcp
 
 ### Available Tools
 
-| Tool | Description |
-|------|-------------|
-| `create_invoice` | Create a Factura Electronica from structured input. Computes taxes, generates the clave, and builds XML. |
-| `check_status` | Check document processing status by 50-digit clave numerica. |
-| `list_documents` | List recent electronic documents with optional filters (date, emisor, receptor). |
-| `get_document` | Get full document details by clave. |
-| `lookup_taxpayer` | Look up taxpayer info by identification number (cedula). |
-| `draft_invoice` | Generate a draft invoice template with sensible defaults. |
+| Tool              | Description                                                                                              |
+| ----------------- | -------------------------------------------------------------------------------------------------------- |
+| `create_invoice`  | Create a Factura Electronica from structured input. Computes taxes, generates the clave, and builds XML. |
+| `check_status`    | Check document processing status by 50-digit clave numerica.                                             |
+| `list_documents`  | List recent electronic documents with optional filters (date, emisor, receptor).                         |
+| `get_document`    | Get full document details by clave.                                                                      |
+| `lookup_taxpayer` | Look up taxpayer info by identification number (cedula).                                                 |
+| `draft_invoice`   | Generate a draft invoice template with sensible defaults.                                                |
 
 **Example prompts for AI assistants:**
 
@@ -870,12 +882,12 @@ hacienda-mcp
 
 ### Available Resources
 
-| URI | Description |
-|-----|-------------|
-| `hacienda://schemas/factura` | JSON schema for invoice creation input |
-| `hacienda://reference/document-types` | Document types, codes, and descriptions |
-| `hacienda://reference/tax-codes` | Tax codes, IVA rates, and units of measure |
-| `hacienda://reference/id-types` | Identification types and validation rules |
+| URI                                   | Description                                |
+| ------------------------------------- | ------------------------------------------ |
+| `hacienda://schemas/factura`          | JSON schema for invoice creation input     |
+| `hacienda://reference/document-types` | Document types, codes, and descriptions    |
+| `hacienda://reference/tax-codes`      | Tax codes, IVA rates, and units of measure |
+| `hacienda://reference/id-types`       | Identification types and validation rules  |
 
 ---
 
@@ -939,18 +951,18 @@ pnpm --filter @hacienda-cr/sdk test clave.spec.ts
 
 ### Tech Stack
 
-| Tool | Purpose |
-|------|---------|
-| TypeScript (strict) | Language |
-| pnpm workspaces + Turborepo | Monorepo management |
-| tsup | Build (zero-config bundler) |
-| Vitest | Testing |
-| ESLint + Prettier | Lint and format |
-| Zod | Runtime validation + type inference |
-| fast-xml-parser | XML generation and parsing |
-| citty | CLI framework |
-| @modelcontextprotocol/sdk | MCP Server framework |
-| xadesjs / xmldsigjs | XAdES-EPES digital signatures |
+| Tool                        | Purpose                             |
+| --------------------------- | ----------------------------------- |
+| TypeScript (strict)         | Language                            |
+| pnpm workspaces + Turborepo | Monorepo management                 |
+| tsup                        | Build (zero-config bundler)         |
+| Vitest                      | Testing                             |
+| ESLint + Prettier           | Lint and format                     |
+| Zod                         | Runtime validation + type inference |
+| fast-xml-parser             | XML generation and parsing          |
+| citty                       | CLI framework                       |
+| @modelcontextprotocol/sdk   | MCP Server framework                |
+| xadesjs / xmldsigjs         | XAdES-EPES digital signatures       |
 
 ### Contributing
 
@@ -961,6 +973,7 @@ pnpm --filter @hacienda-cr/sdk test clave.spec.ts
 5. Commit and open a pull request
 
 **Conventions:**
+
 - Files: `kebab-case.ts`
 - Types/Classes: `PascalCase`
 - Functions/Variables: `camelCase`

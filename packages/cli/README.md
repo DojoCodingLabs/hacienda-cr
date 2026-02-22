@@ -25,13 +25,13 @@ export HACIENDA_PASSWORD="your-password"
 hacienda auth login --cedula-type 02 --cedula 3101234567 --environment sandbox
 ```
 
-| Argument | Description | Default |
-|----------|-------------|---------|
-| `--cedula-type` | `01` Fisica, `02` Juridica, `03` DIMEX, `04` NITE | (required) |
-| `--cedula` | Identification number (9-12 digits) | (required) |
-| `--password` | IDP password (prefer `HACIENDA_PASSWORD` env var) | `$HACIENDA_PASSWORD` |
-| `--environment` | `sandbox` or `production` | `sandbox` |
-| `--profile` | Profile name | `default` |
+| Argument        | Description                                       | Default              |
+| --------------- | ------------------------------------------------- | -------------------- |
+| `--cedula-type` | `01` Fisica, `02` Juridica, `03` DIMEX, `04` NITE | (required)           |
+| `--cedula`      | Identification number (9-12 digits)               | (required)           |
+| `--password`    | IDP password (prefer `HACIENDA_PASSWORD` env var) | `$HACIENDA_PASSWORD` |
+| `--environment` | `sandbox` or `production`                         | `sandbox`            |
+| `--profile`     | Profile name                                      | `default`            |
 
 ### `hacienda auth status`
 
@@ -60,10 +60,10 @@ hacienda submit invoice.json --dry-run    # Validate and preview XML
 hacienda submit invoice.json              # Submit to Hacienda
 ```
 
-| Argument | Description | Default |
-|----------|-------------|---------|
-| `file` | Path to JSON invoice file | (required) |
-| `--dry-run` | Validate and build XML without submitting | `false` |
+| Argument    | Description                               | Default    |
+| ----------- | ----------------------------------------- | ---------- |
+| `file`      | Path to JSON invoice file                 | (required) |
+| `--dry-run` | Validate and build XML without submitting | `false`    |
 
 ### `hacienda status <clave>`
 
@@ -81,10 +81,10 @@ List recent comprobantes from Hacienda.
 hacienda list --limit 50 --offset 0
 ```
 
-| Argument | Description | Default |
-|----------|-------------|---------|
-| `--limit` | Results per page | `20` |
-| `--offset` | Pagination offset | `0` |
+| Argument   | Description       | Default |
+| ---------- | ----------------- | ------- |
+| `--limit`  | Results per page  | `20`    |
+| `--offset` | Pagination offset | `0`     |
 
 ### `hacienda get <clave>`
 
@@ -103,12 +103,12 @@ hacienda sign invoice.xml --p12 cert.p12 --pin 1234 --output signed.xml
 hacienda sign invoice.xml   # Uses HACIENDA_P12_PATH and HACIENDA_P12_PIN env vars
 ```
 
-| Argument | Description | Default |
-|----------|-------------|---------|
-| `file` | Path to XML file to sign | (required) |
-| `--p12` | Path to .p12 certificate file | `$HACIENDA_P12_PATH` |
-| `--pin` | PIN for the .p12 file | `$HACIENDA_P12_PIN` |
-| `--output` | Output path for signed XML (defaults to stdout) | stdout |
+| Argument   | Description                                     | Default              |
+| ---------- | ----------------------------------------------- | -------------------- |
+| `file`     | Path to XML file to sign                        | (required)           |
+| `--p12`    | Path to .p12 certificate file                   | `$HACIENDA_P12_PATH` |
+| `--pin`    | PIN for the .p12 file                           | `$HACIENDA_P12_PIN`  |
+| `--output` | Output path for signed XML (defaults to stdout) | stdout               |
 
 ### `hacienda validate <file>`
 
@@ -138,18 +138,18 @@ hacienda draft --template nota-credito            # Specific document type
 hacienda draft --output my-invoice.json           # Custom output path
 ```
 
-| Argument | Description | Default |
-|----------|-------------|---------|
-| `--output` | Output file path | `draft-<template>.json` |
-| `--template` | `factura`, `nota-credito`, `nota-debito`, `tiquete` | `factura` |
-| `--interactive` | Step-by-step prompts | `true` |
+| Argument        | Description                                         | Default                 |
+| --------------- | --------------------------------------------------- | ----------------------- |
+| `--output`      | Output file path                                    | `draft-<template>.json` |
+| `--template`    | `factura`, `nota-credito`, `nota-debito`, `tiquete` | `factura`               |
+| `--interactive` | Step-by-step prompts                                | `true`                  |
 
 ## Environment Variables
 
-| Variable | Description |
-|----------|-------------|
-| `HACIENDA_PASSWORD` | IDP password for authentication |
-| `HACIENDA_P12_PIN` | PIN for the .p12 certificate file |
+| Variable            | Description                       |
+| ------------------- | --------------------------------- |
+| `HACIENDA_PASSWORD` | IDP password for authentication   |
+| `HACIENDA_P12_PIN`  | PIN for the .p12 certificate file |
 | `HACIENDA_P12_PATH` | Path to the .p12 certificate file |
 
 ## Full Documentation

@@ -72,6 +72,7 @@ await server.connect(transport);
 Create a Factura Electronica (electronic invoice). Accepts emisor, receptor, and line items. Automatically computes taxes, totals, generates the clave numerica, and builds the XML.
 
 **Parameters:**
+
 - `emisor` -- Issuer information (name, ID, email)
 - `receptor` -- Receiver information (name, optional ID, optional email)
 - `codigoActividad` -- CABYS activity code (6 digits)
@@ -85,6 +86,7 @@ Create a Factura Electronica (electronic invoice). Accepts emisor, receptor, and
 Check the processing status of a document by its 50-digit clave numerica.
 
 **Parameters:**
+
 - `clave` -- The 50-digit clave numerica
 
 ### `list_documents`
@@ -92,6 +94,7 @@ Check the processing status of a document by its 50-digit clave numerica.
 List recent electronic documents with optional filters.
 
 **Parameters:**
+
 - `limit` -- Max results (1-100, default: 10)
 - `offset` -- Pagination offset (default: 0)
 - `emisorIdentificacion` -- Filter by issuer ID (optional)
@@ -104,6 +107,7 @@ List recent electronic documents with optional filters.
 Get full details of an electronic document by its 50-digit clave numerica.
 
 **Parameters:**
+
 - `clave` -- The 50-digit clave numerica
 
 ### `lookup_taxpayer`
@@ -111,6 +115,7 @@ Get full details of an electronic document by its 50-digit clave numerica.
 Look up a Costa Rica taxpayer by identification number (cedula). Returns name, ID type, and registered economic activities.
 
 **Parameters:**
+
 - `identificacion` -- Taxpayer ID number (9-12 digits)
 
 ### `draft_invoice`
@@ -118,6 +123,7 @@ Look up a Costa Rica taxpayer by identification number (cedula). Returns name, I
 Generate a draft invoice template with sensible defaults. Returns JSON that can be passed to `create_invoice`.
 
 **Parameters:**
+
 - `emisorNombre` -- Issuer name
 - `emisorIdTipo` -- Issuer ID type (default: `"02"`)
 - `emisorIdNumero` -- Issuer ID number
@@ -133,12 +139,12 @@ Generate a draft invoice template with sensible defaults. Returns JSON that can 
 
 ## Resources
 
-| URI | Description |
-|-----|-------------|
-| `hacienda://schemas/factura` | JSON schema for invoice creation input |
-| `hacienda://reference/document-types` | Document types, codes, and descriptions |
-| `hacienda://reference/tax-codes` | Tax codes, IVA rates, and units of measure |
-| `hacienda://reference/id-types` | Identification types and validation rules |
+| URI                                   | Description                                |
+| ------------------------------------- | ------------------------------------------ |
+| `hacienda://schemas/factura`          | JSON schema for invoice creation input     |
+| `hacienda://reference/document-types` | Document types, codes, and descriptions    |
+| `hacienda://reference/tax-codes`      | Tax codes, IVA rates, and units of measure |
+| `hacienda://reference/id-types`       | Identification types and validation rules  |
 
 ## Full Documentation
 
