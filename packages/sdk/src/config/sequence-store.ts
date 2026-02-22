@@ -6,12 +6,62 @@
  * by "{docType}-{branch}-{pos}".
  */
 
-import { readFile, writeFile, rename } from "node:fs/promises";
+import { readFile, writeFile, rename, mkdir, rm } from "node:fs/promises";
 import { randomBytes } from "node:crypto";
 import { join } from "node:path";
 import { getConfigDir, ensureConfigDir } from "./config-manager.js";
 import { SequenceFileSchema, MAX_SEQUENCE, DEFAULT_BRANCH, DEFAULT_POS } from "./types.js";
 import type { SequenceFile } from "./types.js";
+
+// ---------------------------------------------------------------------------
+// File-based lock (mkdir is atomic on all platforms)
+// ---------------------------------------------------------------------------
+
+const LOCK_TIMEOUT_MS = 5000;
+const LOCK_RETRY_MS = 50;
+
+/**
+ * Acquires a file-based lock using `mkdir` (atomic on all platforms).
+ * Retries until timeout. Returns an unlock function.
+ */
+async function acquireLock(lockPath: string): Promise<() => Promise<void>> {
+  const deadline = Date.now() + LOCK_TIMEOUT_MS;
+
+  while (true) {
+    try {
+      await mkdir(lockPath);
+      return async () => {
+        try {
+          await rm(lockPath, { recursive: true });
+        } catch {
+          // Lock dir may already be removed — non-fatal
+        }
+      };
+    } catch (error) {
+      if (
+        error instanceof Error &&
+        "code" in error &&
+        (error as NodeJS.ErrnoException).code === "EEXIST"
+      ) {
+        if (Date.now() >= deadline) {
+          // Stale lock — force remove and retry once
+          try {
+            await rm(lockPath, { recursive: true });
+          } catch {
+            // ignore
+          }
+          throw new Error(
+            `Failed to acquire sequence lock at ${lockPath} after ${String(LOCK_TIMEOUT_MS)}ms. ` +
+              `If this persists, manually remove the lock directory.`,
+          );
+        }
+        await new Promise((resolve) => setTimeout(resolve, LOCK_RETRY_MS));
+        continue;
+      }
+      throw error;
+    }
+  }
+}
 
 /** Sequences file name */
 const SEQUENCES_FILE_NAME = "sequences.json";
@@ -145,21 +195,30 @@ export async function getNextSequence(
   pos: string = DEFAULT_POS,
   options: SequenceStoreOptions = {},
 ): Promise<number> {
-  const key = buildSequenceKey(docType, branch, pos);
-  const sequences = await readSequenceFile(options.configDir);
+  const configDir = getConfigDir(options.configDir);
+  await ensureConfigDir(options.configDir);
+  const lockPath = join(configDir, ".sequences.lock");
+  const unlock = await acquireLock(lockPath);
 
-  const current = sequences[key] ?? 0;
+  try {
+    const key = buildSequenceKey(docType, branch, pos);
+    const sequences = await readSequenceFile(options.configDir);
 
-  if (current >= MAX_SEQUENCE) {
-    throw new SequenceOverflowError(key, current);
+    const current = sequences[key] ?? 0;
+
+    if (current >= MAX_SEQUENCE) {
+      throw new SequenceOverflowError(key, current);
+    }
+
+    const next = current + 1;
+    sequences[key] = next;
+
+    await writeSequenceFile(sequences, options.configDir);
+
+    return next;
+  } finally {
+    await unlock();
   }
-
-  const next = current + 1;
-  sequences[key] = next;
-
-  await writeSequenceFile(sequences, options.configDir);
-
-  return next;
 }
 
 /**
