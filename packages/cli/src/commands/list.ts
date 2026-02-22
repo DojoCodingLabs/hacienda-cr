@@ -2,14 +2,15 @@
  * `hacienda list` command.
  *
  * Lists recent comprobantes from the Hacienda API.
- * Currently stubbed — requires authenticated API client.
  *
  * @module commands/list
  */
 
 import { defineCommand } from "citty";
-import { warn, outputJson, formatTable, colorStatus } from "../utils/format.js";
+import { listComprobantes } from "@hacienda-cr/sdk";
+import { error, outputJson, formatTable, colorStatus } from "../utils/format.js";
 import type { TableColumn } from "../utils/format.js";
+import { createAuthenticatedClient } from "../utils/api-client.js";
 
 /** Column definitions for the comprobantes table. */
 const COMPROBANTE_COLUMNS: TableColumn[] = [
@@ -21,7 +22,6 @@ const COMPROBANTE_COLUMNS: TableColumn[] = [
     minWidth: 12,
     format: (v) => colorStatus(String(v)),
   },
-  { header: "TYPE", key: "type", minWidth: 10 },
 ];
 
 export const listCommand = defineCommand({
@@ -40,6 +40,11 @@ export const listCommand = defineCommand({
       description: "Pagination offset",
       default: "0",
     },
+    profile: {
+      type: "string",
+      description: "Config profile name",
+      default: "default",
+    },
     json: {
       type: "boolean",
       description: "Output as JSON",
@@ -47,42 +52,44 @@ export const listCommand = defineCommand({
     },
   },
   async run({ args }) {
-    // API listing requires authentication — show guidance
-    warn(
-      "Authenticated API listing requires a configured profile. Run `hacienda auth login` first.",
-    );
+    try {
+      const { httpClient } = await createAuthenticatedClient(args.profile as string);
 
-    // Show example of what the output will look like
-    const exampleData = [
-      {
-        clave: "50601012400310123456700100001010000000001199999999",
-        fechaEmision: "2024-01-12",
-        estado: "aceptado",
-        type: "FE",
-      },
-      {
-        clave: "50601012400310123456700100001010000000002199999998",
-        fechaEmision: "2024-01-12",
-        estado: "procesando",
-        type: "FE",
-      },
-    ];
-
-    if (args.json) {
-      outputJson({
-        success: false,
-        error: "API listing not yet implemented",
-        exampleFormat: {
-          totalRegistros: 0,
-          offset: Number(args.offset),
-          limit: Number(args.limit),
-          comprobantes: [],
-        },
+      const result = await listComprobantes(httpClient, {
+        offset: Number(args.offset),
+        limit: Number(args.limit),
       });
-    } else {
-      console.log("\nExample output format:\n");
-      console.log(formatTable(COMPROBANTE_COLUMNS, exampleData));
-      console.log("\n(This is placeholder data. Run `hacienda auth login` to connect.)");
+
+      if (args.json) {
+        outputJson({
+          success: true,
+          totalRegistros: result.totalRegistros,
+          offset: result.offset,
+          comprobantes: result.comprobantes,
+        });
+      } else {
+        if (result.comprobantes.length === 0) {
+          console.log("No comprobantes found.");
+        } else {
+          console.log(
+            `\nShowing ${result.comprobantes.length} of ${result.totalRegistros} comprobantes:\n`,
+          );
+          console.log(
+            formatTable(
+              COMPROBANTE_COLUMNS,
+              result.comprobantes as unknown as Record<string, unknown>[],
+            ),
+          );
+        }
+      }
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Unknown error occurred";
+      if (args.json) {
+        outputJson({ success: false, error: message });
+      } else {
+        error(`List failed: ${message}`);
+      }
+      process.exitCode = 1;
     }
   },
 });

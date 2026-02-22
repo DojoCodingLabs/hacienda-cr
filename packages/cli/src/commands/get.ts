@@ -2,14 +2,14 @@
  * `hacienda get` command.
  *
  * Gets full details of a document by its clave.
- * Currently stubbed — requires authenticated API client.
  *
  * @module commands/get
  */
 
 import { defineCommand } from "citty";
-import { parseClave } from "@hacienda-cr/sdk";
-import { warn, error, detail, info, outputJson } from "../utils/format.js";
+import { parseClave, getComprobante } from "@hacienda-cr/sdk";
+import { error, detail, info, outputJson, colorStatus } from "../utils/format.js";
+import { createAuthenticatedClient } from "../utils/api-client.js";
 
 export const getCommand = defineCommand({
   meta: {
@@ -21,6 +21,11 @@ export const getCommand = defineCommand({
       type: "positional",
       description: "50-digit clave numerica",
       required: true,
+    },
+    profile: {
+      type: "string",
+      description: "Config profile name",
+      default: "default",
     },
     json: {
       type: "boolean",
@@ -39,15 +44,21 @@ export const getCommand = defineCommand({
         return;
       }
 
-      // Parse the clave to show available info
+      // Parse the clave for supplementary info
       const parsed = parseClave(clave);
 
-      // API document retrieval requires authentication — show parsed clave
-      warn("Document retrieval requires authentication. Run `hacienda auth login` first.");
+      // Authenticate and fetch document
+      const { httpClient } = await createAuthenticatedClient(args.profile as string);
+      const doc = await getComprobante(httpClient, clave);
 
       if (args.json) {
         outputJson({
-          clave,
+          clave: doc.clave,
+          fechaEmision: doc.fechaEmision,
+          estado: doc.estado,
+          emisor: doc.emisor,
+          receptor: doc.receptor,
+          fechaRespuesta: doc.fechaRespuesta,
           parsed: {
             countryCode: parsed.countryCode,
             date: parsed.date.toISOString(),
@@ -57,18 +68,20 @@ export const getCommand = defineCommand({
             situation: parsed.situation,
             securityCode: parsed.securityCode,
           },
-          message: "API document retrieval not yet implemented",
         });
       } else {
-        info(`Document: ${clave}`);
-        detail("Country Code", parsed.countryCode);
-        detail("Date", parsed.date.toISOString().slice(0, 10));
-        detail("Taxpayer ID", parsed.taxpayerId);
+        info(`Document: ${doc.clave}`);
+        console.log(`  Status: ${colorStatus(doc.estado)}`);
+        detail("Emission Date", doc.fechaEmision);
+        detail("Emisor", `${doc.emisor.tipoIdentificacion}: ${doc.emisor.numeroIdentificacion}`);
+        if (doc.receptor) {
+          detail("Receptor", `${doc.receptor.tipoIdentificacion}: ${doc.receptor.numeroIdentificacion}`);
+        }
+        if (doc.fechaRespuesta) detail("Response Date", doc.fechaRespuesta);
+        console.log("");
         detail("Document Type", parsed.documentType);
         detail("Sequence", String(parsed.sequence));
         detail("Situation", parsed.situation);
-        detail("Security Code", parsed.securityCode);
-        console.log("\nFull document details will be available after authentication.");
       }
     } catch (err) {
       const message = err instanceof Error ? err.message : "Unknown error occurred";

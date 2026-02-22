@@ -17,8 +17,17 @@
   "files": [
     "dist"
   ],
+  "keywords": [
+    "costa-rica",
+    "hacienda",
+    "electronic-invoicing",
+    "factura-electronica",
+    "comprobantes-electronicos",
+    "cli"
+  ],
   "scripts": {
     "build": "tsup",
+    "prepublishOnly": "pnpm run build",
     "test": "vitest run",
     "lint": "eslint src/",
     "typecheck": "tsc --noEmit",

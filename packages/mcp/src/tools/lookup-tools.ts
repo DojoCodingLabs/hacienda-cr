@@ -1,13 +1,14 @@
 /**
  * MCP tools: lookup_taxpayer, draft_invoice
  *
- * - lookup_taxpayer: look up taxpayer info by cedula (placeholder)
+ * - lookup_taxpayer: look up taxpayer info by cedula (public API, no auth needed)
  * - draft_invoice: help draft an invoice interactively with sensible defaults
  */
 
 import { z } from "zod";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 
+import { lookupTaxpayer } from "@hacienda-cr/sdk";
 import { IDENTIFICATION_TYPE_NAMES } from "@hacienda-cr/shared";
 import type { IdentificationType } from "@hacienda-cr/shared";
 
@@ -29,46 +30,45 @@ export function registerLookupTaxpayerTool(server: McpServer): void {
         .describe("Taxpayer identification number (9-12 digits)"),
     },
     async (args) => {
-      // Determine probable ID type based on length
-      let probableType: string;
-      switch (args.identificacion.length) {
-        case 9:
-          probableType = "01 - Cedula Fisica";
-          break;
-        case 10:
-          probableType = "02 - Cedula Juridica / 04 - NITE";
-          break;
-        case 11:
-        case 12:
-          probableType = "03 - DIMEX";
-          break;
-        default:
-          probableType = "Unknown";
-      }
+      try {
+        const info = await lookupTaxpayer(args.identificacion);
 
-      // Placeholder response — will call Hacienda economic activity API
-      return {
-        content: [
-          {
-            type: "text" as const,
-            text: [
-              `Taxpayer Lookup (placeholder — API not yet connected)`,
-              ``,
-              `Identification: ${args.identificacion}`,
-              `Probable Type: ${probableType}`,
-              ``,
-              `Available identification types:`,
-              ...Object.entries(IDENTIFICATION_TYPE_NAMES).map(
-                ([code, name]) => `  ${code}: ${name}`,
-              ),
-              ``,
-              `Note: This is a placeholder response. Once the economic ` +
-                `activity API is connected, this tool will return the ` +
-                `taxpayer's name and registered activities.`,
-            ].join("\n"),
-          },
-        ],
-      };
+        const activities =
+          info.actividades.length > 0
+            ? info.actividades.map(
+                (a) => `  - [${a.codigo}] ${a.descripcion} (${a.estado})`,
+              )
+            : ["  (no activities registered)"];
+
+        return {
+          content: [
+            {
+              type: "text" as const,
+              text: [
+                `Taxpayer Information`,
+                ``,
+                `Name: ${info.nombre}`,
+                `Identification: ${args.identificacion}`,
+                `Type: ${info.tipoIdentificacion}`,
+                ``,
+                `Economic Activities:`,
+                ...activities,
+              ].join("\n"),
+            },
+          ],
+        };
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        return {
+          content: [
+            {
+              type: "text" as const,
+              text: `Error looking up taxpayer: ${message}`,
+            },
+          ],
+          isError: true,
+        };
+      }
     },
   );
 }

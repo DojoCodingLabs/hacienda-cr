@@ -20,3 +20,6 @@ export {
   detail,
 } from "./format.js";
 export type { TableColumn } from "./format.js";
+
+export { createAuthenticatedClient } from "./api-client.js";
+export type { AuthenticatedClient } from "./api-client.js";

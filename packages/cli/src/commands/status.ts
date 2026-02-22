@@ -7,8 +7,9 @@
  */
 
 import { defineCommand } from "citty";
-import { parseClave } from "@hacienda-cr/sdk";
-import { warn, error, detail, info, outputJson, colorStatus } from "../utils/format.js";
+import { parseClave, getStatus, extractRejectionReason } from "@hacienda-cr/sdk";
+import { error, detail, info, outputJson, colorStatus } from "../utils/format.js";
+import { createAuthenticatedClient } from "../utils/api-client.js";
 
 export const statusCommand = defineCommand({
   meta: {
@@ -20,6 +21,11 @@ export const statusCommand = defineCommand({
       type: "positional",
       description: "50-digit clave numerica",
       required: true,
+    },
+    profile: {
+      type: "string",
+      description: "Config profile name",
+      default: "default",
     },
     json: {
       type: "boolean",
@@ -41,12 +47,22 @@ export const statusCommand = defineCommand({
       // Parse the clave to show its components
       const parsed = parseClave(clave);
 
-      // API polling requires authentication — show parsed clave
-      warn("Status polling requires authentication. Run `hacienda auth login` first.");
+      // Authenticate and query status
+      const { httpClient } = await createAuthenticatedClient(args.profile as string);
+      const status = await getStatus(httpClient, clave);
+
+      // Extract rejection reason if available
+      let rejectionReason: string | undefined;
+      if (status.responseXml) {
+        rejectionReason = extractRejectionReason(status.responseXml);
+      }
 
       if (args.json) {
         outputJson({
           clave,
+          status: status.status,
+          date: status.date,
+          rejectionReason,
           parsed: {
             countryCode: parsed.countryCode,
             date: parsed.date.toISOString(),
@@ -56,19 +72,18 @@ export const statusCommand = defineCommand({
             situation: parsed.situation,
             securityCode: parsed.securityCode,
           },
-          status: "unknown",
-          message: "API status polling not yet implemented",
         });
       } else {
         info(`Clave: ${clave}`);
+        console.log(`  Status: ${colorStatus(status.status)}`);
+        if (status.date) detail("Date", status.date);
+        if (rejectionReason) detail("Reason", rejectionReason);
+        console.log("");
         detail("Country Code", parsed.countryCode);
-        detail("Date", parsed.date.toISOString().slice(0, 10));
         detail("Taxpayer ID", parsed.taxpayerId);
         detail("Document Type", parsed.documentType);
         detail("Sequence", String(parsed.sequence));
         detail("Situation", parsed.situation);
-        detail("Security Code", parsed.securityCode);
-        console.log(`\n  Status: ${colorStatus("unknown")} (requires authentication)`);
       }
     } catch (err) {
       const message = err instanceof Error ? err.message : "Unknown error occurred";
