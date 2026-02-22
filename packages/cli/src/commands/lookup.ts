@@ -1,14 +1,15 @@
 /**
  * `hacienda lookup` command.
  *
- * Looks up taxpayer economic activities from the Hacienda API.
- * Stubbed — requires the API client module.
+ * Looks up taxpayer economic activities from the Hacienda public API.
+ * This endpoint does not require authentication.
  *
  * @module commands/lookup
  */
 
 import { defineCommand } from "citty";
-import { warn, outputJson } from "../utils/format.js";
+import { lookupTaxpayer } from "@hacienda-cr/sdk";
+import { success, error, detail, info, outputJson } from "../utils/format.js";
 
 export const lookupCommand = defineCommand({
   meta: {
@@ -18,8 +19,8 @@ export const lookupCommand = defineCommand({
   args: {
     cedula: {
       type: "positional",
-      description: "Taxpayer identification number",
-      required: false,
+      description: "Taxpayer identification number (9-12 digits)",
+      required: true,
     },
     json: {
       type: "boolean",
@@ -28,15 +29,47 @@ export const lookupCommand = defineCommand({
     },
   },
   async run({ args }) {
-    if (args.json) {
-      outputJson({
-        success: false,
-        error: "The lookup command is not yet implemented. Pending API client module.",
-      });
-    } else {
-      warn("The lookup command is not yet implemented. Pending API client module.");
-      console.log("\nThis command will query Hacienda's economic activity API to retrieve");
-      console.log("taxpayer information and registered activities by cedula number.");
+    try {
+      const cedula = args.cedula;
+
+      // Basic cedula format validation
+      if (!/^\d{9,12}$/.test(cedula)) {
+        error("Invalid cedula. Must be a 9-12 digit numeric string.");
+        process.exitCode = 1;
+        return;
+      }
+
+      const taxpayer = await lookupTaxpayer(cedula);
+
+      if (args.json) {
+        outputJson({
+          success: true,
+          nombre: taxpayer.nombre,
+          tipoIdentificacion: taxpayer.tipoIdentificacion,
+          actividades: taxpayer.actividades,
+        });
+      } else {
+        success(`Taxpayer found: ${taxpayer.nombre}`);
+        info(`Identification type: ${taxpayer.tipoIdentificacion}`);
+
+        if (taxpayer.actividades.length === 0) {
+          detail("Activities", "None registered");
+        } else {
+          console.log(`\n  Economic activities (${String(taxpayer.actividades.length)}):\n`);
+          for (const act of taxpayer.actividades) {
+            const status = act.estado === "A" ? "Active" : act.estado;
+            console.log(`    [${act.codigo}] ${act.descripcion} (${status})`);
+          }
+        }
+      }
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Unknown error occurred";
+      if (args.json) {
+        outputJson({ success: false, error: message });
+      } else {
+        error(message);
+      }
+      process.exitCode = 1;
     }
   },
 });

@@ -170,7 +170,7 @@ describe("get command", () => {
 });
 
 // ---------------------------------------------------------------------------
-// Sign command (stub)
+// Sign command
 // ---------------------------------------------------------------------------
 
 describe("sign command", () => {
@@ -179,6 +179,22 @@ describe("sign command", () => {
     const meta = resolved.meta as { name: string; description: string };
     expect(meta.name).toBe("sign");
     expect(meta.description).toContain("Sign");
+  });
+
+  it("has required file positional arg", async () => {
+    const resolved = await resolveCommand(signCommand);
+    const args = resolved.args as Record<string, { type: string; required?: boolean }>;
+    expect(args.file).toBeDefined();
+    expect(args.file.type).toBe("positional");
+    expect(args.file.required).toBe(true);
+  });
+
+  it("has p12, pin, and output args", async () => {
+    const resolved = await resolveCommand(signCommand);
+    const args = resolved.args as Record<string, { type: string }>;
+    expect(args.p12).toBeDefined();
+    expect(args.pin).toBeDefined();
+    expect(args.output).toBeDefined();
   });
 });
 
@@ -203,7 +219,7 @@ describe("validate command", () => {
 });
 
 // ---------------------------------------------------------------------------
-// Lookup command (stub)
+// Lookup command
 // ---------------------------------------------------------------------------
 
 describe("lookup command", () => {
@@ -212,6 +228,14 @@ describe("lookup command", () => {
     const meta = resolved.meta as { name: string; description: string };
     expect(meta.name).toBe("lookup");
     expect(meta.description).toContain("Look up");
+  });
+
+  it("has required cedula positional arg", async () => {
+    const resolved = await resolveCommand(lookupCommand);
+    const args = resolved.args as Record<string, { type: string; required?: boolean }>;
+    expect(args.cedula).toBeDefined();
+    expect(args.cedula.type).toBe("positional");
+    expect(args.cedula.required).toBe(true);
   });
 });
 

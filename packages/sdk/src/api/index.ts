@@ -26,6 +26,13 @@ export type { SubmitAndWaitOptions, SubmitAndWaitResult } from "./orchestrator.j
 export { withRetry } from "./retry.js";
 export type { RetryOptions } from "./retry.js";
 
+// Comprobantes — list and detail
+export { listComprobantes, getComprobante } from "./comprobantes.js";
+
+// Taxpayer lookup
+export { lookupTaxpayer } from "./taxpayer.js";
+export type { TaxpayerInfo, LookupTaxpayerOptions } from "./taxpayer.js";
+
 // Error codes
 export {
   HaciendaRejectionCode,

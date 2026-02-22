@@ -47,9 +47,9 @@ export const listCommand = defineCommand({
     },
   },
   async run({ args }) {
-    // API listing not yet implemented — show stub
+    // API listing requires authentication — show guidance
     warn(
-      "API listing is not yet implemented. This command will list recent comprobantes once the API client is connected.",
+      "Authenticated API listing requires a configured profile. Run `hacienda auth login` first.",
     );
 
     // Show example of what the output will look like
@@ -82,7 +82,7 @@ export const listCommand = defineCommand({
     } else {
       console.log("\nExample output format:\n");
       console.log(formatTable(COMPROBANTE_COLUMNS, exampleData));
-      console.log("\n(This is placeholder data. The API client is not yet connected.)");
+      console.log("\n(This is placeholder data. Run `hacienda auth login` to connect.)");
     }
   },
 });
