@@ -1,6 +1,6 @@
 {
   "name": "@hacienda-cr/sdk",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "Core SDK for Costa Rica electronic invoicing (Hacienda API v4.4)",
   "type": "module",
   "main": "./dist/index.js",

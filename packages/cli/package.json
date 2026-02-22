@@ -1,6 +1,6 @@
 {
   "name": "@hacienda-cr/cli",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "CLI for Costa Rica electronic invoicing (hacienda command)",
   "type": "module",
   "main": "./dist/index.js",

@@ -1,6 +1,6 @@
 {
   "name": "@hacienda-cr/mcp",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "MCP Server for Costa Rica electronic invoicing (AI-accessible tools)",
   "type": "module",
   "main": "./dist/index.js",
