@@ -7,7 +7,7 @@
  */
 
 import { defineCommand } from "citty";
-import { listComprobantes } from "@hacienda-cr/sdk";
+import { listComprobantes } from "@dojocoding/hacienda-sdk";
 import { error, outputJson, formatTable, colorStatus } from "../utils/format.js";
 import type { TableColumn } from "../utils/format.js";
 import { createAuthenticatedClient } from "../utils/api-client.js";

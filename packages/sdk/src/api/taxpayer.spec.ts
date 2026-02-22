@@ -3,7 +3,7 @@
  */
 
 import { describe, it, expect, vi } from "vitest";
-import type { ActividadEconomicaResponse } from "@hacienda-cr/shared";
+import type { ActividadEconomicaResponse } from "@dojocoding/hacienda-shared";
 
 import { lookupTaxpayer } from "./taxpayer.js";
 import { ApiError } from "../errors.js";

@@ -7,8 +7,8 @@
  */
 
 import { describe, it, expect, vi } from "vitest";
-import { HaciendaStatus } from "@hacienda-cr/shared";
-import type { StatusResponse, SubmissionRequest } from "@hacienda-cr/shared";
+import { HaciendaStatus } from "@dojocoding/hacienda-shared";
+import type { StatusResponse, SubmissionRequest } from "@dojocoding/hacienda-shared";
 
 import { buildFacturaXml } from "../documents/index.js";
 import { submitAndWait } from "./orchestrator.js";

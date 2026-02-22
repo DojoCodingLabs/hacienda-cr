@@ -15,8 +15,8 @@ import {
   IdType,
   saveConfig,
   ensureConfigDir,
-} from "@hacienda-cr/sdk";
-import type { Profile } from "@hacienda-cr/sdk";
+} from "@dojocoding/hacienda-sdk";
+import type { Profile } from "@dojocoding/hacienda-sdk";
 import { success, error, detail, outputJson } from "../../utils/format.js";
 
 export const loginCommand = defineCommand({

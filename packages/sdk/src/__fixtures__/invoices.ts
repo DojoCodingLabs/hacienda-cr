@@ -8,7 +8,7 @@
  * FacturaElectronica object ready for XML generation.
  */
 
-import type { FacturaElectronica } from "@hacienda-cr/shared";
+import type { FacturaElectronica } from "@dojocoding/hacienda-shared";
 
 // ---------------------------------------------------------------------------
 // Shared emisor / receptor used across fixtures

@@ -8,7 +8,7 @@
  */
 
 import { defineCommand } from "citty";
-import { lookupTaxpayer } from "@hacienda-cr/sdk";
+import { lookupTaxpayer } from "@dojocoding/hacienda-sdk";
 import { success, error, detail, info, outputJson } from "../utils/format.js";
 
 export const lookupCommand = defineCommand({

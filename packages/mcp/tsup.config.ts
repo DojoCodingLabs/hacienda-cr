@@ -16,5 +16,5 @@ export default defineConfig({
     "zod",
     "zod/v4",
   ],
-  noExternal: ["@hacienda-cr/sdk", "@hacienda-cr/shared"],
+  noExternal: ["@dojocoding/hacienda-sdk", "@dojocoding/hacienda-shared"],
 });

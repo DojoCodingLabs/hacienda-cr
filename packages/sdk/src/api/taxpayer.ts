@@ -8,8 +8,8 @@
  * @module api/taxpayer
  */
 
-import type { ActividadEconomicaResponse } from "@hacienda-cr/shared";
-import { ECONOMIC_ACTIVITY_API_URL } from "@hacienda-cr/shared";
+import type { ActividadEconomicaResponse } from "@dojocoding/hacienda-shared";
+import { ECONOMIC_ACTIVITY_API_URL } from "@dojocoding/hacienda-shared";
 
 import { ApiError } from "../errors.js";
 

@@ -3,8 +3,8 @@
  */
 
 import { describe, it, expect, vi } from "vitest";
-import type { ComprobantesListResponse, ComprobanteDetail } from "@hacienda-cr/shared";
-import { HaciendaStatus } from "@hacienda-cr/shared";
+import type { ComprobantesListResponse, ComprobanteDetail } from "@dojocoding/hacienda-shared";
+import { HaciendaStatus } from "@dojocoding/hacienda-shared";
 
 import { listComprobantes, getComprobante } from "./comprobantes.js";
 import type { HttpClient } from "./http-client.js";

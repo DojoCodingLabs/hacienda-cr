@@ -13,7 +13,7 @@ import type {
   FacturaElectronicaExportacion,
   ReciboElectronicoPago,
   MensajeReceptor,
-} from "@hacienda-cr/shared";
+} from "@dojocoding/hacienda-shared";
 
 // ---------------------------------------------------------------------------
 // Shared emisor / receptor used across fixtures

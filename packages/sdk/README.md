@@ -1,4 +1,4 @@
-# @hacienda-cr/sdk
+# @dojocoding/hacienda-sdk
 
 Core SDK for Costa Rica electronic invoicing (Hacienda API v4.4).
 
@@ -7,7 +7,7 @@ Provides authentication, XML generation, XAdES-EPES digital signing, tax calcula
 ## Installation
 
 ```bash
-npm install @hacienda-cr/sdk
+npm install @dojocoding/hacienda-sdk
 ```
 
 Requires **Node.js 22+** (uses native `fetch` and `crypto.subtle`).
@@ -15,7 +15,7 @@ Requires **Node.js 22+** (uses native `fetch` and `crypto.subtle`).
 ## Quick Start
 
 ```ts
-import { HaciendaClient, DocumentType, Situation } from "@hacienda-cr/sdk";
+import { HaciendaClient, DocumentType, Situation } from "@dojocoding/hacienda-sdk";
 
 const client = new HaciendaClient({
   environment: "sandbox",

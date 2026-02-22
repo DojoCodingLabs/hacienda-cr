@@ -1,5 +1,5 @@
 /**
- * @hacienda-cr/cli
+ * @dojocoding/hacienda-cli
  *
  * CLI entry point for Costa Rica electronic invoicing.
  * Provides the `hacienda` command for submitting, querying, and managing invoices.

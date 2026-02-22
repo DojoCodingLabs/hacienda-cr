@@ -8,8 +8,8 @@
  * @module tools/api-client
  */
 
-import { bootstrapClient } from "@hacienda-cr/sdk";
-import type { HttpClient } from "@hacienda-cr/sdk";
+import { bootstrapClient } from "@dojocoding/hacienda-sdk";
+import type { HttpClient } from "@dojocoding/hacienda-sdk";
 
 /** Cached clients keyed by profile name. */
 const clientCache = new Map<string, HttpClient>();

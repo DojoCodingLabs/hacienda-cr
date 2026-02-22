@@ -41,7 +41,7 @@ export enum HaciendaErrorCode {
 /**
  * Base error class for all SDK errors.
  *
- * Every error thrown by the public API of `@hacienda-cr/sdk` is an instance
+ * Every error thrown by the public API of `@dojocoding/hacienda-sdk` is an instance
  * of (or extends) this class, making it easy to catch SDK errors generically:
  *
  * ```ts

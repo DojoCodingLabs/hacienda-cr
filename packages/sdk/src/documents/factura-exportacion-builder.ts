@@ -9,7 +9,7 @@
  * Namespace: https://cdn.comprobanteselectronicos.go.cr/xml-schemas/v4.4/FacturaElectronicaExportacion
  */
 
-import type { FacturaElectronicaExportacion } from "@hacienda-cr/shared";
+import type { FacturaElectronicaExportacion } from "@dojocoding/hacienda-shared";
 import { buildXml } from "../xml/builder.js";
 import { buildStandardDocumentBody } from "./shared-xml-helpers.js";
 
@@ -29,7 +29,7 @@ import { buildStandardDocumentBody } from "./shared-xml-helpers.js";
  *
  * @example
  * ```ts
- * import { buildFacturaExportacionXml } from "@hacienda-cr/sdk";
+ * import { buildFacturaExportacionXml } from "@dojocoding/hacienda-sdk";
  *
  * const xml = buildFacturaExportacionXml({
  *   clave: "506...",

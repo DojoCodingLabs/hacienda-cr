@@ -1,13 +1,13 @@
-# @hacienda-cr/mcp
+# @dojocoding/hacienda-mcp
 
 MCP (Model Context Protocol) Server for Costa Rica electronic invoicing (Hacienda API v4.4).
 
-Exposes the `@hacienda-cr/sdk` as AI-accessible tools and resources via the Model Context Protocol, allowing AI assistants like Claude Desktop to create invoices, check document status, and look up taxpayer information.
+Exposes the `@dojocoding/hacienda-sdk` as AI-accessible tools and resources via the Model Context Protocol, allowing AI assistants like Claude Desktop to create invoices, check document status, and look up taxpayer information.
 
 ## Installation
 
 ```bash
-npm install -g @hacienda-cr/mcp
+npm install -g @dojocoding/hacienda-mcp
 ```
 
 Requires **Node.js 22+**.
@@ -26,7 +26,7 @@ Add this to your Claude Desktop configuration file:
   "mcpServers": {
     "hacienda-cr": {
       "command": "npx",
-      "args": ["-y", "@hacienda-cr/mcp"]
+      "args": ["-y", "@dojocoding/hacienda-mcp"]
     }
   }
 }
@@ -49,7 +49,7 @@ Or if installed globally:
 The server uses stdio transport. Start it with:
 
 ```bash
-npx @hacienda-cr/mcp
+npx @dojocoding/hacienda-mcp
 # or
 hacienda-mcp
 ```
@@ -57,7 +57,7 @@ hacienda-mcp
 ### Programmatic Usage
 
 ```ts
-import { createServer } from "@hacienda-cr/mcp";
+import { createServer } from "@dojocoding/hacienda-mcp";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 
 const server = createServer();

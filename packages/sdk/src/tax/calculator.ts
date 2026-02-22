@@ -8,8 +8,13 @@
  * by the Hacienda specification.
  */
 
-import type { Impuesto, Descuento, CodigoComercial, Exoneracion } from "@hacienda-cr/shared";
-import { TaxCode } from "@hacienda-cr/shared";
+import type {
+  Impuesto,
+  Descuento,
+  CodigoComercial,
+  Exoneracion,
+} from "@dojocoding/hacienda-shared";
+import { TaxCode } from "@dojocoding/hacienda-shared";
 
 // ---------------------------------------------------------------------------
 // Constants

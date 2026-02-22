@@ -9,7 +9,7 @@
  * Namespace: https://cdn.comprobanteselectronicos.go.cr/xml-schemas/v4.4/ReciboElectronicoPago
  */
 
-import type { ReciboElectronicoPago } from "@hacienda-cr/shared";
+import type { ReciboElectronicoPago } from "@dojocoding/hacienda-shared";
 import { buildXml } from "../xml/builder.js";
 import { buildStandardDocumentBody } from "./shared-xml-helpers.js";
 
@@ -29,7 +29,7 @@ import { buildStandardDocumentBody } from "./shared-xml-helpers.js";
  *
  * @example
  * ```ts
- * import { buildReciboPagoXml } from "@hacienda-cr/sdk";
+ * import { buildReciboPagoXml } from "@dojocoding/hacienda-sdk";
  *
  * const xml = buildReciboPagoXml({
  *   clave: "506...",

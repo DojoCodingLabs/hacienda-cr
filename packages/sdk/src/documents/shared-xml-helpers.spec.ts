@@ -19,7 +19,7 @@ import type {
   InformacionReferencia,
   OtroContenido,
   LineaDetalle,
-} from "@hacienda-cr/shared";
+} from "@dojocoding/hacienda-shared";
 import type { CommonDocumentFields } from "./shared-xml-helpers.js";
 
 // ---------------------------------------------------------------------------

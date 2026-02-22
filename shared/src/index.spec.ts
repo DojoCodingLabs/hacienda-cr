@@ -26,7 +26,7 @@ import {
   CLAVE_LENGTH,
 } from "./index.js";
 
-describe("@hacienda-cr/shared", () => {
+describe("@dojocoding/hacienda-shared", () => {
   describe("Environment constants", () => {
     it("should define sandbox and production environments", () => {
       expect(Environment.SANDBOX).toBe("sandbox");

@@ -6,8 +6,8 @@
  * @module utils/api-client
  */
 
-import { bootstrapClient } from "@hacienda-cr/sdk";
-import type { BootstrapResult } from "@hacienda-cr/sdk";
+import { bootstrapClient } from "@dojocoding/hacienda-sdk";
+import type { BootstrapResult } from "@dojocoding/hacienda-sdk";
 
 export type { BootstrapResult };
 

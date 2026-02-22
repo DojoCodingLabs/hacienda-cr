@@ -7,7 +7,7 @@
  */
 
 import { defineCommand } from "citty";
-import { listProfiles, loadConfig } from "@hacienda-cr/sdk";
+import { listProfiles, loadConfig } from "@dojocoding/hacienda-sdk";
 import { success, warn, detail, info, outputJson, dim } from "../../utils/format.js";
 
 export const switchCommand = defineCommand({

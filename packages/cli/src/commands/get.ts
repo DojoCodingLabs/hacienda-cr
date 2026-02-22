@@ -7,7 +7,7 @@
  */
 
 import { defineCommand } from "citty";
-import { parseClave, getComprobante } from "@hacienda-cr/sdk";
+import { parseClave, getComprobante } from "@dojocoding/hacienda-sdk";
 import { error, detail, info, outputJson, colorStatus } from "../utils/format.js";
 import { createAuthenticatedClient } from "../utils/api-client.js";
 

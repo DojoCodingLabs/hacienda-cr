@@ -1,5 +1,5 @@
 /**
- * @hacienda-cr/mcp
+ * @dojocoding/hacienda-mcp
  *
  * MCP Server for Costa Rica electronic invoicing.
  * Exposes SDK functionality as AI-accessible tools via the Model Context Protocol.
@@ -19,6 +19,6 @@
  * - hacienda://reference/id-types — Identification types and validation rules
  */
 
-export const PACKAGE_NAME = "@hacienda-cr/mcp" as const;
+export const PACKAGE_NAME = "@dojocoding/hacienda-mcp" as const;
 
 export { createServer } from "./server.js";

@@ -7,8 +7,12 @@
  * @module api/submission
  */
 
-import type { SubmissionRequest, SubmissionResponse, StatusResponse } from "@hacienda-cr/shared";
-import { HaciendaStatus } from "@hacienda-cr/shared";
+import type {
+  SubmissionRequest,
+  SubmissionResponse,
+  StatusResponse,
+} from "@dojocoding/hacienda-shared";
+import { HaciendaStatus } from "@dojocoding/hacienda-shared";
 
 import { ApiError } from "../errors.js";
 import type { HttpClient, HttpResponse } from "./http-client.js";

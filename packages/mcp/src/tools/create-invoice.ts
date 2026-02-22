@@ -22,9 +22,9 @@ import {
   getNextSequence,
   DEFAULT_BRANCH,
   DEFAULT_POS,
-} from "@hacienda-cr/sdk";
-import type { LineItemInput, CalculatedLineItem } from "@hacienda-cr/sdk";
-import type { FacturaElectronica } from "@hacienda-cr/shared";
+} from "@dojocoding/hacienda-sdk";
+import type { LineItemInput, CalculatedLineItem } from "@dojocoding/hacienda-sdk";
+import type { FacturaElectronica } from "@dojocoding/hacienda-shared";
 
 // ---------------------------------------------------------------------------
 // Input schema

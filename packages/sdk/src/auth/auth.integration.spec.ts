@@ -7,7 +7,7 @@
  *   HACIENDA_PASSWORD="your-sandbox-password"
  *
  * Then run:
- *   pnpm --filter @hacienda-cr/sdk test auth.integration.spec.ts
+ *   pnpm --filter @dojocoding/hacienda-sdk test auth.integration.spec.ts
  */
 
 import { describe, it, expect } from "vitest";

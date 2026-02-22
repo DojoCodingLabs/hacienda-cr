@@ -1,5 +1,5 @@
 {
-  "name": "@hacienda-cr/mcp",
+  "name": "@dojocoding/hacienda-mcp",
   "version": "0.1.0",
   "description": "MCP Server for Costa Rica electronic invoicing (AI-accessible tools)",
   "type": "module",
@@ -35,8 +35,8 @@
     "clean": "rm -rf dist"
   },
   "dependencies": {
-    "@hacienda-cr/sdk": "workspace:*",
-    "@hacienda-cr/shared": "workspace:*",
+    "@dojocoding/hacienda-sdk": "workspace:*",
+    "@dojocoding/hacienda-shared": "workspace:*",
     "@modelcontextprotocol/sdk": "^1.26.0",
     "zod": "^4.3.6"
   },

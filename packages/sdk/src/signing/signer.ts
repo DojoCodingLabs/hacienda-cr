@@ -17,7 +17,7 @@ import xpath from "xpath";
 import * as xadesjs from "xadesjs";
 import * as xmldsigjs from "xmldsigjs";
 
-import { XADES_POLICY_HASH, XADES_POLICY_URI } from "@hacienda-cr/shared";
+import { XADES_POLICY_HASH, XADES_POLICY_URI } from "@dojocoding/hacienda-shared";
 
 import { SigningError } from "../errors.js";
 import { loadP12 } from "./p12-loader.js";
@@ -68,7 +68,7 @@ function ensureInitialized(): void {
  * @example
  * ```ts
  * import { readFileSync } from "node:fs";
- * import { signXml } from "@hacienda-cr/sdk";
+ * import { signXml } from "@dojocoding/hacienda-sdk";
  *
  * const xml = '<FacturaElectronica>...</FacturaElectronica>';
  * const p12 = readFileSync("taxpayer.p12");

@@ -13,7 +13,7 @@
  * Namespace: https://cdn.comprobanteselectronicos.go.cr/xml-schemas/v4.4/MensajeReceptor
  */
 
-import type { MensajeReceptor } from "@hacienda-cr/shared";
+import type { MensajeReceptor } from "@dojocoding/hacienda-shared";
 import { buildXml } from "../xml/builder.js";
 
 // ---------------------------------------------------------------------------
@@ -35,7 +35,7 @@ import { buildXml } from "../xml/builder.js";
  *
  * @example
  * ```ts
- * import { buildMensajeReceptorXml } from "@hacienda-cr/sdk";
+ * import { buildMensajeReceptorXml } from "@dojocoding/hacienda-sdk";
  *
  * const xml = buildMensajeReceptorXml({
  *   clave: "50601...",

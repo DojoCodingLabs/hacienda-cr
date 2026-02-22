@@ -12,7 +12,7 @@ import type {
   ComprobantesQueryParams,
   ComprobantesListResponse,
   ComprobanteDetail,
-} from "@hacienda-cr/shared";
+} from "@dojocoding/hacienda-shared";
 
 import type { HttpClient } from "./http-client.js";
 

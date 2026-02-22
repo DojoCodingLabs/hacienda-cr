@@ -5,7 +5,7 @@
 **El toolkit open-source más completo para facturación electrónica en Costa Rica.**\
 SDK + CLI + Servidor MCP para emitir comprobantes electrónicos contra la API v4.4 del Ministerio de Hacienda.
 
-[![npm version](https://img.shields.io/npm/v/@hacienda-cr/sdk.svg)](https://www.npmjs.com/package/@hacienda-cr/sdk)
+[![npm version](https://img.shields.io/npm/v/@dojocoding/hacienda-sdk.svg)](https://www.npmjs.com/package/@dojocoding/hacienda-sdk)
 [![CI](https://github.com/DojoCodingLabs/hacienda-cr/actions/workflows/ci.yml/badge.svg)](https://github.com/DojoCodingLabs/hacienda-cr/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/Licencia-MIT-blue.svg)](LICENSE)
 [![Node.js](https://img.shields.io/badge/Node.js-22%2B-green.svg)](https://nodejs.org)
@@ -32,11 +32,11 @@ Emitir facturas electrónicas en Costa Rica no debería ser un dolor de cabeza. 
 ### Opción 1: SDK (para desarrolladores)
 
 ```bash
-npm install @hacienda-cr/sdk
+npm install @dojocoding/hacienda-sdk
 ```
 
 ```ts
-import { HaciendaClient, DocumentType, Situation } from "@hacienda-cr/sdk";
+import { HaciendaClient, DocumentType, Situation } from "@dojocoding/hacienda-sdk";
 
 // 1. Crear el cliente
 const client = new HaciendaClient({
@@ -66,7 +66,7 @@ const clave = client.buildClave({
 ### Opción 2: CLI (para facturar desde la terminal)
 
 ```bash
-npm install -g @hacienda-cr/cli
+npm install -g @dojocoding/hacienda-cli
 
 # Autenticarse
 hacienda auth login --cedula-type 02 --cedula 3101234567
@@ -87,7 +87,7 @@ hacienda lookup 3101234567
 ### Opción 3: MCP Server (para asistentes de IA)
 
 ```bash
-npm install -g @hacienda-cr/mcp
+npm install -g @dojocoding/hacienda-mcp
 hacienda-mcp
 ```
 
@@ -138,7 +138,7 @@ Le podés decir a Claude: _"Creá una factura de Mi Empresa S.A. (cédula 310123
 El punto de entrada principal. Orquesta autenticación, generación de claves y operaciones con la API.
 
 ```ts
-import { HaciendaClient } from "@hacienda-cr/sdk";
+import { HaciendaClient } from "@dojocoding/hacienda-sdk";
 
 const client = new HaciendaClient({
   // Requerido
@@ -202,8 +202,8 @@ import {
   buildClave,
   DocumentType,
   Situation,
-} from "@hacienda-cr/sdk";
-import type { LineItemInput } from "@hacienda-cr/sdk";
+} from "@dojocoding/hacienda-sdk";
+import type { LineItemInput } from "@dojocoding/hacienda-sdk";
 
 // 1. Definir las líneas de detalle
 const lineas: LineItemInput[] = [
@@ -293,7 +293,7 @@ const xml = buildFacturaXml(factura);
 **Validación de XML:**
 
 ```ts
-import { validateFacturaInput } from "@hacienda-cr/sdk";
+import { validateFacturaInput } from "@dojocoding/hacienda-sdk";
 
 const resultado = validateFacturaInput(datosFactura);
 if (!resultado.valid) {
@@ -308,8 +308,8 @@ if (!resultado.valid) {
 Utilidades para calcular impuestos, totales por línea y resúmenes según la normativa de Hacienda. Todos los montos se redondean a 5 decimales.
 
 ```ts
-import { round5, calculateLineItemTotals, calculateInvoiceSummary } from "@hacienda-cr/sdk";
-import type { LineItemInput, CalculatedLineItem, InvoiceSummary } from "@hacienda-cr/sdk";
+import { round5, calculateLineItemTotals, calculateInvoiceSummary } from "@dojocoding/hacienda-sdk";
+import type { LineItemInput, CalculatedLineItem, InvoiceSummary } from "@dojocoding/hacienda-sdk";
 
 const item: LineItemInput = {
   numeroLinea: 1,
@@ -365,7 +365,7 @@ Cada comprobante electrónico requiere una clave numérica única de 50 dígitos
 **Estructura:** `[506][DDMMYY][cédula 12 dígitos][sucursal 3][terminal 5][tipo doc 2][consecutivo 10][situación 1][código seguridad 8]`
 
 ```ts
-import { buildClave, parseClave, DocumentType, Situation } from "@hacienda-cr/sdk";
+import { buildClave, parseClave, DocumentType, Situation } from "@dojocoding/hacienda-sdk";
 
 // Generar clave
 const clave = buildClave({
@@ -402,7 +402,7 @@ Todo XML enviado a Hacienda debe estar firmado con XAdES-EPES usando el certific
 
 ```ts
 import { readFileSync } from "node:fs";
-import { signXml, signAndEncode, loadP12 } from "@hacienda-cr/sdk";
+import { signXml, signAndEncode, loadP12 } from "@dojocoding/hacienda-sdk";
 
 const p12Buffer = readFileSync("/ruta/al/certificado.p12");
 const pin = process.env.HACIENDA_P12_PIN!;
@@ -426,7 +426,7 @@ const credenciales = await loadP12(p12Buffer, pin);
 Envía el documento y espera a que Hacienda lo procese. Maneja el polling automáticamente.
 
 ```ts
-import { submitAndWait, HttpClient } from "@hacienda-cr/sdk";
+import { submitAndWait, HttpClient } from "@dojocoding/hacienda-sdk";
 
 const httpClient = new HttpClient({
   baseUrl: "https://api.comprobanteselectronicos.go.cr/recepcion-sandbox/v1",
@@ -463,7 +463,7 @@ if (resultado.accepted) {
 **Opción granular — control total:**
 
 ```ts
-import { submitDocument, getStatus, isTerminalStatus } from "@hacienda-cr/sdk";
+import { submitDocument, getStatus, isTerminalStatus } from "@dojocoding/hacienda-sdk";
 
 // Enviar
 const response = await submitDocument(httpClient, solicitud);
@@ -478,7 +478,7 @@ if (isTerminalStatus(status.status)) {
 **Listar y consultar comprobantes:**
 
 ```ts
-import { listComprobantes, getComprobante } from "@hacienda-cr/sdk";
+import { listComprobantes, getComprobante } from "@dojocoding/hacienda-sdk";
 
 const lista = await listComprobantes(httpClient, {
   offset: 0,
@@ -493,7 +493,7 @@ const detalle = await getComprobante(httpClient, "50601...");
 **Reintentos con backoff exponencial:**
 
 ```ts
-import { withRetry } from "@hacienda-cr/sdk";
+import { withRetry } from "@dojocoding/hacienda-sdk";
 
 const resultado = await withRetry(() => submitDocument(httpClient, solicitud), {
   maxAttempts: 3,
@@ -507,7 +507,7 @@ const resultado = await withRetry(() => submitDocument(httpClient, solicitud), {
 Buscá información de cualquier contribuyente usando la API pública de actividades económicas de Hacienda (no requiere autenticación):
 
 ```ts
-import { lookupTaxpayer } from "@hacienda-cr/sdk";
+import { lookupTaxpayer } from "@dojocoding/hacienda-sdk";
 
 const info = await lookupTaxpayer("3101234567");
 console.log(info.nombre); // "MI EMPRESA S.A."
@@ -529,7 +529,7 @@ import {
   deleteProfile,
   getNextSequence,
   resetSequence,
-} from "@hacienda-cr/sdk";
+} from "@dojocoding/hacienda-sdk";
 
 // Guardar un perfil
 await saveConfig(
@@ -566,7 +566,7 @@ await resetSequence("02", "3101234567", "01", "001", "00001");
 Logger integrado con niveles configurables y soporte para JSON (ideal para producción).
 
 ```ts
-import { Logger, LogLevel, noopLogger } from "@hacienda-cr/sdk";
+import { Logger, LogLevel, noopLogger } from "@dojocoding/hacienda-sdk";
 
 const logger = new Logger({
   level: LogLevel.DEBUG, // DEBUG, INFO, WARN, ERROR, SILENT
@@ -594,7 +594,7 @@ import {
   ApiError,
   AuthenticationError,
   SigningError,
-} from "@hacienda-cr/sdk";
+} from "@dojocoding/hacienda-sdk";
 
 try {
   await client.authenticate();
@@ -636,7 +636,7 @@ try {
 ## CLI — Referencia de comandos
 
 ```bash
-npm install -g @hacienda-cr/cli
+npm install -g @dojocoding/hacienda-cli
 ```
 
 Todos los comandos soportan `--json` para salida legible por máquinas.
@@ -777,7 +777,7 @@ hacienda draft --template nota-credito --output nc.json
 
 ## MCP Server — Integración con IA
 
-El paquete `@hacienda-cr/mcp` expone el SDK como servidor MCP ([Model Context Protocol](https://modelcontextprotocol.io)), permitiendo que asistentes de IA emitan facturas electrónicas de forma conversacional.
+El paquete `@dojocoding/hacienda-mcp` expone el SDK como servidor MCP ([Model Context Protocol](https://modelcontextprotocol.io)), permitiendo que asistentes de IA emitan facturas electrónicas de forma conversacional.
 
 ### Configuración con Claude Desktop
 
@@ -788,7 +788,7 @@ Agregá esto al `claude_desktop_config.json`:
   "mcpServers": {
     "hacienda-cr": {
       "command": "npx",
-      "args": ["-y", "@hacienda-cr/mcp"]
+      "args": ["-y", "@dojocoding/hacienda-mcp"]
     }
   }
 }
@@ -840,10 +840,10 @@ pnpm typecheck
 ```
 hacienda-cr/
 ├── packages/
-│   ├── sdk/       # @hacienda-cr/sdk — Core: auth, XML, firma, API
-│   ├── cli/       # @hacienda-cr/cli — Binario `hacienda` (citty)
-│   └── mcp/       # @hacienda-cr/mcp — Servidor MCP
-├── shared/        # @hacienda-cr/shared — Tipos, constantes, enums compartidos
+│   ├── sdk/       # @dojocoding/hacienda-sdk — Core: auth, XML, firma, API
+│   ├── cli/       # @dojocoding/hacienda-cli — Binario `hacienda` (citty)
+│   └── mcp/       # @dojocoding/hacienda-mcp — Servidor MCP
+├── shared/        # @dojocoding/hacienda-shared — Tipos, constantes, enums compartidos
 ├── turbo.json     # Configuración de Turborepo
 ├── vitest.workspace.ts
 └── pnpm-workspace.yaml
@@ -852,9 +852,9 @@ hacienda-cr/
 ### Construir paquetes individuales
 
 ```bash
-pnpm --filter @hacienda-cr/sdk build
-pnpm --filter @hacienda-cr/sdk test
-pnpm --filter @hacienda-cr/sdk test clave.spec.ts
+pnpm --filter @dojocoding/hacienda-sdk build
+pnpm --filter @dojocoding/hacienda-sdk test
+pnpm --filter @dojocoding/hacienda-sdk test clave.spec.ts
 ```
 
 ### Stack tecnológico
