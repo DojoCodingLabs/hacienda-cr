@@ -131,3 +131,41 @@ export {
 
 // Document builders
 export { buildFacturaXml } from "./documents/index.js";
+
+// ---------------------------------------------------------------------------
+// Signing module — XAdES-EPES digital signature
+// ---------------------------------------------------------------------------
+
+export { loadP12, signXml, signAndEncode } from "./signing/index.js";
+export type { P12Credentials, SignXmlOptions, XadesPolicyConfig } from "./signing/index.js";
+
+// ---------------------------------------------------------------------------
+// API module — HTTP client, submission, polling, orchestrator
+// ---------------------------------------------------------------------------
+
+export {
+  HttpClient,
+  submitDocument,
+  getStatus,
+  isTerminalStatus,
+  extractRejectionReason,
+  submitAndWait,
+  withRetry,
+} from "./api/index.js";
+export type {
+  HttpClientOptions,
+  RequestOptions,
+  HttpResponse,
+  ParsedStatusResponse,
+  SubmitAndWaitOptions,
+  SubmitAndWaitResult,
+  RetryOptions,
+} from "./api/index.js";
+export {
+  HaciendaRejectionCode,
+  REJECTION_CODE_DESCRIPTIONS,
+  HTTP_STATUS_DESCRIPTIONS,
+  getRejectionDescription,
+  getHttpStatusDescription,
+  isRetryableStatus,
+} from "./api/index.js";
