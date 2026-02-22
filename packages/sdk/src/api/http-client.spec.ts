@@ -211,5 +211,68 @@ describe("HttpClient", () => {
 
       expect(response.headers.get("Location")).toBe("/recepcion/12345");
     });
+
+    it("returns text for XML content-type responses", async () => {
+      const xmlBody = "<response><status>ok</status></response>";
+      const mockFetch = vi.fn().mockResolvedValue({
+        ok: true,
+        status: 200,
+        statusText: "OK",
+        headers: new Headers({ "Content-Type": "application/xml" }),
+        text: () => Promise.resolve(xmlBody),
+      } as Response);
+      const client = createHttpClient(mockFetch);
+
+      const response = await client.get("/test");
+
+      expect(response.data).toBe(xmlBody);
+    });
+
+    it("returns undefined for empty 204 No Content responses", async () => {
+      const mockFetch = vi.fn().mockResolvedValue({
+        ok: true,
+        status: 204,
+        statusText: "No Content",
+        headers: new Headers(),
+        text: () => Promise.resolve(""),
+      } as Response);
+      const client = createHttpClient(mockFetch);
+
+      const response = await client.get("/test");
+
+      expect(response.status).toBe(204);
+      expect(response.data).toBeUndefined();
+    });
+
+    it("returns text for plain text non-JSON responses", async () => {
+      const mockFetch = vi.fn().mockResolvedValue({
+        ok: true,
+        status: 200,
+        statusText: "OK",
+        headers: new Headers({ "Content-Type": "text/plain" }),
+        text: () => Promise.resolve("plain text response"),
+      } as Response);
+      const client = createHttpClient(mockFetch);
+
+      const response = await client.get("/test");
+
+      expect(response.data).toBe("plain text response");
+    });
+
+    it("parses JSON from text when content-type is not application/json", async () => {
+      const jsonData = { key: "value", count: 42 };
+      const mockFetch = vi.fn().mockResolvedValue({
+        ok: true,
+        status: 200,
+        statusText: "OK",
+        headers: new Headers({ "Content-Type": "text/plain" }),
+        text: () => Promise.resolve(JSON.stringify(jsonData)),
+      } as Response);
+      const client = createHttpClient(mockFetch);
+
+      const response = await client.get("/test");
+
+      expect(response.data).toEqual(jsonData);
+    });
   });
 });
