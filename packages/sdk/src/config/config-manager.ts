@@ -6,7 +6,7 @@
  * NEVER stored in the config file.
  */
 
-import { readFile, writeFile, mkdir, access } from "node:fs/promises";
+import { readFile, writeFile, mkdir, access, chmod } from "node:fs/promises";
 import { homedir } from "node:os";
 import { join } from "node:path";
 import { parse, stringify } from "smol-toml";
@@ -55,12 +55,21 @@ export function getConfigPath(configDir?: string): string {
 
 /**
  * Creates the config directory (~/.hacienda-cr/) if it doesn't exist.
+ * Sets restrictive permissions (owner-only: 0o700) since the directory
+ * may contain sensitive files like .p12 certificates and config with
+ * path references to credentials.
  *
  * @param configDir - Optional override for the config directory
  */
 export async function ensureConfigDir(configDir?: string): Promise<void> {
   const dir = getConfigDir(configDir);
-  await mkdir(dir, { recursive: true });
+  await mkdir(dir, { recursive: true, mode: 0o700 });
+  // Ensure permissions even if directory already existed
+  try {
+    await chmod(dir, 0o700);
+  } catch {
+    // chmod may fail on some platforms (e.g., Windows) — non-fatal
+  }
 }
 
 /**
@@ -111,6 +120,8 @@ async function readConfigFile(configDir?: string): Promise<ConfigFile> {
 
 /**
  * Writes a ConfigFile record back to disk as TOML.
+ * Sets restrictive file permissions (owner read/write only: 0o600)
+ * since the config file contains paths to .p12 certificates.
  *
  * @param config - The full config file contents
  * @param configDir - Optional override for the config directory
@@ -119,7 +130,7 @@ async function writeConfigFile(config: ConfigFile, configDir?: string): Promise<
   await ensureConfigDir(configDir);
   const configPath = getConfigPath(configDir);
   const toml = stringify(config);
-  await writeFile(configPath, toml, "utf-8");
+  await writeFile(configPath, toml, { encoding: "utf-8", mode: 0o600 });
 }
 
 /**

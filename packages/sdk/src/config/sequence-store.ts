@@ -96,7 +96,7 @@ async function writeSequenceFile(sequences: SequenceFile, configDir?: string): P
   const tempPath = `${filePath}.${uniqueSuffix}.tmp`;
 
   const content = JSON.stringify(sequences, null, 2) + "\n";
-  await writeFile(tempPath, content, "utf-8");
+  await writeFile(tempPath, content, { encoding: "utf-8", mode: 0o600 });
   await rename(tempPath, filePath);
 }
 

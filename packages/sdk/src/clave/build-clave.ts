@@ -78,10 +78,18 @@ function formatDateDDMMYY(date: Date): string {
 }
 
 /**
- * Generates a random numeric string of the specified length.
+ * Generates a cryptographically random 8-digit numeric security code.
+ *
+ * Uses `crypto.getRandomValues()` instead of `Math.random()` to ensure
+ * the security code is not predictable. This is important because the
+ * security code is part of the clave numerica, which must be unique
+ * and non-guessable per Hacienda requirements.
  */
 function generateSecurityCode(): string {
-  const code = Math.floor(Math.random() * 100_000_000);
+  const array = new Uint32Array(1);
+  globalThis.crypto.getRandomValues(array);
+  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion -- array has exactly 1 element
+  const code = array[0]! % 100_000_000;
   return String(code).padStart(8, "0");
 }
 
