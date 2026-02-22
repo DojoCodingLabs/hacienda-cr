@@ -5,11 +5,42 @@
  * MCP protocol flow (initialize, list tools, list resources, call tools, read resources).
  */
 
-import { describe, it, expect, beforeAll, afterAll } from "vitest";
+import { describe, it, expect, beforeAll, afterAll, vi, beforeEach } from "vitest";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 
 import { createServer } from "./server.js";
 import { createLinkedTransports } from "./testing/in-memory-transport.js";
+
+// Use vi.hoisted so mocks are available when vi.mock factories run
+const {
+  mockGetStatus,
+  mockListComprobantes,
+  mockGetComprobante,
+  mockLookupTaxpayer,
+  mockCreateMcpApiClient,
+} = vi.hoisted(() => ({
+  mockGetStatus: vi.fn(),
+  mockListComprobantes: vi.fn(),
+  mockGetComprobante: vi.fn(),
+  mockLookupTaxpayer: vi.fn(),
+  mockCreateMcpApiClient: vi.fn(),
+}));
+
+vi.mock("@hacienda-cr/sdk", async (importOriginal) => {
+  const actual = (await importOriginal()) as Record<string, unknown>;
+  return {
+    ...actual,
+    lookupTaxpayer: mockLookupTaxpayer,
+    getStatus: mockGetStatus,
+    listComprobantes: mockListComprobantes,
+    getComprobante: mockGetComprobante,
+  };
+});
+
+vi.mock("./tools/api-client.js", () => ({
+  createMcpApiClient: (...args: unknown[]) => mockCreateMcpApiClient(...args),
+  clearClientCache: vi.fn(),
+}));
 
 /**
  * Helper: extract text content from the first content block of a tool result.
@@ -48,6 +79,10 @@ describe("MCP Server", () => {
 
   afterAll(async () => {
     await client.close();
+  });
+
+  beforeEach(() => {
+    vi.clearAllMocks();
   });
 
   // -------------------------------------------------------------------------
@@ -366,19 +401,47 @@ describe("MCP Server", () => {
   // -------------------------------------------------------------------------
 
   describe("check_status", () => {
-    it("should return status info for a valid clave", async () => {
-      // Build a valid 50-digit clave
-      const clave = "50601012500310123456700100001010000000001100000001";
+    it("should return error when no profile is configured", async () => {
+      mockCreateMcpApiClient.mockRejectedValueOnce(
+        new Error("No profile configured. Run `hacienda auth login` first."),
+      );
 
+      const clave = "50601012500310123456700100001010000000001100000001";
       const result = await client.callTool({
         name: "check_status",
         arguments: { clave },
       });
 
+      expect(result.isError).toBe(true);
+      const text = getTextContent(result.content as { type: string; text: string }[]);
+      expect(text).toContain("Error checking status");
+    });
+
+    it("should return status for a valid document", async () => {
+      const fakeHttpClient = {};
+      mockCreateMcpApiClient.mockResolvedValueOnce(fakeHttpClient);
+      mockGetStatus.mockResolvedValueOnce({
+        clave: "50601012500310123456700100001010000000001100000001",
+        status: "aceptado",
+        date: "2025-01-12T10:00:00Z",
+        responseXml: undefined,
+        raw: {},
+      });
+
+      const result = await client.callTool({
+        name: "check_status",
+        arguments: { clave: "50601012500310123456700100001010000000001100000001" },
+      });
+
       expect(result.isError).toBeFalsy();
       const text = getTextContent(result.content as { type: string; text: string }[]);
       expect(text).toContain("Document Status");
-      expect(text).toContain("placeholder");
+      expect(text).toContain("Status: aceptado");
+      expect(text).toContain("Response Date: 2025-01-12T10:00:00Z");
+      expect(mockGetStatus).toHaveBeenCalledWith(
+        fakeHttpClient,
+        "50601012500310123456700100001010000000001100000001",
+      );
     });
 
     it("should return error for invalid clave", async () => {
@@ -396,17 +459,74 @@ describe("MCP Server", () => {
   // -------------------------------------------------------------------------
 
   describe("list_documents", () => {
-    it("should return a placeholder list", async () => {
+    it("should return error when no profile is configured", async () => {
+      mockCreateMcpApiClient.mockRejectedValueOnce(
+        new Error("No profile configured. Run `hacienda auth login` first."),
+      );
+
       const result = await client.callTool({
         name: "list_documents",
         arguments: { limit: 5 },
       });
 
+      expect(result.isError).toBe(true);
+      const text = getTextContent(result.content as { type: string; text: string }[]);
+      expect(text).toContain("Error listing documents");
+    });
+
+    it("should return a list of documents", async () => {
+      const fakeHttpClient = {};
+      mockCreateMcpApiClient.mockResolvedValueOnce(fakeHttpClient);
+      mockListComprobantes.mockResolvedValueOnce({
+        totalRegistros: 2,
+        offset: 0,
+        comprobantes: [
+          {
+            clave: "50601012500310123456700100001010000000001100000001",
+            fechaEmision: "2025-01-12",
+            estado: "aceptado",
+            emisor: { tipoIdentificacion: "02", numeroIdentificacion: "3101234567" },
+          },
+          {
+            clave: "50601012500310123456700100001010000000002100000002",
+            fechaEmision: "2025-01-13",
+            estado: "rechazado",
+            emisor: { tipoIdentificacion: "02", numeroIdentificacion: "3101234567" },
+          },
+        ],
+      });
+
+      const result = await client.callTool({
+        name: "list_documents",
+        arguments: { limit: 10 },
+      });
+
       expect(result.isError).toBeFalsy();
       const text = getTextContent(result.content as { type: string; text: string }[]);
       expect(text).toContain("Document List");
-      expect(text).toContain("Limit: 5");
-      expect(text).toContain("placeholder");
+      expect(text).toContain("Total: 2 documents");
+      expect(text).toContain("aceptado");
+      expect(text).toContain("rechazado");
+      expect(text).toContain("3101234567");
+    });
+
+    it("should show message when no documents match", async () => {
+      const fakeHttpClient = {};
+      mockCreateMcpApiClient.mockResolvedValueOnce(fakeHttpClient);
+      mockListComprobantes.mockResolvedValueOnce({
+        totalRegistros: 0,
+        offset: 0,
+        comprobantes: [],
+      });
+
+      const result = await client.callTool({
+        name: "list_documents",
+        arguments: { limit: 10 },
+      });
+
+      expect(result.isError).toBeFalsy();
+      const text = getTextContent(result.content as { type: string; text: string }[]);
+      expect(text).toContain("No documents found");
     });
   });
 
@@ -415,18 +535,52 @@ describe("MCP Server", () => {
   // -------------------------------------------------------------------------
 
   describe("get_document", () => {
-    it("should return document details for a valid clave", async () => {
-      const clave = "50601012500310123456700100001010000000001100000001";
+    it("should return error when no profile is configured", async () => {
+      mockCreateMcpApiClient.mockRejectedValueOnce(
+        new Error("No profile configured. Run `hacienda auth login` first."),
+      );
 
+      const clave = "50601012500310123456700100001010000000001100000001";
       const result = await client.callTool({
         name: "get_document",
         arguments: { clave },
       });
 
+      expect(result.isError).toBe(true);
+      const text = getTextContent(result.content as { type: string; text: string }[]);
+      expect(text).toContain("Error getting document");
+    });
+
+    it("should return full document details", async () => {
+      const fakeHttpClient = {};
+      mockCreateMcpApiClient.mockResolvedValueOnce(fakeHttpClient);
+
+      const sampleXml = "<FacturaElectronica>test</FacturaElectronica>";
+      const xmlBase64 = Buffer.from(sampleXml).toString("base64");
+
+      mockGetComprobante.mockResolvedValueOnce({
+        clave: "50601012500310123456700100001010000000001100000001",
+        fechaEmision: "2025-01-12",
+        estado: "aceptado",
+        emisor: { tipoIdentificacion: "02", numeroIdentificacion: "3101234567" },
+        receptor: { tipoIdentificacion: "01", numeroIdentificacion: "101230456" },
+        comprobanteXml: xmlBase64,
+        fechaRespuesta: "2025-01-12T10:05:00Z",
+      });
+
+      const result = await client.callTool({
+        name: "get_document",
+        arguments: { clave: "50601012500310123456700100001010000000001100000001" },
+      });
+
       expect(result.isError).toBeFalsy();
       const text = getTextContent(result.content as { type: string; text: string }[]);
       expect(text).toContain("Document Details");
-      expect(text).toContain("placeholder");
+      expect(text).toContain("Status: aceptado");
+      expect(text).toContain("Emisor: 02 3101234567");
+      expect(text).toContain("Receptor: 01 101230456");
+      expect(text).toContain("FacturaElectronica");
+      expect(text).toContain("Response Date: 2025-01-12T10:05:00Z");
     });
   });
 
@@ -435,7 +589,19 @@ describe("MCP Server", () => {
   // -------------------------------------------------------------------------
 
   describe("lookup_taxpayer", () => {
-    it("should return taxpayer info placeholder", async () => {
+    it("should return taxpayer info from the API", async () => {
+      mockLookupTaxpayer.mockResolvedValueOnce({
+        nombre: "EMPRESA DE PRUEBA S.A.",
+        tipoIdentificacion: "02",
+        actividades: [
+          {
+            codigo: "620100",
+            descripcion: "Actividades de programación informática",
+            estado: "Activo",
+          },
+        ],
+      });
+
       const result = await client.callTool({
         name: "lookup_taxpayer",
         arguments: { identificacion: "3101234567" },
@@ -443,9 +609,25 @@ describe("MCP Server", () => {
 
       expect(result.isError).toBeFalsy();
       const text = getTextContent(result.content as { type: string; text: string }[]);
-      expect(text).toContain("Taxpayer Lookup");
+      expect(text).toContain("Taxpayer Information");
+      expect(text).toContain("EMPRESA DE PRUEBA S.A.");
       expect(text).toContain("3101234567");
-      expect(text).toContain("02 - Cedula Juridica");
+      expect(text).toContain("620100");
+      expect(text).toContain("programación informática");
+    });
+
+    it("should return error when API call fails", async () => {
+      mockLookupTaxpayer.mockRejectedValueOnce(new Error("Network error"));
+
+      const result = await client.callTool({
+        name: "lookup_taxpayer",
+        arguments: { identificacion: "3101234567" },
+      });
+
+      expect(result.isError).toBe(true);
+      const text = getTextContent(result.content as { type: string; text: string }[]);
+      expect(text).toContain("Error looking up taxpayer");
+      expect(text).toContain("Network error");
     });
   });
 

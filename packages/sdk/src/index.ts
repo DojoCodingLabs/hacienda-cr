@@ -15,6 +15,13 @@ export { HaciendaClient, HaciendaClientOptionsSchema } from "./client.js";
 export type { HaciendaClientOptions } from "./client.js";
 
 // ---------------------------------------------------------------------------
+// Bootstrap — convenience auth helper for CLI / MCP consumers
+// ---------------------------------------------------------------------------
+
+export { bootstrapClient } from "./bootstrap.js";
+export type { BootstrapResult, BootstrapOptions } from "./bootstrap.js";
+
+// ---------------------------------------------------------------------------
 // SDK error hierarchy
 // ---------------------------------------------------------------------------
 

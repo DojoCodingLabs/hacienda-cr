@@ -1,8 +1,8 @@
 /**
  * `hacienda submit` command.
  *
- * Reads a JSON invoice file, validates it, builds XML, and submits to Hacienda.
- * Signing is stubbed until the signing module is complete.
+ * Reads a JSON invoice file, validates it, builds XML, signs it,
+ * and submits to the Hacienda API.
  *
  * @module commands/submit
  */
@@ -12,8 +12,15 @@ import { resolve } from "node:path";
 import { defineCommand } from "citty";
 import { FacturaElectronicaSchema } from "@hacienda-cr/shared";
 import type { FacturaElectronica } from "@hacienda-cr/shared";
-import { buildFacturaXml, validateFacturaInput } from "@hacienda-cr/sdk";
-import { success, error, detail, warn, outputJson } from "../utils/format.js";
+import type { SubmissionRequest } from "@hacienda-cr/shared";
+import {
+  buildFacturaXml,
+  validateFacturaInput,
+  signAndEncode,
+  submitAndWait,
+} from "@hacienda-cr/sdk";
+import { success, error, detail, info, outputJson } from "../utils/format.js";
+import { createAuthenticatedClient } from "../utils/api-client.js";
 
 export const submitCommand = defineCommand({
   meta: {
@@ -30,6 +37,20 @@ export const submitCommand = defineCommand({
       type: "boolean",
       description: "Validate and build XML without submitting",
       default: false,
+    },
+    profile: {
+      type: "string",
+      description: "Config profile name",
+      default: "default",
+    },
+    p12: {
+      type: "string",
+      description: "Path to .p12 certificate file (overrides profile)",
+    },
+    pin: {
+      type: "string",
+      description:
+        "PIN for the .p12 certificate (prefer HACIENDA_P12_PIN env var — CLI args are visible in process lists)",
     },
     json: {
       type: "boolean",
@@ -124,25 +145,101 @@ export const submitCommand = defineCommand({
         return;
       }
 
-      // Submission requires signing and API client — stub for now
-      warn(
-        "Signing and API submission are not yet implemented. Use --dry-run to validate and preview XML.",
-      );
+      // Authenticate
+      const { httpClient, config } = await createAuthenticatedClient(args.profile as string);
+
+      // Resolve .p12 path and PIN
+      const p12Path =
+        (args.p12 as string | undefined) ??
+        process.env["HACIENDA_P12_PATH"] ??
+        config.profile.p12_path;
+      if (!p12Path) {
+        error(
+          "Missing .p12 certificate path. Use --p12, set HACIENDA_P12_PATH, or configure in profile.",
+        );
+        process.exitCode = 1;
+        return;
+      }
+
+      const p12Pin = (args.pin as string | undefined) ?? config.p12Pin;
+      if (!p12Pin) {
+        error("Missing .p12 PIN. Use --pin or set HACIENDA_P12_PIN environment variable.");
+        process.exitCode = 1;
+        return;
+      }
+
+      // Read the .p12 file
+      let p12Buffer: Buffer;
+      try {
+        p12Buffer = await readFile(resolve(p12Path));
+      } catch (err) {
+        const detail = err instanceof Error ? err.message : String(err);
+        error(`Cannot read .p12 file: ${p12Path}: ${detail}`);
+        process.exitCode = 1;
+        return;
+      }
+
+      // Sign and Base64-encode the XML
+      if (!args.json) {
+        info("Signing XML...");
+      }
+      const signedXmlBase64 = await signAndEncode(xml, p12Buffer, p12Pin);
+
+      // Build submission request
+      const invoiceDoc = validation.data;
+      const receptor = invoiceDoc.receptor?.identificacion
+        ? {
+            tipoIdentificacion: invoiceDoc.receptor.identificacion.tipo,
+            numeroIdentificacion: invoiceDoc.receptor.identificacion.numero,
+          }
+        : undefined;
+
+      const request: SubmissionRequest = {
+        clave: invoiceDoc.clave,
+        fecha: invoiceDoc.fechaEmision,
+        emisor: {
+          tipoIdentificacion: invoiceDoc.emisor.identificacion.tipo,
+          numeroIdentificacion: invoiceDoc.emisor.identificacion.numero,
+        },
+        receptor,
+        comprobanteXml: signedXmlBase64,
+      };
+
+      // Submit and wait for response
+      if (!args.json) {
+        info("Submitting to Hacienda...");
+      }
+
+      const result = await submitAndWait(httpClient, request, {
+        onPoll: (status, attempt) => {
+          if (!args.json) {
+            info(`Polling status (attempt ${attempt}): ${status.status}`);
+          }
+        },
+      });
+
       if (args.json) {
         outputJson({
-          success: false,
-          error: "Submission not yet implemented. Use --dry-run to validate.",
-          clave: validation.data.clave,
-          xml,
+          success: result.accepted,
+          clave: result.clave,
+          status: result.status,
+          date: result.date,
+          rejectionReason: result.rejectionReason,
+          pollAttempts: result.pollAttempts,
         });
+      } else if (result.accepted) {
+        success("Document accepted by Hacienda!");
+        detail("Clave", result.clave);
+        detail("Status", result.status);
+        if (result.date) detail("Date", result.date);
       } else {
-        detail("Clave", validation.data.clave);
-        detail("Consecutivo", validation.data.numeroConsecutivo);
-        console.log(
-          "\nOnce signing is implemented, this command will sign the XML and submit it to the Hacienda API.",
-        );
+        error(`Document rejected by Hacienda: ${result.status}`);
+        detail("Clave", result.clave);
+        if (result.rejectionReason) {
+          detail("Reason", result.rejectionReason);
+        }
+        process.exitCode = 1;
       }
-      process.exitCode = 1;
     } catch (err) {
       const message = err instanceof Error ? err.message : "Unknown error occurred";
       if (args.json) {

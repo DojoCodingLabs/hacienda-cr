@@ -108,6 +108,14 @@ describe("submit command", () => {
     expect(args["dry-run"]).toBeDefined();
     expect(args.json).toBeDefined();
   });
+
+  it("has profile, p12, and pin args", async () => {
+    const resolved = await resolveCommand(submitCommand);
+    const args = resolved.args as Record<string, { type: string }>;
+    expect(args.profile).toBeDefined();
+    expect(args.p12).toBeDefined();
+    expect(args.pin).toBeDefined();
+  });
 });
 
 // ---------------------------------------------------------------------------
@@ -128,6 +136,12 @@ describe("status command", () => {
     expect(args.clave.type).toBe("positional");
     expect(args.clave.required).toBe(true);
   });
+
+  it("has profile arg", async () => {
+    const resolved = await resolveCommand(statusCommand);
+    const args = resolved.args as Record<string, { type: string }>;
+    expect(args.profile).toBeDefined();
+  });
 });
 
 // ---------------------------------------------------------------------------
@@ -146,6 +160,12 @@ describe("list command", () => {
     const args = resolved.args as Record<string, { type: string }>;
     expect(args.limit).toBeDefined();
     expect(args.offset).toBeDefined();
+  });
+
+  it("has profile arg", async () => {
+    const resolved = await resolveCommand(listCommand);
+    const args = resolved.args as Record<string, { type: string }>;
+    expect(args.profile).toBeDefined();
   });
 });
 
@@ -166,6 +186,12 @@ describe("get command", () => {
     expect(args.clave).toBeDefined();
     expect(args.clave.type).toBe("positional");
     expect(args.clave.required).toBe(true);
+  });
+
+  it("has profile arg", async () => {
+    const resolved = await resolveCommand(getCommand);
+    const args = resolved.args as Record<string, { type: string }>;
+    expect(args.profile).toBeDefined();
   });
 });
 
