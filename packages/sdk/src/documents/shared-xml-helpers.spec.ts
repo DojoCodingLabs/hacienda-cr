@@ -73,7 +73,9 @@ function minimalLineaDetalle(): LineaDetalle {
   } as LineaDetalle;
 }
 
-function minimalDocumentFields(overrides: Partial<CommonDocumentFields> = {}): CommonDocumentFields {
+function minimalDocumentFields(
+  overrides: Partial<CommonDocumentFields> = {},
+): CommonDocumentFields {
   return {
     clave: "50601012600310123456700100001010000000001199999999",
     codigoActividad: "620100",
@@ -191,7 +193,13 @@ describe("buildEmisorXml", () => {
     const result = buildEmisorXml(
       minimalEmisor({
         nombreComercial: "Brand",
-        ubicacion: { provincia: "1", canton: "01", distrito: "01", barrio: "01", otrasSenas: "Calle 1" },
+        ubicacion: {
+          provincia: "1",
+          canton: "01",
+          distrito: "01",
+          barrio: "01",
+          otrasSenas: "Calle 1",
+        },
         telefono: { codigoPais: "506", numTelefono: "11112222" },
         fax: { codigoPais: "506", numTelefono: "33334444" },
       }),
@@ -284,9 +292,7 @@ describe("buildReceptorXml", () => {
   });
 
   it("should include CorreoElectronico when present", () => {
-    const result = buildReceptorXml(
-      minimalReceptor({ correoElectronico: "cliente@test.com" }),
-    );
+    const result = buildReceptorXml(minimalReceptor({ correoElectronico: "cliente@test.com" }));
     expect(result.CorreoElectronico).toBe("cliente@test.com");
   });
 
@@ -313,7 +319,13 @@ describe("buildReceptorXml", () => {
         identificacion: { tipo: "02", numero: "3109876543" },
         identificacionExtranjero: "PA-RUC-555",
         nombreComercial: "Import Co",
-        ubicacion: { provincia: "7", canton: "01", distrito: "01", barrio: "01", otrasSenas: "Zona franca" },
+        ubicacion: {
+          provincia: "7",
+          canton: "01",
+          distrito: "01",
+          barrio: "01",
+          otrasSenas: "Zona franca",
+        },
         telefono: { codigoPais: "507", numTelefono: "12345678" },
         fax: { codigoPais: "507", numTelefono: "87654321" },
         correoElectronico: "import@co.pa",
@@ -699,9 +711,7 @@ describe("buildStandardDocumentBody", () => {
   });
 
   it("should include PlazoCredito when present", () => {
-    const result = buildStandardDocumentBody(
-      minimalDocumentFields({ plazoCredito: "60" }),
-    );
+    const result = buildStandardDocumentBody(minimalDocumentFields({ plazoCredito: "60" }));
     expect(result.PlazoCredito).toBe("60");
   });
 
@@ -711,9 +721,7 @@ describe("buildStandardDocumentBody", () => {
   });
 
   it("should not include OtrosCargos when empty array", () => {
-    const result = buildStandardDocumentBody(
-      minimalDocumentFields({ otrosCargos: [] }),
-    );
+    const result = buildStandardDocumentBody(minimalDocumentFields({ otrosCargos: [] }));
     expect(result).not.toHaveProperty("OtrosCargos");
   });
 
@@ -732,9 +740,7 @@ describe("buildStandardDocumentBody", () => {
   });
 
   it("should not include InformacionReferencia when empty array", () => {
-    const result = buildStandardDocumentBody(
-      minimalDocumentFields({ informacionReferencia: [] }),
-    );
+    const result = buildStandardDocumentBody(minimalDocumentFields({ informacionReferencia: [] }));
     expect(result).not.toHaveProperty("InformacionReferencia");
   });
 
@@ -763,9 +769,7 @@ describe("buildStandardDocumentBody", () => {
   });
 
   it("should not include Otros when empty array", () => {
-    const result = buildStandardDocumentBody(
-      minimalDocumentFields({ otros: [] }),
-    );
+    const result = buildStandardDocumentBody(minimalDocumentFields({ otros: [] }));
     expect(result).not.toHaveProperty("Otros");
   });
 
