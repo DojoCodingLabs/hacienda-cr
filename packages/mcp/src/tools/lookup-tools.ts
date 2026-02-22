@@ -35,9 +35,7 @@ export function registerLookupTaxpayerTool(server: McpServer): void {
 
         const activities =
           info.actividades.length > 0
-            ? info.actividades.map(
-                (a) => `  - [${a.codigo}] ${a.descripcion} (${a.estado})`,
-              )
+            ? info.actividades.map((a) => `  - [${a.codigo}] ${a.descripcion} (${a.estado})`)
             : ["  (no activities registered)"];
 
         return {

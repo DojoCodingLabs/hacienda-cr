@@ -13,7 +13,12 @@ import { defineCommand } from "citty";
 import { FacturaElectronicaSchema } from "@hacienda-cr/shared";
 import type { FacturaElectronica } from "@hacienda-cr/shared";
 import type { SubmissionRequest } from "@hacienda-cr/shared";
-import { buildFacturaXml, validateFacturaInput, signAndEncode, submitAndWait } from "@hacienda-cr/sdk";
+import {
+  buildFacturaXml,
+  validateFacturaInput,
+  signAndEncode,
+  submitAndWait,
+} from "@hacienda-cr/sdk";
 import { success, error, detail, info, outputJson } from "../utils/format.js";
 import { createAuthenticatedClient } from "../utils/api-client.js";
 
@@ -44,7 +49,8 @@ export const submitCommand = defineCommand({
     },
     pin: {
       type: "string",
-      description: "PIN for the .p12 certificate (or set HACIENDA_P12_PIN env var)",
+      description:
+        "PIN for the .p12 certificate (prefer HACIENDA_P12_PIN env var — CLI args are visible in process lists)",
     },
     json: {
       type: "boolean",
@@ -143,18 +149,19 @@ export const submitCommand = defineCommand({
       const { httpClient, config } = await createAuthenticatedClient(args.profile as string);
 
       // Resolve .p12 path and PIN
-      const p12Path = (args.p12 as string | undefined) ??
+      const p12Path =
+        (args.p12 as string | undefined) ??
         process.env["HACIENDA_P12_PATH"] ??
         config.profile.p12_path;
       if (!p12Path) {
-        error("Missing .p12 certificate path. Use --p12, set HACIENDA_P12_PATH, or configure in profile.");
+        error(
+          "Missing .p12 certificate path. Use --p12, set HACIENDA_P12_PATH, or configure in profile.",
+        );
         process.exitCode = 1;
         return;
       }
 
-      const p12Pin = (args.pin as string | undefined) ??
-        config.p12Pin ??
-        process.env["HACIENDA_P12_PIN"];
+      const p12Pin = (args.pin as string | undefined) ?? config.p12Pin;
       if (!p12Pin) {
         error("Missing .p12 PIN. Use --pin or set HACIENDA_P12_PIN environment variable.");
         process.exitCode = 1;
@@ -165,8 +172,9 @@ export const submitCommand = defineCommand({
       let p12Buffer: Buffer;
       try {
         p12Buffer = await readFile(resolve(p12Path));
-      } catch {
-        error(`Cannot read .p12 file: ${p12Path}`);
+      } catch (err) {
+        const detail = err instanceof Error ? err.message : String(err);
+        error(`Cannot read .p12 file: ${p12Path}: ${detail}`);
         process.exitCode = 1;
         return;
       }

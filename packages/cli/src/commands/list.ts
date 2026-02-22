@@ -53,11 +53,25 @@ export const listCommand = defineCommand({
   },
   async run({ args }) {
     try {
+      const limit = Number(args.limit);
+      const offset = Number(args.offset);
+
+      if (!Number.isInteger(limit) || limit < 1 || limit > 100) {
+        error("Invalid --limit. Must be an integer between 1 and 100.");
+        process.exitCode = 1;
+        return;
+      }
+      if (!Number.isInteger(offset) || offset < 0) {
+        error("Invalid --offset. Must be a non-negative integer.");
+        process.exitCode = 1;
+        return;
+      }
+
       const { httpClient } = await createAuthenticatedClient(args.profile as string);
 
       const result = await listComprobantes(httpClient, {
-        offset: Number(args.offset),
-        limit: Number(args.limit),
+        offset,
+        limit,
       });
 
       if (args.json) {

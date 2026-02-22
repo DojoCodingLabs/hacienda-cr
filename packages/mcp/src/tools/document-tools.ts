@@ -8,7 +8,13 @@
 import { z } from "zod";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 
-import { parseClave, getStatus, extractRejectionReason, listComprobantes, getComprobante } from "@hacienda-cr/sdk";
+import {
+  parseClave,
+  getStatus,
+  extractRejectionReason,
+  listComprobantes,
+  getComprobante,
+} from "@hacienda-cr/sdk";
 import { DOCUMENT_TYPE_NAMES } from "@hacienda-cr/shared";
 import type { DocumentTypeCode } from "@hacienda-cr/shared";
 import { createMcpApiClient } from "./api-client.js";
@@ -25,7 +31,7 @@ export function registerCheckStatusTool(server: McpServer): void {
       "Requires a configured profile (run `hacienda auth login` first).",
     {
       clave: z.string().length(50).describe("The 50-digit clave numerica of the document to check"),
-      profile: z.string().default("default").describe("Config profile name (default: \"default\")"),
+      profile: z.string().default("default").describe('Config profile name (default: "default")'),
     },
     async (args) => {
       try {
@@ -113,7 +119,7 @@ export function registerListDocumentsTool(server: McpServer): void {
         .describe("Filter by receiver identification number"),
       fechaDesde: z.string().optional().describe("Filter by start date (ISO 8601)"),
       fechaHasta: z.string().optional().describe("Filter by end date (ISO 8601)"),
-      profile: z.string().default("default").describe("Config profile name (default: \"default\")"),
+      profile: z.string().default("default").describe('Config profile name (default: "default")'),
     },
     async (args) => {
       try {
@@ -188,7 +194,7 @@ export function registerGetDocumentTool(server: McpServer): void {
         .string()
         .length(50)
         .describe("The 50-digit clave numerica of the document to retrieve"),
-      profile: z.string().default("default").describe("Config profile name (default: \"default\")"),
+      profile: z.string().default("default").describe('Config profile name (default: "default")'),
     },
     async (args) => {
       try {

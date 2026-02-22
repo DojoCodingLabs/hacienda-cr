@@ -22,4 +22,4 @@ export {
 export type { TableColumn } from "./format.js";
 
 export { createAuthenticatedClient } from "./api-client.js";
-export type { AuthenticatedClient } from "./api-client.js";
+export type { BootstrapResult } from "./api-client.js";

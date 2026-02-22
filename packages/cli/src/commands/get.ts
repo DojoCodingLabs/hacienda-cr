@@ -75,7 +75,10 @@ export const getCommand = defineCommand({
         detail("Emission Date", doc.fechaEmision);
         detail("Emisor", `${doc.emisor.tipoIdentificacion}: ${doc.emisor.numeroIdentificacion}`);
         if (doc.receptor) {
-          detail("Receptor", `${doc.receptor.tipoIdentificacion}: ${doc.receptor.numeroIdentificacion}`);
+          detail(
+            "Receptor",
+            `${doc.receptor.tipoIdentificacion}: ${doc.receptor.numeroIdentificacion}`,
+          );
         }
         if (doc.fechaRespuesta) detail("Response Date", doc.fechaRespuesta);
         console.log("");

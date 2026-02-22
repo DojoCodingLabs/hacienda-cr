@@ -1,50 +1,43 @@
 /**
  * Shared auth helper for MCP tools that need an authenticated API client.
  *
- * Loads a config profile, authenticates, and returns a ready-to-use HttpClient.
- * On failure, returns MCP-friendly error text.
+ * Delegates to the SDK's {@link bootstrapClient} and caches the resulting
+ * HttpClient per profile name so that repeated tool calls within a session
+ * reuse the same TokenManager (which handles token refresh internally).
  *
  * @module tools/api-client
  */
 
-import {
-  loadConfig,
-  loadCredentials,
-  TokenManager,
-  getEnvironmentConfig,
-  HttpClient,
-} from "@hacienda-cr/sdk";
-import type { IdType, Environment } from "@hacienda-cr/sdk";
+import { bootstrapClient } from "@hacienda-cr/sdk";
+import type { HttpClient } from "@hacienda-cr/sdk";
+
+/** Cached clients keyed by profile name. */
+const clientCache = new Map<string, HttpClient>();
 
 /**
- * Creates an authenticated HttpClient from a saved config profile.
- *
- * For v0.1.0, MCP tools require a config profile set up via CLI
- * (`hacienda auth login`).
+ * Returns an authenticated HttpClient for the given profile, using a cache
+ * so that repeated calls reuse the same TokenManager / token.
  *
  * @param profileName - Profile name (defaults to "default").
  * @returns Authenticated HTTP client.
  * @throws Error with user-friendly message if auth fails.
  */
 export async function createMcpApiClient(profileName?: string): Promise<HttpClient> {
-  const config = await loadConfig(profileName ?? "default");
+  const key = profileName ?? "default";
 
-  if (!config.password) {
-    throw new Error(
-      "Missing password. Set the HACIENDA_PASSWORD environment variable " +
-        "and ensure you have run `hacienda auth login` to create a profile.",
-    );
+  const cached = clientCache.get(key);
+  if (cached) {
+    return cached;
   }
 
-  const credentials = loadCredentials({
-    idType: config.profile.cedula_type as IdType,
-    idNumber: config.profile.cedula,
-    password: config.password,
-  });
+  const { httpClient } = await bootstrapClient({ profileName: key });
+  clientCache.set(key, httpClient);
+  return httpClient;
+}
 
-  const envConfig = getEnvironmentConfig(config.profile.environment as Environment);
-  const tokenManager = new TokenManager({ envConfig });
-  await tokenManager.authenticate(credentials);
-
-  return new HttpClient({ envConfig, tokenManager });
+/**
+ * Clears the client cache. Primarily used for testing.
+ */
+export function clearClientCache(): void {
+  clientCache.clear();
 }
