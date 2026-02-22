@@ -1,0 +1,28 @@
+{
+  "name": "@hacienda-cr/mcp",
+  "version": "0.0.1",
+  "description": "MCP Server for Costa Rica electronic invoicing (AI-accessible tools)",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "test": "vitest run",
+    "lint": "eslint src/",
+    "typecheck": "tsc --noEmit",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "@hacienda-cr/sdk": "workspace:*",
+    "@hacienda-cr/shared": "workspace:*"
+  }
+}

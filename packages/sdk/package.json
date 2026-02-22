@@ -1,0 +1,27 @@
+{
+  "name": "@hacienda-cr/sdk",
+  "version": "0.0.1",
+  "description": "Core SDK for Costa Rica electronic invoicing (Hacienda API v4.4)",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "test": "vitest run",
+    "lint": "eslint src/",
+    "typecheck": "tsc --noEmit",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "@hacienda-cr/shared": "workspace:*"
+  }
+}
