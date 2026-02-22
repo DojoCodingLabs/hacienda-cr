@@ -44,16 +44,16 @@ async function acquireLock(lockPath: string): Promise<() => Promise<void>> {
         (error as NodeJS.ErrnoException).code === "EEXIST"
       ) {
         if (Date.now() >= deadline) {
-          // Stale lock — force remove and retry once
+          // Stale lock — force remove and retry
           try {
             await rm(lockPath, { recursive: true });
           } catch {
-            // ignore
+            throw new Error(
+              `Failed to acquire sequence lock at ${lockPath} after ${String(LOCK_TIMEOUT_MS)}ms. ` +
+                `If this persists, manually remove the lock directory.`,
+            );
           }
-          throw new Error(
-            `Failed to acquire sequence lock at ${lockPath} after ${String(LOCK_TIMEOUT_MS)}ms. ` +
-              `If this persists, manually remove the lock directory.`,
-          );
+          continue;
         }
         await new Promise((resolve) => setTimeout(resolve, LOCK_RETRY_MS));
         continue;
