@@ -713,11 +713,11 @@ describe("calculateLineItemTotals – edge cases", () => {
     };
     const result = calculateLineItemTotals(item);
     expect(result.impuesto).toBeDefined();
-    expect(result.impuesto!.length).toBe(2);
+    expect(result.impuesto).toHaveLength(2);
     // IVA: 10000 * 0.13 = 1300
-    expect(result.impuesto![0]!.monto).toBe(1300);
+    expect(result.impuesto?.[0]?.monto).toBe(1300);
     // Selectivo: 10000 * 0.10 = 1000
-    expect(result.impuesto![1]!.monto).toBe(1000);
+    expect(result.impuesto?.[1]?.monto).toBe(1000);
     // impuestoNeto only counts IVA (code "01"), not selectivo consumo ("02")
     expect(result.impuestoNeto).toBe(1300);
     // montoTotalLinea = subTotal + impuestoNeto (only IVA net)

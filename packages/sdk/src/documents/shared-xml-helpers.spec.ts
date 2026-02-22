@@ -16,7 +16,6 @@ import type {
   Emisor,
   Receptor,
   ResumenFactura,
-  OtroCargo,
   InformacionReferencia,
   OtroContenido,
   LineaDetalle,
