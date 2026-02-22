@@ -525,23 +525,259 @@ Estimated critical path duration: **~3-4 weeks** with focused effort.
 
 ## Open Questions
 
-1. **Sandbox credentials** — Do we have ATV access? Need to register and generate test credentials + .p12 before M1-05.
-2. **Signing lib decision** — S-01 and S-02 spikes will determine if we wrap existing libs or build our own signing.
-3. **npm scope** — `@hacienda-cr/*` availability? Alternative: `@dojocoding/hacienda-*`
-4. **Schema v4.4 XSDs** — Need to download and vendor these from the ATV portal.
-5. **CIIU 4 codes** — Full code list needed for constants module. Source: Hacienda annex documents.
-6. **Exoneration API** — Exact endpoint URL and schema not fully documented in research. Needs investigation.
-7. **Sequence number management** — How to handle consecutive numbering: in-memory, file-based, or database?
-8. **Multi-company support** — Should the SDK natively support switching between multiple taxpayer identities?
+1. **Signing lib decision** — S-01 and S-02 spikes will determine if we wrap existing libs or build our own signing.
+2. **npm scope** — `@hacienda-cr/*` availability? Alternative: `@dojocoding/hacienda-*`
+3. **Schema v4.4 XSDs** — Need to download and vendor these from the ATV portal.
+4. **CIIU 4 codes** — Full code list needed for constants module. Source: Hacienda annex documents.
+5. **Exoneration API** — Exact endpoint URL and schema not fully documented in research. Needs investigation.
+6. **Sequence number management** — How to handle consecutive numbering: in-memory, file-based, or database?
+7. **Multi-company support** — Should the SDK natively support switching between multiple taxpayer identities?
 
 ---
 
-## Reference Materials
+## 🔑 Sandbox & Credential Setup Guide
 
-- **API Docs (v4.4):** https://atv.hacienda.go.cr/ATV/ComprobanteElectronico/docs/esquemas/2024/v4.4/comprobantes-electronicos-api.html
-- **XSD Schemas:** https://atv.hacienda.go.cr/ATV/ComprobanteElectronico/frmAnexosyEstructuras.aspx
-- **IdP Auth Guide:** Guia_IdP.pdf (from ATV portal)
-- **CRLibre (reference impl):** https://github.com/CRLibre/API_Hacienda
-- **facturar-costa-rica-lib:** https://www.npmjs.com/package/facturar-costa-rica-lib
-- **haciendacostarica-signer:** https://www.npmjs.com/package/haciendacostarica-signer
-- **Resolution MH-DGT-RES-0027-2024:** Schema v4.4 specification
+### Background: ATV → TRIBU-CR Migration
+
+As of **October 6, 2025**, Costa Rica migrated from the old **ATV** (Administración Tributaria Virtual) portal to **TRIBU-CR** (Sistema Integrado de Administración Tributaria). The new portal is accessed through the **OVI** (Oficina Virtual). All credential generation, tax declarations, and electronic invoicing management now happens through TRIBU-CR/OVI.
+
+- **Old portal (deprecated):** `https://www.hacienda.go.cr/ATV/login.aspx`
+- **New portal (active):** `https://ovitribucr.hacienda.go.cr/home`
+- **TRIBU-CR info:** `https://www.hacienda.go.cr/TRIBU-CR.html`
+
+> **Important:** The sandbox API endpoints (`api-stag`) remain the same — only the credential management portal changed from ATV to TRIBU-CR/OVI.
+
+### Step-by-Step: Getting Sandbox Credentials
+
+#### Prerequisites
+
+- A valid Costa Rican **cédula** (physical or juridical person)
+- Registration in the **RUT** (Registro Único Tributario)
+- Access to the email registered in your RUT profile (for 2FA codes)
+
+#### Step 1: Access TRIBU-CR / OVI
+
+1. Go to **https://ovitribucr.hacienda.go.cr/home**
+2. Log in with your **cédula number** and password
+3. Complete **two-factor authentication** (code sent to registered email)
+4. Select your **user profile**: Obligado Tributario or Representante Legal
+
+> **Note on 2FA:** TRIBU-CR uses email-based 2FA (no more Tarjeta Inteligente Virtual). Each login requires entering a temporary code sent to the email registered in the RUT. This means you can no longer share a single static password with third parties.
+
+#### Step 2: Generate API Production Password (Contraseña de Producción)
+
+1. In the OVI sidebar, select **"Tico Factura"**
+2. Click **"Crear usuario"**
+3. Select **"No, voy a usar otro programa"** (since we're building our own system)
+4. Click **"Crear Usuario"**
+5. The system generates and sends to your registered email:
+   - **Username (Identificación de Ingreso):**
+     - Persona Física: `cpf-XXXXXXXXX@prod.comprobanteselectronicos.go.cr`
+     - Persona Jurídica: `cpj-3XXXXXXXXX@prod.comprobanteselectronicos.go.cr`
+   - **Password:** Auto-generated (~20 character string)
+
+> These credentials are also visible under **"Mi perfil"** in TicoFactura.
+
+#### Step 3: Generate Llave Criptográfica (.p12 file)
+
+1. Still in **"Tico Factura"**, look for the **"Generar Llave Criptográfica"** button
+2. Enter a **4-digit PIN** twice (you'll need this PIN to load the .p12 in code)
+3. Click **"Guardar"**
+4. Click **"Descargar Llave Criptográfica"** to download the `.p12` file
+5. Store the `.p12` file securely — this is your digital signing certificate
+
+> **PIN is critical:** The PIN protects the .p12 file. Our SDK will need this PIN to load the PKCS#12 keystore at runtime. Store it in your config alongside the .p12 path.
+
+#### Step 4: Sandbox vs Production
+
+The credentials generated above are **production** credentials. For the **sandbox** environment:
+
+- **Same .p12 file** works for both environments
+- **Username format changes slightly** for sandbox:
+  - Production: `cpf-XXX@prod.comprobanteselectronicos.go.cr`
+  - Sandbox (stag): `cpf-XXX@stag.comprobanteselectronicos.go.cr` *(verify — may use same credentials)*
+- **Client ID** changes: `api-stag` instead of `api-prod`
+- **IDP realm** changes: `rut-stag` instead of `rut`
+
+> ⚠️ **Spike S-04 should verify** whether sandbox requires separate credential generation or if production credentials work against the `rut-stag` realm. CRLibre documentation and community forums suggest the same credentials work for both — but this needs hands-on verification.
+
+#### Step 5: Verify Authentication
+
+Test your credentials against the sandbox IDP:
+
+```bash
+curl -s -X POST \
+  "https://idp.comprobanteselectronicos.go.cr/auth/realms/rut-stag/protocol/openid-connect/token" \
+  -H "Content-Type: application/x-www-form-urlencoded" \
+  -d "grant_type=password" \
+  -d "client_id=api-stag" \
+  -d "username=cpj-3XXXXXXXXX@stag.comprobanteselectronicos.go.cr" \
+  -d "password=YOUR_PASSWORD" \
+  | jq '{access_token: .access_token[:50], expires_in, refresh_expires_in, token_type}'
+```
+
+Expected response:
+```json
+{
+  "access_token": "eyJhbGciOiJSUzI1NiIsInR5cCIgOiAiSldUIiwi...",
+  "expires_in": 300,
+  "refresh_expires_in": 36000,
+  "token_type": "bearer"
+}
+```
+
+### Credential Storage Convention
+
+For our SDK/CLI, credentials are stored in `~/.hacienda-cr/`:
+
+```
+~/.hacienda-cr/
+├── config.toml          # Environment, username, p12 path
+├── credentials.enc      # Encrypted password (or use env var)
+└── keys/
+    └── company-name.p12 # Digital signing certificate
+```
+
+**config.toml example:**
+```toml
+[default]
+environment = "sandbox"  # or "production"
+
+[sandbox]
+username = "cpj-3101234567@stag.comprobanteselectronicos.go.cr"
+p12_path = "~/.hacienda-cr/keys/dojocoding.p12"
+# Password via env: HACIENDA_PASSWORD
+# P12 PIN via env: HACIENDA_P12_PIN
+
+[production]
+username = "cpj-3101234567@prod.comprobanteselectronicos.go.cr"
+p12_path = "~/.hacienda-cr/keys/dojocoding.p12"
+```
+
+### Token Lifecycle
+
+| Token | Lifetime | Strategy |
+|-------|----------|----------|
+| Access token (JWT) | ~5 minutes (300s) | Cache in memory, refresh 30s before expiry |
+| Refresh token | ~10 hours (36000s) | Persist to disk, use for silent re-auth |
+| Re-authentication | When refresh expires | Full ROPC grant with stored credentials |
+
+### Token Revocation
+
+Logout/revocation endpoints (for completeness):
+- **Sandbox:** `https://idp.comprobanteselectronicos.go.cr/auth/realms/rut-stag/protocol/openid-connect/logout`
+- **Production:** `https://idp.comprobanteselectronicos.go.cr/auth/realms/rut/protocol/openid-connect/token/logout`
+
+---
+
+## 📚 Official Hacienda Documentation
+
+All official documentation comes from Hacienda's portal. These should be downloaded and tracked in the repo under `docs/hacienda/`.
+
+### Primary Documents
+
+| Document | URL | Description | Track In Repo |
+|----------|-----|-------------|---------------|
+| **API Reference (v4.4)** | [comprobantes-electronicos-api.html](https://atv.hacienda.go.cr/ATV/ComprobanteElectronico/docs/esquemas/2024/v4.4/comprobantes-electronicos-api.html) | RAML-based REST API documentation. Endpoints, payloads, responses. | `docs/hacienda/api-reference-v4.4.html` |
+| **Annexes & Structures (v4.4)** | [ANEXOS Y ESTRUCTURAS_V4.4.pdf](https://atv.hacienda.go.cr/ATV/ComprobanteElectronico/docs/esquemas/2024/v4.4/ANEXOS%20Y%20ESTRUCTURAS_V4.4.pdf) | Complete spec: XML structure, field definitions, codes, validation rules, clave numérica format. **This is the bible.** | `docs/hacienda/anexos-estructuras-v4.4.pdf` |
+| **XSD Schemas (v4.4)** | [frmAnexosyEstructuras.aspx](https://atv.hacienda.go.cr/ATV/ComprobanteElectronico/frmAnexosyEstructuras.aspx) | Downloadable XSD files defining XML structure for all 7 document types. | `packages/sdk/src/xml/schemas/*.xsd` |
+| **IdP Authentication Guide** | [Guia_IdP.pdf](https://www.hacienda.go.cr/ATV/ComprobanteElectronico/docs/esquemas/2016/v4.3/Guia_IdP.pdf) | OAuth2/OpenID Connect authentication flow, username format, token management. | `docs/hacienda/guia-idp.pdf` |
+| **Resolution MH-DGT-RES-0027-2024** | *(Official gazette)* | Legal resolution establishing v4.4 schema, effective Sept 1, 2025. Lists all 146 changes from v4.3. | `docs/hacienda/resolucion-0027-2024.pdf` |
+| **Annexes v4.3 (legacy reference)** | [ANEXOS Y ESTRUCTURAS_V4.3.pdf](https://atv.hacienda.go.cr/ATV/ComprobanteElectronico/docs/esquemas/2016/v4.3/ANEXOS%20Y%20ESTRUCTURAS_V4.3.pdf) | Previous version — useful for understanding what changed. | `docs/hacienda/anexos-estructuras-v4.3.pdf` (optional) |
+
+### Supplementary References
+
+| Document | URL | Description |
+|----------|-----|-------------|
+| **TRIBU-CR FAQ** | [Preguntas y Respuestas](https://www.hacienda.go.cr/docs/dPreguntasYRespuestasDeTRIBU-CR.pdf) | FAQ covering the ATV → TRIBU-CR migration, OVI access, TicoFactura |
+| **TRIBU-CR Info Page** | [hacienda.go.cr/TRIBU-CR.html](https://www.hacienda.go.cr/TRIBU-CR.html) | Official landing page with video tutorials |
+| **TRIBU-CR Notices** | [hacienda.go.cr/AvisosTRIBU-CR.html](https://www.hacienda.go.cr/AvisosTRIBU-CR.html) | Ongoing notices about system changes and availability |
+| **CRLibre API URLs** | [crlibre.org/preguntas/url-de-api](https://crlibre.org/preguntas/url-de-api-de-comprobantes-electronicos/) | Community reference for all API endpoints (sandbox + prod + revocation) |
+| **XAdES Signing Policy** | [Resolucion_DGT-R-48-2016.pdf](https://tribunet.hacienda.go.cr/docs/esquemas/2016/v4.1/Resolucion_Comprobantes_Electronicos_DGT-R-48-2016.pdf) | Referenced in XAdES-EPES policy identifier |
+
+### Documentation Repo Structure
+
+```
+docs/
+├── hacienda/                        # Official Hacienda documents (vendored)
+│   ├── README.md                    # Index with download dates and version notes
+│   ├── api-reference-v4.4.html      # REST API documentation
+│   ├── anexos-estructuras-v4.4.pdf  # The spec bible
+│   ├── guia-idp.pdf                 # Auth guide
+│   ├── resolucion-0027-2024.pdf     # Legal resolution (v4.4)
+│   └── tribu-cr-faq.pdf             # TRIBU-CR migration FAQ
+├── architecture/                    # Our own design docs
+│   └── decisions.md                 # ADRs (Architecture Decision Records)
+└── guides/
+    ├── sandbox-setup.md             # Step-by-step (extracted from this doc)
+    └── first-invoice.md             # Tutorial: submit your first invoice
+```
+
+---
+
+## 🔧 Open-Source Ecosystem — Libraries to Extract Value From
+
+These are the proven open-source projects in the CR electronic invoicing space. We should study, audit, and selectively adopt patterns from them.
+
+### Tier 1: Primary References (Node.js / TypeScript)
+
+| Repo | Stars | Language | Last Updated | License | What to Extract |
+|------|-------|----------|--------------|---------|-----------------|
+| [**facturacr/facturar-costa-rica-lib**](https://github.com/facturacr/facturar-costa-rica-lib) | 19 ⭐ | TypeScript | 2025-09-04 | MIT | **Highest value.** Full SDK: XML generation, API client, types. v4.4 support (v2.0.11-alpha). Study their XML builder patterns, Zod schemas, and API abstractions. May wrap or fork significant portions. |
+| [**aazcast/haciendacostarica-signer**](https://github.com/aazcast/haciendacostarica-signer) | 21 ⭐ | JavaScript | 2019-06-28 | MIT | **XAdES-EPES signing.** Dedicated signing library. Not updated since 2019 — needs audit for v4.4 policy compatibility. May need fork + maintenance. Core crypto logic is likely still valid (XAdES spec hasn't changed). |
+
+**Spike S-01** audits `haciendacostarica-signer`: Does the policy hash match? Does it handle v4.4 XML structures? What's the dependency tree?
+
+**Spike S-02** audits `facturar-costa-rica-lib`: How complete is v4.4 support? What's the code quality? Can we use it as our SDK core or do we build fresh and just reference patterns?
+
+### Tier 2: Reference Implementations (Other Languages)
+
+| Repo | Stars | Language | Last Updated | What to Extract |
+|------|-------|----------|--------------|-----------------|
+| [**CRLibre/API_Hacienda**](https://github.com/CRLibre/API_Hacienda) | 205 ⭐ | PHP | 2025-11-06 | **The flagship.** Most battle-tested impl. Study their XML generation templates, signing flow, error handling, and edge cases. v4.4 updated Oct 2025. Docker-deployable. |
+| [**CRLibre/fe-hacienda-cr-docs**](https://github.com/CRLibre/fe-hacienda-cr-docs) | 17 ⭐ | HTML/Docs | — | **Flow diagrams and documentation.** Contains the canonical workflow diagram for electronic invoicing in CR. |
+| [**CRLibre/fe-hacienda-cr-misc**](https://github.com/CRLibre/fe-hacienda-cr-misc) | 4 ⭐ | — | — | **Common files and resources.** Sample XMLs, test data, shared assets for any FE implementation. |
+| [**royrojas/FacturaElectronicaCR**](https://github.com/royrojas/FacturaElectronicaCR) | 47 ⭐ | C# | 2022-12-07 | **Complete .NET implementation.** Uses FirmaXadesNet for signing. Good reference for strongly-typed document models. Roy Rojas also published sample XML documents for v4.3. |
+| [**open-byte/xml-signer**](https://github.com/open-byte/xml-signer) | 8 ⭐ | Python | 2023-10-16 | **Python XAdES-EPES CLI.** Clean signing implementation. Useful for cross-referencing our signing output against a known-good implementation. |
+
+### Tier 3: Ecosystem & Connectors
+
+| Repo | Language | What to Extract |
+|------|----------|-----------------|
+| [**CRLibre/fe-hacienda-cr-dotnet**](https://github.com/CRLibre/fe-hacienda-cr-dotnet) | C# | .NET connector for CRLibre API — patterns for API client abstraction |
+| **opencodecr/Faktur-PHP-SDK** | PHP | Alternative PHP SDK — different architectural approach |
+
+### Extraction Strategy
+
+For each Tier 1 repo, the spike should produce:
+
+1. **API surface audit** — What functions/classes exist? How are they organized?
+2. **v4.4 compliance check** — Does it handle all 146 changes? New document types?
+3. **Code quality assessment** — Types? Tests? Error handling? Edge cases?
+4. **Dependency audit** — What does it pull in? Any security concerns?
+5. **Reuse recommendation** — Wrap? Fork? Reference only? Rewrite?
+
+### What We Learn From Each
+
+| Source | Key Learning |
+|--------|-------------|
+| `facturar-costa-rica-lib` | TS type definitions, XML builder patterns, Zod schemas, API client shape |
+| `haciendacostarica-signer` | XAdES-EPES crypto implementation, .p12 loading, signature embedding |
+| `CRLibre/API_Hacienda` | Battle-tested XML templates, error handling patterns, edge cases from 200+ users |
+| `fe-hacienda-cr-docs` | Canonical workflow diagrams, process documentation |
+| `fe-hacienda-cr-misc` | Sample XML files for testing, shared resources |
+| `royrojas/FacturaElectronicaCR` | Strongly-typed document models in C# (translate patterns to TS) |
+| `open-byte/xml-signer` | Cross-validation target for signing output |
+
+---
+
+## Open Questions
+
+1. **Signing lib decision** — S-01 and S-02 spikes will determine if we wrap existing libs or build our own signing.
+2. **npm scope** — `@hacienda-cr/*` availability? Alternative: `@dojocoding/hacienda-*`
+3. **Schema v4.4 XSDs** — Need to download and vendor these from the ATV portal.
+4. **CIIU 4 codes** — Full code list needed for constants module. Source: Hacienda annex documents.
+5. **Exoneration API** — Exact endpoint URL and schema not fully documented in research. Needs investigation.
+6. **Sequence number management** — How to handle consecutive numbering: in-memory, file-based, or database?
+7. **Multi-company support** — Should the SDK natively support switching between multiple taxpayer identities?
+8. **Sandbox credential format** — Verify if `@stag.comprobanteselectronicos.go.cr` or `@prod...` works against sandbox IDP realm.
