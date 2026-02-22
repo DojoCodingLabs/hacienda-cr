@@ -76,9 +76,7 @@ describe("lookupTaxpayer", () => {
     const fetchFn = vi.fn().mockResolvedValue(createMockResponse(404, { error: "Not found" }));
 
     await expect(lookupTaxpayer("0000000000", { fetchFn })).rejects.toThrow(ApiError);
-    await expect(lookupTaxpayer("0000000000", { fetchFn })).rejects.toThrow(
-      /Taxpayer not found/,
-    );
+    await expect(lookupTaxpayer("0000000000", { fetchFn })).rejects.toThrow(/Taxpayer not found/);
   });
 
   it("throws ApiError on server error (500)", async () => {
@@ -94,8 +92,6 @@ describe("lookupTaxpayer", () => {
     const fetchFn = vi.fn().mockRejectedValue(new Error("DNS resolution failed"));
 
     await expect(lookupTaxpayer("3101234567", { fetchFn })).rejects.toThrow(ApiError);
-    await expect(lookupTaxpayer("3101234567", { fetchFn })).rejects.toThrow(
-      /Network error/,
-    );
+    await expect(lookupTaxpayer("3101234567", { fetchFn })).rejects.toThrow(/Network error/);
   });
 });
