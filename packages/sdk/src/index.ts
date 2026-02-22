@@ -130,7 +130,16 @@ export {
 } from "./tax/index.js";
 
 // Document builders
-export { buildFacturaXml } from "./documents/index.js";
+export {
+  buildFacturaXml,
+  buildTiqueteXml,
+  buildNotaCreditoXml,
+  buildNotaDebitoXml,
+  buildFacturaCompraXml,
+  buildFacturaExportacionXml,
+  buildReciboPagoXml,
+  buildMensajeReceptorXml,
+} from "./documents/index.js";
 
 // ---------------------------------------------------------------------------
 // Logging module — structured logging
