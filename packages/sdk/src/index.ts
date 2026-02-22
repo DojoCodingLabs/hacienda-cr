@@ -77,3 +77,28 @@ export {
   type ConfigManagerOptions,
   type SequenceStoreOptions,
 } from "./config/index.js";
+
+// XML module — XML generation and validation
+export {
+  buildXml,
+  getNamespaceUri,
+  getSchemaFragment,
+  validateFacturaInput,
+  type BuildXmlOptions,
+  type FacturaValidationError,
+  type FacturaValidationResult,
+} from "./xml/index.js";
+
+// Tax calculation module
+export {
+  round5,
+  calculateLineItemTotals,
+  calculateInvoiceSummary,
+  type LineItemTaxInput,
+  type LineItemInput,
+  type CalculatedLineItem,
+  type InvoiceSummary,
+} from "./tax/index.js";
+
+// Document builders
+export { buildFacturaXml } from "./documents/index.js";
