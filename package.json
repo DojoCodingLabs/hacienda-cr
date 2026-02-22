@@ -12,9 +12,13 @@
     "format": "prettier --check .",
     "format:fix": "prettier --write .",
     "typecheck": "turbo run typecheck",
-    "clean": "turbo run clean"
+    "clean": "turbo run clean",
+    "changeset": "changeset",
+    "version-packages": "changeset version",
+    "release": "pnpm build && changeset publish"
   },
   "devDependencies": {
+    "@changesets/cli": "2.27.12",
     "@eslint/js": "^9.19.0",
     "@types/node": "^25.3.0",
     "eslint": "^9.19.0",

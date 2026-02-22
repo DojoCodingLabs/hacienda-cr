@@ -161,6 +161,7 @@ export type { P12Credentials, SignXmlOptions, XadesPolicyConfig } from "./signin
 
 export {
   HttpClient,
+  RateLimiter,
   submitDocument,
   getStatus,
   isTerminalStatus,
@@ -175,6 +176,7 @@ export type {
   HttpClientOptions,
   RequestOptions,
   HttpResponse,
+  RateLimiterOptions,
   ParsedStatusResponse,
   SubmitAndWaitOptions,
   SubmitAndWaitResult,

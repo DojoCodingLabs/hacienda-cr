@@ -240,7 +240,7 @@ describe("lookup command", () => {
 });
 
 // ---------------------------------------------------------------------------
-// Draft command (stub)
+// Draft command (interactive invoice builder)
 // ---------------------------------------------------------------------------
 
 describe("draft command", () => {
@@ -248,12 +248,22 @@ describe("draft command", () => {
     const resolved = await resolveCommand(draftCommand);
     const meta = resolved.meta as { name: string; description: string };
     expect(meta.name).toBe("draft");
+    expect(meta.description).toContain("draft");
   });
 
-  it("has template arg", async () => {
+  it("has template arg with factura default", async () => {
     const resolved = await resolveCommand(draftCommand);
-    const args = resolved.args as Record<string, { type: string; default?: string }>;
+    const args = resolved.args as Record<string, { type: string; default?: string | boolean }>;
     expect(args.template).toBeDefined();
     expect(args.template.default).toBe("factura");
+  });
+
+  it("has output, json, and interactive args", async () => {
+    const resolved = await resolveCommand(draftCommand);
+    const args = resolved.args as Record<string, { type: string; default?: string | boolean }>;
+    expect(args.output).toBeDefined();
+    expect(args.json).toBeDefined();
+    expect(args.interactive).toBeDefined();
+    expect(args.interactive.default).toBe(true);
   });
 });

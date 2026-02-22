@@ -9,6 +9,10 @@
 export { HttpClient } from "./http-client.js";
 export type { HttpClientOptions, RequestOptions, HttpResponse } from "./http-client.js";
 
+// Rate limiter
+export { RateLimiter } from "./rate-limiter.js";
+export type { RateLimiterOptions } from "./rate-limiter.js";
+
 // Submission & polling
 export {
   submitDocument,
