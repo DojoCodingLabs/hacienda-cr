@@ -43,17 +43,17 @@ shared/        # @hacienda-cr/shared — Types, Zod schemas, constants, enums
 
 ### SDK modules (`packages/sdk/src/`)
 
-| Module       | Purpose                                                        |
-| ------------ | -------------------------------------------------------------- |
-| `auth/`      | OAuth2 ROPC token management, .p12 credential loading          |
-| `api/`       | Typed HTTP client wrapping Hacienda REST endpoints             |
-| `clave/`     | 50-digit clave numérica builder and parser                     |
-| `xml/`       | XML generation (fast-xml-parser), v4.4 XSD validation          |
-| `signing/`   | XAdES-EPES digital signature with .p12 keys (xadesjs/xmldsigjs)|
-| `documents/` | Builders for all 7 document types                              |
-| `config/`    | Config file management (~/.hacienda-cr/config.toml), sequences |
-| `tax/`       | Tax calculation: rounding, line items, IVA math                |
-| `logging/`   | Structured logger with levels (DEBUG→SILENT), text/JSON output |
+| Module       | Purpose                                                         |
+| ------------ | --------------------------------------------------------------- |
+| `auth/`      | OAuth2 ROPC token management, .p12 credential loading           |
+| `api/`       | Typed HTTP client wrapping Hacienda REST endpoints              |
+| `clave/`     | 50-digit clave numérica builder and parser                      |
+| `xml/`       | XML generation (fast-xml-parser), v4.4 XSD validation           |
+| `signing/`   | XAdES-EPES digital signature with .p12 keys (xadesjs/xmldsigjs) |
+| `documents/` | Builders for all 7 document types                               |
+| `config/`    | Config file management (~/.hacienda-cr/config.toml), sequences  |
+| `tax/`       | Tax calculation: rounding, line items, IVA math                 |
+| `logging/`   | Structured logger with levels (DEBUG→SILENT), text/JSON output  |
 
 Each module uses barrel exports via `index.ts`. The SDK root `src/index.ts` re-exports 190+ symbols organized by domain.
 
@@ -116,16 +116,16 @@ Config: `~/.hacienda-cr/config.toml`. Secrets always via env vars (`HACIENDA_PAS
 
 ## Key Dependencies
 
-| Package                    | Purpose                          |
-| -------------------------- | -------------------------------- |
-| `zod`                      | Runtime validation + type inference |
-| `fast-xml-parser`          | XML generation and parsing       |
-| `xadesjs` / `xmldsigjs`   | XAdES-EPES digital signing       |
-| `node-forge`               | Cryptographic operations         |
-| `@xmldom/xmldom`           | DOM implementation for XML       |
-| `smol-toml`                | TOML config parsing              |
-| `citty`                    | CLI framework (unjs)             |
-| `@modelcontextprotocol/sdk`| MCP Server framework             |
+| Package                     | Purpose                             |
+| --------------------------- | ----------------------------------- |
+| `zod`                       | Runtime validation + type inference |
+| `fast-xml-parser`           | XML generation and parsing          |
+| `xadesjs` / `xmldsigjs`     | XAdES-EPES digital signing          |
+| `node-forge`                | Cryptographic operations            |
+| `@xmldom/xmldom`            | DOM implementation for XML          |
+| `smol-toml`                 | TOML config parsing                 |
+| `citty`                     | CLI framework (unjs)                |
+| `@modelcontextprotocol/sdk` | MCP Server framework                |
 
 ## Implementation Notes
 
