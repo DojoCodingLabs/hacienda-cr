@@ -114,12 +114,7 @@ describe("getNextSequence", () => {
     expect(seq).toBe(1);
 
     // Verify it stored under the default key
-    const current = await getCurrentSequence(
-      "01",
-      "001",
-      "00001",
-      opts,
-    );
+    const current = await getCurrentSequence("01", "001", "00001", opts);
     expect(current).toBe(1);
   });
 
@@ -143,19 +138,13 @@ describe("getNextSequence", () => {
     const filePath = getSequencesPath(temp.dir);
     const { mkdir } = await import("node:fs/promises");
     await mkdir(temp.dir, { recursive: true });
-    await writeFile(
-      filePath,
-      JSON.stringify({ "01-001-00001": MAX_SEQUENCE }),
-      "utf-8",
+    await writeFile(filePath, JSON.stringify({ "01-001-00001": MAX_SEQUENCE }), "utf-8");
+
+    await expect(getNextSequence("01", "001", "00001", opts)).rejects.toThrow(
+      SequenceOverflowError,
     );
 
-    await expect(
-      getNextSequence("01", "001", "00001", opts),
-    ).rejects.toThrow(SequenceOverflowError);
-
-    await expect(
-      getNextSequence("01", "001", "00001", opts),
-    ).rejects.toThrow(/Sequence overflow/);
+    await expect(getNextSequence("01", "001", "00001", opts)).rejects.toThrow(/Sequence overflow/);
   });
 
   it("SequenceOverflowError has correct properties", async () => {
@@ -164,11 +153,7 @@ describe("getNextSequence", () => {
     const filePath = getSequencesPath(temp.dir);
     const { mkdir } = await import("node:fs/promises");
     await mkdir(temp.dir, { recursive: true });
-    await writeFile(
-      filePath,
-      JSON.stringify({ "01-001-00001": MAX_SEQUENCE }),
-      "utf-8",
-    );
+    await writeFile(filePath, JSON.stringify({ "01-001-00001": MAX_SEQUENCE }), "utf-8");
 
     try {
       await getNextSequence("01", "001", "00001", opts);
@@ -188,11 +173,7 @@ describe("getNextSequence", () => {
     const filePath = getSequencesPath(temp.dir);
     const { mkdir } = await import("node:fs/promises");
     await mkdir(temp.dir, { recursive: true });
-    await writeFile(
-      filePath,
-      JSON.stringify({ "01-001-00001": MAX_SEQUENCE }),
-      "utf-8",
-    );
+    await writeFile(filePath, JSON.stringify({ "01-001-00001": MAX_SEQUENCE }), "utf-8");
 
     // Different doc type should still work
     const seq = await getNextSequence("04", "001", "00001", opts);
@@ -370,9 +351,7 @@ describe("edge cases", () => {
     await mkdir(temp.dir, { recursive: true });
     await writeFile(filePath, "not valid json", "utf-8");
 
-    await expect(
-      getNextSequence("01", "001", "00001", { configDir: temp.dir }),
-    ).rejects.toThrow();
+    await expect(getNextSequence("01", "001", "00001", { configDir: temp.dir })).rejects.toThrow();
   });
 
   it("MAX_SEQUENCE is 9999999999 (10 digits)", () => {
@@ -386,18 +365,14 @@ describe("edge cases", () => {
     const filePath = getSequencesPath(temp.dir);
     const { mkdir } = await import("node:fs/promises");
     await mkdir(temp.dir, { recursive: true });
-    await writeFile(
-      filePath,
-      JSON.stringify({ "01-001-00001": MAX_SEQUENCE - 1 }),
-      "utf-8",
-    );
+    await writeFile(filePath, JSON.stringify({ "01-001-00001": MAX_SEQUENCE - 1 }), "utf-8");
 
     const seq = await getNextSequence("01", "001", "00001", opts);
     expect(seq).toBe(MAX_SEQUENCE);
 
     // Now it should overflow
-    await expect(
-      getNextSequence("01", "001", "00001", opts),
-    ).rejects.toThrow(SequenceOverflowError);
+    await expect(getNextSequence("01", "001", "00001", opts)).rejects.toThrow(
+      SequenceOverflowError,
+    );
   });
 });

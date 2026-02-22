@@ -165,9 +165,9 @@ describe("saveConfig", () => {
       p12_path: "/path/to/cert.p12",
     };
 
-    await expect(
-      saveConfig(invalidProfile, "default", { configDir: temp.dir }),
-    ).rejects.toThrow(/Invalid profile data/);
+    await expect(saveConfig(invalidProfile, "default", { configDir: temp.dir })).rejects.toThrow(
+      /Invalid profile data/,
+    );
   });
 });
 
@@ -244,15 +244,15 @@ describe("loadConfig", () => {
   it("throws when profile does not exist", async () => {
     await saveConfig(SANDBOX_PROFILE, "default", { configDir: temp.dir });
 
-    await expect(
-      loadConfig("nonexistent", { configDir: temp.dir }),
-    ).rejects.toThrow(/Profile "nonexistent" not found/);
+    await expect(loadConfig("nonexistent", { configDir: temp.dir })).rejects.toThrow(
+      /Profile "nonexistent" not found/,
+    );
   });
 
   it("throws when config file does not exist", async () => {
-    await expect(
-      loadConfig("default", { configDir: temp.dir }),
-    ).rejects.toThrow(/Profile "default" not found/);
+    await expect(loadConfig("default", { configDir: temp.dir })).rejects.toThrow(
+      /Profile "default" not found/,
+    );
   });
 
   it("mentions available profiles in error message", async () => {
@@ -261,9 +261,9 @@ describe("loadConfig", () => {
       configDir: temp.dir,
     });
 
-    await expect(
-      loadConfig("nonexistent", { configDir: temp.dir }),
-    ).rejects.toThrow(/default, production/);
+    await expect(loadConfig("nonexistent", { configDir: temp.dir })).rejects.toThrow(
+      /default, production/,
+    );
   });
 });
 
