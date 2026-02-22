@@ -21,9 +21,9 @@ import { SIMPLE_INVOICE } from "../__fixtures__/invoices.js";
 
 const HAS_CREDENTIALS = Boolean(
   process.env["HACIENDA_USERNAME"] &&
-    process.env["HACIENDA_PASSWORD"] &&
-    process.env["HACIENDA_P12_PATH"] &&
-    process.env["HACIENDA_P12_PIN"],
+  process.env["HACIENDA_PASSWORD"] &&
+  process.env["HACIENDA_P12_PATH"] &&
+  process.env["HACIENDA_P12_PIN"],
 );
 
 // ---------------------------------------------------------------------------

@@ -14,6 +14,8 @@ import type { TokenManager } from "../auth/token-manager.js";
 import type { EnvironmentConfig } from "../auth/types.js";
 import { ApiError } from "../errors.js";
 import { getHttpStatusDescription } from "./error-codes.js";
+import { RateLimiter } from "./rate-limiter.js";
+import type { RateLimiterOptions } from "./rate-limiter.js";
 import { withRetry } from "./retry.js";
 import type { RetryOptions } from "./retry.js";
 
@@ -31,6 +33,8 @@ export interface HttpClientOptions {
   readonly fetchFn?: typeof fetch;
   /** Optional retry configuration. */
   readonly retryOptions?: RetryOptions;
+  /** Optional rate limiter configuration. Set to `false` to disable. */
+  readonly rateLimiterOptions?: RateLimiterOptions | false;
 }
 
 /** Options for individual HTTP requests. */
@@ -85,12 +89,18 @@ export class HttpClient {
   private readonly tokenManager: TokenManager;
   private readonly fetchFn: typeof fetch;
   private readonly retryOptions: RetryOptions | undefined;
+  private readonly rateLimiter: RateLimiter | undefined;
 
   constructor(options: HttpClientOptions) {
     this.baseUrl = options.envConfig.apiBaseUrl;
     this.tokenManager = options.tokenManager;
     this.fetchFn = options.fetchFn ?? globalThis.fetch;
     this.retryOptions = options.retryOptions;
+
+    // Initialize rate limiter (enabled by default, disable with `false`)
+    if (options.rateLimiterOptions !== false) {
+      this.rateLimiter = new RateLimiter(options.rateLimiterOptions);
+    }
   }
 
   // -------------------------------------------------------------------------
@@ -159,14 +169,17 @@ export class HttpClient {
         headers["Content-Type"] = "application/json";
       }
 
-      // Execute the fetch
+      // Execute the fetch (through rate limiter if enabled)
       let response: Response;
       try {
-        response = await this.fetchFn(url, {
-          method: options.method,
-          headers,
-          body: options.body !== undefined ? JSON.stringify(options.body) : undefined,
-        });
+        const doFetch = () =>
+          this.fetchFn(url, {
+            method: options.method,
+            headers,
+            body: options.body !== undefined ? JSON.stringify(options.body) : undefined,
+          });
+
+        response = this.rateLimiter ? await this.rateLimiter.execute(doFetch) : await doFetch();
       } catch (error) {
         throw new ApiError(
           `Network error calling ${options.method} ${options.path}: ${

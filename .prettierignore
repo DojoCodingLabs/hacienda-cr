@@ -2,4 +2,5 @@ dist/
 node_modules/
 coverage/
 .turbo/
+.claude/
 pnpm-lock.yaml

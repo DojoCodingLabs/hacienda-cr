@@ -13,9 +13,7 @@ import type { HttpClient } from "./http-client.js";
 // Helpers
 // ---------------------------------------------------------------------------
 
-function createMockHttpClient(methods: {
-  get?: ReturnType<typeof vi.fn>;
-}): HttpClient {
+function createMockHttpClient(methods: { get?: ReturnType<typeof vi.fn> }): HttpClient {
   return {
     post: vi.fn(),
     get: methods.get ?? vi.fn(),
@@ -155,7 +153,10 @@ describe("getComprobante", () => {
     const mockGet = vi.fn().mockResolvedValue({ status: 200, data: mockDetail });
     const client = createMockHttpClient({ get: mockGet });
 
-    const result = await getComprobante(client, "50601012300310123456700100001010000000001199999999");
+    const result = await getComprobante(
+      client,
+      "50601012300310123456700100001010000000001199999999",
+    );
 
     expect(result.respuestaXml).toBeUndefined();
     expect(result.fechaRespuesta).toBeUndefined();
