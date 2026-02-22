@@ -889,6 +889,15 @@ pnpm --filter @hacienda-cr/sdk test clave.spec.ts
 
 ---
 
+## Agradecimientos
+
+Este proyecto se construye sobre el trabajo pionero de la comunidad open-source costarricense:
+
+- **[CRLibre/API_Hacienda](https://github.com/CRLibre/API_Hacienda)** — La API open-source original para facturación electrónica en Costa Rica (PHP). Su documentación, diagramas de flujo y recursos comunitarios fueron referencias invaluables para entender la API de Hacienda. Gracias a toda la comunidad CRLibre por hacer la facturación electrónica accesible para los desarrolladores ticos.
+- **[CRLibre/fe-hacienda-cr-misc](https://github.com/CRLibre/fe-hacienda-cr-misc)** — Recursos compartidos y documentación para facturación electrónica en Costa Rica.
+
+---
+
 ## Licencia
 
 [MIT](LICENSE)
@@ -896,7 +905,8 @@ pnpm --filter @hacienda-cr/sdk test clave.spec.ts
 ---
 
 <p align="center">
-  Hecho con orgullo para el ecosistema de facturación electrónica de Costa Rica.
+  <strong>Construido por <a href="https://dojocoding.io">Dojo Coding</a></strong><br/>
+  Herramientas open-source para desarrolladores costarricenses 🇨🇷
 </p>
 
 <!-- Keywords: facturación electrónica costa rica, comprobantes electrónicos, hacienda costa rica api, sdk factura electrónica, typescript hacienda cr, firma digital xades costa rica, iva costa rica, api hacienda v4.4, ministerio de hacienda, factura electronica sdk, nota credito electronica, nota debito electronica, tiquete electronico, factura compra electronica, factura exportacion, recibo pago electronico, mensaje receptor, clave numerica hacienda, certificado p12 costa rica, oauth2 hacienda, mcp server facturacion, cli facturacion electronica, contribuyente costa rica, cedula juridica, dimex, nite, cabys codigo, comprobante electronico typescript -->
