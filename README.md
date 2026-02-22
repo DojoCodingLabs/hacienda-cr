@@ -3,7 +3,7 @@
 **TypeScript SDK, CLI & MCP Server for Costa Rica Electronic Invoicing (Hacienda API v4.4)**
 
 [![npm version](https://img.shields.io/npm/v/@hacienda-cr/sdk.svg)](https://www.npmjs.com/package/@hacienda-cr/sdk)
-[![CI](https://github.com/danielbejarano/hacienda-cr/actions/workflows/ci.yml/badge.svg)](https://github.com/danielbejarano/hacienda-cr/actions/workflows/ci.yml)
+[![CI](https://github.com/DojoCodingLabs/hacienda-cr/actions/workflows/ci.yml/badge.svg)](https://github.com/DojoCodingLabs/hacienda-cr/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
 A complete toolkit for Costa Rica electronic invoicing (_comprobantes electronicos_) against the Ministerio de Hacienda API v4.4. Three-layer architecture: **SDK** (core library) -> **CLI** (`hacienda` binary) -> **MCP Server** (AI-accessible tools).
@@ -981,6 +981,20 @@ pnpm --filter @hacienda-cr/sdk test clave.spec.ts
 
 ---
 
+## Acknowledgments
+
+This project builds on the pioneering work of the Costa Rica open-source community:
+
+- **[CRLibre/API_Hacienda](https://github.com/CRLibre/API_Hacienda)** — The original open-source API for Costa Rica electronic invoicing (PHP). Their documentation, flow diagrams, and community resources were invaluable references for understanding the Hacienda API. Thank you to the entire CRLibre community for making electronic invoicing accessible to Costa Rican developers. 🇨🇷
+- **[CRLibre/fe-hacienda-cr-misc](https://github.com/CRLibre/fe-hacienda-cr-misc)** — Shared resources and documentation for electronic invoicing in Costa Rica.
+
 ## License
 
-MIT
+MIT — see [LICENSE](LICENSE) for details.
+
+---
+
+<p align="center">
+  <strong>Powered by <a href="https://dojocoding.io">Dojo Coding</a></strong><br/>
+  Open source tools for Costa Rican developers 🇨🇷
+</p>
