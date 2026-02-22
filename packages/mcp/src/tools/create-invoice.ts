@@ -19,6 +19,9 @@ import {
   Situation,
   calculateLineItemTotals,
   calculateInvoiceSummary,
+  getNextSequence,
+  DEFAULT_BRANCH,
+  DEFAULT_POS,
 } from "@hacienda-cr/sdk";
 import type { LineItemInput, CalculatedLineItem } from "@hacienda-cr/sdk";
 import type { FacturaElectronica } from "@hacienda-cr/shared";
@@ -132,24 +135,26 @@ export function registerCreateInvoiceTool(server: McpServer): void {
         // 2. Calculate invoice summary
         const summary = calculateInvoiceSummary(calculatedItems);
 
-        // 3. Generate clave numerica
+        // 3. Get next sequence number and generate clave numerica
         const now = new Date();
         const taxpayerId = args.emisor.identificacion.numero;
+        const docTypeCode = "01"; // Factura Electronica
+        const branch = DEFAULT_BRANCH; // "001"
+        const pos = DEFAULT_POS; // "00001"
+
+        const sequence = await getNextSequence(docTypeCode, branch, pos);
 
         const clave = buildClave({
           date: now,
           taxpayerId,
           documentType: DocumentType.FACTURA_ELECTRONICA,
-          sequence: 1,
+          sequence,
           situation: Situation.NORMAL,
         });
 
         // 4. Build consecutive number (branch + POS + doc type + sequence)
-        const branch = "001";
-        const pos = "00001";
-        const docType = "01";
-        const seq = "0000000001";
-        const numeroConsecutivo = `${branch}${pos}${docType}${seq}`;
+        const seq = String(sequence).padStart(10, "0");
+        const numeroConsecutivo = `${branch}${pos}${docTypeCode}${seq}`;
 
         // 5. Format emission date
         const fechaEmision = now.toISOString();
