@@ -1,5 +1,11 @@
 # @dojocoding/hacienda-shared
 
+## 0.2.0
+
+### Minor Changes
+
+- Rename npm scope from `@hacienda-cr` to `@dojocoding` for DojoCoding ecosystem branding. All packages now published under the `@dojocoding` org. No API changes.
+
 ## 0.1.0
 
 ### Minor Changes

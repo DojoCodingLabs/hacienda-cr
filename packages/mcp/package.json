@@ -1,6 +1,6 @@
 {
   "name": "@dojocoding/hacienda-mcp",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "MCP Server for Costa Rica electronic invoicing (AI-accessible tools)",
   "type": "module",
   "main": "./dist/index.js",

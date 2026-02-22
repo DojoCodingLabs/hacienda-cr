@@ -1,6 +1,6 @@
 {
   "name": "@dojocoding/hacienda-shared",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Shared types, constants, and enums for Hacienda CR electronic invoicing",
   "type": "module",
   "main": "./dist/index.js",
