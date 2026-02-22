@@ -20,5 +20,8 @@
     "lint": "eslint src/",
     "typecheck": "tsc --noEmit",
     "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "zod": "^4.3.6"
   }
 }
