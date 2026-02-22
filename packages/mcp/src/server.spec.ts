@@ -180,6 +180,168 @@ describe("MCP Server", () => {
       expect(text).toContain("FacturaElectronica");
     });
 
+    it("should create an invoice with a single exempt line item (no tax)", async () => {
+      const result = await client.callTool({
+        name: "create_invoice",
+        arguments: {
+          emisor: {
+            nombre: "Exenta S.A.",
+            identificacion: { tipo: "02", numero: "3109876543" },
+            correoElectronico: "exenta@empresa.com",
+          },
+          receptor: { nombre: "Cliente Exento" },
+          codigoActividad: "620100",
+          lineItems: [
+            {
+              codigoCabys: "8310100000000",
+              cantidad: 2,
+              unidadMedida: "Unid",
+              detalle: "Producto exento de impuesto",
+              precioUnitario: 5000,
+            },
+          ],
+        },
+      });
+
+      expect(result.isError).toBeFalsy();
+      const text = getTextContent(result.content as { type: string; text: string }[]);
+      expect(text).toContain("Clave:");
+      expect(text).toContain("<?xml");
+      expect(text).toContain("Exenta S.A.");
+      expect(text).toContain("Tax: 0");
+      expect(text).toContain("Total: 10000");
+    });
+
+    it("should create an invoice with IVA 13% and TotalImpuesto > 0", async () => {
+      const result = await client.callTool({
+        name: "create_invoice",
+        arguments: {
+          emisor: {
+            nombre: "Gravada S.A.",
+            identificacion: { tipo: "02", numero: "3101234567" },
+            correoElectronico: "gravada@empresa.com",
+          },
+          receptor: { nombre: "Cliente Gravado" },
+          codigoActividad: "620100",
+          lineItems: [
+            {
+              codigoCabys: "8310100000000",
+              cantidad: 1,
+              unidadMedida: "Sp",
+              detalle: "Servicio gravado",
+              precioUnitario: 10000,
+              esServicio: true,
+              impuesto: [{ codigo: "01", codigoTarifa: "08", tarifa: 13 }],
+            },
+          ],
+        },
+      });
+
+      expect(result.isError).toBeFalsy();
+      const text = getTextContent(result.content as { type: string; text: string }[]);
+      expect(text).toContain("Tax: 1300");
+      expect(text).toContain("Total: 11300");
+      expect(text).toContain("<TotalImpuesto>1300</TotalImpuesto>");
+    });
+
+    it("should return error when emisor is missing", async () => {
+      const result = await client.callTool({
+        name: "create_invoice",
+        arguments: {
+          receptor: { nombre: "Cliente" },
+          codigoActividad: "620100",
+          lineItems: [
+            {
+              codigoCabys: "8310100000000",
+              cantidad: 1,
+              unidadMedida: "Unid",
+              detalle: "Item",
+              precioUnitario: 1000,
+            },
+          ],
+        },
+      });
+
+      expect(result.isError).toBe(true);
+      const text = getTextContent(result.content as { type: string; text: string }[]);
+      expect(text.toLowerCase()).toContain("error");
+    });
+
+    it("should create an invoice with multiple line items", async () => {
+      const result = await client.callTool({
+        name: "create_invoice",
+        arguments: {
+          emisor: {
+            nombre: "Multi S.A.",
+            identificacion: { tipo: "02", numero: "3101234567" },
+            correoElectronico: "multi@empresa.com",
+          },
+          receptor: { nombre: "Cliente Multi" },
+          codigoActividad: "620100",
+          lineItems: [
+            {
+              codigoCabys: "8310100000000",
+              cantidad: 1,
+              unidadMedida: "Sp",
+              detalle: "Consultoria estrategica",
+              precioUnitario: 50000,
+              esServicio: true,
+            },
+            {
+              codigoCabys: "4321000000000",
+              cantidad: 3,
+              unidadMedida: "Unid",
+              detalle: "Licencia de software",
+              precioUnitario: 20000,
+            },
+          ],
+        },
+      });
+
+      expect(result.isError).toBeFalsy();
+      const text = getTextContent(result.content as { type: string; text: string }[]);
+      expect(text).toContain("Consultoria estrategica");
+      expect(text).toContain("Licencia de software");
+      expect(text).toContain("Total: 110000");
+    });
+
+    it("should create an invoice with a discount on a line item", async () => {
+      const result = await client.callTool({
+        name: "create_invoice",
+        arguments: {
+          emisor: {
+            nombre: "Descuento S.A.",
+            identificacion: { tipo: "02", numero: "3101234567" },
+            correoElectronico: "desc@empresa.com",
+          },
+          receptor: { nombre: "Cliente Descuento" },
+          codigoActividad: "620100",
+          lineItems: [
+            {
+              codigoCabys: "8310100000000",
+              cantidad: 1,
+              unidadMedida: "Unid",
+              detalle: "Producto con descuento",
+              precioUnitario: 100000,
+              descuento: [
+                {
+                  montoDescuento: 10000,
+                  naturalezaDescuento: "Descuento por volumen",
+                },
+              ],
+            },
+          ],
+        },
+      });
+
+      expect(result.isError).toBeFalsy();
+      const text = getTextContent(result.content as { type: string; text: string }[]);
+      expect(text).toContain("Descuento por volumen");
+      expect(text).toContain("<MontoDescuento>10000</MontoDescuento>");
+      expect(text).toContain("Total: 80000");
+      expect(text).toContain("<TotalDescuentos>10000</TotalDescuentos>");
+    });
+
     it("should return error for missing required fields", async () => {
       const result = await client.callTool({
         name: "create_invoice",

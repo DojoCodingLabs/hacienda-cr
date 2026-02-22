@@ -608,3 +608,252 @@ describe("calculateInvoiceSummary", () => {
     expect(summary.totalComprobante).toBe(124240);
   });
 });
+
+// ---------------------------------------------------------------------------
+// round5 – IEEE 754 edge cases
+// ---------------------------------------------------------------------------
+
+describe("round5 – IEEE 754 edge cases", () => {
+  it("should round 0.123456789 to 0.12346", () => {
+    expect(round5(0.123456789)).toBe(0.12346);
+  });
+
+  it("should round 99999.999999 to 100000 (precision test)", () => {
+    expect(round5(99999.999999)).toBe(100000);
+  });
+
+  it("should round -0.123456789 to -0.12346", () => {
+    expect(round5(-0.123456789)).toBe(-0.12346);
+  });
+
+  it("should preserve precision for large number 999999999.12345", () => {
+    expect(round5(999999999.12345)).toBe(999999999.12345);
+  });
+
+  it("should round 0.000001 to 0 (below half-unit at 5th decimal)", () => {
+    expect(round5(0.000001)).toBe(0);
+  });
+
+  it("should round 0.000005 to 0.00001 (rounds half up at boundary)", () => {
+    expect(round5(0.000005)).toBe(0.00001);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// calculateLineItemTotals – edge cases
+// ---------------------------------------------------------------------------
+
+describe("calculateLineItemTotals – edge cases", () => {
+  it("should handle micro quantity (cantidad=0.001)", () => {
+    const item: LineItemInput = {
+      numeroLinea: 1,
+      codigoCabys: "4321000000000",
+      cantidad: 0.001,
+      unidadMedida: "kg",
+      detalle: "Micro quantity",
+      precioUnitario: 10000,
+      impuesto: [{ codigo: "01", codigoTarifa: "08", tarifa: 13 }],
+    };
+    const result = calculateLineItemTotals(item);
+    // montoTotal = 0.001 * 10000 = 10
+    expect(result.montoTotal).toBe(10);
+    // tax = 10 * 0.13 = 1.3
+    expect(result.impuestoNeto).toBe(1.3);
+    expect(result.montoTotalLinea).toBe(11.3);
+  });
+
+  it("should handle free item (precioUnitario=0)", () => {
+    const item: LineItemInput = {
+      numeroLinea: 1,
+      codigoCabys: "4321000000000",
+      cantidad: 5,
+      unidadMedida: "Unid",
+      detalle: "Free promotional item",
+      precioUnitario: 0,
+      impuesto: [{ codigo: "01", codigoTarifa: "08", tarifa: 13 }],
+    };
+    const result = calculateLineItemTotals(item);
+    expect(result.montoTotal).toBe(0);
+    expect(result.subTotal).toBe(0);
+    expect(result.impuestoNeto).toBe(0);
+    expect(result.montoTotalLinea).toBe(0);
+  });
+
+  it("should handle very large amounts (999999.99 * 100)", () => {
+    const item: LineItemInput = {
+      numeroLinea: 1,
+      codigoCabys: "4321000000000",
+      cantidad: 100,
+      unidadMedida: "Unid",
+      detalle: "Expensive bulk",
+      precioUnitario: 999999.99,
+      impuesto: [{ codigo: "01", codigoTarifa: "08", tarifa: 13 }],
+    };
+    const result = calculateLineItemTotals(item);
+    // montoTotal = 100 * 999999.99 = 99999999
+    expect(result.montoTotal).toBe(99999999);
+    const tax = getFirstTax(result);
+    // tax = 99999999 * 0.13 = 12999999.87
+    expect(tax.monto).toBe(12999999.87);
+    expect(result.montoTotalLinea).toBe(112999998.87);
+  });
+
+  it("should handle multiple taxes on same line (IVA + selectivo consumo)", () => {
+    const item: LineItemInput = {
+      numeroLinea: 1,
+      codigoCabys: "4321000000000",
+      cantidad: 1,
+      unidadMedida: "Unid",
+      detalle: "Multi-tax item",
+      precioUnitario: 10000,
+      impuesto: [
+        { codigo: "01", codigoTarifa: "08", tarifa: 13 },
+        { codigo: "02", tarifa: 10 },
+      ],
+    };
+    const result = calculateLineItemTotals(item);
+    expect(result.impuesto).toBeDefined();
+    expect(result.impuesto).toHaveLength(2);
+    // IVA: 10000 * 0.13 = 1300
+    expect(result.impuesto?.[0]?.monto).toBe(1300);
+    // Selectivo: 10000 * 0.10 = 1000
+    expect(result.impuesto?.[1]?.monto).toBe(1000);
+    // impuestoNeto only counts IVA (code "01"), not selectivo consumo ("02")
+    expect(result.impuestoNeto).toBe(1300);
+    // montoTotalLinea = subTotal + impuestoNeto (only IVA net)
+    expect(result.montoTotalLinea).toBe(11300);
+  });
+
+  it("should handle 100% exoneration", () => {
+    const item: LineItemInput = {
+      numeroLinea: 1,
+      codigoCabys: "4321000000000",
+      cantidad: 1,
+      unidadMedida: "Sp",
+      detalle: "Fully exonerated",
+      precioUnitario: 50000,
+      impuesto: [
+        {
+          codigo: "01",
+          codigoTarifa: "08",
+          tarifa: 13,
+          exoneracion: {
+            tipoDocumento: "03",
+            numeroDocumento: "EX-100-2025",
+            nombreInstitucion: "Ministerio",
+            fechaEmision: "2025-06-01T00:00:00-06:00",
+            porcentajeExoneracion: 100,
+          },
+        },
+      ],
+    };
+    const result = calculateLineItemTotals(item);
+    const tax = getFirstTax(result);
+    expect(tax.monto).toBe(6500); // full tax still recorded
+    expect(tax.exoneracion?.montoExoneracion).toBe(6500);
+    expect(result.impuestoNeto).toBe(0);
+    expect(result.montoTotalLinea).toBe(50000);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// calculateInvoiceSummary – edge cases
+// ---------------------------------------------------------------------------
+
+describe("calculateInvoiceSummary – edge cases", () => {
+  it("should handle invoice summary with all zeros", () => {
+    const items = [
+      calculateLineItemTotals({
+        numeroLinea: 1,
+        codigoCabys: "4321000000000",
+        cantidad: 1,
+        unidadMedida: "Unid",
+        detalle: "Free item",
+        precioUnitario: 0,
+      }),
+    ];
+    const summary = calculateInvoiceSummary(items);
+    expect(summary.totalServGravados).toBe(0);
+    expect(summary.totalServExentos).toBe(0);
+    expect(summary.totalServExonerado).toBe(0);
+    expect(summary.totalMercanciasGravadas).toBe(0);
+    expect(summary.totalMercanciasExentas).toBe(0);
+    expect(summary.totalMercExonerada).toBe(0);
+    expect(summary.totalGravado).toBe(0);
+    expect(summary.totalExento).toBe(0);
+    expect(summary.totalExonerado).toBe(0);
+    expect(summary.totalVenta).toBe(0);
+    expect(summary.totalDescuentos).toBe(0);
+    expect(summary.totalVentaNeta).toBe(0);
+    expect(summary.totalImpuesto).toBe(0);
+    expect(summary.totalComprobante).toBe(0);
+  });
+
+  it("should handle summary with only services", () => {
+    const items = [
+      calculateLineItemTotals({
+        numeroLinea: 1,
+        codigoCabys: "4321000000000",
+        cantidad: 1,
+        unidadMedida: "Sp",
+        detalle: "Service A",
+        precioUnitario: 20000,
+        esServicio: true,
+        impuesto: [{ codigo: "01", codigoTarifa: "08", tarifa: 13 }],
+      }),
+      calculateLineItemTotals({
+        numeroLinea: 2,
+        codigoCabys: "4321000000000",
+        cantidad: 1,
+        unidadMedida: "Sp",
+        detalle: "Service B",
+        precioUnitario: 30000,
+        esServicio: true,
+      }),
+    ];
+    const summary = calculateInvoiceSummary(items);
+    expect(summary.totalServGravados).toBe(20000);
+    expect(summary.totalServExentos).toBe(30000);
+    expect(summary.totalMercanciasGravadas).toBe(0);
+    expect(summary.totalMercanciasExentas).toBe(0);
+    expect(summary.totalGravado).toBe(20000);
+    expect(summary.totalExento).toBe(30000);
+    expect(summary.totalVenta).toBe(50000);
+    expect(summary.totalImpuesto).toBe(2600);
+    expect(summary.totalComprobante).toBe(52600);
+  });
+
+  it("should handle summary with only merchandise", () => {
+    const items = [
+      calculateLineItemTotals({
+        numeroLinea: 1,
+        codigoCabys: "4321000000000",
+        cantidad: 3,
+        unidadMedida: "Unid",
+        detalle: "Product A",
+        precioUnitario: 5000,
+        esServicio: false,
+        impuesto: [{ codigo: "01", codigoTarifa: "08", tarifa: 13 }],
+      }),
+      calculateLineItemTotals({
+        numeroLinea: 2,
+        codigoCabys: "4321000000000",
+        cantidad: 1,
+        unidadMedida: "Unid",
+        detalle: "Product B",
+        precioUnitario: 8000,
+        esServicio: false,
+      }),
+    ];
+    const summary = calculateInvoiceSummary(items);
+    expect(summary.totalServGravados).toBe(0);
+    expect(summary.totalServExentos).toBe(0);
+    expect(summary.totalMercanciasGravadas).toBe(15000);
+    expect(summary.totalMercanciasExentas).toBe(8000);
+    expect(summary.totalGravado).toBe(15000);
+    expect(summary.totalExento).toBe(8000);
+    expect(summary.totalVenta).toBe(23000);
+    expect(summary.totalImpuesto).toBe(1950);
+    expect(summary.totalComprobante).toBe(24950);
+  });
+});
