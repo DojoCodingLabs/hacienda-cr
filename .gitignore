@@ -33,3 +33,12 @@ pnpm-debug.log*
 
 # Test
 *.tsbuildinfo
+
+# Security-sensitive files — NEVER commit these
+*.p12
+*.pfx
+*.pem
+*.key
+config.toml
+credentials.enc
+sequences.json
