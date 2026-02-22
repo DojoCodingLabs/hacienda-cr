@@ -7,7 +7,30 @@
 
 export const PACKAGE_NAME = "@hacienda-cr/sdk" as const;
 
+// ---------------------------------------------------------------------------
+// Client — primary entry point
+// ---------------------------------------------------------------------------
+
+export { HaciendaClient, HaciendaClientOptionsSchema } from "./client.js";
+export type { HaciendaClientOptions } from "./client.js";
+
+// ---------------------------------------------------------------------------
+// SDK error hierarchy
+// ---------------------------------------------------------------------------
+
+export {
+  HaciendaError,
+  HaciendaErrorCode,
+  ValidationError,
+  ApiError,
+  AuthenticationError,
+  SigningError,
+} from "./errors.js";
+
+// ---------------------------------------------------------------------------
 // Auth module
+// ---------------------------------------------------------------------------
+
 export {
   AuthError,
   AuthErrorCode,
@@ -29,7 +52,10 @@ export type {
   TokenState,
 } from "./auth/index.js";
 
+// ---------------------------------------------------------------------------
 // Clave numerica — 50-digit key generation and parsing
+// ---------------------------------------------------------------------------
+
 export {
   buildClave,
   ClaveInputSchema,
@@ -41,7 +67,10 @@ export {
   type ClaveParsed,
 } from "./clave/index.js";
 
+// ---------------------------------------------------------------------------
 // Config — configuration file management and sequence persistence
+// ---------------------------------------------------------------------------
+
 export {
   // Config manager
   getConfigDir,
