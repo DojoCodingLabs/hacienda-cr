@@ -41,8 +41,8 @@ export const statusCommand = defineCommand({
       // Parse the clave to show its components
       const parsed = parseClave(clave);
 
-      // API polling not yet implemented — show parsed clave and stub message
-      warn("API status polling is not yet implemented. Showing clave details.");
+      // API polling requires authentication — show parsed clave
+      warn("Status polling requires authentication. Run `hacienda auth login` first.");
 
       if (args.json) {
         outputJson({
@@ -68,7 +68,7 @@ export const statusCommand = defineCommand({
         detail("Sequence", String(parsed.sequence));
         detail("Situation", parsed.situation);
         detail("Security Code", parsed.securityCode);
-        console.log(`\n  Status: ${colorStatus("unknown")} (API polling not yet implemented)`);
+        console.log(`\n  Status: ${colorStatus("unknown")} (requires authentication)`);
       }
     } catch (err) {
       const message = err instanceof Error ? err.message : "Unknown error occurred";

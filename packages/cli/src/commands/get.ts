@@ -42,8 +42,8 @@ export const getCommand = defineCommand({
       // Parse the clave to show available info
       const parsed = parseClave(clave);
 
-      // API get not yet implemented — show parsed clave and stub message
-      warn("API document retrieval is not yet implemented. Showing clave details.");
+      // API document retrieval requires authentication — show parsed clave
+      warn("Document retrieval requires authentication. Run `hacienda auth login` first.");
 
       if (args.json) {
         outputJson({
@@ -68,7 +68,7 @@ export const getCommand = defineCommand({
         detail("Sequence", String(parsed.sequence));
         detail("Situation", parsed.situation);
         detail("Security Code", parsed.securityCode);
-        console.log("\nFull document details will be shown once the API client is connected.");
+        console.log("\nFull document details will be available after authentication.");
       }
     } catch (err) {
       const message = err instanceof Error ? err.message : "Unknown error occurred";

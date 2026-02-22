@@ -133,6 +133,13 @@ export {
 export { buildFacturaXml } from "./documents/index.js";
 
 // ---------------------------------------------------------------------------
+// Logging module — structured logging
+// ---------------------------------------------------------------------------
+
+export { Logger, LogLevel, noopLogger } from "./logging/index.js";
+export type { LoggerOptions, LogFormat, LogWriter, LogEntry } from "./logging/index.js";
+
+// ---------------------------------------------------------------------------
 // Signing module — XAdES-EPES digital signature
 // ---------------------------------------------------------------------------
 
@@ -151,6 +158,9 @@ export {
   extractRejectionReason,
   submitAndWait,
   withRetry,
+  listComprobantes,
+  getComprobante,
+  lookupTaxpayer,
 } from "./api/index.js";
 export type {
   HttpClientOptions,
@@ -160,6 +170,8 @@ export type {
   SubmitAndWaitOptions,
   SubmitAndWaitResult,
   RetryOptions,
+  TaxpayerInfo,
+  LookupTaxpayerOptions,
 } from "./api/index.js";
 export {
   HaciendaRejectionCode,
