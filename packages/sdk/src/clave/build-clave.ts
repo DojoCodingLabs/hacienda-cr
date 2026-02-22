@@ -102,7 +102,7 @@ function generateSecurityCode(): string {
  *
  * @example
  * ```ts
- * import { buildClave, DocumentType, Situation } from "@hacienda-cr/sdk";
+ * import { buildClave, DocumentType, Situation } from "@dojocoding/hacienda-sdk";
  *
  * const clave = buildClave({
  *   date: new Date(2025, 6, 27), // July 27, 2025

@@ -10,7 +10,7 @@
  * Namespace: https://cdn.comprobanteselectronicos.go.cr/xml-schemas/v4.4/FacturaElectronicaCompra
  */
 
-import type { FacturaElectronicaCompra } from "@hacienda-cr/shared";
+import type { FacturaElectronicaCompra } from "@dojocoding/hacienda-shared";
 import { buildXml } from "../xml/builder.js";
 import { buildStandardDocumentBody } from "./shared-xml-helpers.js";
 
@@ -29,7 +29,7 @@ import { buildStandardDocumentBody } from "./shared-xml-helpers.js";
  *
  * @example
  * ```ts
- * import { buildFacturaCompraXml } from "@hacienda-cr/sdk";
+ * import { buildFacturaCompraXml } from "@dojocoding/hacienda-sdk";
  *
  * const xml = buildFacturaCompraXml({
  *   clave: "506...",

@@ -1,4 +1,4 @@
-# @hacienda-cr/cli
+# @dojocoding/hacienda-cli
 
 Command-line tool for Costa Rica electronic invoicing (Hacienda API v4.4).
 
@@ -7,7 +7,7 @@ Provides the `hacienda` command for authenticating, creating, validating, signin
 ## Installation
 
 ```bash
-npm install -g @hacienda-cr/cli
+npm install -g @dojocoding/hacienda-cli
 ```
 
 Requires **Node.js 22+**.

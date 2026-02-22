@@ -1,5 +1,5 @@
 {
-  "name": "@hacienda-cr/cli",
+  "name": "@dojocoding/hacienda-cli",
   "version": "0.1.0",
   "description": "CLI for Costa Rica electronic invoicing (hacienda command)",
   "type": "module",
@@ -34,8 +34,8 @@
     "clean": "rm -rf dist"
   },
   "dependencies": {
-    "@hacienda-cr/sdk": "workspace:*",
-    "@hacienda-cr/shared": "workspace:*",
+    "@dojocoding/hacienda-sdk": "workspace:*",
+    "@dojocoding/hacienda-shared": "workspace:*",
     "citty": "^0.2.1"
   },
   "license": "MIT",

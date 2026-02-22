@@ -9,7 +9,7 @@
  * Namespace: https://cdn.comprobanteselectronicos.go.cr/xml-schemas/v4.4/tiqueteElectronico
  */
 
-import type { TiqueteElectronico } from "@hacienda-cr/shared";
+import type { TiqueteElectronico } from "@dojocoding/hacienda-shared";
 import { buildXml } from "../xml/builder.js";
 import { buildStandardDocumentBody } from "./shared-xml-helpers.js";
 
@@ -29,7 +29,7 @@ import { buildStandardDocumentBody } from "./shared-xml-helpers.js";
  *
  * @example
  * ```ts
- * import { buildTiqueteXml } from "@hacienda-cr/sdk";
+ * import { buildTiqueteXml } from "@dojocoding/hacienda-sdk";
  *
  * const xml = buildTiqueteXml({
  *   clave: "506...",

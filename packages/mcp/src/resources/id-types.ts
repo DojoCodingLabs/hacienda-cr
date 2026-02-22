@@ -11,7 +11,7 @@ import {
   IdentificationType,
   IDENTIFICATION_TYPE_NAMES,
   IDENTIFICATION_LENGTHS,
-} from "@hacienda-cr/shared";
+} from "@dojocoding/hacienda-shared";
 
 const ID_TYPES_REFERENCE = {
   identificationTypes: [

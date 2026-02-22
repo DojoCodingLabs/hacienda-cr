@@ -3,8 +3,8 @@
  */
 
 import { describe, it, expect, vi } from "vitest";
-import type { StatusResponse } from "@hacienda-cr/shared";
-import { HaciendaStatus } from "@hacienda-cr/shared";
+import type { StatusResponse } from "@dojocoding/hacienda-shared";
+import { HaciendaStatus } from "@dojocoding/hacienda-shared";
 
 import {
   submitDocument,

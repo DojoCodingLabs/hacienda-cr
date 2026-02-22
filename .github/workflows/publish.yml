@@ -50,22 +50,22 @@ jobs:
       - name: Test
         run: pnpm test
 
-      - name: Publish @hacienda-cr/shared
-        run: pnpm --filter @hacienda-cr/shared publish --access public --no-git-checks
+      - name: Publish @dojocoding/hacienda-shared
+        run: pnpm --filter @dojocoding/hacienda-shared publish --access public --no-git-checks
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
-      - name: Publish @hacienda-cr/sdk
-        run: pnpm --filter @hacienda-cr/sdk publish --access public --no-git-checks
+      - name: Publish @dojocoding/hacienda-sdk
+        run: pnpm --filter @dojocoding/hacienda-sdk publish --access public --no-git-checks
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
-      - name: Publish @hacienda-cr/cli
-        run: pnpm --filter @hacienda-cr/cli publish --access public --no-git-checks
+      - name: Publish @dojocoding/hacienda-cli
+        run: pnpm --filter @dojocoding/hacienda-cli publish --access public --no-git-checks
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
-      - name: Publish @hacienda-cr/mcp
-        run: pnpm --filter @hacienda-cr/mcp publish --access public --no-git-checks
+      - name: Publish @dojocoding/hacienda-mcp
+        run: pnpm --filter @dojocoding/hacienda-mcp publish --access public --no-git-checks
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

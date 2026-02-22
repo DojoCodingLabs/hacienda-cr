@@ -1,9 +1,9 @@
 import { describe, it, expect } from "vitest";
 import { PACKAGE_NAME, VERSION, main } from "./main.js";
 
-describe("@hacienda-cr/cli", () => {
+describe("@dojocoding/hacienda-cli", () => {
   it("should export the package name", () => {
-    expect(PACKAGE_NAME).toBe("@hacienda-cr/cli");
+    expect(PACKAGE_NAME).toBe("@dojocoding/hacienda-cli");
   });
 
   it("should export the version", () => {

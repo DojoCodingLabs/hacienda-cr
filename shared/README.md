@@ -1,8 +1,8 @@
-# @hacienda-cr/shared
+# @dojocoding/hacienda-shared
 
 Shared types, constants, enums, and Zod validation schemas for Costa Rica electronic invoicing (Hacienda API v4.4).
 
-This package is used internally by `@hacienda-cr/sdk`, `@hacienda-cr/cli`, and `@hacienda-cr/mcp`. It is not typically imported directly by end users.
+This package is used internally by `@dojocoding/hacienda-sdk`, `@dojocoding/hacienda-cli`, and `@dojocoding/hacienda-mcp`. It is not typically imported directly by end users.
 
 ## Contents
 
@@ -39,7 +39,7 @@ This package is used internally by `@hacienda-cr/sdk`, `@hacienda-cr/cli`, and `
 ## Installation
 
 ```bash
-npm install @hacienda-cr/shared
+npm install @dojocoding/hacienda-shared
 ```
 
 This package is typically consumed as a workspace dependency via `workspace:*`.

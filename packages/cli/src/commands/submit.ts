@@ -10,15 +10,15 @@
 import { readFile } from "node:fs/promises";
 import { resolve } from "node:path";
 import { defineCommand } from "citty";
-import { FacturaElectronicaSchema } from "@hacienda-cr/shared";
-import type { FacturaElectronica } from "@hacienda-cr/shared";
-import type { SubmissionRequest } from "@hacienda-cr/shared";
+import { FacturaElectronicaSchema } from "@dojocoding/hacienda-shared";
+import type { FacturaElectronica } from "@dojocoding/hacienda-shared";
+import type { SubmissionRequest } from "@dojocoding/hacienda-shared";
 import {
   buildFacturaXml,
   validateFacturaInput,
   signAndEncode,
   submitAndWait,
-} from "@hacienda-cr/sdk";
+} from "@dojocoding/hacienda-sdk";
 import { success, error, detail, info, outputJson } from "../utils/format.js";
 import { createAuthenticatedClient } from "../utils/api-client.js";
 

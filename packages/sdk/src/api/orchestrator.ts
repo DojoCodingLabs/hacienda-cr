@@ -7,8 +7,8 @@
  * @module api/orchestrator
  */
 
-import type { SubmissionRequest } from "@hacienda-cr/shared";
-import { HaciendaStatus } from "@hacienda-cr/shared";
+import type { SubmissionRequest } from "@dojocoding/hacienda-shared";
+import { HaciendaStatus } from "@dojocoding/hacienda-shared";
 
 import { ApiError } from "../errors.js";
 import type { HttpClient } from "./http-client.js";

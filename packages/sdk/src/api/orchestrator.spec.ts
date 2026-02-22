@@ -3,8 +3,8 @@
  */
 
 import { describe, it, expect, vi } from "vitest";
-import { HaciendaStatus } from "@hacienda-cr/shared";
-import type { SubmissionRequest, StatusResponse } from "@hacienda-cr/shared";
+import { HaciendaStatus } from "@dojocoding/hacienda-shared";
+import type { SubmissionRequest, StatusResponse } from "@dojocoding/hacienda-shared";
 
 import { submitAndWait } from "./orchestrator.js";
 import type { HttpClient } from "./http-client.js";

@@ -1,8 +1,8 @@
 import { describe, it, expect } from "vitest";
 import { PACKAGE_NAME } from "./index.js";
 
-describe("@hacienda-cr/mcp", () => {
+describe("@dojocoding/hacienda-mcp", () => {
   it("should export the package name", () => {
-    expect(PACKAGE_NAME).toBe("@hacienda-cr/mcp");
+    expect(PACKAGE_NAME).toBe("@dojocoding/hacienda-mcp");
   });
 });

@@ -13,7 +13,7 @@ import {
   IVA_RATE_PERCENTAGES,
   ExonerationType,
   UnitOfMeasure,
-} from "@hacienda-cr/shared";
+} from "@dojocoding/hacienda-shared";
 
 const TAX_REFERENCE = {
   taxCodes: [

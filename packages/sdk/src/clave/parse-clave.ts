@@ -65,7 +65,7 @@ function parseDateDDMMYY(ddmmyy: string): Date {
  *
  * @example
  * ```ts
- * import { parseClave } from "@hacienda-cr/sdk";
+ * import { parseClave } from "@dojocoding/hacienda-sdk";
  *
  * const parsed = parseClave("50627072531012345670010000101000000000119999999");
  * console.log(parsed.taxpayerId);   // "310123456700"

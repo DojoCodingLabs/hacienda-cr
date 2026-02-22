@@ -11,8 +11,8 @@
  * - Valid tax code / rate combinations
  */
 
-import type { FacturaElectronicaInput } from "@hacienda-cr/shared";
-import { FacturaElectronicaSchema, TaxCode } from "@hacienda-cr/shared";
+import type { FacturaElectronicaInput } from "@dojocoding/hacienda-shared";
+import { FacturaElectronicaSchema, TaxCode } from "@dojocoding/hacienda-shared";
 import { round5 } from "../tax/calculator.js";
 
 // ---------------------------------------------------------------------------

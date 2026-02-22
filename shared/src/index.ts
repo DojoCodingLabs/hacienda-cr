@@ -1,5 +1,5 @@
 /**
- * @hacienda-cr/shared
+ * @dojocoding/hacienda-shared
  *
  * Shared types, constants, enums, and validation schemas
  * for Costa Rica electronic invoicing (Hacienda API v4.4).

@@ -7,7 +7,7 @@ import { describe, it, expect } from "vitest";
 import { calculateLineItemTotals, calculateInvoiceSummary } from "../tax/calculator.js";
 import { buildFacturaXml } from "./factura-builder.js";
 import { validateFacturaInput } from "../xml/validator.js";
-import type { FacturaElectronica } from "@hacienda-cr/shared";
+import type { FacturaElectronica } from "@dojocoding/hacienda-shared";
 
 // ---------------------------------------------------------------------------
 // Helpers

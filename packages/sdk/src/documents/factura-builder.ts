@@ -5,7 +5,7 @@
  * compliant XML string using the XML builder core.
  */
 
-import type { FacturaElectronica } from "@hacienda-cr/shared";
+import type { FacturaElectronica } from "@dojocoding/hacienda-shared";
 import { buildXml } from "../xml/builder.js";
 import { buildStandardDocumentBody } from "./shared-xml-helpers.js";
 
@@ -25,7 +25,7 @@ import { buildStandardDocumentBody } from "./shared-xml-helpers.js";
  *
  * @example
  * ```ts
- * import { buildFacturaXml } from "@hacienda-cr/sdk";
+ * import { buildFacturaXml } from "@dojocoding/hacienda-sdk";
  *
  * const xml = buildFacturaXml({
  *   clave: "506...",

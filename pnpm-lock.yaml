@@ -47,10 +47,10 @@ importers:
 
   packages/cli:
     dependencies:
-      '@hacienda-cr/sdk':
+      '@dojocoding/hacienda-sdk':
         specifier: workspace:*
         version: link:../sdk
-      '@hacienda-cr/shared':
+      '@dojocoding/hacienda-shared':
         specifier: workspace:*
         version: link:../../shared
       citty:
@@ -59,10 +59,10 @@ importers:
 
   packages/mcp:
     dependencies:
-      '@hacienda-cr/sdk':
+      '@dojocoding/hacienda-sdk':
         specifier: workspace:*
         version: link:../sdk
-      '@hacienda-cr/shared':
+      '@dojocoding/hacienda-shared':
         specifier: workspace:*
         version: link:../../shared
       '@modelcontextprotocol/sdk':
@@ -74,7 +74,7 @@ importers:
 
   packages/sdk:
     dependencies:
-      '@hacienda-cr/shared':
+      '@dojocoding/hacienda-shared':
         specifier: workspace:*
         version: link:../../shared
       '@xmldom/xmldom':

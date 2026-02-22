@@ -14,9 +14,9 @@ import {
   extractRejectionReason,
   listComprobantes,
   getComprobante,
-} from "@hacienda-cr/sdk";
-import { DOCUMENT_TYPE_NAMES } from "@hacienda-cr/shared";
-import type { DocumentTypeCode } from "@hacienda-cr/shared";
+} from "@dojocoding/hacienda-sdk";
+import { DOCUMENT_TYPE_NAMES } from "@dojocoding/hacienda-shared";
+import type { DocumentTypeCode } from "@dojocoding/hacienda-shared";
 import { createMcpApiClient } from "./api-client.js";
 
 // ---------------------------------------------------------------------------

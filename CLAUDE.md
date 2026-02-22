@@ -6,8 +6,6 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 TypeScript SDK, CLI & MCP Server for Costa Rica Electronic Invoicing (Comprobantes Electrónicos) against the Ministerio de Hacienda API v4.4. Three-layer architecture: SDK (core library) → CLI (`hacienda` binary) → MCP Server (AI-accessible tools).
 
-See `MASTER_PLAN.md` for full architecture, backlog, spikes (S-01 through S-06), and dependency graph.
-
 ## Commands
 
 ```bash
@@ -20,9 +18,9 @@ pnpm typecheck                  # Type-check all packages
 pnpm clean                      # Remove all dist/ directories
 
 # Single package
-pnpm --filter @hacienda-cr/sdk build
-pnpm --filter @hacienda-cr/sdk test
-pnpm --filter @hacienda-cr/sdk test clave.spec.ts   # Single test file
+pnpm --filter @dojocoding/hacienda-sdk build
+pnpm --filter @dojocoding/hacienda-sdk test
+pnpm --filter @dojocoding/hacienda-sdk test clave.spec.ts   # Single test file
 ```
 
 **Build order matters:** Turbo handles this automatically — `shared` builds first, then `sdk`, then `cli`/`mcp`. Always run `pnpm build` before `pnpm test` on a fresh clone.
@@ -31,10 +29,10 @@ pnpm --filter @hacienda-cr/sdk test clave.spec.ts   # Single test file
 
 ```
 packages/
-├── sdk/       # @hacienda-cr/sdk — Core: auth, XML, signing, API client, tax calc
-├── cli/       # @hacienda-cr/cli — `hacienda` binary (citty framework)
-└── mcp/       # @hacienda-cr/mcp — MCP Server (@modelcontextprotocol/sdk)
-shared/        # @hacienda-cr/shared — Types, Zod schemas, constants, enums
+├── sdk/       # @dojocoding/hacienda-sdk — Core: auth, XML, signing, API client, tax calc
+├── cli/       # @dojocoding/hacienda-cli — `hacienda` binary (citty framework)
+└── mcp/       # @dojocoding/hacienda-mcp — MCP Server (@modelcontextprotocol/sdk)
+shared/        # @dojocoding/hacienda-shared — Types, Zod schemas, constants, enums
 ```
 
 **Dependency flow:** `shared` ← `sdk` ← `cli` / `mcp`. The SDK is the foundation — CLI and MCP wrap it.
@@ -132,4 +130,3 @@ Config: `~/.hacienda-cr/config.toml`. Secrets always via env vars (`HACIENDA_PAS
 - Token lifecycle: access token ~5min (cache in memory, refresh 30s before expiry), refresh token ~10hrs (persist to disk)
 - All XML must validate against vendored v4.4 XSD schemas before submission
 - Critical path: monorepo setup → types/clave → XML builder (Factura) → signing → API submission → end-to-end test
-- Spikes S-01 through S-06 in MASTER_PLAN.md must be resolved before their dependent milestones

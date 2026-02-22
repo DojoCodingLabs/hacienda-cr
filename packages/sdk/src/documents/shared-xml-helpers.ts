@@ -16,7 +16,7 @@ import type {
   OtroCargo,
   InformacionReferencia,
   OtroContenido,
-} from "@hacienda-cr/shared";
+} from "@dojocoding/hacienda-shared";
 
 /**
  * Build the Emisor XML structure.

@@ -1,5 +1,5 @@
 {
-  "name": "@hacienda-cr/sdk",
+  "name": "@dojocoding/hacienda-sdk",
   "version": "0.1.0",
   "description": "Core SDK for Costa Rica electronic invoicing (Hacienda API v4.4)",
   "type": "module",
@@ -30,7 +30,7 @@
     "clean": "rm -rf dist"
   },
   "dependencies": {
-    "@hacienda-cr/shared": "workspace:*",
+    "@dojocoding/hacienda-shared": "workspace:*",
     "@xmldom/xmldom": "^0.9.8",
     "fast-xml-parser": "^5.3.7",
     "node-forge": "^1.3.1",

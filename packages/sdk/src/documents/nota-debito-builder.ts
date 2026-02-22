@@ -10,7 +10,7 @@
  * Namespace: https://cdn.comprobanteselectronicos.go.cr/xml-schemas/v4.4/NotaDebitoElectronica
  */
 
-import type { NotaDebitoElectronica } from "@hacienda-cr/shared";
+import type { NotaDebitoElectronica } from "@dojocoding/hacienda-shared";
 import { buildXml } from "../xml/builder.js";
 import { buildStandardDocumentBody } from "./shared-xml-helpers.js";
 
@@ -30,7 +30,7 @@ import { buildStandardDocumentBody } from "./shared-xml-helpers.js";
  *
  * @example
  * ```ts
- * import { buildNotaDebitoXml } from "@hacienda-cr/sdk";
+ * import { buildNotaDebitoXml } from "@dojocoding/hacienda-sdk";
  *
  * const xml = buildNotaDebitoXml({
  *   clave: "506...",

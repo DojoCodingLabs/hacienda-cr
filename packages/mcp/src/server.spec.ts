@@ -26,7 +26,7 @@ const {
   mockCreateMcpApiClient: vi.fn(),
 }));
 
-vi.mock("@hacienda-cr/sdk", async (importOriginal) => {
+vi.mock("@dojocoding/hacienda-sdk", async (importOriginal) => {
   const actual = (await importOriginal()) as Record<string, unknown>;
   return {
     ...actual,

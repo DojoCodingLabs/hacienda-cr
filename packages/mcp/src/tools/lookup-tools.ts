@@ -8,9 +8,9 @@
 import { z } from "zod";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 
-import { lookupTaxpayer } from "@hacienda-cr/sdk";
-import { IDENTIFICATION_TYPE_NAMES } from "@hacienda-cr/shared";
-import type { IdentificationType } from "@hacienda-cr/shared";
+import { lookupTaxpayer } from "@dojocoding/hacienda-sdk";
+import { IDENTIFICATION_TYPE_NAMES } from "@dojocoding/hacienda-shared";
+import type { IdentificationType } from "@dojocoding/hacienda-shared";
 
 // ---------------------------------------------------------------------------
 // lookup_taxpayer

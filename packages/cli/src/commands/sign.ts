@@ -10,7 +10,7 @@
 import { readFile, writeFile } from "node:fs/promises";
 import { resolve } from "node:path";
 import { defineCommand } from "citty";
-import { signXml } from "@hacienda-cr/sdk";
+import { signXml } from "@dojocoding/hacienda-sdk";
 import { success, error, outputJson } from "../utils/format.js";
 
 export const signCommand = defineCommand({

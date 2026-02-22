@@ -11,8 +11,8 @@
 import { readFile } from "node:fs/promises";
 import { resolve, extname } from "node:path";
 import { defineCommand } from "citty";
-import { FacturaElectronicaSchema } from "@hacienda-cr/shared";
-import { validateFacturaInput } from "@hacienda-cr/sdk";
+import { FacturaElectronicaSchema } from "@dojocoding/hacienda-shared";
+import { validateFacturaInput } from "@dojocoding/hacienda-sdk";
 import { success, error, info, outputJson } from "../utils/format.js";
 
 // ---------------------------------------------------------------------------

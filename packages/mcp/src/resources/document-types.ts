@@ -14,7 +14,7 @@ import {
   MensajeReceptorCode,
   SALE_CONDITION_NAMES,
   PAYMENT_METHOD_NAMES,
-} from "@hacienda-cr/shared";
+} from "@dojocoding/hacienda-shared";
 
 const REFERENCE_DATA = {
   documentTypes: Object.entries(DOCUMENT_TYPE_NAMES).map(([code, name]) => ({

@@ -1,12 +1,12 @@
 /**
- * HaciendaClient — the primary entry point for `@hacienda-cr/sdk`.
+ * HaciendaClient — the primary entry point for `@dojocoding/hacienda-sdk`.
  *
  * Provides a clean facade over the SDK's internal modules (auth, clave,
  * config) so consumers only need to interact with a single class.
  *
  * @example
  * ```ts
- * import { HaciendaClient } from "@hacienda-cr/sdk";
+ * import { HaciendaClient } from "@dojocoding/hacienda-sdk";
  *
  * const client = new HaciendaClient({
  *   environment: "sandbox",
@@ -239,7 +239,7 @@ export class HaciendaClient {
    *
    * @example
    * ```ts
-   * import { DocumentType, Situation } from "@hacienda-cr/sdk";
+   * import { DocumentType, Situation } from "@dojocoding/hacienda-sdk";
    *
    * const clave = client.buildClave({
    *   date: new Date(),
