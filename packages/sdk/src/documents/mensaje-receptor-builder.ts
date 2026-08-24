@@ -72,6 +72,14 @@ export function buildMensajeReceptorXml(input: MensajeReceptor): string {
     data.CondicionImpuesto = input.condicionImpuesto;
   }
 
+  if (input.montoTotalImpuestoAcreditar !== undefined) {
+    data.MontoTotalImpuestoAcreditar = input.montoTotalImpuestoAcreditar;
+  }
+
+  if (input.montoTotalDeGastoAplicable !== undefined) {
+    data.MontoTotalDeGastoAplicable = input.montoTotalDeGastoAplicable;
+  }
+
   data.TotalFactura = input.totalFactura;
   data.NumeroCedulaReceptor = input.numeroCedulaReceptor;
   data.NumeroConsecutivoReceptor = input.numeroConsecutivoReceptor;

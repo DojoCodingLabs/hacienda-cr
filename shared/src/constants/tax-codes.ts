@@ -49,6 +49,12 @@ export const IvaRateCode = {
   TRANSITORIO_8: "07",
   /** Tarifa general 13% */
   GENERAL_13: "08",
+  /** Tarifa reducida 0.5% (new in v4.4) */
+  REDUCIDA_0_5: "09",
+  /** Tarifa exenta (new in v4.4) */
+  TARIFA_EXENTA: "10",
+  /** Tarifa 0% sin derecho a credito (new in v4.4) */
+  CERO_SIN_CREDITO: "11",
 } as const;
 
 export type IvaRateCode = (typeof IvaRateCode)[keyof typeof IvaRateCode];
@@ -63,6 +69,9 @@ export const IVA_RATE_PERCENTAGES: Record<IvaRateCode, number> = {
   [IvaRateCode.TRANSITORIO_4]: 4,
   [IvaRateCode.TRANSITORIO_8]: 8,
   [IvaRateCode.GENERAL_13]: 13,
+  [IvaRateCode.REDUCIDA_0_5]: 0.5,
+  [IvaRateCode.TARIFA_EXENTA]: 0,
+  [IvaRateCode.CERO_SIN_CREDITO]: 0,
 } as const;
 
 /** Exoneration type codes. */
@@ -81,76 +90,175 @@ export const ExonerationType = {
   TRANSITORIO_IX: "06",
   /** Transitorio XVII */
   TRANSITORIO_XVII: "07",
+  /** Exoneracion Zona Franca (new in v4.4) */
+  ZONA_FRANCA: "08",
+  /** Exoneracion de servicios complementarios para la exportacion (new in v4.4) */
+  SERVICIOS_COMPLEMENTARIOS_EXPORTACION: "09",
+  /** Organo de las corporaciones municipales (new in v4.4) */
+  CORPORACIONES_MUNICIPALES: "10",
+  /** Exenciones DGH — autorizacion de impuesto local concreta (new in v4.4) */
+  DGH_IMPUESTO_LOCAL_CONCRETA: "11",
+  /** Codigo 12 — ver ANEXOS Y ESTRUCTURAS v4.4 para la descripcion oficial */
+  EXONERACION_12: "12",
   /** Otros */
   OTROS: "99",
 } as const;
 
 export type ExonerationType = (typeof ExonerationType)[keyof typeof ExonerationType];
 
-/** Unit of measure codes (Unidad de Medida). */
+/**
+ * Unit of measure codes (Unidad de Medida), vendored verbatim from the
+ * v4.4 XSD enumeration (UnidadMedidaType, 101 values). Casing follows the
+ * official schema exactly (e.g. "Kg", "L", "mL", "Min").
+ */
+export const UNITS_OF_MEASURE = [
+  "1",
+  "´",
+  "´´",
+  "°C",
+  "1/m",
+  "A",
+  "A/m",
+  "A/m²",
+  "Acv",
+  "Al",
+  "Alc",
+  "B",
+  "Bq",
+  "C",
+  "C/kg",
+  "C/m²",
+  "C/m³",
+  "Cc",
+  "Cd",
+  "cd/m²",
+  "Cm",
+  "cm",
+  "Cu",
+  "D",
+  "eV",
+  "F",
+  "F/m",
+  "Fa",
+  "G",
+  "Gal",
+  "Gy",
+  "Gy/s",
+  "h",
+  "H",
+  "H/m",
+  "Hz",
+  "I",
+  "J",
+  "J/(kg·K)",
+  "J/(mol·K)",
+  "J/K",
+  "J/kg",
+  "J/m³",
+  "J/mol",
+  "K",
+  "Kat",
+  "kat/m³",
+  "Kg",
+  "kg/m³",
+  "Km",
+  "Kw",
+  "kWh",
+  "L",
+  "Lm",
+  "Ln",
+  "Lx",
+  "M",
+  "m/s",
+  "m/s²",
+  "m²",
+  "m³",
+  "Min",
+  "mL",
+  "Mm",
+  "Mol",
+  "mol/m³",
+  "N",
+  "N/m",
+  "N·m",
+  "Np",
+  "º",
+  "Os",
+  "Otros",
+  "Oz",
+  "Pa",
+  "Pa·s",
+  "Qq",
+  "Rad",
+  "rad/s",
+  "rad/s²",
+  "S",
+  "s",
+  "Sp",
+  "Spe",
+  "Sr",
+  "St",
+  "Sv",
+  "t",
+  "T",
+  "U",
+  "Ua",
+  "Unid",
+  "V",
+  "V/m",
+  "W",
+  "W/(m·K)",
+  "W/(m²·sr)",
+  "W/m²",
+  "W/sr",
+  "Wb",
+  "Ω",
+] as const;
+
+export type UnitOfMeasure = (typeof UNITS_OF_MEASURE)[number];
+
+/** Named accessors for commonly used units (all values exist in UNITS_OF_MEASURE). */
 export const UnitOfMeasure = {
-  /** Servicios profesionales (sp) */
+  /** Servicios profesionales */
   SERVICIOS_PROFESIONALES: "Sp",
+  /** Otros servicios */
+  OTROS_SERVICIOS: "Os",
+  /** Servicios personales */
+  SERVICIOS_PERSONALES: "Spe",
+  /** Unidad */
+  UNIDAD: "Unid",
   /** Metros */
-  METROS: "m",
+  METROS: "M",
+  /** Centimetros */
+  CENTIMETROS: "cm",
+  /** Kilometros */
+  KILOMETROS: "Km",
   /** Kilogramos */
-  KILOGRAMOS: "kg",
-  /** Segundos */
-  SEGUNDOS: "s",
-  /** Amperes */
-  AMPERES: "A",
-  /** Kelvin */
-  KELVIN: "K",
-  /** Moles */
-  MOLES: "mol",
-  /** Candelas */
-  CANDELAS: "cd",
+  KILOGRAMOS: "Kg",
+  /** Gramos */
+  GRAMOS: "G",
+  /** Toneladas */
+  TONELADAS: "t",
+  /** Litros */
+  LITROS: "L",
+  /** Mililitros */
+  MILILITROS: "mL",
   /** Metros cuadrados */
   METROS_CUADRADOS: "m²",
   /** Metros cubicos */
   METROS_CUBICOS: "m³",
-  /** Litros */
-  LITROS: "l",
-  /** Watts */
-  WATTS: "W",
-  /** Voltios */
-  VOLTIOS: "V",
-  /** Julios (Joules) */
-  JULIOS: "J",
-  /** Gramos */
-  GRAMOS: "g",
-  /** Toneladas */
-  TONELADAS: "t",
   /** Galones */
   GALONES: "Gal",
-  /** Unidad */
-  UNIDAD: "Unid",
-  /** Otros (especificar) */
-  OTROS: "Os",
-  /** Pulgadas */
-  PULGADAS: "in",
-  /** Centimetros */
-  CENTIMETROS: "cm",
-  /** Mililitros */
-  MILILITROS: "ml",
   /** Onzas */
-  ONZAS: "oz",
-  /** Libras */
-  LIBRAS: "lb",
-  /** Pies */
-  PIES: "ft",
-  /** Yardas */
-  YARDAS: "yd",
+  ONZAS: "Oz",
   /** Horas */
   HORAS: "h",
   /** Minutos */
-  MINUTOS: "min",
+  MINUTOS: "Min",
+  /** Segundos */
+  SEGUNDOS: "s",
   /** Dias */
-  DIAS: "d",
-  /** Cajas */
-  CAJAS: "Cj",
-  /** Paquetes */
-  PAQUETES: "Pq",
-} as const;
-
-export type UnitOfMeasure = (typeof UnitOfMeasure)[keyof typeof UnitOfMeasure];
+  DIAS: "D",
+  /** Otros (especificar) */
+  OTROS: "Otros",
+} as const satisfies Record<string, UnitOfMeasure>;

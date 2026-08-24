@@ -218,7 +218,7 @@ const lineas: LineItemInput[] = [
     impuesto: [
       {
         codigo: "01", // IVA
-        codigoTarifa: "08", // Tarifa general 13%
+        codigoTarifaIVA: "08", // Tarifa general 13%
         tarifa: 13,
       },
     ],
@@ -234,13 +234,14 @@ const lineas: LineItemInput[] = [
     impuesto: [
       {
         codigo: "01",
-        codigoTarifa: "08",
+        codigoTarifaIVA: "08",
         tarifa: 13,
       },
     ],
     descuento: [
       {
         montoDescuento: 25000,
+        codigoDescuento: "01",
         naturalezaDescuento: "Descuento por volumen",
       },
     ],
@@ -268,12 +269,19 @@ const numeroConsecutivo = "00100001010000000001";
 // 6. Armar la factura y generar XML
 const factura = {
   clave,
-  codigoActividad: "620100",
+  proveedorSistemas: "3101234567", // Cédula del proveedor de sistemas (v4.4)
+  codigoActividadEmisor: "620100",
   numeroConsecutivo,
   fechaEmision: new Date().toISOString(),
   emisor: {
     nombre: "Mi Empresa S.A.",
     identificacion: { tipo: "02", numero: "3101234567" },
+    ubicacion: {
+      provincia: "1",
+      canton: "01",
+      distrito: "01",
+      otrasSenas: "100m norte del parque central",
+    },
     correoElectronico: "facturacion@miempresa.co.cr",
   },
   receptor: {
@@ -282,9 +290,12 @@ const factura = {
     correoElectronico: "pagos@cliente.co.cr",
   },
   condicionVenta: "01", // Contado
-  medioPago: ["01"], // Efectivo
   detalleServicio: lineasCalculadas,
-  resumenFactura: resumen,
+  resumenFactura: {
+    ...resumen,
+    // v4.4: los medios de pago van dentro del ResumenFactura, con monto
+    medioPago: [{ tipoMedioPago: "01", totalMedioPago: resumen.totalComprobante }],
+  },
 };
 
 const xml = buildFacturaXml(factura);
@@ -319,7 +330,7 @@ const item: LineItemInput = {
   detalle: "Horas de consultoría",
   precioUnitario: 75000,
   esServicio: true,
-  impuesto: [{ codigo: "01", codigoTarifa: "08", tarifa: 13 }],
+  impuesto: [{ codigo: "01", codigoTarifaIVA: "08", tarifa: 13 }],
 };
 
 const calculado: CalculatedLineItem = calculateLineItemTotals(item);
@@ -342,21 +353,21 @@ const itemExonerado: LineItemInput = {
   impuesto: [
     {
       codigo: "01",
-      codigoTarifa: "08",
+      codigoTarifaIVA: "08",
       tarifa: 13,
       exoneracion: {
         tipoDocumento: "01",
         numeroDocumento: "AL-001-2025",
-        nombreInstitucion: "MEIC",
+        nombreInstitucion: "99", // código de institución (Nota v4.4)
         fechaEmision: "2025-01-01T00:00:00",
-        porcentajeExoneracion: 100,
+        tarifaExonerada: 13, // puntos de tarifa exonerados
       },
     },
   ],
 };
 ```
 
-**Tarifas de IVA soportadas:** 0%, 1%, 2%, 4%, 8%, 13%
+**Tarifas de IVA soportadas:** 0%, 0.5%, 1%, 2%, 4%, 8%, 13% (códigos 01-11 de la v4.4)
 
 ### Clave numérica
 

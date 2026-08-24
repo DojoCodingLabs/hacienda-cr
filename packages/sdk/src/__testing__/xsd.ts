@@ -41,6 +41,32 @@ export function xmllintAvailable(): boolean {
   return xmllintChecked;
 }
 
+/** Options for {@link validateAgainstXsd}. */
+export interface XsdValidationOptions {
+  /**
+   * The v4.4 XSDs require 1-5 ds:Signature elements, but builders emit
+   * unsigned XML (signing happens in a separate step). When true, a
+   * schema-valid placeholder signature is appended before validating so
+   * everything else is checked strictly.
+   */
+  allowMissingSignature?: boolean;
+}
+
+/** Minimal ds:Signature accepted by the W3C xmldsig core schema. */
+const PLACEHOLDER_SIGNATURE = [
+  '<ds:Signature xmlns:ds="http://www.w3.org/2000/09/xmldsig#">',
+  "<ds:SignedInfo>",
+  '<ds:CanonicalizationMethod Algorithm="http://www.w3.org/TR/2001/REC-xml-c14n-20010315"/>',
+  '<ds:SignatureMethod Algorithm="http://www.w3.org/2001/04/xmldsig-more#rsa-sha256"/>',
+  '<ds:Reference URI="">',
+  '<ds:DigestMethod Algorithm="http://www.w3.org/2001/04/xmlenc#sha256"/>',
+  "<ds:DigestValue>AAAA</ds:DigestValue>",
+  "</ds:Reference>",
+  "</ds:SignedInfo>",
+  "<ds:SignatureValue>AAAA</ds:SignatureValue>",
+  "</ds:Signature>",
+].join("");
+
 /**
  * Validate an XML string against one of the vendored v4.4 XSD files.
  *
@@ -48,12 +74,23 @@ export function xmllintAvailable(): boolean {
  * @param xsdFileName - Schema file name inside `schemas/2024/v4.4`,
  *   e.g. `"FacturaElectronica_V4.4.xsd"`.
  */
-export function validateAgainstXsd(xml: string, xsdFileName: string): XsdValidationResult {
+export function validateAgainstXsd(
+  xml: string,
+  xsdFileName: string,
+  options: XsdValidationOptions = {},
+): XsdValidationResult {
   const xsdPath = path.join(SCHEMAS_DIR, xsdFileName);
   const dir = mkdtempSync(path.join(tmpdir(), "hacienda-xsd-"));
   const xmlPath = path.join(dir, "doc.xml");
+
+  let doc = xml;
+  if (options.allowMissingSignature && !doc.includes("Signature")) {
+    // Append the placeholder signature as the last child of the root element.
+    doc = doc.replace(/<\/([A-Za-z]+)>\s*$/, `${PLACEHOLDER_SIGNATURE}</$1>`);
+  }
+
   try {
-    writeFileSync(xmlPath, xml, "utf8");
+    writeFileSync(xmlPath, doc, "utf8");
     execFileSync("xmllint", ["--noout", "--nonet", "--schema", xsdPath, xmlPath], {
       stdio: ["ignore", "ignore", "pipe"],
     });

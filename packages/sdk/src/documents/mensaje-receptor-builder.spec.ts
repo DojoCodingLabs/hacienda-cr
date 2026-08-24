@@ -1,5 +1,5 @@
 /**
- * Tests for the Mensaje Receptor XML builder.
+ * Tests for the Mensaje Receptor XML builder (v4.4 structure).
  */
 
 import { describe, it, expect } from "vitest";
@@ -11,6 +11,8 @@ import {
   MENSAJE_MINIMAL,
 } from "../__fixtures__/document-fixtures.js";
 
+const NAMESPACE = "https://cdn.comprobanteselectronicos.go.cr/xml-schemas/v4.4/mensajeReceptor";
+
 describe("buildMensajeReceptorXml", () => {
   describe("XML declaration and root element", () => {
     it("should produce valid XML with declaration", () => {
@@ -18,15 +20,16 @@ describe("buildMensajeReceptorXml", () => {
       expect(xml).toContain('<?xml version="1.0" encoding="utf-8"?>');
     });
 
-    it("should have MensajeReceptor as root element", () => {
+    it("should have MensajeReceptor as root element (PascalCase)", () => {
       const xml = buildMensajeReceptorXml(MENSAJE_ACEPTACION_TOTAL);
       expect(xml).toContain("<MensajeReceptor");
       expect(xml).toContain("</MensajeReceptor>");
     });
 
-    it("should include correct namespace", () => {
+    it("should include the lowerCamelCase v4.4 namespace", () => {
       const xml = buildMensajeReceptorXml(MENSAJE_ACEPTACION_TOTAL);
-      expect(xml).toContain(
+      expect(xml).toContain(`xmlns="${NAMESPACE}"`);
+      expect(xml).not.toContain(
         'xmlns="https://cdn.comprobanteselectronicos.go.cr/xml-schemas/v4.4/MensajeReceptor"',
       );
     });
@@ -34,7 +37,8 @@ describe("buildMensajeReceptorXml", () => {
     it("should include xsi namespace and schemaLocation", () => {
       const xml = buildMensajeReceptorXml(MENSAJE_ACEPTACION_TOTAL);
       expect(xml).toContain('xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"');
-      expect(xml).toContain("MensajeReceptor_V.4.4.xsd");
+      expect(xml).toContain(`xsi:schemaLocation="${NAMESPACE} MensajeReceptor_V4.4.xsd"`);
+      expect(xml).not.toContain("MensajeReceptor_V.4.4.xsd");
     });
   });
 
@@ -98,12 +102,42 @@ describe("buildMensajeReceptorXml", () => {
       expect(xml).toContain("<CondicionImpuesto>01</CondicionImpuesto>");
     });
 
+    it("should include MontoTotalImpuestoAcreditar when present (new in v4.4)", () => {
+      const xml = buildMensajeReceptorXml(MENSAJE_ACEPTACION_TOTAL);
+      expect(xml).toContain("<MontoTotalImpuestoAcreditar>13000</MontoTotalImpuestoAcreditar>");
+    });
+
+    it("should include MontoTotalDeGastoAplicable when present (new in v4.4)", () => {
+      const xml = buildMensajeReceptorXml({
+        ...MENSAJE_ACEPTACION_TOTAL,
+        montoTotalDeGastoAplicable: 100000,
+      });
+      expect(xml).toContain("<MontoTotalDeGastoAplicable>100000</MontoTotalDeGastoAplicable>");
+    });
+
+    it("should emit the v4.4 optional amounts between CondicionImpuesto and TotalFactura", () => {
+      const xml = buildMensajeReceptorXml({
+        ...MENSAJE_ACEPTACION_TOTAL,
+        montoTotalDeGastoAplicable: 100000,
+      });
+      const condicionIndex = xml.indexOf("<CondicionImpuesto>");
+      const acreditarIndex = xml.indexOf("<MontoTotalImpuestoAcreditar>");
+      const gastoIndex = xml.indexOf("<MontoTotalDeGastoAplicable>");
+      const totalIndex = xml.indexOf("<TotalFactura>");
+      expect(condicionIndex).toBeGreaterThan(-1);
+      expect(acreditarIndex).toBeGreaterThan(condicionIndex);
+      expect(gastoIndex).toBeGreaterThan(acreditarIndex);
+      expect(totalIndex).toBeGreaterThan(gastoIndex);
+    });
+
     it("should not include optional elements when absent", () => {
       const xml = buildMensajeReceptorXml(MENSAJE_MINIMAL);
       expect(xml).not.toContain("<DetalleMensaje>");
       expect(xml).not.toContain("<MontoTotalImpuesto>");
       expect(xml).not.toContain("<CodigoActividad>");
       expect(xml).not.toContain("<CondicionImpuesto>");
+      expect(xml).not.toContain("<MontoTotalImpuestoAcreditar>");
+      expect(xml).not.toContain("<MontoTotalDeGastoAplicable>");
     });
   });
 

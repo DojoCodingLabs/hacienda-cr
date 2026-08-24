@@ -26,14 +26,11 @@ export const UbicacionSchema = z.object({
   /** Distrito code (2 digits, 01-99). */
   distrito: z.string().regex(/^\d{2}$/),
 
-  /** Barrio code (2 digits). Optional. */
-  barrio: z
-    .string()
-    .regex(/^\d{2}$/)
-    .optional(),
+  /** Barrio name (free text, 5-50 chars in v4.4 — no longer a code). Optional. */
+  barrio: z.string().min(5).max(50).optional(),
 
-  /** Additional address details. Optional, max 250 chars. */
-  otrasSenas: z.string().max(250).optional(),
+  /** Additional address details. Required by the v4.4 XSD, 5-250 chars. */
+  otrasSenas: z.string().min(5).max(250),
 });
 
 export type UbicacionInput = z.infer<typeof UbicacionSchema>;

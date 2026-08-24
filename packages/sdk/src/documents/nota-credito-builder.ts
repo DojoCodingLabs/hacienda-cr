@@ -12,7 +12,7 @@
 
 import type { NotaCreditoElectronica } from "@dojocoding/hacienda-shared";
 import { buildXml } from "../xml/builder.js";
-import { buildStandardDocumentBody } from "./shared-xml-helpers.js";
+import { buildStandardDocumentBody, DOCUMENT_VARIANTS } from "./shared-xml-helpers.js";
 
 // ---------------------------------------------------------------------------
 // Public API
@@ -41,6 +41,6 @@ import { buildStandardDocumentBody } from "./shared-xml-helpers.js";
  * ```
  */
 export function buildNotaCreditoXml(input: NotaCreditoElectronica): string {
-  const data = buildStandardDocumentBody(input);
+  const data = buildStandardDocumentBody(input, DOCUMENT_VARIANTS.NotaCreditoElectronica);
   return buildXml("NotaCreditoElectronica", data);
 }

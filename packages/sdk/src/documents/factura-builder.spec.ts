@@ -1,5 +1,5 @@
 /**
- * Tests for the Factura Electronica XML builder.
+ * Tests for the Factura Electronica XML builder (v4.4 structure).
  */
 
 import { describe, it, expect } from "vitest";
@@ -13,6 +13,8 @@ import {
   CREDIT_INVOICE,
   REFERENCE_INVOICE,
 } from "../__fixtures__/invoices.js";
+
+const NAMESPACE = "https://cdn.comprobanteselectronicos.go.cr/xml-schemas/v4.4/facturaElectronica";
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -43,15 +45,17 @@ describe("buildFacturaXml", () => {
       expectContains(xml, '<?xml version="1.0" encoding="utf-8"?>');
     });
 
-    it("should have FacturaElectronica as root element", () => {
+    it("should have FacturaElectronica as root element (PascalCase)", () => {
       const xml = buildFacturaXml(SIMPLE_INVOICE);
       expectContains(xml, "<FacturaElectronica");
       expectContains(xml, "</FacturaElectronica>");
     });
 
-    it("should include correct namespace", () => {
+    it("should include the lowerCamelCase v4.4 namespace", () => {
       const xml = buildFacturaXml(SIMPLE_INVOICE);
-      expectContains(
+      expectContains(xml, `xmlns="${NAMESPACE}"`);
+      // The old PascalCase namespace fragment must be gone
+      expectNotContains(
         xml,
         'xmlns="https://cdn.comprobanteselectronicos.go.cr/xml-schemas/v4.4/FacturaElectronica"',
       );
@@ -62,9 +66,11 @@ describe("buildFacturaXml", () => {
       expectContains(xml, 'xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"');
     });
 
-    it("should include schemaLocation", () => {
+    it("should include schemaLocation with namespace and V4.4 XSD file name", () => {
       const xml = buildFacturaXml(SIMPLE_INVOICE);
-      expectContains(xml, "FacturaElectronica_V.4.4.xsd");
+      expectContains(xml, `xsi:schemaLocation="${NAMESPACE} FacturaElectronica_V4.4.xsd"`);
+      // No dot between V and 4 (v4.3 style)
+      expectNotContains(xml, "FacturaElectronica_V.4.4.xsd");
     });
   });
 
@@ -74,9 +80,17 @@ describe("buildFacturaXml", () => {
       expectContains(xml, `<Clave>${SIMPLE_INVOICE.clave}</Clave>`);
     });
 
-    it("should include CodigoActividad", () => {
+    it("should include ProveedorSistemas immediately after Clave", () => {
       const xml = buildFacturaXml(SIMPLE_INVOICE);
-      expectContains(xml, "<CodigoActividad>620100</CodigoActividad>");
+      expect(xml).toMatch(
+        /<Clave>[^<]+<\/Clave>\s*<ProveedorSistemas>3101234567<\/ProveedorSistemas>/,
+      );
+    });
+
+    it("should include CodigoActividadEmisor (not CodigoActividad)", () => {
+      const xml = buildFacturaXml(SIMPLE_INVOICE);
+      expectContains(xml, "<CodigoActividadEmisor>620100</CodigoActividadEmisor>");
+      expectNotContains(xml, "<CodigoActividad>");
     });
 
     it("should include NumeroConsecutivo", () => {
@@ -97,9 +111,12 @@ describe("buildFacturaXml", () => {
       expectContains(xml, "<CondicionVenta>01</CondicionVenta>");
     });
 
-    it("should include MedioPago", () => {
+    it("should NOT include a root-level MedioPago (moved into ResumenFactura in v4.4)", () => {
       const xml = buildFacturaXml(SIMPLE_INVOICE);
-      expectContains(xml, "<MedioPago>01</MedioPago>");
+      expectNotContains(xml, "<MedioPago>01</MedioPago>");
+      const medioPagoIndex = xml.indexOf("<MedioPago>");
+      const resumenIndex = xml.indexOf("<ResumenFactura>");
+      expect(medioPagoIndex).toBeGreaterThan(resumenIndex);
     });
   });
 
@@ -141,19 +158,22 @@ describe("buildFacturaXml", () => {
       expectContains(xml, "<Nombre>Cliente Ejemplo S.R.L.</Nombre>");
     });
 
-    it("should include foreign identification for export invoice", () => {
+    it("should use Identificacion Tipo 05 for foreign receivers (no IdentificacionExtranjero)", () => {
       const xml = buildFacturaXml(EXPORT_INVOICE);
-      expectContains(xml, "<IdentificacionExtranjero>US-EIN-12-3456789</IdentificacionExtranjero>");
+      expectContains(xml, "<Tipo>05</Tipo>");
+      expectContains(xml, "<Numero>US-EIN-12-3456789</Numero>");
+      expectNotContains(xml, "<IdentificacionExtranjero>");
     });
   });
 
   describe("DetalleServicio element", () => {
-    it("should include line items", () => {
+    it("should include line items with CodigoCABYS (not Codigo)", () => {
       const xml = buildFacturaXml(SIMPLE_INVOICE);
       expectContains(xml, "<DetalleServicio>");
       expectContains(xml, "<LineaDetalle>");
       expectContains(xml, "<NumeroLinea>1</NumeroLinea>");
-      expectContains(xml, "<Codigo>4321000000000</Codigo>");
+      expectContains(xml, "<CodigoCABYS>4321000000000</CodigoCABYS>");
+      expectNotContains(xml, "<Codigo>4321000000000</Codigo>");
       expectContains(xml, "<Cantidad>1</Cantidad>");
       expectContains(xml, "<UnidadMedida>Sp</UnidadMedida>");
       expectContains(xml, "<Detalle>Servicio de consultoria en TI</Detalle>");
@@ -177,11 +197,12 @@ describe("buildFacturaXml", () => {
       expectContains(xml, "<Codigo>PROD-001</Codigo>");
     });
 
-    it("should include Impuesto details", () => {
+    it("should include Impuesto details with CodigoTarifaIVA (not CodigoTarifa)", () => {
       const xml = buildFacturaXml(SIMPLE_INVOICE);
       expectContains(xml, "<Impuesto>");
       expectContains(xml, "<Codigo>01</Codigo>");
-      expectContains(xml, "<CodigoTarifa>08</CodigoTarifa>");
+      expectContains(xml, "<CodigoTarifaIVA>08</CodigoTarifaIVA>");
+      expectNotContains(xml, "<CodigoTarifa>");
       expectContains(xml, "<Tarifa>13</Tarifa>");
       expectContains(xml, "<Monto>13000</Monto>");
     });
@@ -191,6 +212,11 @@ describe("buildFacturaXml", () => {
       expectContains(xml, "<ImpuestoNeto>13000</ImpuestoNeto>");
     });
 
+    it("should include ImpuestoAsumidoEmisorFabrica (defaults to 0)", () => {
+      const xml = buildFacturaXml(SIMPLE_INVOICE);
+      expectContains(xml, "<ImpuestoAsumidoEmisorFabrica>0</ImpuestoAsumidoEmisorFabrica>");
+    });
+
     it("should include BaseImponible when present", () => {
       const xml = buildFacturaXml(SIMPLE_INVOICE);
       expectContains(xml, "<BaseImponible>100000</BaseImponible>");
@@ -198,23 +224,31 @@ describe("buildFacturaXml", () => {
   });
 
   describe("discounts", () => {
-    it("should include Descuento elements", () => {
+    it("should include Descuento elements with CodigoDescuento", () => {
       const xml = buildFacturaXml(DISCOUNT_INVOICE);
       expectContains(xml, "<Descuento>");
       expectContains(xml, "<MontoDescuento>5000</MontoDescuento>");
+      expectContains(xml, "<CodigoDescuento>01</CodigoDescuento>");
       expectContains(xml, "<NaturalezaDescuento>Descuento por volumen (10%)</NaturalezaDescuento>");
     });
   });
 
   describe("exonerations", () => {
-    it("should include Exoneracion details", () => {
+    it("should include Exoneracion details in v4.4 shape", () => {
       const xml = buildFacturaXml(EXONERATED_INVOICE);
       expectContains(xml, "<Exoneracion>");
-      expectContains(xml, "<TipoDocumento>03</TipoDocumento>");
+      expectContains(xml, "<TipoDocumentoEX1>03</TipoDocumentoEX1>");
+      expectNotContains(xml, "<TipoDocumento>");
       expectContains(xml, "<NumeroDocumento>AL-001-2025</NumeroDocumento>");
-      expectContains(xml, "<NombreInstitucion>Ministerio de Educacion</NombreInstitucion>");
-      expectContains(xml, "<PorcentajeExoneracion>100</PorcentajeExoneracion>");
+      expectContains(xml, "<NombreInstitucion>99</NombreInstitucion>");
+      expectContains(
+        xml,
+        "<NombreInstitucionOtros>Ministerio de Educacion Publica</NombreInstitucionOtros>",
+      );
+      expectContains(xml, "<FechaEmisionEX>2025-01-15T00:00:00-06:00</FechaEmisionEX>");
+      expectContains(xml, "<TarifaExonerada>13</TarifaExonerada>");
       expectContains(xml, "<MontoExoneracion>26000</MontoExoneracion>");
+      expectNotContains(xml, "<PorcentajeExoneracion>");
     });
   });
 
@@ -235,11 +269,30 @@ describe("buildFacturaXml", () => {
       expectContains(xml, "<TotalComprobante>113000</TotalComprobante>");
     });
 
+    it("should always include CodigoTipoMoneda, defaulting to CRC / 1", () => {
+      const xml = buildFacturaXml(SIMPLE_INVOICE);
+      expectContains(xml, "<CodigoTipoMoneda>");
+      expectContains(xml, "<CodigoMoneda>CRC</CodigoMoneda>");
+      expectContains(xml, "<TipoCambio>1</TipoCambio>");
+    });
+
     it("should include CodigoTipoMoneda for foreign currency", () => {
       const xml = buildFacturaXml(EXPORT_INVOICE);
       expectContains(xml, "<CodigoTipoMoneda>");
       expectContains(xml, "<CodigoMoneda>USD</CodigoMoneda>");
       expectContains(xml, "<TipoCambio>530.5</TipoCambio>");
+    });
+
+    it("should include MedioPago inside ResumenFactura with TipoMedioPago and TotalMedioPago", () => {
+      const xml = buildFacturaXml(SIMPLE_INVOICE);
+      expectContains(xml, "<MedioPago>");
+      expectContains(xml, "<TipoMedioPago>01</TipoMedioPago>");
+      expectContains(xml, "<TotalMedioPago>113000</TotalMedioPago>");
+      const resumenIndex = xml.indexOf("<ResumenFactura>");
+      const medioPagoIndex = xml.indexOf("<MedioPago>");
+      const resumenEndIndex = xml.indexOf("</ResumenFactura>");
+      expect(medioPagoIndex).toBeGreaterThan(resumenIndex);
+      expect(medioPagoIndex).toBeLessThan(resumenEndIndex);
     });
 
     it("should include TotalExonerado when present", () => {
@@ -248,7 +301,7 @@ describe("buildFacturaXml", () => {
       expectContains(xml, "<TotalExonerado>200000</TotalExonerado>");
     });
 
-    it("should not include TotalExonerado when zero", () => {
+    it("should not include TotalExonerado when absent", () => {
       const xml = buildFacturaXml(SIMPLE_INVOICE);
       expectNotContains(xml, "<TotalExonerado>");
       expectNotContains(xml, "<TotalServExonerado>");
@@ -266,10 +319,12 @@ describe("buildFacturaXml", () => {
       expectNotContains(xml, "<PlazoCredito>");
     });
 
-    it("should include InformacionReferencia when present", () => {
+    it("should include InformacionReferencia with TipoDocIR and FechaEmisionIR", () => {
       const xml = buildFacturaXml(REFERENCE_INVOICE);
       expectContains(xml, "<InformacionReferencia>");
-      expectContains(xml, "<TipoDoc>01</TipoDoc>");
+      expectContains(xml, "<TipoDocIR>01</TipoDocIR>");
+      expectNotContains(xml, "<TipoDoc>");
+      expectContains(xml, "<FechaEmisionIR>2025-07-27T10:30:00-06:00</FechaEmisionIR>");
       expectContains(xml, "<Codigo>01</Codigo>");
       expectContains(xml, "<Razon>Correccion del monto por error de digitacion</Razon>");
     });
@@ -289,12 +344,15 @@ describe("buildFacturaXml", () => {
       ["EXPORT_INVOICE", EXPORT_INVOICE],
       ["CREDIT_INVOICE", CREDIT_INVOICE],
       ["REFERENCE_INVOICE", REFERENCE_INVOICE],
-    ] as const)("%s should produce XML with declaration and root element", (_name, fixture) => {
+    ] as const)("%s should produce XML with v4.4 root structure", (_name, fixture) => {
       const xml = buildFacturaXml(fixture);
       expect(xml).toContain('<?xml version="1.0" encoding="utf-8"?>');
       expect(xml).toContain("<FacturaElectronica");
       expect(xml).toContain("</FacturaElectronica>");
       expect(xml).toContain(`<Clave>${fixture.clave}</Clave>`);
+      expect(xml).toContain("<ProveedorSistemas>3101234567</ProveedorSistemas>");
+      expect(xml).toContain("<CodigoActividadEmisor>620100</CodigoActividadEmisor>");
+      expect(xml).toContain("<CodigoTipoMoneda>");
     });
   });
 });

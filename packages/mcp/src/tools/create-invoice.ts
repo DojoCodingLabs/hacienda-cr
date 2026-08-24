@@ -32,12 +32,16 @@ import type { FacturaElectronica } from "@dojocoding/hacienda-shared";
 
 const ImpuestoInputSchema = z.object({
   codigo: z.string().describe('Tax type code (e.g. "01" for IVA)'),
-  codigoTarifa: z.string().optional().describe('IVA rate code (e.g. "08" for 13%)'),
+  codigoTarifaIVA: z.string().optional().describe('IVA rate code (e.g. "08" for 13%)'),
   tarifa: z.number().describe("Tax rate percentage (e.g. 13 for 13%)"),
 });
 
 const DescuentoInputSchema = z.object({
   montoDescuento: z.number().positive().describe("Discount amount"),
+  codigoDescuento: z
+    .string()
+    .default("01")
+    .describe('Discount code (v4.4 CodigoDescuento). Defaults to "01"'),
   naturalezaDescuento: z.string().describe("Reason for discount"),
 });
 
@@ -60,10 +64,19 @@ const IdentificacionInputSchema = z.object({
   numero: z.string().describe("ID number (digits only)"),
 });
 
+const UbicacionInputSchema = z.object({
+  provincia: z.string().describe("Province code (1-7)"),
+  canton: z.string().describe("Canton code (2 digits)"),
+  distrito: z.string().describe("District code (2 digits)"),
+  barrio: z.string().optional().describe("Barrio code (2 digits)"),
+  otrasSenas: z.string().describe("Address details (required in v4.4)"),
+});
+
 const EmisorInputSchema = z.object({
   nombre: z.string().describe("Issuer name (max 100 chars)"),
   identificacion: IdentificacionInputSchema.describe("Taxpayer identification"),
   nombreComercial: z.string().optional().describe("Commercial name"),
+  ubicacion: UbicacionInputSchema.describe("Issuer location (required in v4.4)"),
   correoElectronico: z.string().describe("Email address"),
 });
 
@@ -76,15 +89,23 @@ const ReceptorInputSchema = z.object({
 const CreateInvoiceInputSchema = z.object({
   emisor: EmisorInputSchema.describe("Invoice issuer (emisor)"),
   receptor: ReceptorInputSchema.describe("Invoice receiver (receptor)"),
-  codigoActividad: z.string().describe("CABYS activity code (6 digits)"),
+  proveedorSistemas: z
+    .string()
+    .optional()
+    .describe(
+      "Invoicing-system provider ID (ProveedorSistemas, v4.4). Defaults to the emisor's ID number",
+    ),
+  codigoActividadEmisor: z.string().describe("Issuer economic activity code (6 digits)"),
   condicionVenta: z
     .string()
     .default("01")
     .describe('Sale condition code: "01"=Cash, "02"=Credit, etc. Defaults to "01"'),
   medioPago: z
-    .array(z.string())
-    .default(["01"])
-    .describe('Payment methods: ["01"]=Cash, ["02"]=Card, etc. Defaults to ["01"]'),
+    .string()
+    .default("01")
+    .describe(
+      'Payment method: "01"=Cash, "02"=Card, "04"=Transfer, "06"=SINPE Movil. Defaults to "01"',
+    ),
   lineItems: z
     .array(LineItemInputSchema)
     .min(1)
@@ -109,7 +130,8 @@ export function registerCreateInvoiceTool(server: McpServer): void {
     {
       emisor: EmisorInputSchema,
       receptor: ReceptorInputSchema,
-      codigoActividad: CreateInvoiceInputSchema.shape.codigoActividad,
+      proveedorSistemas: CreateInvoiceInputSchema.shape.proveedorSistemas,
+      codigoActividadEmisor: CreateInvoiceInputSchema.shape.codigoActividadEmisor,
       condicionVenta: CreateInvoiceInputSchema.shape.condicionVenta,
       medioPago: CreateInvoiceInputSchema.shape.medioPago,
       lineItems: CreateInvoiceInputSchema.shape.lineItems,
@@ -127,7 +149,7 @@ export function registerCreateInvoiceTool(server: McpServer): void {
           precioUnitario: item.precioUnitario,
           esServicio: item.esServicio ?? false,
           impuesto: item.impuesto,
-          descuento: item.descuento,
+          descuento: item.descuento as LineItemInput["descuento"],
         }));
 
         const calculatedItems: CalculatedLineItem[] = lineItemInputs.map(calculateLineItemTotals);
@@ -169,7 +191,8 @@ export function registerCreateInvoiceTool(server: McpServer): void {
         // 7. Assemble the full factura input
         const factura: FacturaElectronica = {
           clave,
-          codigoActividad: args.codigoActividad,
+          proveedorSistemas: args.proveedorSistemas ?? args.emisor.identificacion.numero,
+          codigoActividadEmisor: args.codigoActividadEmisor,
           numeroConsecutivo,
           fechaEmision,
           emisor: {
@@ -182,6 +205,7 @@ export function registerCreateInvoiceTool(server: McpServer): void {
             ...(args.emisor.nombreComercial
               ? { nombreComercial: args.emisor.nombreComercial }
               : {}),
+            ubicacion: args.emisor.ubicacion,
             correoElectronico: args.emisor.correoElectronico,
           },
           receptor: {
@@ -201,7 +225,6 @@ export function registerCreateInvoiceTool(server: McpServer): void {
           },
           condicionVenta: args.condicionVenta as FacturaElectronica["condicionVenta"],
           ...(args.plazoCredito ? { plazoCredito: args.plazoCredito } : {}),
-          medioPago: args.medioPago as FacturaElectronica["medioPago"],
           detalleServicio,
           resumenFactura: {
             totalServGravados: summary.totalServGravados,
@@ -220,7 +243,16 @@ export function registerCreateInvoiceTool(server: McpServer): void {
             totalVenta: summary.totalVenta,
             totalDescuentos: summary.totalDescuentos,
             totalVentaNeta: summary.totalVentaNeta,
+            totalDesgloseImpuesto: summary.totalDesgloseImpuesto,
             totalImpuesto: summary.totalImpuesto,
+            medioPago: [
+              {
+                tipoMedioPago: args.medioPago as NonNullable<
+                  FacturaElectronica["resumenFactura"]["medioPago"]
+                >[0]["tipoMedioPago"],
+                totalMedioPago: summary.totalComprobante,
+              },
+            ],
             totalComprobante: summary.totalComprobante,
           },
         };

@@ -25,7 +25,7 @@ const EMISOR_DEFAULT = {
     provincia: "1",
     canton: "01",
     distrito: "01",
-    barrio: "01",
+    barrio: "Barrio El Carmen",
     otrasSenas: "100m norte del parque central",
   },
   telefono: {
@@ -50,13 +50,13 @@ const RECEPTOR_DEFAULT = {
 
 export const SIMPLE_INVOICE: FacturaElectronica = {
   clave: "50601072500031012345670010000101000000000119999999",
-  codigoActividad: "620100",
+  proveedorSistemas: "3101234567",
+  codigoActividadEmisor: "620100",
   numeroConsecutivo: "00100001010000000001",
   fechaEmision: "2025-07-27T10:30:00-06:00",
   emisor: EMISOR_DEFAULT,
   receptor: RECEPTOR_DEFAULT,
   condicionVenta: "01",
-  medioPago: ["01"],
   detalleServicio: [
     {
       numeroLinea: 1,
@@ -71,7 +71,7 @@ export const SIMPLE_INVOICE: FacturaElectronica = {
       impuesto: [
         {
           codigo: "01",
-          codigoTarifa: "08",
+          codigoTarifaIVA: "08",
           tarifa: 13,
           monto: 13000,
         },
@@ -91,6 +91,7 @@ export const SIMPLE_INVOICE: FacturaElectronica = {
     totalDescuentos: 0,
     totalVentaNeta: 100000,
     totalImpuesto: 13000,
+    medioPago: [{ tipoMedioPago: "01", totalMedioPago: 113000 }],
     totalComprobante: 113000,
   },
 };
@@ -101,13 +102,13 @@ export const SIMPLE_INVOICE: FacturaElectronica = {
 
 export const MULTI_ITEM_INVOICE: FacturaElectronica = {
   clave: "50601072500031012345670010000101000000000219999999",
-  codigoActividad: "620100",
+  proveedorSistemas: "3101234567",
+  codigoActividadEmisor: "620100",
   numeroConsecutivo: "00100001010000000002",
   fechaEmision: "2025-07-27T14:00:00-06:00",
   emisor: EMISOR_DEFAULT,
   receptor: RECEPTOR_DEFAULT,
   condicionVenta: "01",
-  medioPago: ["02"],
   detalleServicio: [
     {
       // Service at 13% IVA
@@ -123,7 +124,7 @@ export const MULTI_ITEM_INVOICE: FacturaElectronica = {
       impuesto: [
         {
           codigo: "01",
-          codigoTarifa: "08",
+          codigoTarifaIVA: "08",
           tarifa: 13,
           monto: 13000,
         },
@@ -146,7 +147,7 @@ export const MULTI_ITEM_INVOICE: FacturaElectronica = {
       impuesto: [
         {
           codigo: "01",
-          codigoTarifa: "04",
+          codigoTarifaIVA: "04",
           tarifa: 4,
           monto: 400,
         },
@@ -168,7 +169,7 @@ export const MULTI_ITEM_INVOICE: FacturaElectronica = {
       impuesto: [
         {
           codigo: "01",
-          codigoTarifa: "02",
+          codigoTarifaIVA: "02",
           tarifa: 1,
           monto: 150,
         },
@@ -188,6 +189,7 @@ export const MULTI_ITEM_INVOICE: FacturaElectronica = {
     totalDescuentos: 0,
     totalVentaNeta: 125000,
     totalImpuesto: 13550,
+    medioPago: [{ tipoMedioPago: "02", totalMedioPago: 138550 }],
     totalComprobante: 138550,
   },
 };
@@ -198,13 +200,13 @@ export const MULTI_ITEM_INVOICE: FacturaElectronica = {
 
 export const DISCOUNT_INVOICE: FacturaElectronica = {
   clave: "50601072500031012345670010000101000000000319999999",
-  codigoActividad: "620100",
+  proveedorSistemas: "3101234567",
+  codigoActividadEmisor: "620100",
   numeroConsecutivo: "00100001010000000003",
   fechaEmision: "2025-07-28T09:00:00-06:00",
   emisor: EMISOR_DEFAULT,
   receptor: RECEPTOR_DEFAULT,
   condicionVenta: "01",
-  medioPago: ["01"],
   detalleServicio: [
     {
       numeroLinea: 1,
@@ -217,6 +219,7 @@ export const DISCOUNT_INVOICE: FacturaElectronica = {
       descuento: [
         {
           montoDescuento: 5000,
+          codigoDescuento: "01",
           naturalezaDescuento: "Descuento por volumen (10%)",
         },
       ],
@@ -225,7 +228,7 @@ export const DISCOUNT_INVOICE: FacturaElectronica = {
       impuesto: [
         {
           codigo: "01",
-          codigoTarifa: "08",
+          codigoTarifaIVA: "08",
           tarifa: 13,
           monto: 5850,
         },
@@ -245,6 +248,7 @@ export const DISCOUNT_INVOICE: FacturaElectronica = {
     totalDescuentos: 5000,
     totalVentaNeta: 40000,
     totalImpuesto: 5850,
+    medioPago: [{ tipoMedioPago: "01", totalMedioPago: 45850 }],
     totalComprobante: 45850,
   },
 };
@@ -255,7 +259,8 @@ export const DISCOUNT_INVOICE: FacturaElectronica = {
 
 export const EXONERATED_INVOICE: FacturaElectronica = {
   clave: "50601072500031012345670010000101000000000419999999",
-  codigoActividad: "620100",
+  proveedorSistemas: "3101234567",
+  codigoActividadEmisor: "620100",
   numeroConsecutivo: "00100001010000000004",
   fechaEmision: "2025-07-28T11:00:00-06:00",
   emisor: EMISOR_DEFAULT,
@@ -268,7 +273,6 @@ export const EXONERATED_INVOICE: FacturaElectronica = {
     correoElectronico: "contabilidad@fundacion.cr",
   },
   condicionVenta: "01",
-  medioPago: ["04"],
   detalleServicio: [
     {
       numeroLinea: 1,
@@ -283,15 +287,16 @@ export const EXONERATED_INVOICE: FacturaElectronica = {
       impuesto: [
         {
           codigo: "01",
-          codigoTarifa: "08",
+          codigoTarifaIVA: "08",
           tarifa: 13,
           monto: 26000,
           exoneracion: {
             tipoDocumento: "03",
             numeroDocumento: "AL-001-2025",
-            nombreInstitucion: "Ministerio de Educacion",
+            nombreInstitucion: "99",
+            nombreInstitucionOtros: "Ministerio de Educacion Publica",
             fechaEmision: "2025-01-15T00:00:00-06:00",
-            porcentajeExoneracion: 100,
+            tarifaExonerada: 13,
             montoExoneracion: 26000,
           },
         },
@@ -313,6 +318,7 @@ export const EXONERATED_INVOICE: FacturaElectronica = {
     totalDescuentos: 0,
     totalVentaNeta: 200000,
     totalImpuesto: 0,
+    medioPago: [{ tipoMedioPago: "04", totalMedioPago: 200000 }],
     totalComprobante: 200000,
   },
 };
@@ -323,17 +329,20 @@ export const EXONERATED_INVOICE: FacturaElectronica = {
 
 export const EXPORT_INVOICE: FacturaElectronica = {
   clave: "50601072500031012345670010000101000000000519999999",
-  codigoActividad: "620100",
+  proveedorSistemas: "3101234567",
+  codigoActividadEmisor: "620100",
   numeroConsecutivo: "00100001010000000005",
   fechaEmision: "2025-07-29T08:00:00-06:00",
   emisor: EMISOR_DEFAULT,
   receptor: {
     nombre: "Acme Corp USA",
-    identificacionExtranjero: "US-EIN-12-3456789",
+    identificacion: {
+      tipo: "05" as const,
+      numero: "US-EIN-12-3456789",
+    },
     correoElectronico: "ap@acmecorp.com",
   },
   condicionVenta: "01",
-  medioPago: ["04"],
   detalleServicio: [
     {
       numeroLinea: 1,
@@ -344,6 +353,16 @@ export const EXPORT_INVOICE: FacturaElectronica = {
       precioUnitario: 75,
       montoTotal: 3000,
       subTotal: 3000,
+      baseImponible: 3000,
+      impuesto: [
+        {
+          codigo: "01",
+          codigoTarifaIVA: "01",
+          tarifa: 0,
+          monto: 0,
+        },
+      ],
+      impuestoNeto: 0,
       montoTotalLinea: 3000,
     },
   ],
@@ -362,6 +381,7 @@ export const EXPORT_INVOICE: FacturaElectronica = {
     totalDescuentos: 0,
     totalVentaNeta: 3000,
     totalImpuesto: 0,
+    medioPago: [{ tipoMedioPago: "04", totalMedioPago: 3000 }],
     totalComprobante: 3000,
   },
 };
@@ -372,14 +392,14 @@ export const EXPORT_INVOICE: FacturaElectronica = {
 
 export const CREDIT_INVOICE: FacturaElectronica = {
   clave: "50601072500031012345670010000101000000000619999999",
-  codigoActividad: "620100",
+  proveedorSistemas: "3101234567",
+  codigoActividadEmisor: "620100",
   numeroConsecutivo: "00100001010000000006",
   fechaEmision: "2025-07-30T16:00:00-06:00",
   emisor: EMISOR_DEFAULT,
   receptor: RECEPTOR_DEFAULT,
   condicionVenta: "02",
   plazoCredito: "30",
-  medioPago: ["04"],
   detalleServicio: [
     {
       numeroLinea: 1,
@@ -394,7 +414,7 @@ export const CREDIT_INVOICE: FacturaElectronica = {
       impuesto: [
         {
           codigo: "01",
-          codigoTarifa: "08",
+          codigoTarifaIVA: "08",
           tarifa: 13,
           monto: 65000,
         },
@@ -414,6 +434,7 @@ export const CREDIT_INVOICE: FacturaElectronica = {
     totalDescuentos: 0,
     totalVentaNeta: 500000,
     totalImpuesto: 65000,
+    medioPago: [{ tipoMedioPago: "04", totalMedioPago: 565000 }],
     totalComprobante: 565000,
   },
 };
@@ -424,13 +445,13 @@ export const CREDIT_INVOICE: FacturaElectronica = {
 
 export const REFERENCE_INVOICE: FacturaElectronica = {
   clave: "50601072500031012345670010000101000000000719999999",
-  codigoActividad: "620100",
+  proveedorSistemas: "3101234567",
+  codigoActividadEmisor: "620100",
   numeroConsecutivo: "00100001010000000007",
   fechaEmision: "2025-08-01T10:00:00-06:00",
   emisor: EMISOR_DEFAULT,
   receptor: RECEPTOR_DEFAULT,
   condicionVenta: "01",
-  medioPago: ["01"],
   detalleServicio: [
     {
       numeroLinea: 1,
@@ -445,7 +466,7 @@ export const REFERENCE_INVOICE: FacturaElectronica = {
       impuesto: [
         {
           codigo: "01",
-          codigoTarifa: "08",
+          codigoTarifaIVA: "08",
           tarifa: 13,
           monto: 15600,
         },
@@ -465,6 +486,7 @@ export const REFERENCE_INVOICE: FacturaElectronica = {
     totalDescuentos: 0,
     totalVentaNeta: 120000,
     totalImpuesto: 15600,
+    medioPago: [{ tipoMedioPago: "01", totalMedioPago: 135600 }],
     totalComprobante: 135600,
   },
   informacionReferencia: [

@@ -97,8 +97,6 @@ const TAX_REFERENCE = {
       description: "Square meters",
     },
     { code: UnitOfMeasure.METROS_CUBICOS, name: "Metros cubicos", description: "Cubic meters" },
-    { code: UnitOfMeasure.CAJAS, name: "Cajas", description: "Boxes" },
-    { code: UnitOfMeasure.PAQUETES, name: "Paquetes", description: "Packages" },
     { code: UnitOfMeasure.GALONES, name: "Galones", description: "Gallons" },
     { code: UnitOfMeasure.OTROS, name: "Otros", description: "Other (specify)" },
   ],

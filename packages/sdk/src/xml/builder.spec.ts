@@ -10,21 +10,21 @@ import { buildXml, getNamespaceUri, getSchemaFragment } from "./builder.js";
 // ---------------------------------------------------------------------------
 
 describe("getNamespaceUri", () => {
-  it("should build namespace URI for FacturaElectronica", () => {
-    expect(getNamespaceUri("FacturaElectronica")).toBe(
-      "https://cdn.comprobanteselectronicos.go.cr/xml-schemas/v4.4/FacturaElectronica",
+  it("should build namespace URI for the facturaElectronica fragment", () => {
+    expect(getNamespaceUri("facturaElectronica")).toBe(
+      "https://cdn.comprobanteselectronicos.go.cr/xml-schemas/v4.4/facturaElectronica",
     );
   });
 
-  it("should build namespace URI for NotaCreditoElectronica", () => {
-    expect(getNamespaceUri("NotaCreditoElectronica")).toBe(
-      "https://cdn.comprobanteselectronicos.go.cr/xml-schemas/v4.4/NotaCreditoElectronica",
+  it("should build namespace URI for the notaCreditoElectronica fragment", () => {
+    expect(getNamespaceUri("notaCreditoElectronica")).toBe(
+      "https://cdn.comprobanteselectronicos.go.cr/xml-schemas/v4.4/notaCreditoElectronica",
     );
   });
 
-  it("should build namespace URI for MensajeReceptor", () => {
-    expect(getNamespaceUri("MensajeReceptor")).toBe(
-      "https://cdn.comprobanteselectronicos.go.cr/xml-schemas/v4.4/MensajeReceptor",
+  it("should build namespace URI for the mensajeReceptor fragment", () => {
+    expect(getNamespaceUri("mensajeReceptor")).toBe(
+      "https://cdn.comprobanteselectronicos.go.cr/xml-schemas/v4.4/mensajeReceptor",
     );
   });
 });
@@ -34,28 +34,28 @@ describe("getNamespaceUri", () => {
 // ---------------------------------------------------------------------------
 
 describe("getSchemaFragment", () => {
-  it("should return known schema fragment for FacturaElectronica", () => {
-    expect(getSchemaFragment("FacturaElectronica")).toBe("FacturaElectronica");
+  it("should return the lowerCamelCase fragment for FacturaElectronica (v4.4)", () => {
+    expect(getSchemaFragment("FacturaElectronica")).toBe("facturaElectronica");
   });
 
   it("should return the root name itself for unknown types", () => {
     expect(getSchemaFragment("CustomDocument")).toBe("CustomDocument");
   });
 
-  it("should map all 7 document types + MensajeReceptor", () => {
-    const knownTypes = [
-      "FacturaElectronica",
-      "NotaCreditoElectronica",
-      "NotaDebitoElectronica",
-      "TiqueteElectronico",
-      "FacturaElectronicaCompra",
-      "FacturaElectronicaExportacion",
-      "ReciboElectronicoPago",
-      "MensajeReceptor",
-    ];
+  it("should map all 7 document types + MensajeReceptor to lowerCamelCase fragments", () => {
+    const expectedFragments: Record<string, string> = {
+      FacturaElectronica: "facturaElectronica",
+      NotaCreditoElectronica: "notaCreditoElectronica",
+      NotaDebitoElectronica: "notaDebitoElectronica",
+      TiqueteElectronico: "tiqueteElectronico",
+      FacturaElectronicaCompra: "facturaElectronicaCompra",
+      FacturaElectronicaExportacion: "facturaElectronicaExportacion",
+      ReciboElectronicoPago: "reciboElectronicoPago",
+      MensajeReceptor: "mensajeReceptor",
+    };
 
-    for (const type of knownTypes) {
-      expect(getSchemaFragment(type)).toBe(type);
+    for (const [rootName, fragment] of Object.entries(expectedFragments)) {
+      expect(getSchemaFragment(rootName)).toBe(fragment);
     }
   });
 });
@@ -70,10 +70,10 @@ describe("buildXml", () => {
     expect(xml).toContain('<?xml version="1.0" encoding="utf-8"?>');
   });
 
-  it("should include the correct namespace for FacturaElectronica", () => {
+  it("should include the correct lowerCamelCase namespace for FacturaElectronica", () => {
     const xml = buildXml("FacturaElectronica", { Clave: "test" });
     expect(xml).toContain(
-      'xmlns="https://cdn.comprobanteselectronicos.go.cr/xml-schemas/v4.4/FacturaElectronica"',
+      'xmlns="https://cdn.comprobanteselectronicos.go.cr/xml-schemas/v4.4/facturaElectronica"',
     );
   });
 
@@ -85,7 +85,10 @@ describe("buildXml", () => {
   it("should include xsi:schemaLocation by default", () => {
     const xml = buildXml("FacturaElectronica", { Clave: "test" });
     expect(xml).toContain("xsi:schemaLocation");
-    expect(xml).toContain("FacturaElectronica_V.4.4.xsd");
+    // v4.4: schemaLocation pairs the namespace with "<RootName>_V4.4.xsd"
+    expect(xml).toContain(
+      'xsi:schemaLocation="https://cdn.comprobanteselectronicos.go.cr/xml-schemas/v4.4/facturaElectronica FacturaElectronica_V4.4.xsd"',
+    );
   });
 
   it("should omit xsi:schemaLocation when configured", () => {
@@ -148,7 +151,7 @@ describe("buildXml", () => {
   it("should use correct namespace for different document types", () => {
     const xml = buildXml("NotaCreditoElectronica", { Clave: "test" });
     expect(xml).toContain(
-      'xmlns="https://cdn.comprobanteselectronicos.go.cr/xml-schemas/v4.4/NotaCreditoElectronica"',
+      'xmlns="https://cdn.comprobanteselectronicos.go.cr/xml-schemas/v4.4/notaCreditoElectronica"',
     );
     expect(xml).toContain("<NotaCreditoElectronica");
     expect(xml).toContain("</NotaCreditoElectronica>");

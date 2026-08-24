@@ -46,6 +46,8 @@ export {
   CodigoTipoMonedaSchema,
   InformacionReferenciaSchema,
   OtroCargoSchema,
+  MedioPagoSchema,
+  TotalDesgloseImpuestoSchema,
   ResumenFacturaSchema,
   OtroContenidoSchema,
   FacturaElectronicaSchema,

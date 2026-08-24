@@ -13,11 +13,21 @@ import {
   IdentificationType,
   IDENTIFICATION_LENGTHS,
   SaleCondition,
+  REP_SALE_CONDITIONS,
   PaymentMethod,
   ProvinceCode,
   PROVINCE_NAMES,
   XADES_POLICY_HASH,
   CurrencyCode,
+  CURRENCY_CODES,
+  ExonerationType,
+  UnitOfMeasure,
+  UNITS_OF_MEASURE,
+  REFERENCE_DOC_TYPES,
+  REFERENCE_CODES,
+  DISCOUNT_CODES,
+  OTHER_CHARGE_TYPES,
+  EXONERATION_INSTITUTIONS,
   COUNTRY_CODE,
   SituationCode,
   MensajeReceptorCode,
@@ -95,6 +105,12 @@ describe("@dojocoding/hacienda-shared", () => {
       expect(IvaRateCode.GENERAL_13).toBe("08");
     });
 
+    it("should define the new v4.4 IVA rate codes", () => {
+      expect(IvaRateCode.REDUCIDA_0_5).toBe("09");
+      expect(IvaRateCode.TARIFA_EXENTA).toBe("10");
+      expect(IvaRateCode.CERO_SIN_CREDITO).toBe("11");
+    });
+
     it("should map IVA rates to percentages", () => {
       expect(IVA_RATE_PERCENTAGES["01"]).toBe(0);
       expect(IVA_RATE_PERCENTAGES["02"]).toBe(1);
@@ -102,22 +118,61 @@ describe("@dojocoding/hacienda-shared", () => {
       expect(IVA_RATE_PERCENTAGES["04"]).toBe(4);
       expect(IVA_RATE_PERCENTAGES["07"]).toBe(8);
       expect(IVA_RATE_PERCENTAGES["08"]).toBe(13);
+      expect(IVA_RATE_PERCENTAGES["09"]).toBe(0.5);
+      expect(IVA_RATE_PERCENTAGES["10"]).toBe(0);
+      expect(IVA_RATE_PERCENTAGES["11"]).toBe(0);
+    });
+
+    it("should define the new v4.4 exoneration types", () => {
+      expect(ExonerationType.ZONA_FRANCA).toBe("08");
+      expect(ExonerationType.SERVICIOS_COMPLEMENTARIOS_EXPORTACION).toBe("09");
+      expect(ExonerationType.CORPORACIONES_MUNICIPALES).toBe("10");
+      expect(ExonerationType.DGH_IMPUESTO_LOCAL_CONCRETA).toBe("11");
+      expect(ExonerationType.EXONERACION_12).toBe("12");
+      expect(ExonerationType.OTROS).toBe("99");
+    });
+  });
+
+  describe("Units of measure", () => {
+    it("should vendor all 101 official v4.4 unit codes", () => {
+      expect(UNITS_OF_MEASURE).toHaveLength(101);
+    });
+
+    it("should include common units with official casing", () => {
+      expect(UNITS_OF_MEASURE).toContain("Sp");
+      expect(UNITS_OF_MEASURE).toContain("Unid");
+      expect(UNITS_OF_MEASURE).toContain("Kg");
+      expect(UNITS_OF_MEASURE).toContain("mL");
+      expect(UNITS_OF_MEASURE).not.toContain("kg");
+    });
+
+    it("should provide named accessors that exist in the catalog", () => {
+      expect(UnitOfMeasure.SERVICIOS_PROFESIONALES).toBe("Sp");
+      expect(UnitOfMeasure.UNIDAD).toBe("Unid");
+      expect(UnitOfMeasure.KILOGRAMOS).toBe("Kg");
+      for (const value of Object.values(UnitOfMeasure)) {
+        expect(UNITS_OF_MEASURE).toContain(value);
+      }
     });
   });
 
   describe("Identification types", () => {
-    it("should define all 4 identification types", () => {
+    it("should define all 6 identification types (05/06 new in v4.4)", () => {
       expect(IdentificationType.CEDULA_FISICA).toBe("01");
       expect(IdentificationType.CEDULA_JURIDICA).toBe("02");
       expect(IdentificationType.DIMEX).toBe("03");
       expect(IdentificationType.NITE).toBe("04");
+      expect(IdentificationType.EXTRANJERO_NO_DOMICILIADO).toBe("05");
+      expect(IdentificationType.NO_CONTRIBUYENTE).toBe("06");
     });
 
-    it("should define expected lengths", () => {
+    it("should define expected lengths for domestic registry types only", () => {
       expect(IDENTIFICATION_LENGTHS["01"]).toEqual([9]);
       expect(IDENTIFICATION_LENGTHS["02"]).toEqual([10]);
       expect(IDENTIFICATION_LENGTHS["03"]).toEqual([11, 12]);
       expect(IDENTIFICATION_LENGTHS["04"]).toEqual([10]);
+      expect(IDENTIFICATION_LENGTHS["05"]).toBeUndefined();
+      expect(IDENTIFICATION_LENGTHS["06"]).toBeUndefined();
     });
   });
 
@@ -125,12 +180,67 @@ describe("@dojocoding/hacienda-shared", () => {
     it("should define sale conditions", () => {
       expect(SaleCondition.CONTADO).toBe("01");
       expect(SaleCondition.CREDITO).toBe("02");
+      expect(SaleCondition.VENTA_CREDITO_IVA_90_DIAS).toBe("10");
+      expect(SaleCondition.VENTA_MERCANCIA_NO_NACIONALIZADA).toBe("12");
+      expect(SaleCondition.VENTA_BIENES_USADOS_NO_CONTRIBUYENTE).toBe("13");
+      expect(SaleCondition.ARRENDAMIENTO_OPERATIVO).toBe("14");
+      expect(SaleCondition.ARRENDAMIENTO_FINANCIERO).toBe("15");
+      expect(SaleCondition.OTROS).toBe("99");
+    });
+
+    it("should define the REP-only payment sale conditions (09 and 11)", () => {
+      expect(SaleCondition.PAGO_SERVICIO_ESTADO).toBe("09");
+      expect(SaleCondition.PAGO_VENTA_CREDITO_IVA_90_DIAS).toBe("11");
+      expect(REP_SALE_CONDITIONS).toEqual(["09", "11"]);
     });
 
     it("should define payment methods", () => {
       expect(PaymentMethod.EFECTIVO).toBe("01");
       expect(PaymentMethod.TARJETA).toBe("02");
       expect(PaymentMethod.TRANSFERENCIA).toBe("04");
+    });
+
+    it("should define the new v4.4 payment methods", () => {
+      expect(PaymentMethod.SINPE_MOVIL).toBe("06");
+      expect(PaymentMethod.PLATAFORMA_DIGITAL).toBe("07");
+      expect(PaymentMethod.OTROS).toBe("99");
+    });
+  });
+
+  describe("Document reference catalogs (v4.4)", () => {
+    it("should define referenced document types 01-18 plus 99", () => {
+      expect(REFERENCE_DOC_TYPES).toHaveLength(19);
+      expect(REFERENCE_DOC_TYPES).toContain("01");
+      expect(REFERENCE_DOC_TYPES).toContain("18");
+      expect(REFERENCE_DOC_TYPES).toContain("99");
+    });
+
+    it("should define reference codes without 03", () => {
+      expect(REFERENCE_CODES).toContain("01");
+      expect(REFERENCE_CODES).toContain("12");
+      expect(REFERENCE_CODES).toContain("99");
+      expect(REFERENCE_CODES).not.toContain("03");
+    });
+
+    it("should define discount codes 01-09 plus 99", () => {
+      expect(DISCOUNT_CODES).toHaveLength(10);
+      expect(DISCOUNT_CODES).toContain("01");
+      expect(DISCOUNT_CODES).toContain("09");
+      expect(DISCOUNT_CODES).toContain("99");
+    });
+
+    it("should define other-charge types 01-10 plus 99", () => {
+      expect(OTHER_CHARGE_TYPES).toHaveLength(11);
+      expect(OTHER_CHARGE_TYPES).toContain("01");
+      expect(OTHER_CHARGE_TYPES).toContain("10");
+      expect(OTHER_CHARGE_TYPES).toContain("99");
+    });
+
+    it("should define exoneration institutions 01-12 plus 99", () => {
+      expect(EXONERATION_INSTITUTIONS).toHaveLength(13);
+      expect(EXONERATION_INSTITUTIONS).toContain("01");
+      expect(EXONERATION_INSTITUTIONS).toContain("12");
+      expect(EXONERATION_INSTITUTIONS).toContain("99");
     });
   });
 
@@ -158,6 +268,14 @@ describe("@dojocoding/hacienda-shared", () => {
       expect(CurrencyCode.CRC).toBe("CRC");
       expect(CurrencyCode.USD).toBe("USD");
       expect(CurrencyCode.EUR).toBe("EUR");
+    });
+
+    it("should vendor the full ISO 4217 catalog from the v4.4 XSD", () => {
+      expect(CURRENCY_CODES).toHaveLength(168);
+      expect(CURRENCY_CODES).toContain("CRC");
+      expect(CURRENCY_CODES).toContain("USD");
+      expect(CURRENCY_CODES).toContain("JPY");
+      expect(CURRENCY_CODES).not.toContain("ZZZ");
     });
   });
 

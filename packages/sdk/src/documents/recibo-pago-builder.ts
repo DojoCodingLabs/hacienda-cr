@@ -11,7 +11,7 @@
 
 import type { ReciboElectronicoPago } from "@dojocoding/hacienda-shared";
 import { buildXml } from "../xml/builder.js";
-import { buildStandardDocumentBody } from "./shared-xml-helpers.js";
+import { buildStandardDocumentBody, DOCUMENT_VARIANTS } from "./shared-xml-helpers.js";
 
 // ---------------------------------------------------------------------------
 // Public API
@@ -39,6 +39,6 @@ import { buildStandardDocumentBody } from "./shared-xml-helpers.js";
  * ```
  */
 export function buildReciboPagoXml(input: ReciboElectronicoPago): string {
-  const data = buildStandardDocumentBody(input);
+  const data = buildStandardDocumentBody(input, DOCUMENT_VARIANTS.ReciboElectronicoPago);
   return buildXml("ReciboElectronicoPago", data);
 }

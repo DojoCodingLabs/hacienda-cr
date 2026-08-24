@@ -28,7 +28,23 @@ export {
   IVA_RATE_PERCENTAGES,
   ExonerationType,
   UnitOfMeasure,
+  UNITS_OF_MEASURE,
 } from "./tax-codes.js";
+
+export {
+  REFERENCE_DOC_TYPES,
+  REFERENCE_CODES,
+  DISCOUNT_CODES,
+  OTHER_CHARGE_TYPES,
+  EXONERATION_INSTITUTIONS,
+} from "./document-references.js";
+export type {
+  ReferenceDocType,
+  ReferenceCode,
+  DiscountCode,
+  OtherChargeType,
+  ExonerationInstitution,
+} from "./document-references.js";
 
 export {
   IdentificationType,
@@ -36,7 +52,7 @@ export {
   IDENTIFICATION_LENGTHS,
 } from "./identification-types.js";
 
-export { SaleCondition, SALE_CONDITION_NAMES } from "./sale-conditions.js";
+export { SaleCondition, SALE_CONDITION_NAMES, REP_SALE_CONDITIONS } from "./sale-conditions.js";
 
 export { PaymentMethod, PAYMENT_METHOD_NAMES } from "./payment-methods.js";
 
@@ -51,4 +67,4 @@ export {
   XADES_DIGEST_ALGORITHM,
 } from "./xades-policy.js";
 
-export { CurrencyCode } from "./currency-codes.js";
+export { CurrencyCode, CURRENCY_CODES } from "./currency-codes.js";

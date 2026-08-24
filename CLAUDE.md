@@ -90,6 +90,8 @@ All XML signed with XAdES-EPES v1.3.2+ using taxpayer .p12 certificate (RSA 2048
 
 Config: `~/.hacienda-cr/config.toml`. Secrets always via env vars (`HACIENDA_PASSWORD`, `HACIENDA_P12_PIN`, `HACIENDA_P12_PATH`), never in config files.
 
+Production API users and the .p12 llave criptográfica are issued from the TRIBU-CR OVi portal (Tico Factura → Crear usuario → "No, voy a utilizar otro programa"), which replaced ATV in October 2025. Llaves issued since 2026-08-01 use 14-character complex PINs.
+
 ## Conventions
 
 - **Files:** kebab-case (`token-manager.ts`)
@@ -128,5 +130,6 @@ Config: `~/.hacienda-cr/config.toml`. Secrets always via env vars (`HACIENDA_PAS
 ## Implementation Notes
 
 - Token lifecycle: access token ~5min (cache in memory, refresh 30s before expiry), refresh token ~10hrs (persist to disk)
-- All XML must validate against vendored v4.4 XSD schemas before submission
+- All XML must validate against the official v4.4 XSD schemas vendored in `packages/sdk/schemas/2024/v4.4/` — the `xsd-conformance.integration.spec.ts` suite enforces this via `xmllint` (skips when xmllint is unavailable)
+- The April 22, 2026 revision of the v4.4 schemas is mandatory 2026-11-01 (alphanumeric clave/cédulas, reference codes 13-17/19-20) — see `docs/specs/v4.4-compliance.md`
 - Critical path: monorepo setup → types/clave → XML builder (Factura) → signing → API submission → end-to-end test

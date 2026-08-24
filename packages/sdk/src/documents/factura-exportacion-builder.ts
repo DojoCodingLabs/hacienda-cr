@@ -11,7 +11,7 @@
 
 import type { FacturaElectronicaExportacion } from "@dojocoding/hacienda-shared";
 import { buildXml } from "../xml/builder.js";
-import { buildStandardDocumentBody } from "./shared-xml-helpers.js";
+import { buildStandardDocumentBody, DOCUMENT_VARIANTS } from "./shared-xml-helpers.js";
 
 // ---------------------------------------------------------------------------
 // Public API
@@ -40,6 +40,6 @@ import { buildStandardDocumentBody } from "./shared-xml-helpers.js";
  * ```
  */
 export function buildFacturaExportacionXml(input: FacturaElectronicaExportacion): string {
-  const data = buildStandardDocumentBody(input);
+  const data = buildStandardDocumentBody(input, DOCUMENT_VARIANTS.FacturaElectronicaExportacion);
   return buildXml("FacturaElectronicaExportacion", data);
 }
