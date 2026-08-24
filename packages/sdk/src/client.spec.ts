@@ -473,7 +473,7 @@ describe("HaciendaClient", () => {
         taxpayerId: "3101234567",
         branch: "002",
         pos: "00003",
-        documentType: DocumentType.NOTA_DEBITO,
+        documentType: DocumentType.NOTA_DEBITO_ELECTRONICA,
         sequence: 100,
         situation: Situation.CONTINGENCIA,
         securityCode: "11223344",

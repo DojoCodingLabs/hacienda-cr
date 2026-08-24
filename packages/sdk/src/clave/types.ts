@@ -7,46 +7,28 @@
  * [country:3][date:6][taxpayer:12][branch:3][pos:5][docType:2][sequence:10][situation:1][security:8]
  */
 
+import { DocumentTypeCode, SituationCode } from "@dojocoding/hacienda-shared";
+
 /** Country code — always 506 for Costa Rica */
 export const COUNTRY_CODE = "506" as const;
 
 /**
- * Document type codes as defined by Hacienda.
+ * Document type codes as defined by the Hacienda v4.4 specification.
  *
- * Each electronic document type has a 2-digit code used in the clave numerica.
+ * Aliased from `@dojocoding/hacienda-shared` so the clave layer and the
+ * document builders always agree on code meanings (05 = Factura de Compra,
+ * 06 = Factura de Exportacion, 07 = Recibo Electronico de Pago, ...).
  */
-export enum DocumentType {
-  /** Factura Electronica */
-  FACTURA_ELECTRONICA = "01",
-  /** Nota de Debito Electronica */
-  NOTA_DEBITO = "02",
-  /** Nota de Credito Electronica */
-  NOTA_CREDITO = "03",
-  /** Tiquete Electronico */
-  TIQUETE_ELECTRONICO = "04",
-  /** Confirmacion de Aceptacion del Comprobante Electronico */
-  CONFIRMACION_ACEPTACION = "05",
-  /** Confirmacion de Aceptacion Parcial del Comprobante Electronico */
-  CONFIRMACION_ACEPTACION_PARCIAL = "06",
-  /** Confirmacion de Rechazo del Comprobante Electronico */
-  CONFIRMACION_RECHAZO = "07",
-  /** Factura Electronica de Compra */
-  FACTURA_COMPRA = "08",
-  /** Factura Electronica de Exportacion */
-  FACTURA_EXPORTACION = "09",
-}
+export const DocumentType = DocumentTypeCode;
+export type DocumentType = DocumentTypeCode;
 
 /**
  * Situation codes indicating the circumstances of document emission.
+ *
+ * Aliased from `@dojocoding/hacienda-shared`.
  */
-export enum Situation {
-  /** Normal — standard online submission */
-  NORMAL = "1",
-  /** Contingencia — system contingency mode */
-  CONTINGENCIA = "2",
-  /** Sin Internet — offline, no internet connection */
-  SIN_INTERNET = "3",
-}
+export const Situation = SituationCode;
+export type Situation = SituationCode;
 
 /**
  * Input parameters for building a clave numerica.
