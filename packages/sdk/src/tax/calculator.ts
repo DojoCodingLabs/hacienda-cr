@@ -234,6 +234,13 @@ export function calculateLineItemTotals(item: LineItemInput): CalculatedLineItem
     // Handle exoneration: the exonerated amount is the portion of the
     // taxable base covered by the exonerated tariff points.
     if (tax.exoneracion) {
+      if (typeof tax.exoneracion.tarifaExonerada !== "number") {
+        throw new TypeError(
+          "exoneracion.tarifaExonerada must be a number (v4.4). " +
+            "The v4.3 field porcentajeExoneracion was replaced by tarifaExonerada " +
+            "(exonerated tariff percentage points, 0..tarifa).",
+        );
+      }
       const exonerationPortion = round5((subTotal * tax.exoneracion.tarifaExonerada) / 100);
       taxAmount = round5(Math.max(0, fullTaxAmount - exonerationPortion));
 
@@ -454,7 +461,7 @@ export function calculateInvoiceSummary(
   const desglose = new Map<string, TotalDesgloseImpuesto>();
   for (const item of items) {
     for (const tax of item.impuesto) {
-      const netAmount = round5(tax.monto - (tax.exoneracion?.montoExoneracion ?? 0));
+      const netAmount = round5(Math.max(0, tax.monto - (tax.exoneracion?.montoExoneracion ?? 0)));
       const key = `${tax.codigo}|${tax.codigoTarifaIVA ?? ""}`;
       const existing = desglose.get(key);
       if (existing) {

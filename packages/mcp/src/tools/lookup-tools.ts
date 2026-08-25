@@ -98,10 +98,10 @@ export function registerDraftInvoiceTool(server: McpServer): void {
         .describe('Receiver ID type (optional): "01"=Fisica, "02"=Juridica, "03"=DIMEX, "04"=NITE'),
       receptorIdNumero: z.string().optional().describe("Receiver identification number (optional)"),
       receptorEmail: z.string().optional().describe("Receiver email address (optional)"),
-      codigoActividad: z
+      codigoActividadEmisor: z
         .string()
         .default("620100")
-        .describe("CABYS activity code (6 digits). Defaults to 620100 (IT services)"),
+        .describe("Issuer economic activity code (6 digits). Defaults to 620100 (IT services)"),
       description: z
         .string()
         .default("Servicio profesional")
@@ -126,15 +126,9 @@ export function registerDraftInvoiceTool(server: McpServer): void {
         esServicio: true,
       };
 
-      if (args.includeIva) {
-        lineItem.impuesto = [
-          {
-            codigo: "01",
-            codigoTarifa: "08",
-            tarifa: 13,
-          },
-        ];
-      }
+      lineItem.impuesto = args.includeIva
+        ? [{ codigo: "01", codigoTarifaIVA: "08", tarifa: 13 }]
+        : [{ codigo: "01", codigoTarifaIVA: "01", tarifa: 0 }];
 
       const draft: Record<string, unknown> = {
         emisor: {
@@ -142,6 +136,12 @@ export function registerDraftInvoiceTool(server: McpServer): void {
           identificacion: {
             tipo: args.emisorIdTipo,
             numero: args.emisorIdNumero,
+          },
+          ubicacion: {
+            provincia: "1",
+            canton: "01",
+            distrito: "01",
+            otrasSenas: "<<COMPLETE_ISSUER_ADDRESS>>",
           },
           correoElectronico: args.emisorEmail,
         },
@@ -157,9 +157,10 @@ export function registerDraftInvoiceTool(server: McpServer): void {
             : {}),
           ...(args.receptorEmail ? { correoElectronico: args.receptorEmail } : {}),
         },
-        codigoActividad: args.codigoActividad,
+        proveedorSistemas: args.emisorIdNumero,
+        codigoActividadEmisor: args.codigoActividadEmisor,
         condicionVenta: "01",
-        medioPago: ["01"],
+        medioPago: "01",
         lineItems: [lineItem],
       };
 
@@ -175,7 +176,7 @@ export function registerDraftInvoiceTool(server: McpServer): void {
               ``,
               `Emisor: ${args.emisorNombre} (${idTypeName}: ${args.emisorIdNumero})`,
               `Receptor: ${args.receptorNombre}`,
-              `Activity: ${args.codigoActividad}`,
+              `Activity: ${args.codigoActividadEmisor}`,
               `Sale Condition: Contado (cash)`,
               `Payment: Efectivo (cash)`,
               args.includeIva ? `IVA: 13% included` : `IVA: not included`,

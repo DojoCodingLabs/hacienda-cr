@@ -234,11 +234,11 @@ const SaleConditionValues = [
 
 /** Schema for a full Factura Electronica input, per the v4.4 XSD. */
 export const FacturaElectronicaSchema = z.object({
-  /** 50-character clave (alphanumeric since the April 2026 revision). */
+  /** 50-character clave (taxpayer segment alphanumeric since April 2026). */
   clave: z
     .string()
     .length(50)
-    .regex(/^[A-Za-z0-9]{50}$/),
+    .regex(/^\d{9}[A-Za-z0-9]{12}\d{29}$/),
 
   /** Invoicing-system provider identification (ProveedorSistemas). */
   proveedorSistemas: z.string().min(1).max(20),

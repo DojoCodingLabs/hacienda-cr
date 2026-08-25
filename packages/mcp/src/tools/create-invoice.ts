@@ -24,6 +24,7 @@ import {
   DEFAULT_POS,
 } from "@dojocoding/hacienda-sdk";
 import type { LineItemInput, CalculatedLineItem } from "@dojocoding/hacienda-sdk";
+import { UNITS_OF_MEASURE } from "@dojocoding/hacienda-shared";
 import type { FacturaElectronica } from "@dojocoding/hacienda-shared";
 
 // ---------------------------------------------------------------------------
@@ -48,7 +49,9 @@ const DescuentoInputSchema = z.object({
 const LineItemInputSchema = z.object({
   codigoCabys: z.string().describe("CABYS code (13 digits)"),
   cantidad: z.number().positive().describe("Quantity"),
-  unidadMedida: z.string().describe('Unit of measure (e.g. "Unid", "Sp", "kg")'),
+  unidadMedida: z
+    .enum(UNITS_OF_MEASURE)
+    .describe('Unit of measure from the official v4.4 catalog (e.g. "Unid", "Sp", "Kg", "h")'),
   detalle: z.string().describe("Item description (max 200 chars)"),
   precioUnitario: z.number().min(0).describe("Unit price before taxes"),
   esServicio: z
@@ -65,11 +68,29 @@ const IdentificacionInputSchema = z.object({
 });
 
 const UbicacionInputSchema = z.object({
-  provincia: z.string().describe("Province code (1-7)"),
-  canton: z.string().describe("Canton code (2 digits)"),
-  distrito: z.string().describe("District code (2 digits)"),
-  barrio: z.string().optional().describe("Barrio code (2 digits)"),
-  otrasSenas: z.string().describe("Address details (required in v4.4)"),
+  provincia: z
+    .string()
+    .regex(/^[1-7]$/)
+    .describe("Province code (1-7)"),
+  canton: z
+    .string()
+    .regex(/^\d{2}$/)
+    .describe("Canton code (2 digits)"),
+  distrito: z
+    .string()
+    .regex(/^\d{2}$/)
+    .describe("District code (2 digits)"),
+  barrio: z
+    .string()
+    .min(5)
+    .max(50)
+    .optional()
+    .describe("Barrio name (free text 5-50 chars in v4.4; no longer a 2-digit code)"),
+  otrasSenas: z
+    .string()
+    .min(5)
+    .max(250)
+    .describe("Address details (5-250 chars, required in v4.4)"),
 });
 
 const EmisorInputSchema = z.object({

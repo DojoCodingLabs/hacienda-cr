@@ -653,11 +653,16 @@ describe("buildLineaDetalleXml", () => {
     ]);
   });
 
-  it("should not emit ImpuestoAsumidoEmisorFabrica for a Nota de Credito line", () => {
+  it("should emit ImpuestoAsumidoEmisorFabrica for a Nota de Credito line when provided", () => {
     const result = buildLineaDetalleXml(
       baseLinea({ impuestoAsumidoEmisorFabrica: 10 }),
       DOCUMENT_VARIANTS.NotaCreditoElectronica,
     );
+    expect(result.ImpuestoAsumidoEmisorFabrica).toBe(10);
+  });
+
+  it("should omit ImpuestoAsumidoEmisorFabrica for a Nota de Credito line when absent", () => {
+    const result = buildLineaDetalleXml(baseLinea(), DOCUMENT_VARIANTS.NotaCreditoElectronica);
     expect(result).not.toHaveProperty("ImpuestoAsumidoEmisorFabrica");
   });
 

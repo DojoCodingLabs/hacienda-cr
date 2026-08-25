@@ -237,11 +237,19 @@ function validateBusinessRules(input: FacturaElectronicaInput): FacturaValidatio
     });
   }
 
-  // totalImpuesto should match sum of line item impuestoNeto values
-  if (r.totalImpuesto !== undefined && !amountsEqual(r.totalImpuesto, sumLineImpuestoNeto)) {
+  // totalImpuesto must match the sum of line item impuestoNeto values, and
+  // may only be omitted when the lines carry no tax at all.
+  if (r.totalImpuesto !== undefined) {
+    if (!amountsEqual(r.totalImpuesto, sumLineImpuestoNeto)) {
+      errors.push({
+        path: "resumenFactura.totalImpuesto",
+        message: `totalImpuesto (${r.totalImpuesto}) must equal sum of line item impuestoNeto (${sumLineImpuestoNeto})`,
+      });
+    }
+  } else if (sumLineImpuestoNeto > 0) {
     errors.push({
       path: "resumenFactura.totalImpuesto",
-      message: `totalImpuesto (${r.totalImpuesto}) must equal sum of line item impuestoNeto (${sumLineImpuestoNeto})`,
+      message: `totalImpuesto is required when line items carry tax (sum of impuestoNeto is ${sumLineImpuestoNeto})`,
     });
   }
 

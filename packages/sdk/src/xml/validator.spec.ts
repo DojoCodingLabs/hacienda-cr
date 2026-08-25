@@ -616,21 +616,22 @@ describe("validateFacturaInput — optional summary totals", () => {
     expect(result.errors.some((e) => e.path === "resumenFactura.totalVenta")).toBe(true);
   });
 
-  it("should skip the totalImpuesto check when it is omitted", () => {
+  it("should require totalImpuesto when line items carry tax", () => {
     const { totalImpuesto: _, ...resumen } = SIMPLE_INVOICE.resumenFactura;
     const result = validateFacturaInput({
       ...SIMPLE_INVOICE,
       resumenFactura: {
         ...resumen,
-        // With totalImpuesto absent, totalComprobante = totalVentaNeta + 0
         medioPago: [{ tipoMedioPago: "01" as const, totalMedioPago: 100000 }],
         totalComprobante: 100000,
       },
     });
-    if (!result.valid) {
-      console.error("Validation errors:", result.errors);
-    }
-    expect(result.valid).toBe(true);
+    expect(result.valid).toBe(false);
+    expect(
+      result.errors.some(
+        (e) => e.path === "resumenFactura.totalImpuesto" && e.message.includes("required"),
+      ),
+    ).toBe(true);
   });
 
   it("should validate totalExonerado consistency when present", () => {

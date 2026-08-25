@@ -41,8 +41,12 @@ export interface DocumentVariant {
   lineaConBaseImponible: boolean;
   lineaConImpuestoNeto: boolean;
 
-  /** Whether the XSD requires ImpuestoAsumidoEmisorFabrica on each line. */
-  lineaConImpuestoAsumido: boolean;
+  /**
+   * ImpuestoAsumidoEmisorFabrica on each line: "required" (FE/TE — emitted
+   * with a 0 default), "optional" (NC/ND/FEC — emitted when provided), or
+   * "none" (FEE/REP — the XSD has no such element).
+   */
+  lineaConImpuestoAsumido: "required" | "optional" | "none";
 
   /** Whether lines may carry PartidaArancelaria (NC/ND/FEE). */
   lineaConPartidaArancelaria: boolean;
@@ -62,7 +66,7 @@ export const DOCUMENT_VARIANTS = {
     lineaConCabys: true,
     lineaConBaseImponible: true,
     lineaConImpuestoNeto: true,
-    lineaConImpuestoAsumido: true,
+    lineaConImpuestoAsumido: "required",
     lineaConPartidaArancelaria: false,
     lineaCompleta: true,
     cuerpoCompleto: true,
@@ -73,7 +77,7 @@ export const DOCUMENT_VARIANTS = {
     lineaConCabys: true,
     lineaConBaseImponible: true,
     lineaConImpuestoNeto: true,
-    lineaConImpuestoAsumido: true,
+    lineaConImpuestoAsumido: "required",
     lineaConPartidaArancelaria: false,
     lineaCompleta: true,
     cuerpoCompleto: true,
@@ -84,7 +88,7 @@ export const DOCUMENT_VARIANTS = {
     lineaConCabys: true,
     lineaConBaseImponible: true,
     lineaConImpuestoNeto: true,
-    lineaConImpuestoAsumido: false,
+    lineaConImpuestoAsumido: "optional",
     lineaConPartidaArancelaria: true,
     lineaCompleta: true,
     cuerpoCompleto: true,
@@ -95,7 +99,7 @@ export const DOCUMENT_VARIANTS = {
     lineaConCabys: true,
     lineaConBaseImponible: true,
     lineaConImpuestoNeto: true,
-    lineaConImpuestoAsumido: false,
+    lineaConImpuestoAsumido: "optional",
     lineaConPartidaArancelaria: true,
     lineaCompleta: true,
     cuerpoCompleto: true,
@@ -106,7 +110,7 @@ export const DOCUMENT_VARIANTS = {
     lineaConCabys: true,
     lineaConBaseImponible: true,
     lineaConImpuestoNeto: true,
-    lineaConImpuestoAsumido: false,
+    lineaConImpuestoAsumido: "optional",
     lineaConPartidaArancelaria: false,
     lineaCompleta: true,
     cuerpoCompleto: true,
@@ -117,7 +121,7 @@ export const DOCUMENT_VARIANTS = {
     lineaConCabys: true,
     lineaConBaseImponible: false,
     lineaConImpuestoNeto: false,
-    lineaConImpuestoAsumido: false,
+    lineaConImpuestoAsumido: "none",
     lineaConPartidaArancelaria: true,
     lineaCompleta: true,
     cuerpoCompleto: true,
@@ -128,7 +132,7 @@ export const DOCUMENT_VARIANTS = {
     lineaConCabys: false,
     lineaConBaseImponible: false,
     lineaConImpuestoNeto: true,
-    lineaConImpuestoAsumido: false,
+    lineaConImpuestoAsumido: "none",
     lineaConPartidaArancelaria: false,
     lineaCompleta: false,
     cuerpoCompleto: false,
@@ -166,6 +170,12 @@ export function buildEmisorXml(emisor: Emisor, minimal = false): Record<string, 
 
     if (emisor.nombreComercial) {
       result.NombreComercial = emisor.nombreComercial;
+    }
+
+    if (!emisor.ubicacion) {
+      throw new Error(
+        "emisor.ubicacion is required by the v4.4 schemas (provincia, canton, distrito, otrasSenas)",
+      );
     }
 
     result.Ubicacion = {
@@ -366,8 +376,13 @@ export function buildLineaDetalleXml(
     result.Impuesto = linea.impuesto.map((t: Impuesto) => buildImpuestoXml(t));
   }
 
-  if (variant.lineaConImpuestoAsumido) {
+  if (variant.lineaConImpuestoAsumido === "required") {
     result.ImpuestoAsumidoEmisorFabrica = linea.impuestoAsumidoEmisorFabrica ?? 0;
+  } else if (
+    variant.lineaConImpuestoAsumido === "optional" &&
+    linea.impuestoAsumidoEmisorFabrica !== undefined
+  ) {
+    result.ImpuestoAsumidoEmisorFabrica = linea.impuestoAsumidoEmisorFabrica;
   }
 
   if (variant.lineaConImpuestoNeto) {
@@ -532,10 +547,28 @@ export function buildStandardDocumentBody(
 ): Record<string, unknown> {
   const minimalParties = !variant.cuerpoCompleto;
 
+  // Guard against pre-v4.4 input shapes from untyped callers: these fields
+  // were renamed/moved and would otherwise be dropped silently.
+  const legacy = input as unknown as Record<string, unknown>;
+  if (legacy.codigoActividad !== undefined) {
+    throw new Error(
+      "codigoActividad was renamed to codigoActividadEmisor in v4.4 (with optional codigoActividadReceptor)",
+    );
+  }
+  if (legacy.medioPago !== undefined) {
+    throw new Error(
+      "medioPago moved into resumenFactura.medioPago in v4.4 (entries of { tipoMedioPago, totalMedioPago })",
+    );
+  }
+
   const data: Record<string, unknown> = {
     Clave: input.clave,
     ProveedorSistemas: input.proveedorSistemas,
   };
+
+  if (variant.codigoActividadEmisor === "required" && !input.codigoActividadEmisor) {
+    throw new Error("codigoActividadEmisor is required for this document type (v4.4)");
+  }
 
   if (variant.codigoActividadEmisor !== "none" && input.codigoActividadEmisor) {
     data.CodigoActividadEmisor = input.codigoActividadEmisor;

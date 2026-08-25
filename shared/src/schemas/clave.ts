@@ -97,10 +97,13 @@ export type ClaveInputParsed = z.infer<typeof ClaveInputSchema>;
 
 /**
  * Schema validating a complete 50-character clave string.
- * Alphanumeric since the April 2026 revision of v4.4 (the taxpayer-ID
- * segment may carry letters once alphanumeric cedulas juridicas ship).
+ * Since the April 2026 revision of v4.4 the taxpayer-ID segment
+ * (positions 10-21) may be alphanumeric; every other segment stays numeric.
  */
 export const ClaveNumericaSchema = z
   .string()
   .length(50, "Clave numerica must be exactly 50 characters")
-  .regex(/^[A-Za-z0-9]{50}$/, "Clave numerica must contain only alphanumeric characters");
+  .regex(
+    /^\d{9}[A-Za-z0-9]{12}\d{29}$/,
+    "Clave must be numeric except the taxpayer-ID segment (positions 10-21), which may be alphanumeric",
+  );

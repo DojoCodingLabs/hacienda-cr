@@ -35,7 +35,9 @@ const PAYMENT_METHODS = [
   { code: "02", name: "Tarjeta" },
   { code: "03", name: "Cheque" },
   { code: "04", name: "Transferencia" },
+  { code: "05", name: "Recaudado por terceros" },
   { code: "06", name: "SINPE Movil" },
+  { code: "07", name: "Plataforma Digital" },
   { code: "99", name: "Otros" },
 ] as const;
 
@@ -45,6 +47,9 @@ const IVA_RATES = [
   { code: "03", name: "Reducida 2%", rate: 2 },
   { code: "04", name: "Reducida 4%", rate: 4 },
   { code: "08", name: "General 13%", rate: 13 },
+  { code: "09", name: "Reducida 0.5%", rate: 0.5 },
+  { code: "10", name: "Tarifa exenta", rate: 0 },
+  { code: "11", name: "0% sin derecho a credito", rate: 0 },
 ] as const;
 
 const COMMON_UNITS = [
@@ -195,6 +200,11 @@ async function collectReceptor(): Promise<DraftReceptor> {
     const tipoId = await promptSelect("Identification type", IDENTIFICATION_TYPES, "02");
     const numero = await prompt("Identification number (digits only)");
     receptor.identificacion = { tipo: tipoId, numero };
+  } else {
+    // Facturas require a receptor identification in v4.4; foreign receivers
+    // use type 05 (Extranjero No Domiciliado) with a free-form number.
+    const numero = await prompt("Foreign identification number (max 20 chars)");
+    receptor.identificacion = { tipo: "05", numero };
   }
 
   const correo = await prompt("Receiver email (optional, press Enter to skip)");
@@ -219,7 +229,8 @@ async function collectLineItem(lineNumber: number): Promise<DraftLineItem> {
   const montoTotal = round5(cantidad * precioUnitario);
   const subTotal = montoTotal; // No discounts in basic draft
 
-  // Tax
+  // Tax. v4.4 requires at least one Impuesto per line, so a tax-free line
+  // still carries an exempt IVA entry (codigo 01, tarifa 0).
   const hasTax = await promptConfirm("Apply IVA tax?", true);
   let impuesto: DraftLineItem["impuesto"];
   let impuestoNeto = 0;
@@ -239,6 +250,15 @@ async function collectLineItem(lineNumber: number): Promise<DraftLineItem> {
         monto,
       },
     ];
+  } else {
+    impuesto = [
+      {
+        codigo: "01",
+        codigoTarifaIVA: "01", // Exento
+        tarifa: 0,
+        monto: 0,
+      },
+    ];
   }
 
   return {
@@ -251,7 +271,7 @@ async function collectLineItem(lineNumber: number): Promise<DraftLineItem> {
     montoTotal,
     subTotal,
     impuesto,
-    impuestoNeto: impuestoNeto || undefined,
+    impuestoNeto,
     montoTotalLinea: round5(subTotal + impuestoNeto),
   };
 }
