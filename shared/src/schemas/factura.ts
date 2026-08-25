@@ -5,15 +5,17 @@
 
 import { z } from "zod";
 import {
-  SaleCondition,
-  PaymentMethod,
-  TaxCode,
-  IvaRateCode,
   REFERENCE_DOC_TYPES,
   REFERENCE_CODES,
   OTHER_CHARGE_TYPES,
   CURRENCY_CODES,
 } from "../constants/index.js";
+import {
+  TaxCodeSchema,
+  IvaRateCodeSchema,
+  PaymentMethodSchema,
+  SaleConditionSchema,
+} from "./common.js";
 import { EmisorSchema } from "./emisor.js";
 import { ReceptorSchema } from "./receptor.js";
 import { IdentificacionSchema } from "./identification.js";
@@ -76,22 +78,10 @@ export const OtroCargoSchema = z.object({
   montoCargo: z.number().min(0),
 });
 
-/** Payment method values accepted by the v4.4 XSD. */
-const PaymentMethodValues = [
-  PaymentMethod.EFECTIVO,
-  PaymentMethod.TARJETA,
-  PaymentMethod.CHEQUE,
-  PaymentMethod.TRANSFERENCIA,
-  PaymentMethod.RECAUDADO_TERCEROS,
-  PaymentMethod.SINPE_MOVIL,
-  PaymentMethod.PLATAFORMA_DIGITAL,
-  PaymentMethod.OTROS,
-] as const;
-
 /** Schema for a payment-method entry inside ResumenFactura (v4.4). */
 export const MedioPagoSchema = z.object({
   /** Payment method code (TipoMedioPago). */
-  tipoMedioPago: z.enum(PaymentMethodValues),
+  tipoMedioPago: PaymentMethodSchema,
 
   /** Free-text payment method. Required when tipo is "99" (3-100 chars). */
   medioPagoOtros: z.string().min(3).max(100).optional(),
@@ -103,35 +93,10 @@ export const MedioPagoSchema = z.object({
 /** Schema for a per-tax-code total breakdown entry (v4.4). */
 export const TotalDesgloseImpuestoSchema = z.object({
   /** Tax type code. */
-  codigo: z.enum([
-    TaxCode.IVA,
-    TaxCode.IMPUESTO_SELECTIVO_CONSUMO,
-    TaxCode.IMPUESTO_UNICO_COMBUSTIBLES,
-    TaxCode.IMPUESTO_BEBIDAS_ALCOHOLICAS,
-    TaxCode.IMPUESTO_BEBIDAS_SIN_ALCOHOL,
-    TaxCode.IMPUESTO_TABACO,
-    TaxCode.IVA_CALCULO_ESPECIAL,
-    TaxCode.IVA_BIENES_USADOS,
-    TaxCode.IMPUESTO_CEMENTO,
-    TaxCode.OTROS,
-  ]),
+  codigo: TaxCodeSchema,
 
   /** IVA rate code. Optional. */
-  codigoTarifaIVA: z
-    .enum([
-      IvaRateCode.EXENTO,
-      IvaRateCode.REDUCIDA_1,
-      IvaRateCode.REDUCIDA_2,
-      IvaRateCode.REDUCIDA_4,
-      IvaRateCode.TRANSITORIO_0,
-      IvaRateCode.TRANSITORIO_4,
-      IvaRateCode.TRANSITORIO_8,
-      IvaRateCode.GENERAL_13,
-      IvaRateCode.REDUCIDA_0_5,
-      IvaRateCode.TARIFA_EXENTA,
-      IvaRateCode.CERO_SIN_CREDITO,
-    ])
-    .optional(),
+  codigoTarifaIVA: IvaRateCodeSchema.optional(),
 
   /** Total tax amount for this (code, rate) pair. */
   totalMontoImpuesto: z.number().min(0),
@@ -214,24 +179,6 @@ export const OtroContenidoSchema = z.object({
   contenido: z.string().min(1),
 });
 
-/** Sale condition enum values for schema (v4.4 set). */
-const SaleConditionValues = [
-  SaleCondition.CONTADO,
-  SaleCondition.CREDITO,
-  SaleCondition.CONSIGNACION,
-  SaleCondition.APARTADO,
-  SaleCondition.ARRENDAMIENTO_OPCION_COMPRA,
-  SaleCondition.ARRENDAMIENTO_FUNCION_FINANCIERA,
-  SaleCondition.COBRO_FAVOR_TERCERO,
-  SaleCondition.SERVICIOS_ESTADO,
-  SaleCondition.VENTA_CREDITO_IVA_90_DIAS,
-  SaleCondition.VENTA_MERCANCIA_NO_NACIONALIZADA,
-  SaleCondition.VENTA_BIENES_USADOS_NO_CONTRIBUYENTE,
-  SaleCondition.ARRENDAMIENTO_OPERATIVO,
-  SaleCondition.ARRENDAMIENTO_FINANCIERO,
-  SaleCondition.OTROS,
-] as const;
-
 /** Schema for a full Factura Electronica input, per the v4.4 XSD. */
 export const FacturaElectronicaSchema = z.object({
   /** 50-character clave (taxpayer segment alphanumeric since April 2026). */
@@ -270,8 +217,8 @@ export const FacturaElectronicaSchema = z.object({
     path: ["identificacion"],
   }),
 
-  /** Sale condition. */
-  condicionVenta: z.enum(SaleConditionValues),
+  /** Sale condition (v4.4 set — REP-only payment codes excluded). */
+  condicionVenta: SaleConditionSchema,
 
   /** Free-text sale condition. Required when condicionVenta is "99" (5-100 chars). */
   condicionVentaOtros: z.string().min(5).max(100).optional(),

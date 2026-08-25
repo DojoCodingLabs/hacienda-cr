@@ -74,6 +74,21 @@ export const IVA_RATE_PERCENTAGES: Record<IvaRateCode, number> = {
   [IvaRateCode.CERO_SIN_CREDITO]: 0,
 } as const;
 
+/** Human-readable names for IVA rate codes. */
+export const IVA_RATE_NAMES: Record<IvaRateCode, string> = {
+  [IvaRateCode.EXENTO]: "Exento (0%)",
+  [IvaRateCode.REDUCIDA_1]: "Tarifa reducida 1%",
+  [IvaRateCode.REDUCIDA_2]: "Tarifa reducida 2%",
+  [IvaRateCode.REDUCIDA_4]: "Tarifa reducida 4%",
+  [IvaRateCode.TRANSITORIO_0]: "Transitorio 0%",
+  [IvaRateCode.TRANSITORIO_4]: "Transitorio 4%",
+  [IvaRateCode.TRANSITORIO_8]: "Transitorio 8%",
+  [IvaRateCode.GENERAL_13]: "Tarifa general 13%",
+  [IvaRateCode.REDUCIDA_0_5]: "Tarifa reducida 0.5%",
+  [IvaRateCode.TARIFA_EXENTA]: "Tarifa exenta",
+  [IvaRateCode.CERO_SIN_CREDITO]: "Tarifa 0% sin derecho a crédito",
+} as const;
+
 /** Exoneration type codes. */
 export const ExonerationType = {
   /** Compras autorizadas */

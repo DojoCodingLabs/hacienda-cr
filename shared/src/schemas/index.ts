@@ -5,6 +5,11 @@
  */
 
 export {
+  TaxCodeSchema,
+  IvaRateCodeSchema,
+  ExonerationTypeSchema,
+  PaymentMethodSchema,
+  SaleConditionSchema,
   TelefonoSchema,
   UbicacionSchema,
   type TelefonoInput,

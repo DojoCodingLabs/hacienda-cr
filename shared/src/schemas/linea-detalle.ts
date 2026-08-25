@@ -3,14 +3,8 @@
  */
 
 import { z } from "zod";
-import {
-  TaxCode,
-  IvaRateCode,
-  ExonerationType,
-  DISCOUNT_CODES,
-  EXONERATION_INSTITUTIONS,
-  UNITS_OF_MEASURE,
-} from "../constants/index.js";
+import { DISCOUNT_CODES, EXONERATION_INSTITUTIONS, UNITS_OF_MEASURE } from "../constants/index.js";
+import { TaxCodeSchema, IvaRateCodeSchema, ExonerationTypeSchema } from "./common.js";
 
 /** Schema for commercial code (CodigoComercial). */
 export const CodigoComercialSchema = z.object({
@@ -26,21 +20,7 @@ export type CodigoComercialInput = z.infer<typeof CodigoComercialSchema>;
 /** Schema for exoneration information (v4.4 structure). */
 export const ExoneracionSchema = z.object({
   /** Exoneration document type (TipoDocumentoEX1). */
-  tipoDocumento: z.enum([
-    ExonerationType.COMPRAS_AUTORIZADAS,
-    ExonerationType.VENTAS_EXENTAS_DIPLOMATICOS,
-    ExonerationType.AUTORIZADO_LEY_ESPECIAL,
-    ExonerationType.EXENCIONES_DGH,
-    ExonerationType.TRANSITORIO_V,
-    ExonerationType.TRANSITORIO_IX,
-    ExonerationType.TRANSITORIO_XVII,
-    ExonerationType.ZONA_FRANCA,
-    ExonerationType.SERVICIOS_COMPLEMENTARIOS_EXPORTACION,
-    ExonerationType.CORPORACIONES_MUNICIPALES,
-    ExonerationType.DGH_IMPUESTO_LOCAL_CONCRETA,
-    ExonerationType.EXONERACION_12,
-    ExonerationType.OTROS,
-  ]),
+  tipoDocumento: ExonerationTypeSchema,
 
   /** Free-text document type. Required when tipoDocumento is "99". */
   tipoDocumentoOtros: z.string().min(5).max(100).optional(),
@@ -75,38 +55,13 @@ export type ExoneracionInput = z.infer<typeof ExoneracionSchema>;
 /** Schema for tax (Impuesto), per the v4.4 XSD. */
 export const ImpuestoSchema = z.object({
   /** Tax type code. */
-  codigo: z.enum([
-    TaxCode.IVA,
-    TaxCode.IMPUESTO_SELECTIVO_CONSUMO,
-    TaxCode.IMPUESTO_UNICO_COMBUSTIBLES,
-    TaxCode.IMPUESTO_BEBIDAS_ALCOHOLICAS,
-    TaxCode.IMPUESTO_BEBIDAS_SIN_ALCOHOL,
-    TaxCode.IMPUESTO_TABACO,
-    TaxCode.IVA_CALCULO_ESPECIAL,
-    TaxCode.IVA_BIENES_USADOS,
-    TaxCode.IMPUESTO_CEMENTO,
-    TaxCode.OTROS,
-  ]),
+  codigo: TaxCodeSchema,
 
   /** Free-text tax type. Required when codigo is "99" (5-100 chars). */
   codigoImpuestoOtros: z.string().min(5).max(100).optional(),
 
   /** IVA rate code (CodigoTarifaIVA). Required when tax code is IVA-related. */
-  codigoTarifaIVA: z
-    .enum([
-      IvaRateCode.EXENTO,
-      IvaRateCode.REDUCIDA_1,
-      IvaRateCode.REDUCIDA_2,
-      IvaRateCode.REDUCIDA_4,
-      IvaRateCode.TRANSITORIO_0,
-      IvaRateCode.TRANSITORIO_4,
-      IvaRateCode.TRANSITORIO_8,
-      IvaRateCode.GENERAL_13,
-      IvaRateCode.REDUCIDA_0_5,
-      IvaRateCode.TARIFA_EXENTA,
-      IvaRateCode.CERO_SIN_CREDITO,
-    ])
-    .optional(),
+  codigoTarifaIVA: IvaRateCodeSchema.optional(),
 
   /** Tax rate percentage. Optional for non-rate taxes. */
   tarifa: z.number().min(0).max(99.99).optional(),
