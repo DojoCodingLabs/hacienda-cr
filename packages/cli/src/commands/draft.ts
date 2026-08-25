@@ -11,6 +11,14 @@
 import { writeFile } from "node:fs/promises";
 import { resolve } from "node:path";
 import { defineCommand } from "citty";
+import {
+  PaymentMethod,
+  PAYMENT_METHOD_NAMES,
+  IvaRateCode,
+  IVA_RATE_NAMES,
+  IVA_RATE_PERCENTAGES,
+  UnitOfMeasure,
+} from "@dojocoding/hacienda-shared";
 import { success, error, detail, info, outputJson, bold, cyan, dim } from "../utils/format.js";
 
 // ---------------------------------------------------------------------------
@@ -30,36 +38,26 @@ const SALE_CONDITIONS = [
   { code: "99", name: "Otros" },
 ] as const;
 
-const PAYMENT_METHODS = [
-  { code: "01", name: "Efectivo" },
-  { code: "02", name: "Tarjeta" },
-  { code: "03", name: "Cheque" },
-  { code: "04", name: "Transferencia" },
-  { code: "05", name: "Recaudado por terceros" },
-  { code: "06", name: "SINPE Movil" },
-  { code: "07", name: "Plataforma Digital" },
-  { code: "99", name: "Otros" },
-] as const;
+const PAYMENT_METHODS = Object.values(PaymentMethod).map((code) => ({
+  code,
+  name: PAYMENT_METHOD_NAMES[code],
+}));
 
-const IVA_RATES = [
-  { code: "01", name: "Exento (0%)", rate: 0 },
-  { code: "02", name: "Reducida 1%", rate: 1 },
-  { code: "03", name: "Reducida 2%", rate: 2 },
-  { code: "04", name: "Reducida 4%", rate: 4 },
-  { code: "08", name: "General 13%", rate: 13 },
-  { code: "09", name: "Reducida 0.5%", rate: 0.5 },
-  { code: "10", name: "Tarifa exenta", rate: 0 },
-  { code: "11", name: "0% sin derecho a credito", rate: 0 },
-] as const;
+const IVA_RATES = Object.values(IvaRateCode).map((code) => ({
+  code,
+  name: IVA_RATE_NAMES[code],
+  rate: IVA_RATE_PERCENTAGES[code],
+}));
 
+/** Curated shortlist of the most common units for the interactive picker. */
 const COMMON_UNITS = [
-  { code: "Unid", name: "Unidad" },
-  { code: "Sp", name: "Servicios profesionales" },
-  { code: "h", name: "Horas" },
-  { code: "Kg", name: "Kilogramos" },
-  { code: "M", name: "Metros" },
-  { code: "L", name: "Litros" },
-  { code: "Os", name: "Otros servicios" },
+  { code: UnitOfMeasure.UNIDAD, name: "Unidad" },
+  { code: UnitOfMeasure.SERVICIOS_PROFESIONALES, name: "Servicios profesionales" },
+  { code: UnitOfMeasure.HORAS, name: "Horas" },
+  { code: UnitOfMeasure.KILOGRAMOS, name: "Kilogramos" },
+  { code: UnitOfMeasure.METROS, name: "Metros" },
+  { code: UnitOfMeasure.LITROS, name: "Litros" },
+  { code: UnitOfMeasure.OTROS_SERVICIOS, name: "Otros servicios" },
 ] as const;
 
 // ---------------------------------------------------------------------------

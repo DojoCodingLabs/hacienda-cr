@@ -66,23 +66,8 @@ export type ReferenceCode = (typeof REFERENCE_CODES)[number];
  * the REP enumeration additionally admits code 17 (pago de comprobante).
  */
 export const REP_REFERENCE_CODES = [
-  "01",
-  "02",
-  "04",
-  "05",
-  "06",
-  "07",
-  "08",
-  "09",
-  "10",
-  "11",
-  "12",
-  "13",
-  "14",
-  "15",
-  "16",
+  ...REFERENCE_CODES,
   "17", // Pago de comprobante (REP only, April 2026 revision)
-  "99",
 ] as const;
 
 export type RepReferenceCode = (typeof REP_REFERENCE_CODES)[number];

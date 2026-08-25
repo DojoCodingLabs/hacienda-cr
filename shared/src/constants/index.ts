@@ -26,6 +26,7 @@ export {
   TaxCode,
   IvaRateCode,
   IVA_RATE_PERCENTAGES,
+  IVA_RATE_NAMES,
   ExonerationType,
   UnitOfMeasure,
   UNITS_OF_MEASURE,

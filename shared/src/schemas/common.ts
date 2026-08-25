@@ -3,6 +3,34 @@
  */
 
 import { z } from "zod";
+import {
+  TaxCode,
+  IvaRateCode,
+  ExonerationType,
+  PaymentMethod,
+  SaleCondition,
+} from "../constants/index.js";
+
+/** Schema for tax type codes (Codigo de Impuesto), full v4.4 catalog. */
+export const TaxCodeSchema = z.enum(TaxCode);
+
+/** Schema for IVA rate codes (CodigoTarifaIVA), full v4.4 catalog. */
+export const IvaRateCodeSchema = z.enum(IvaRateCode);
+
+/** Schema for exoneration document types (TipoDocumentoEX1), full v4.4 catalog. */
+export const ExonerationTypeSchema = z.enum(ExonerationType);
+
+/** Schema for payment method codes (TipoMedioPago), full v4.4 catalog. */
+export const PaymentMethodSchema = z.enum(PaymentMethod);
+
+/**
+ * Schema for sale condition codes (CondicionVenta) on regular documents —
+ * excludes the two payment codes (09, 11) only the Recibo Electronico de
+ * Pago XSD admits (REP_SALE_CONDITIONS).
+ */
+export const SaleConditionSchema = z
+  .enum(SaleCondition)
+  .exclude(["PAGO_SERVICIO_ESTADO", "PAGO_VENTA_CREDITO_IVA_90_DIAS"]);
 
 /** Schema for phone number (Telefono). */
 export const TelefonoSchema = z.object({
