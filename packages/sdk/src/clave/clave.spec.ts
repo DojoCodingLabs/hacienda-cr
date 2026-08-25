@@ -187,8 +187,13 @@ describe("buildClave", () => {
     expect(() => buildClave(validInput({ taxpayerId: "1234567890123" }))).toThrow();
   });
 
-  it("should reject a non-numeric taxpayer ID", () => {
-    expect(() => buildClave(validInput({ taxpayerId: "ABC1234567" }))).toThrow();
+  it("should accept an alphanumeric taxpayer ID (April 2026 revision)", () => {
+    const clave = buildClave(validInput({ taxpayerId: "ABC1234567" }));
+    expect(clave.slice(9, 21)).toBe("00ABC1234567");
+  });
+
+  it("should reject a taxpayer ID with symbols", () => {
+    expect(() => buildClave(validInput({ taxpayerId: "ABC-1234567" }))).toThrow();
   });
 
   it("should reject a branch longer than 3 digits", () => {
@@ -332,14 +337,20 @@ describe("parseClave", () => {
     expect(() => parseClave("")).toThrow(/must be exactly 50 characters/);
   });
 
-  it("should reject a clave with non-digit characters", () => {
+  it("should accept letters in the taxpayer-ID segment (April 2026 revision)", () => {
+    const alnumClave = knownClave.slice(0, 9) + "00ABC1234567" + knownClave.slice(21);
+    const parsed = parseClave(alnumClave);
+    expect(parsed.taxpayerId).toBe("00ABC1234567");
+  });
+
+  it("should reject letters outside the taxpayer-ID segment", () => {
     const badClave = "A" + knownClave.slice(1);
-    expect(() => parseClave(badClave)).toThrow(/must contain only digits/);
+    expect(() => parseClave(badClave)).toThrow(/taxpayer-ID segment/);
   });
 
   it("should reject a clave with spaces", () => {
     const badClave = " " + knownClave.slice(1);
-    expect(() => parseClave(badClave)).toThrow(/must contain only digits/);
+    expect(() => parseClave(badClave)).toThrow(/taxpayer-ID segment/);
   });
 
   it("should reject an invalid country code", () => {

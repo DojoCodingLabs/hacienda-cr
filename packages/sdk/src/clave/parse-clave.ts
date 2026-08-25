@@ -79,9 +79,12 @@ export function parseClave(clave: string): ClaveParsed {
     throw new Error(`Clave must be exactly 50 characters, got ${clave.length}`);
   }
 
-  // Validate all characters are digits
-  if (!/^\d{50}$/.test(clave)) {
-    throw new Error("Clave must contain only digits (0-9)");
+  // Since the April 2026 revision of v4.4 the taxpayer-ID segment (positions
+  // 9-21) may be alphanumeric; every other segment stays numeric.
+  if (!/^\d{9}[A-Za-z0-9]{12}\d{29}$/.test(clave)) {
+    throw new Error(
+      "Clave must be numeric except for the taxpayer-ID segment (positions 10-21), which may be alphanumeric",
+    );
   }
 
   // Extract components by position

@@ -34,6 +34,7 @@ export {
 export {
   REFERENCE_DOC_TYPES,
   REFERENCE_CODES,
+  REP_REFERENCE_CODES,
   DISCOUNT_CODES,
   OTHER_CHARGE_TYPES,
   EXONERATION_INSTITUTIONS,
@@ -41,6 +42,7 @@ export {
 export type {
   ReferenceDocType,
   ReferenceCode,
+  RepReferenceCode,
   DiscountCode,
   OtherChargeType,
   ExonerationInstitution,

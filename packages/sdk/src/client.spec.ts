@@ -434,7 +434,7 @@ describe("HaciendaClient", () => {
       expect(() =>
         client.buildClave({
           date: new Date("2026-01-15"),
-          taxpayerId: "abc",
+          taxpayerId: "abc-123!",
           documentType: DocumentType.FACTURA_ELECTRONICA,
           sequence: 1,
           situation: Situation.NORMAL,

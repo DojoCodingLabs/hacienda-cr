@@ -25,6 +25,7 @@ import {
   UNITS_OF_MEASURE,
   REFERENCE_DOC_TYPES,
   REFERENCE_CODES,
+  REP_REFERENCE_CODES,
   DISCOUNT_CODES,
   OTHER_CHARGE_TYPES,
   EXONERATION_INSTITUTIONS,
@@ -209,17 +210,22 @@ describe("@dojocoding/hacienda-shared", () => {
 
   describe("Document reference catalogs (v4.4)", () => {
     it("should define referenced document types 01-18 plus 99", () => {
-      expect(REFERENCE_DOC_TYPES).toHaveLength(19);
+      expect(REFERENCE_DOC_TYPES).toHaveLength(21);
       expect(REFERENCE_DOC_TYPES).toContain("01");
       expect(REFERENCE_DOC_TYPES).toContain("18");
+      expect(REFERENCE_DOC_TYPES).toContain("19");
+      expect(REFERENCE_DOC_TYPES).toContain("20");
       expect(REFERENCE_DOC_TYPES).toContain("99");
     });
 
     it("should define reference codes without 03", () => {
       expect(REFERENCE_CODES).toContain("01");
       expect(REFERENCE_CODES).toContain("12");
+      expect(REFERENCE_CODES).toContain("16");
       expect(REFERENCE_CODES).toContain("99");
       expect(REFERENCE_CODES).not.toContain("03");
+      expect(REFERENCE_CODES).not.toContain("17");
+      expect(REP_REFERENCE_CODES).toContain("17");
     });
 
     it("should define discount codes 01-09 plus 99", () => {

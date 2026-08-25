@@ -18,7 +18,7 @@ import { buildFacturaCompraXml } from "./factura-compra-builder.js";
 import { buildFacturaExportacionXml } from "./factura-exportacion-builder.js";
 import { buildReciboPagoXml } from "./recibo-pago-builder.js";
 import { buildMensajeReceptorXml } from "./mensaje-receptor-builder.js";
-import { validateAgainstXsd, xmllintAvailable } from "../__testing__/xsd.js";
+import { validateAgainstXsd, xmllintAvailable, SCHEMA_GENERATIONS } from "../__testing__/xsd.js";
 import {
   SIMPLE_FACTURA,
   SIMPLE_TIQUETE,
@@ -126,17 +126,45 @@ const CASES: ConformanceCase[] = [
 ];
 
 run("XSD conformance against official v4.4 schemas", () => {
-  it.each(CASES.map((c) => [c.name, c] as const))("%s validates", (_name, c) => {
-    const result = validateAgainstXsd(c.build(), c.xsd, { allowMissingSignature: true });
-    expect(result.errors).toBe("");
-    expect(result.valid).toBe(true);
+  // Output must validate against both vendored generations: the base 2024
+  // package and the April 2026 revision (mandatory 2026-11-01).
+  describe.each(SCHEMA_GENERATIONS)("generation %s", (generation) => {
+    it.each(CASES.map((c) => [c.name, c] as const))("%s validates", (_name, c) => {
+      const result = validateAgainstXsd(c.build(), c.xsd, {
+        allowMissingSignature: true,
+        generation,
+      });
+      expect(result.errors).toBe("");
+      expect(result.valid).toBe(true);
+    });
+
+    it("rejects structurally invalid XML (harness sanity check)", () => {
+      const bogus = `<?xml version="1.0" encoding="utf-8"?><FacturaElectronica xmlns="https://cdn.comprobanteselectronicos.go.cr/xml-schemas/v4.4/facturaElectronica"><Clave>123</Clave></FacturaElectronica>`;
+      const result = validateAgainstXsd(bogus, "FacturaElectronica_V4.4.xsd", {
+        allowMissingSignature: true,
+        generation,
+      });
+      expect(result.valid).toBe(false);
+    });
   });
 
-  it("rejects structurally invalid XML (harness sanity check)", () => {
-    const bogus = `<?xml version="1.0" encoding="utf-8"?><FacturaElectronica xmlns="https://cdn.comprobanteselectronicos.go.cr/xml-schemas/v4.4/facturaElectronica"><Clave>123</Clave></FacturaElectronica>`;
-    const result = validateAgainstXsd(bogus, "FacturaElectronica_V4.4.xsd", {
-      allowMissingSignature: true,
-    });
-    expect(result.valid).toBe(false);
+  it("accepts an alphanumeric clave under the 2026 revision only", () => {
+    const doc = {
+      ...SIMPLE_FACTURA,
+      clave: "506010725000310123456A0010000101000000000119999999",
+    };
+    const xml = buildFacturaXml(doc);
+    expect(
+      validateAgainstXsd(xml, "FacturaElectronica_V4.4.xsd", {
+        allowMissingSignature: true,
+        generation: "2026",
+      }).valid,
+    ).toBe(true);
+    expect(
+      validateAgainstXsd(xml, "FacturaElectronica_V4.4.xsd", {
+        allowMissingSignature: true,
+        generation: "2024",
+      }).valid,
+    ).toBe(false);
   });
 });

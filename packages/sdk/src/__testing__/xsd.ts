@@ -14,10 +14,20 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
-const SCHEMAS_DIR = path.resolve(
-  path.dirname(fileURLToPath(import.meta.url)),
-  "../../schemas/2024/v4.4",
-);
+/**
+ * Vendored schema generations. "2026" is the April 22, 2026 revision
+ * (accepted in production since 2026-04-22, mandatory 2026-11-01);
+ * "2024" is the original base v4.4 package.
+ */
+export const SCHEMA_GENERATIONS = ["2024", "2026"] as const;
+export type SchemaGeneration = (typeof SCHEMA_GENERATIONS)[number];
+
+function schemasDir(generation: SchemaGeneration): string {
+  return path.resolve(
+    path.dirname(fileURLToPath(import.meta.url)),
+    `../../schemas/${generation}/v4.4`,
+  );
+}
 
 /** Result of validating an XML document against an XSD. */
 export interface XsdValidationResult {
@@ -50,6 +60,9 @@ export interface XsdValidationOptions {
    * everything else is checked strictly.
    */
   allowMissingSignature?: boolean;
+
+  /** Which vendored schema generation to validate against. Default "2026". */
+  generation?: SchemaGeneration;
 }
 
 /** Minimal ds:Signature accepted by the W3C xmldsig core schema. */
@@ -79,7 +92,7 @@ export function validateAgainstXsd(
   xsdFileName: string,
   options: XsdValidationOptions = {},
 ): XsdValidationResult {
-  const xsdPath = path.join(SCHEMAS_DIR, xsdFileName);
+  const xsdPath = path.join(schemasDir(options.generation ?? "2026"), xsdFileName);
   const dir = mkdtempSync(path.join(tmpdir(), "hacienda-xsd-"));
   const xmlPath = path.join(dir, "doc.xml");
 

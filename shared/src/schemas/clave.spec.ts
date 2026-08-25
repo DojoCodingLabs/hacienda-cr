@@ -33,9 +33,16 @@ describe("ClaveNumericaSchema", () => {
     expect(result.success).toBe(false);
   });
 
-  it("should reject a clave with non-digit characters", () => {
+  it("should accept an alphanumeric clave (April 2026 revision)", () => {
     const result = ClaveNumericaSchema.safeParse(
       "5060107250001234567800100001010000000001A199999999",
+    );
+    expect(result.success).toBe(true);
+  });
+
+  it("should reject a clave with non-alphanumeric characters", () => {
+    const result = ClaveNumericaSchema.safeParse(
+      "506010725000123456780010000101000000000-A199999999",
     );
     expect(result.success).toBe(false);
   });
@@ -159,10 +166,18 @@ describe("ClaveInputSchema", () => {
     expect(result.success).toBe(false);
   });
 
-  it("should reject non-numeric taxpayer ID", () => {
+  it("should accept an alphanumeric taxpayer ID (April 2026 revision)", () => {
     const result = ClaveInputSchema.safeParse({
       ...validInput,
       taxpayerId: "31012345AB",
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it("should reject a taxpayer ID with symbols", () => {
+    const result = ClaveInputSchema.safeParse({
+      ...validInput,
+      taxpayerId: "3101-2345A",
     });
     expect(result.success).toBe(false);
   });
