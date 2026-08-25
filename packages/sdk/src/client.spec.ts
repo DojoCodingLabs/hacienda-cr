@@ -434,7 +434,7 @@ describe("HaciendaClient", () => {
       expect(() =>
         client.buildClave({
           date: new Date("2026-01-15"),
-          taxpayerId: "abc",
+          taxpayerId: "abc-123!",
           documentType: DocumentType.FACTURA_ELECTRONICA,
           sequence: 1,
           situation: Situation.NORMAL,
@@ -473,7 +473,7 @@ describe("HaciendaClient", () => {
         taxpayerId: "3101234567",
         branch: "002",
         pos: "00003",
-        documentType: DocumentType.NOTA_DEBITO,
+        documentType: DocumentType.NOTA_DEBITO_ELECTRONICA,
         sequence: 100,
         situation: Situation.CONTINGENCIA,
         securityCode: "11223344",

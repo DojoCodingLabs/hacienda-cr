@@ -35,6 +35,9 @@ const PAYMENT_METHODS = [
   { code: "02", name: "Tarjeta" },
   { code: "03", name: "Cheque" },
   { code: "04", name: "Transferencia" },
+  { code: "05", name: "Recaudado por terceros" },
+  { code: "06", name: "SINPE Movil" },
+  { code: "07", name: "Plataforma Digital" },
   { code: "99", name: "Otros" },
 ] as const;
 
@@ -44,16 +47,19 @@ const IVA_RATES = [
   { code: "03", name: "Reducida 2%", rate: 2 },
   { code: "04", name: "Reducida 4%", rate: 4 },
   { code: "08", name: "General 13%", rate: 13 },
+  { code: "09", name: "Reducida 0.5%", rate: 0.5 },
+  { code: "10", name: "Tarifa exenta", rate: 0 },
+  { code: "11", name: "0% sin derecho a credito", rate: 0 },
 ] as const;
 
 const COMMON_UNITS = [
   { code: "Unid", name: "Unidad" },
   { code: "Sp", name: "Servicios profesionales" },
   { code: "h", name: "Horas" },
-  { code: "kg", name: "Kilogramos" },
-  { code: "m", name: "Metros" },
-  { code: "l", name: "Litros" },
-  { code: "Os", name: "Otros" },
+  { code: "Kg", name: "Kilogramos" },
+  { code: "M", name: "Metros" },
+  { code: "L", name: "Litros" },
+  { code: "Os", name: "Otros servicios" },
 ] as const;
 
 // ---------------------------------------------------------------------------
@@ -120,6 +126,12 @@ async function promptConfirm(question: string, defaultValue = true): Promise<boo
 interface DraftEmisor {
   nombre: string;
   identificacion: { tipo: string; numero: string };
+  ubicacion: {
+    provincia: string;
+    canton: string;
+    distrito: string;
+    otrasSenas: string;
+  };
   correoElectronico: string;
   nombreComercial?: string;
 }
@@ -141,7 +153,7 @@ interface DraftLineItem {
   subTotal: number;
   impuesto?: {
     codigo: string;
-    codigoTarifa: string;
+    codigoTarifaIVA: string;
     tarifa: number;
     monto: number;
   }[];
@@ -155,12 +167,17 @@ async function collectEmisor(): Promise<DraftEmisor> {
   const nombre = await prompt("Business name (Nombre o Razon Social)");
   const tipoId = await promptSelect("Identification type", IDENTIFICATION_TYPES, "02");
   const numero = await prompt("Identification number (digits only)");
+  const provincia = await prompt("Province code (1-7)", "1");
+  const canton = await prompt("Canton code (2 digits)", "01");
+  const distrito = await prompt("District code (2 digits)", "01");
+  const otrasSenas = await prompt("Address details (min 5 chars)", "Sin otras senas");
   const correo = await prompt("Email address");
   const nombreComercial = await prompt("Commercial name (optional, press Enter to skip)");
 
   const emisor: DraftEmisor = {
     nombre,
     identificacion: { tipo: tipoId, numero },
+    ubicacion: { provincia, canton, distrito, otrasSenas },
     correoElectronico: correo,
   };
 
@@ -183,6 +200,11 @@ async function collectReceptor(): Promise<DraftReceptor> {
     const tipoId = await promptSelect("Identification type", IDENTIFICATION_TYPES, "02");
     const numero = await prompt("Identification number (digits only)");
     receptor.identificacion = { tipo: tipoId, numero };
+  } else {
+    // Facturas require a receptor identification in v4.4; foreign receivers
+    // use type 05 (Extranjero No Domiciliado) with a free-form number.
+    const numero = await prompt("Foreign identification number (max 20 chars)");
+    receptor.identificacion = { tipo: "05", numero };
   }
 
   const correo = await prompt("Receiver email (optional, press Enter to skip)");
@@ -207,7 +229,8 @@ async function collectLineItem(lineNumber: number): Promise<DraftLineItem> {
   const montoTotal = round5(cantidad * precioUnitario);
   const subTotal = montoTotal; // No discounts in basic draft
 
-  // Tax
+  // Tax. v4.4 requires at least one Impuesto per line, so a tax-free line
+  // still carries an exempt IVA entry (codigo 01, tarifa 0).
   const hasTax = await promptConfirm("Apply IVA tax?", true);
   let impuesto: DraftLineItem["impuesto"];
   let impuestoNeto = 0;
@@ -222,9 +245,18 @@ async function collectLineItem(lineNumber: number): Promise<DraftLineItem> {
     impuesto = [
       {
         codigo: "01", // IVA
-        codigoTarifa: ivaCode,
+        codigoTarifaIVA: ivaCode,
         tarifa,
         monto,
+      },
+    ];
+  } else {
+    impuesto = [
+      {
+        codigo: "01",
+        codigoTarifaIVA: "01", // Exento
+        tarifa: 0,
+        monto: 0,
       },
     ];
   }
@@ -239,7 +271,7 @@ async function collectLineItem(lineNumber: number): Promise<DraftLineItem> {
     montoTotal,
     subTotal,
     impuesto,
-    impuestoNeto: impuestoNeto || undefined,
+    impuestoNeto,
     montoTotalLinea: round5(subTotal + impuestoNeto),
   };
 }
@@ -248,7 +280,10 @@ function round5(value: number): number {
   return Math.round(value * 100000) / 100000;
 }
 
-function buildResumenFactura(lineItems: DraftLineItem[]): Record<string, number> {
+function buildResumenFactura(
+  lineItems: DraftLineItem[],
+  medioPago: string,
+): Record<string, unknown> {
   let totalGravado = 0;
   let totalExento = 0;
   let totalImpuesto = 0;
@@ -278,6 +313,7 @@ function buildResumenFactura(lineItems: DraftLineItem[]): Record<string, number>
     totalDescuentos,
     totalVentaNeta,
     totalImpuesto,
+    medioPago: [{ tipoMedioPago: medioPago, totalMedioPago: totalComprobante }],
     totalComprobante,
   };
 }
@@ -337,7 +373,7 @@ export const draftCommand = defineCommand({
       console.log(dim("The output JSON can be submitted via `hacienda submit <file>`.\n"));
 
       // Activity code
-      const codigoActividad = await prompt("Economic activity code (CIIU)", "620100");
+      const codigoActividadEmisor = await prompt("Economic activity code (CIIU)", "620100");
 
       // Sale condition
       const condicionVenta = await promptSelect("Sale condition", SALE_CONDITIONS, "01");
@@ -366,20 +402,20 @@ export const draftCommand = defineCommand({
         }
       }
 
-      // Build the summary
-      const resumenFactura = buildResumenFactura(lineItems);
+      // Build the summary (v4.4: payment methods live inside the summary)
+      const resumenFactura = buildResumenFactura(lineItems, medioPago);
 
       // Assemble the draft document
       const now = new Date();
       const draft = {
         clave: "<<GENERATE_ON_SUBMIT>>",
-        codigoActividad,
+        proveedorSistemas: emisor.identificacion.numero,
+        codigoActividadEmisor,
         numeroConsecutivo: "<<GENERATE_ON_SUBMIT>>",
         fechaEmision: now.toISOString(),
         emisor,
         receptor,
         condicionVenta,
-        medioPago: [medioPago],
         detalleServicio: lineItems,
         resumenFactura,
       };
@@ -431,7 +467,8 @@ export const draftCommand = defineCommand({
 function generateBlankTemplate(templateType: string): Record<string, unknown> {
   const base = {
     clave: "<<GENERATE_ON_SUBMIT>>",
-    codigoActividad: "620100",
+    proveedorSistemas: "<<YOUR_CEDULA>>",
+    codigoActividadEmisor: "620100",
     numeroConsecutivo: "<<GENERATE_ON_SUBMIT>>",
     fechaEmision: new Date().toISOString(),
     emisor: {
@@ -440,10 +477,15 @@ function generateBlankTemplate(templateType: string): Record<string, unknown> {
         tipo: "02",
         numero: "<<YOUR_CEDULA>>",
       },
+      ubicacion: {
+        provincia: "1",
+        canton: "01",
+        distrito: "01",
+        otrasSenas: "<<YOUR_ADDRESS>>",
+      },
       correoElectronico: "<<YOUR_EMAIL>>",
     },
     condicionVenta: "01",
-    medioPago: ["01"],
     detalleServicio: [
       {
         numeroLinea: 1,
@@ -457,7 +499,7 @@ function generateBlankTemplate(templateType: string): Record<string, unknown> {
         impuesto: [
           {
             codigo: "01",
-            codigoTarifa: "08",
+            codigoTarifaIVA: "08",
             tarifa: 13,
             monto: 0,
           },
@@ -477,6 +519,7 @@ function generateBlankTemplate(templateType: string): Record<string, unknown> {
       totalDescuentos: 0,
       totalVentaNeta: 0,
       totalImpuesto: 0,
+      medioPago: [{ tipoMedioPago: "01", totalMedioPago: 0 }],
       totalComprobante: 0,
     },
   };

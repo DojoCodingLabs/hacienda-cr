@@ -131,14 +131,14 @@ describe("buildClave", () => {
 
   it.each([
     ["FACTURA_ELECTRONICA", DocumentType.FACTURA_ELECTRONICA, "01"],
-    ["NOTA_DEBITO", DocumentType.NOTA_DEBITO, "02"],
-    ["NOTA_CREDITO", DocumentType.NOTA_CREDITO, "03"],
+    ["NOTA_DEBITO_ELECTRONICA", DocumentType.NOTA_DEBITO_ELECTRONICA, "02"],
+    ["NOTA_CREDITO_ELECTRONICA", DocumentType.NOTA_CREDITO_ELECTRONICA, "03"],
     ["TIQUETE_ELECTRONICO", DocumentType.TIQUETE_ELECTRONICO, "04"],
-    ["CONFIRMACION_ACEPTACION", DocumentType.CONFIRMACION_ACEPTACION, "05"],
-    ["CONFIRMACION_ACEPTACION_PARCIAL", DocumentType.CONFIRMACION_ACEPTACION_PARCIAL, "06"],
-    ["CONFIRMACION_RECHAZO", DocumentType.CONFIRMACION_RECHAZO, "07"],
-    ["FACTURA_COMPRA", DocumentType.FACTURA_COMPRA, "08"],
-    ["FACTURA_EXPORTACION", DocumentType.FACTURA_EXPORTACION, "09"],
+    ["FACTURA_ELECTRONICA_COMPRA", DocumentType.FACTURA_ELECTRONICA_COMPRA, "05"],
+    ["FACTURA_ELECTRONICA_EXPORTACION", DocumentType.FACTURA_ELECTRONICA_EXPORTACION, "06"],
+    ["RECIBO_ELECTRONICO_PAGO", DocumentType.RECIBO_ELECTRONICO_PAGO, "07"],
+    ["COMPRA_PAGO", DocumentType.COMPRA_PAGO, "08"],
+    ["GASTO_VIAJE", DocumentType.GASTO_VIAJE, "09"],
   ])("should encode document type %s as %s", (_name, docType, expected) => {
     const clave = buildClave(validInput({ documentType: docType }));
     expect(clave.slice(29, 31)).toBe(expected);
@@ -187,8 +187,13 @@ describe("buildClave", () => {
     expect(() => buildClave(validInput({ taxpayerId: "1234567890123" }))).toThrow();
   });
 
-  it("should reject a non-numeric taxpayer ID", () => {
-    expect(() => buildClave(validInput({ taxpayerId: "ABC1234567" }))).toThrow();
+  it("should accept an alphanumeric taxpayer ID (April 2026 revision)", () => {
+    const clave = buildClave(validInput({ taxpayerId: "ABC1234567" }));
+    expect(clave.slice(9, 21)).toBe("00ABC1234567");
+  });
+
+  it("should reject a taxpayer ID with symbols", () => {
+    expect(() => buildClave(validInput({ taxpayerId: "ABC-1234567" }))).toThrow();
   });
 
   it("should reject a branch longer than 3 digits", () => {
@@ -332,14 +337,20 @@ describe("parseClave", () => {
     expect(() => parseClave("")).toThrow(/must be exactly 50 characters/);
   });
 
-  it("should reject a clave with non-digit characters", () => {
+  it("should accept letters in the taxpayer-ID segment (April 2026 revision)", () => {
+    const alnumClave = knownClave.slice(0, 9) + "00ABC1234567" + knownClave.slice(21);
+    const parsed = parseClave(alnumClave);
+    expect(parsed.taxpayerId).toBe("00ABC1234567");
+  });
+
+  it("should reject letters outside the taxpayer-ID segment", () => {
     const badClave = "A" + knownClave.slice(1);
-    expect(() => parseClave(badClave)).toThrow(/must contain only digits/);
+    expect(() => parseClave(badClave)).toThrow(/taxpayer-ID segment/);
   });
 
   it("should reject a clave with spaces", () => {
     const badClave = " " + knownClave.slice(1);
-    expect(() => parseClave(badClave)).toThrow(/must contain only digits/);
+    expect(() => parseClave(badClave)).toThrow(/taxpayer-ID segment/);
   });
 
   it("should reject an invalid country code", () => {
@@ -415,7 +426,7 @@ describe("build + parse round-trip", () => {
       taxpayerId: "112233445566",
       branch: "123",
       pos: "54321",
-      documentType: DocumentType.FACTURA_EXPORTACION,
+      documentType: DocumentType.FACTURA_ELECTRONICA_EXPORTACION,
       sequence: 5_000_000_000,
       situation: Situation.CONTINGENCIA,
       securityCode: "00000001",
@@ -429,7 +440,7 @@ describe("build + parse round-trip", () => {
     expect(parsed.taxpayerId).toBe("112233445566");
     expect(parsed.branch).toBe("123");
     expect(parsed.pos).toBe("54321");
-    expect(parsed.documentType).toBe("09");
+    expect(parsed.documentType).toBe("06");
     expect(parsed.sequence).toBe(5_000_000_000);
     expect(parsed.situation).toBe("2");
     expect(parsed.securityCode).toBe("00000001");

@@ -14,12 +14,12 @@ const FACTURA_SCHEMA = {
     "Schema for creating a Factura Electronica via the create_invoice tool. " +
     "This describes the input format accepted by the tool.",
   type: "object",
-  required: ["emisor", "receptor", "codigoActividad", "lineItems"],
+  required: ["emisor", "receptor", "codigoActividadEmisor", "lineItems"],
   properties: {
     emisor: {
       type: "object",
       description: "Invoice issuer (emisor) information",
-      required: ["nombre", "identificacion", "correoElectronico"],
+      required: ["nombre", "identificacion", "ubicacion", "correoElectronico"],
       properties: {
         nombre: {
           type: "string",
@@ -32,8 +32,9 @@ const FACTURA_SCHEMA = {
           properties: {
             tipo: {
               type: "string",
-              enum: ["01", "02", "03", "04"],
-              description: "01=Cedula Fisica, 02=Cedula Juridica, 03=DIMEX, 04=NITE",
+              enum: ["01", "02", "03", "04", "05", "06"],
+              description:
+                "01=Cedula Fisica, 02=Cedula Juridica, 03=DIMEX, 04=NITE, 05=Extranjero No Domiciliado, 06=No Contribuyente (05/06 new in v4.4)",
             },
             numero: {
               type: "string",
@@ -46,6 +47,32 @@ const FACTURA_SCHEMA = {
           type: "string",
           maxLength: 80,
           description: "Commercial name (optional)",
+        },
+        ubicacion: {
+          type: "object",
+          required: ["provincia", "canton", "distrito", "otrasSenas"],
+          description: "Issuer location (required by the v4.4 schemas)",
+          properties: {
+            provincia: { type: "string", pattern: "^[1-7]$", description: "Province code (1-7)" },
+            canton: { type: "string", pattern: "^\\d{2}$", description: "Canton code (2 digits)" },
+            distrito: {
+              type: "string",
+              pattern: "^\\d{2}$",
+              description: "District code (2 digits)",
+            },
+            barrio: {
+              type: "string",
+              minLength: 5,
+              maxLength: 50,
+              description: "Barrio name (free text 5-50 chars in v4.4; no longer a 2-digit code)",
+            },
+            otrasSenas: {
+              type: "string",
+              minLength: 5,
+              maxLength: 250,
+              description: "Address details (5-250 chars, required)",
+            },
+          },
         },
         correoElectronico: {
           type: "string",
@@ -85,26 +112,30 @@ const FACTURA_SCHEMA = {
         },
       },
     },
-    codigoActividad: {
+    proveedorSistemas: {
+      type: "string",
+      maxLength: 20,
+      description:
+        "Invoicing-system provider ID (v4.4 ProveedorSistemas). Defaults to the emisor's ID number",
+    },
+    codigoActividadEmisor: {
       type: "string",
       pattern: "^\\d{6}$",
-      description: "CABYS economic activity code (6 digits)",
+      description: "Issuer economic activity code (6 digits, v4.4 CodigoActividadEmisor)",
     },
     condicionVenta: {
       type: "string",
-      enum: ["01", "02", "03", "04", "05", "06", "07", "08", "09", "99"],
+      enum: ["01", "02", "03", "04", "05", "06", "07", "08", "10", "12", "13", "14", "15", "99"],
       default: "01",
-      description: "Sale condition: 01=Cash, 02=Credit, 03=Consignment, 04=Layaway, 99=Other",
+      description:
+        "Sale condition (v4.4): 01=Cash, 02=Credit, 03=Consignment, 04=Layaway, 99=Other",
     },
     medioPago: {
-      type: "array",
-      items: {
-        type: "string",
-        enum: ["01", "02", "03", "04", "05", "99"],
-      },
-      default: ["01"],
+      type: "string",
+      enum: ["01", "02", "03", "04", "05", "06", "07", "99"],
+      default: "01",
       description:
-        "Payment methods: 01=Cash, 02=Card, 03=Check, 04=Transfer, 05=Third-party, 99=Other",
+        "Payment method (v4.4, emitted inside ResumenFactura with the total): 01=Cash, 02=Card, 03=Check, 04=Transfer, 05=Third-party, 06=SINPE Movil, 07=Digital platform, 99=Other",
     },
     plazoCredito: {
       type: "string",
@@ -132,7 +163,7 @@ const FACTURA_SCHEMA = {
           unidadMedida: {
             type: "string",
             description:
-              'Unit of measure: "Sp"=Service, "Unid"=Unit, "kg"=Kilogram, "m"=Meter, etc.',
+              'Unit of measure (official v4.4 catalog casing): "Sp"=Service, "Unid"=Unit, "Kg"=Kilogram, "M"=Meter, "L"=Liter, "h"=Hour, etc.',
           },
           detalle: {
             type: "string",
@@ -160,9 +191,10 @@ const FACTURA_SCHEMA = {
                   type: "string",
                   description: "Tax code: 01=IVA, 02=Selective, etc.",
                 },
-                codigoTarifa: {
+                codigoTarifaIVA: {
                   type: "string",
-                  description: "IVA rate code: 01=0%, 02=1%, 03=2%, 04=4%, 08=13%",
+                  description:
+                    "IVA rate code (v4.4 CodigoTarifaIVA): 01=0%, 02=1%, 03=2%, 04=4%, 08=13%, 09=0.5%, 10=exempt, 11=0% without credit",
                 },
                 tarifa: {
                   type: "number",
@@ -176,15 +208,19 @@ const FACTURA_SCHEMA = {
             description: "Discounts",
             items: {
               type: "object",
-              required: ["montoDescuento", "naturalezaDescuento"],
+              required: ["montoDescuento", "codigoDescuento"],
               properties: {
                 montoDescuento: {
                   type: "number",
                   description: "Discount amount",
                 },
+                codigoDescuento: {
+                  type: "string",
+                  description: 'Discount code (v4.4 CodigoDescuento, "01".."09" or "99")',
+                },
                 naturalezaDescuento: {
                   type: "string",
-                  description: "Reason for discount",
+                  description: "Reason for discount (optional in v4.4)",
                 },
               },
             },

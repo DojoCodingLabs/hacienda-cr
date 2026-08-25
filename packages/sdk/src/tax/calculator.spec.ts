@@ -1,5 +1,5 @@
 /**
- * Tests for tax calculation utilities.
+ * Tests for tax calculation utilities (Hacienda v4.4 semantics).
  */
 
 import { describe, it, expect } from "vitest";
@@ -85,19 +85,19 @@ describe("calculateLineItemTotals", () => {
       expect(result.subTotal).toBe(5000);
     });
 
-    it("should set montoTotalLinea = subTotal when no taxes", () => {
+    it("should always set baseImponible = subTotal", () => {
       const item: LineItemInput = {
         numeroLinea: 1,
         codigoCabys: "4321000000000",
-        cantidad: 1,
+        cantidad: 2,
         unidadMedida: "Unid",
-        detalle: "Exempt item",
-        precioUnitario: 10000,
+        detalle: "Test",
+        precioUnitario: 5000,
+        impuesto: [{ codigo: "01", codigoTarifaIVA: "08", tarifa: 13 }],
       };
 
       const result = calculateLineItemTotals(item);
-      expect(result.montoTotalLinea).toBe(10000);
-      expect(result.impuestoNeto).toBeUndefined();
+      expect(result.baseImponible).toBe(10000);
     });
 
     it("should default esServicio to false", () => {
@@ -130,6 +130,51 @@ describe("calculateLineItemTotals", () => {
     });
   });
 
+  describe("synthetic exempt tax (v4.4: every line has at least one Impuesto)", () => {
+    it("should add a synthetic exempt IVA entry when no taxes are given", () => {
+      const item: LineItemInput = {
+        numeroLinea: 1,
+        codigoCabys: "4321000000000",
+        cantidad: 1,
+        unidadMedida: "Unid",
+        detalle: "Untaxed item",
+        precioUnitario: 10000,
+      };
+
+      const result = calculateLineItemTotals(item);
+      expect(result.impuesto).toHaveLength(1);
+      expect(result.impuesto[0]).toEqual({
+        codigo: "01",
+        codigoTarifaIVA: "01",
+        tarifa: 0,
+        monto: 0,
+      });
+      expect(result.impuestoNeto).toBe(0);
+      expect(result.baseImponible).toBe(10000);
+      expect(result.montoTotalLinea).toBe(10000);
+    });
+
+    it("should add the synthetic entry for an empty impuesto array", () => {
+      const item: LineItemInput = {
+        numeroLinea: 1,
+        codigoCabys: "4321000000000",
+        cantidad: 1,
+        unidadMedida: "Unid",
+        detalle: "Untaxed item",
+        precioUnitario: 2500,
+        impuesto: [],
+      };
+
+      const result = calculateLineItemTotals(item);
+      expect(result.impuesto).toHaveLength(1);
+      expect(result.impuesto[0]?.codigo).toBe("01");
+      expect(result.impuesto[0]?.codigoTarifaIVA).toBe("01");
+      expect(result.impuesto[0]?.tarifa).toBe(0);
+      expect(result.impuesto[0]?.monto).toBe(0);
+      expect(result.impuestoNeto).toBe(0);
+    });
+  });
+
   describe("IVA calculation", () => {
     it("should calculate 13% IVA correctly", () => {
       const item: LineItemInput = {
@@ -139,12 +184,13 @@ describe("calculateLineItemTotals", () => {
         unidadMedida: "Sp",
         detalle: "Consulting",
         precioUnitario: 100000,
-        impuesto: [{ codigo: "01", codigoTarifa: "08", tarifa: 13 }],
+        impuesto: [{ codigo: "01", codigoTarifaIVA: "08", tarifa: 13 }],
       };
 
       const result = calculateLineItemTotals(item);
       const tax = getFirstTax(result);
       expect(tax.monto).toBe(13000);
+      expect(tax.codigoTarifaIVA).toBe("08");
       expect(result.impuestoNeto).toBe(13000);
       expect(result.montoTotalLinea).toBe(113000);
     });
@@ -157,7 +203,7 @@ describe("calculateLineItemTotals", () => {
         unidadMedida: "Unid",
         detalle: "Basic goods",
         precioUnitario: 5000,
-        impuesto: [{ codigo: "01", codigoTarifa: "04", tarifa: 4 }],
+        impuesto: [{ codigo: "01", codigoTarifaIVA: "04", tarifa: 4 }],
       };
 
       const result = calculateLineItemTotals(item);
@@ -176,7 +222,7 @@ describe("calculateLineItemTotals", () => {
         unidadMedida: "Unid",
         detalle: "Medicine",
         precioUnitario: 15000,
-        impuesto: [{ codigo: "01", codigoTarifa: "02", tarifa: 1 }],
+        impuesto: [{ codigo: "01", codigoTarifaIVA: "02", tarifa: 1 }],
       };
 
       const result = calculateLineItemTotals(item);
@@ -194,7 +240,7 @@ describe("calculateLineItemTotals", () => {
         unidadMedida: "Unid",
         detalle: "2% item",
         precioUnitario: 10000,
-        impuesto: [{ codigo: "01", codigoTarifa: "03", tarifa: 2 }],
+        impuesto: [{ codigo: "01", codigoTarifaIVA: "03", tarifa: 2 }],
       };
 
       const result = calculateLineItemTotals(item);
@@ -210,7 +256,7 @@ describe("calculateLineItemTotals", () => {
         unidadMedida: "Unid",
         detalle: "8% item",
         precioUnitario: 10000,
-        impuesto: [{ codigo: "01", codigoTarifa: "07", tarifa: 8 }],
+        impuesto: [{ codigo: "01", codigoTarifaIVA: "07", tarifa: 8 }],
       };
 
       const result = calculateLineItemTotals(item);
@@ -226,7 +272,7 @@ describe("calculateLineItemTotals", () => {
         unidadMedida: "Unid",
         detalle: "Exempt item",
         precioUnitario: 10000,
-        impuesto: [{ codigo: "01", codigoTarifa: "01", tarifa: 0 }],
+        impuesto: [{ codigo: "01", codigoTarifaIVA: "01", tarifa: 0 }],
       };
 
       const result = calculateLineItemTotals(item);
@@ -234,6 +280,23 @@ describe("calculateLineItemTotals", () => {
       expect(tax.monto).toBe(0);
       expect(result.impuestoNeto).toBe(0);
       expect(result.montoTotalLinea).toBe(10000);
+    });
+
+    it("should omit codigoTarifaIVA on the output for non-IVA taxes", () => {
+      const item: LineItemInput = {
+        numeroLinea: 1,
+        codigoCabys: "4321000000000",
+        cantidad: 1,
+        unidadMedida: "Unid",
+        detalle: "Selectivo consumo item",
+        precioUnitario: 10000,
+        impuesto: [{ codigo: "02", tarifa: 10 }],
+      };
+
+      const result = calculateLineItemTotals(item);
+      const tax = getFirstTax(result);
+      expect(tax.monto).toBe(1000);
+      expect(tax).not.toHaveProperty("codigoTarifaIVA");
     });
   });
 
@@ -249,15 +312,17 @@ describe("calculateLineItemTotals", () => {
         descuento: [
           {
             montoDescuento: 5000,
+            codigoDescuento: "01",
             naturalezaDescuento: "Volume discount",
           },
         ],
-        impuesto: [{ codigo: "01", codigoTarifa: "08", tarifa: 13 }],
+        impuesto: [{ codigo: "01", codigoTarifaIVA: "08", tarifa: 13 }],
       };
 
       const result = calculateLineItemTotals(item);
       expect(result.montoTotal).toBe(50000);
       expect(result.subTotal).toBe(45000);
+      expect(result.baseImponible).toBe(45000);
       // Tax on 45000: 45000 * 0.13 = 5850
       const tax = getFirstTax(result);
       expect(tax.monto).toBe(5850);
@@ -273,8 +338,8 @@ describe("calculateLineItemTotals", () => {
         detalle: "Multi-discount",
         precioUnitario: 10000,
         descuento: [
-          { montoDescuento: 1000, naturalezaDescuento: "Discount A" },
-          { montoDescuento: 500, naturalezaDescuento: "Discount B" },
+          { montoDescuento: 1000, codigoDescuento: "01", naturalezaDescuento: "Discount A" },
+          { montoDescuento: 500, codigoDescuento: "02", naturalezaDescuento: "Discount B" },
         ],
       };
 
@@ -283,8 +348,8 @@ describe("calculateLineItemTotals", () => {
     });
   });
 
-  describe("exonerations", () => {
-    it("should calculate exoneration correctly", () => {
+  describe("exonerations (v4.4: tarifaExonerada in tariff points)", () => {
+    it("should calculate a full exoneration (tarifaExonerada = tarifa)", () => {
       const item: LineItemInput = {
         numeroLinea: 1,
         codigoCabys: "4321000000000",
@@ -295,14 +360,14 @@ describe("calculateLineItemTotals", () => {
         impuesto: [
           {
             codigo: "01",
-            codigoTarifa: "08",
+            codigoTarifaIVA: "08",
             tarifa: 13,
             exoneracion: {
               tipoDocumento: "03",
               numeroDocumento: "AL-001-2025",
-              nombreInstitucion: "Ministerio de Educacion",
+              nombreInstitucion: "02",
               fechaEmision: "2025-01-15T00:00:00-06:00",
-              porcentajeExoneracion: 100,
+              tarifaExonerada: 13,
             },
           },
         ],
@@ -310,17 +375,18 @@ describe("calculateLineItemTotals", () => {
 
       const result = calculateLineItemTotals(item);
       const tax = getFirstTax(result);
-      // Full tax: 200000 * 0.13 = 26000
+      // Full tax: 200000 * 13 / 100 = 26000 (still recorded on the tax)
       expect(tax.monto).toBe(26000);
-      // Exoneration: 26000 * 100% = 26000
+      // Exonerated amount: 200000 * 13 / 100 = 26000
       expect(tax.exoneracion).toBeDefined();
       expect(tax.exoneracion?.montoExoneracion).toBe(26000);
-      // Net tax: 26000 - 26000 = 0
+      expect(tax.exoneracion?.tarifaExonerada).toBe(13);
+      // Net tax: max(0, 26000 - 26000) = 0
       expect(result.impuestoNeto).toBe(0);
       expect(result.montoTotalLinea).toBe(200000);
     });
 
-    it("should handle partial exoneration (50%)", () => {
+    it("should handle partial exoneration (6.5 of 13 points)", () => {
       const item: LineItemInput = {
         numeroLinea: 1,
         codigoCabys: "4321000000000",
@@ -331,14 +397,14 @@ describe("calculateLineItemTotals", () => {
         impuesto: [
           {
             codigo: "01",
-            codigoTarifa: "08",
+            codigoTarifaIVA: "08",
             tarifa: 13,
             exoneracion: {
               tipoDocumento: "04",
               numeroDocumento: "DGH-002-2025",
-              nombreInstitucion: "DGH",
+              nombreInstitucion: "04",
               fechaEmision: "2025-01-01T00:00:00-06:00",
-              porcentajeExoneracion: 50,
+              tarifaExonerada: 6.5,
             },
           },
         ],
@@ -346,14 +412,115 @@ describe("calculateLineItemTotals", () => {
 
       const result = calculateLineItemTotals(item);
       const tax = getFirstTax(result);
-      // Full tax: 100000 * 0.13 = 13000
+      // Full tax: 100000 * 13 / 100 = 13000
       expect(tax.monto).toBe(13000);
-      // Exonerated: 13000 * 50% = 6500
+      // Exonerated: 100000 * 6.5 / 100 = 6500
       expect(tax.exoneracion).toBeDefined();
       expect(tax.exoneracion?.montoExoneracion).toBe(6500);
+      expect(tax.exoneracion?.tarifaExonerada).toBe(6.5);
       // Net tax: 13000 - 6500 = 6500
       expect(result.impuestoNeto).toBe(6500);
       expect(result.montoTotalLinea).toBe(106500);
+    });
+
+    it("should handle exoneration of 4 points on a 13% tariff", () => {
+      const item: LineItemInput = {
+        numeroLinea: 1,
+        codigoCabys: "4321000000000",
+        cantidad: 1,
+        unidadMedida: "Sp",
+        detalle: "4-point exoneration",
+        precioUnitario: 130000,
+        impuesto: [
+          {
+            codigo: "01",
+            codigoTarifaIVA: "08",
+            tarifa: 13,
+            exoneracion: {
+              tipoDocumento: "01",
+              numeroDocumento: "EX-004-2025",
+              nombreInstitucion: "01",
+              fechaEmision: "2025-02-01T00:00:00-06:00",
+              tarifaExonerada: 4,
+            },
+          },
+        ],
+      };
+
+      const result = calculateLineItemTotals(item);
+      const tax = getFirstTax(result);
+      // Full tax: 130000 * 13 / 100 = 16900
+      expect(tax.monto).toBe(16900);
+      // Exonerated: 130000 * 4 / 100 = 5200
+      expect(tax.exoneracion?.montoExoneracion).toBe(5200);
+      // Net tax: 16900 - 5200 = 11700
+      expect(result.impuestoNeto).toBe(11700);
+      expect(result.montoTotalLinea).toBe(141700);
+    });
+
+    it("should clamp net tax at 0 when tarifaExonerada exceeds tarifa", () => {
+      const item: LineItemInput = {
+        numeroLinea: 1,
+        codigoCabys: "4321000000000",
+        cantidad: 1,
+        unidadMedida: "Sp",
+        detalle: "Over-exonerated",
+        precioUnitario: 100000,
+        impuesto: [
+          {
+            codigo: "01",
+            codigoTarifaIVA: "04",
+            tarifa: 4,
+            exoneracion: {
+              tipoDocumento: "03",
+              numeroDocumento: "EX-OVER-2025",
+              nombreInstitucion: "03",
+              fechaEmision: "2025-03-01T00:00:00-06:00",
+              tarifaExonerada: 13,
+            },
+          },
+        ],
+      };
+
+      const result = calculateLineItemTotals(item);
+      const tax = getFirstTax(result);
+      expect(tax.monto).toBe(4000);
+      expect(tax.exoneracion?.montoExoneracion).toBe(13000);
+      // Net tax: max(0, 4000 - 13000) = 0
+      expect(result.impuestoNeto).toBe(0);
+      expect(result.montoTotalLinea).toBe(100000);
+    });
+
+    it("should carry the exoneration document fields through to the output", () => {
+      const item: LineItemInput = {
+        numeroLinea: 1,
+        codigoCabys: "4321000000000",
+        cantidad: 1,
+        unidadMedida: "Sp",
+        detalle: "Doc passthrough",
+        precioUnitario: 10000,
+        impuesto: [
+          {
+            codigo: "01",
+            codigoTarifaIVA: "08",
+            tarifa: 13,
+            exoneracion: {
+              tipoDocumento: "03",
+              numeroDocumento: "AL-777-2025",
+              nombreInstitucion: "99",
+              fechaEmision: "2025-06-01T00:00:00-06:00",
+              tarifaExonerada: 13,
+            },
+          },
+        ],
+      };
+
+      const result = calculateLineItemTotals(item);
+      const tax = getFirstTax(result);
+      expect(tax.exoneracion?.tipoDocumento).toBe("03");
+      expect(tax.exoneracion?.numeroDocumento).toBe("AL-777-2025");
+      expect(tax.exoneracion?.nombreInstitucion).toBe("99");
+      expect(tax.exoneracion?.fechaEmision).toBe("2025-06-01T00:00:00-06:00");
     });
   });
 
@@ -387,14 +554,48 @@ describe("calculateLineItemTotals", () => {
         unidadMedida: "kg",
         detalle: "Weighted product",
         precioUnitario: 3333.33,
-        impuesto: [{ codigo: "01", codigoTarifa: "08", tarifa: 13 }],
+        impuesto: [{ codigo: "01", codigoTarifaIVA: "08", tarifa: 13 }],
       };
 
       const result = calculateLineItemTotals(item);
       expect(result.montoTotal).toBe(8333.325);
       const tax = getFirstTax(result);
-      // Tax: 8333.325 * 0.13 = 1083.33225 -> 1083.33225
+      // Tax: 8333.325 * 0.13 = 1083.33225
       expect(tax.monto).toBe(1083.33225);
+    });
+
+    it("should round the exonerated amount to 5 decimals", () => {
+      const item: LineItemInput = {
+        numeroLinea: 1,
+        codigoCabys: "4321000000000",
+        cantidad: 1,
+        unidadMedida: "Unid",
+        detalle: "Rounded exoneration",
+        precioUnitario: 3333.33333,
+        impuesto: [
+          {
+            codigo: "01",
+            codigoTarifaIVA: "08",
+            tarifa: 13,
+            exoneracion: {
+              tipoDocumento: "03",
+              numeroDocumento: "EX-RND-2025",
+              nombreInstitucion: "05",
+              fechaEmision: "2025-04-01T00:00:00-06:00",
+              tarifaExonerada: 6.5,
+            },
+          },
+        ],
+      };
+
+      const result = calculateLineItemTotals(item);
+      const tax = getFirstTax(result);
+      // Full tax: round5(3333.33333 * 13 / 100) = round5(433.3333329) = 433.33333
+      expect(tax.monto).toBe(433.33333);
+      // Exonerated: round5(3333.33333 * 6.5 / 100) = round5(216.66666645) = 216.66667
+      expect(tax.exoneracion?.montoExoneracion).toBe(216.66667);
+      // Net: round5(433.33333 - 216.66667) = 216.66666
+      expect(result.impuestoNeto).toBe(216.66666);
     });
   });
 });
@@ -414,7 +615,7 @@ describe("calculateInvoiceSummary", () => {
         detalle: "Service",
         precioUnitario: 100000,
         esServicio: true,
-        impuesto: [{ codigo: "01", codigoTarifa: "08", tarifa: 13 }],
+        impuesto: [{ codigo: "01", codigoTarifaIVA: "08", tarifa: 13 }],
       }),
     ];
 
@@ -430,6 +631,9 @@ describe("calculateInvoiceSummary", () => {
     expect(summary.totalVentaNeta).toBe(100000);
     expect(summary.totalImpuesto).toBe(13000);
     expect(summary.totalComprobante).toBe(113000);
+    expect(summary.totalDesgloseImpuesto).toEqual([
+      { codigo: "01", codigoTarifaIVA: "08", totalMontoImpuesto: 13000 },
+    ]);
   });
 
   it("should separate services from merchandise", () => {
@@ -442,7 +646,7 @@ describe("calculateInvoiceSummary", () => {
         detalle: "Service",
         precioUnitario: 50000,
         esServicio: true,
-        impuesto: [{ codigo: "01", codigoTarifa: "08", tarifa: 13 }],
+        impuesto: [{ codigo: "01", codigoTarifaIVA: "08", tarifa: 13 }],
       }),
       calculateLineItemTotals({
         numeroLinea: 2,
@@ -452,7 +656,7 @@ describe("calculateInvoiceSummary", () => {
         detalle: "Product",
         precioUnitario: 10000,
         esServicio: false,
-        impuesto: [{ codigo: "01", codigoTarifa: "08", tarifa: 13 }],
+        impuesto: [{ codigo: "01", codigoTarifaIVA: "08", tarifa: 13 }],
       }),
     ];
 
@@ -464,7 +668,7 @@ describe("calculateInvoiceSummary", () => {
     expect(summary.totalComprobante).toBe(79100);
   });
 
-  it("should handle exempt items (no tax)", () => {
+  it("should handle exempt items (no tax input, synthetic exempt entry)", () => {
     const items = [
       calculateLineItemTotals({
         numeroLinea: 1,
@@ -483,9 +687,13 @@ describe("calculateInvoiceSummary", () => {
     expect(summary.totalExento).toBe(30000);
     expect(summary.totalImpuesto).toBe(0);
     expect(summary.totalComprobante).toBe(30000);
+    // The synthetic exempt entry appears in the breakdown with a 0 total
+    expect(summary.totalDesgloseImpuesto).toEqual([
+      { codigo: "01", codigoTarifaIVA: "01", totalMontoImpuesto: 0 },
+    ]);
   });
 
-  it("should handle exonerated items", () => {
+  it("should handle fully exonerated items", () => {
     const items = [
       calculateLineItemTotals({
         numeroLinea: 1,
@@ -498,14 +706,14 @@ describe("calculateInvoiceSummary", () => {
         impuesto: [
           {
             codigo: "01",
-            codigoTarifa: "08",
+            codigoTarifaIVA: "08",
             tarifa: 13,
             exoneracion: {
               tipoDocumento: "03",
               numeroDocumento: "EX-001",
-              nombreInstitucion: "MinEdu",
+              nombreInstitucion: "02",
               fechaEmision: "2025-01-01",
-              porcentajeExoneracion: 100,
+              tarifaExonerada: 13,
             },
           },
         ],
@@ -518,6 +726,90 @@ describe("calculateInvoiceSummary", () => {
     expect(summary.totalExonerado).toBe(100000);
     expect(summary.totalImpuesto).toBe(0);
     expect(summary.totalComprobante).toBe(100000);
+    // Breakdown is net of exoneration: 13000 - 13000 = 0
+    expect(summary.totalDesgloseImpuesto).toEqual([
+      { codigo: "01", codigoTarifaIVA: "08", totalMontoImpuesto: 0 },
+    ]);
+  });
+
+  it("should split base between gravado and exonerado for partial exoneration", () => {
+    const items = [
+      calculateLineItemTotals({
+        numeroLinea: 1,
+        codigoCabys: "4321000000000",
+        cantidad: 1,
+        unidadMedida: "Sp",
+        detalle: "Half exonerated",
+        precioUnitario: 100000,
+        esServicio: true,
+        impuesto: [
+          {
+            codigo: "01",
+            codigoTarifaIVA: "08",
+            tarifa: 13,
+            exoneracion: {
+              tipoDocumento: "04",
+              numeroDocumento: "EX-050",
+              nombreInstitucion: "04",
+              fechaEmision: "2025-01-01",
+              tarifaExonerada: 6.5,
+            },
+          },
+        ],
+      }),
+    ];
+
+    const summary = calculateInvoiceSummary(items);
+    // Exonerated base portion = subTotal * tarifaExonerada / tarifa
+    //                         = 100000 * 6.5 / 13 = 50000
+    expect(summary.totalServExonerado).toBe(50000);
+    expect(summary.totalServGravados).toBe(50000);
+    expect(summary.totalGravado).toBe(50000);
+    expect(summary.totalExonerado).toBe(50000);
+    expect(summary.totalVenta).toBe(100000);
+    // Net tax: 13000 - 6500
+    expect(summary.totalImpuesto).toBe(6500);
+    expect(summary.totalComprobante).toBe(106500);
+    expect(summary.totalDesgloseImpuesto).toEqual([
+      { codigo: "01", codigoTarifaIVA: "08", totalMontoImpuesto: 6500 },
+    ]);
+  });
+
+  it("should split base for a 4-of-13-points exoneration on merchandise", () => {
+    const items = [
+      calculateLineItemTotals({
+        numeroLinea: 1,
+        codigoCabys: "4321000000000",
+        cantidad: 1,
+        unidadMedida: "Unid",
+        detalle: "Partially exonerated goods",
+        precioUnitario: 130000,
+        esServicio: false,
+        impuesto: [
+          {
+            codigo: "01",
+            codigoTarifaIVA: "08",
+            tarifa: 13,
+            exoneracion: {
+              tipoDocumento: "01",
+              numeroDocumento: "EX-004",
+              nombreInstitucion: "01",
+              fechaEmision: "2025-02-01",
+              tarifaExonerada: 4,
+            },
+          },
+        ],
+      }),
+    ];
+
+    const summary = calculateInvoiceSummary(items);
+    // Exonerated base = 130000 * 4 / 13 = 40000
+    expect(summary.totalMercExonerada).toBe(40000);
+    expect(summary.totalMercanciasGravadas).toBe(90000);
+    expect(summary.totalVenta).toBe(130000);
+    // Net tax: 16900 - 5200 = 11700
+    expect(summary.totalImpuesto).toBe(11700);
+    expect(summary.totalComprobante).toBe(141700);
   });
 
   it("should handle discounts in the summary", () => {
@@ -529,8 +821,8 @@ describe("calculateInvoiceSummary", () => {
         unidadMedida: "Unid",
         detalle: "Discounted product",
         precioUnitario: 5000,
-        descuento: [{ montoDescuento: 5000, naturalezaDescuento: "Volume" }],
-        impuesto: [{ codigo: "01", codigoTarifa: "08", tarifa: 13 }],
+        descuento: [{ montoDescuento: 5000, codigoDescuento: "01", naturalezaDescuento: "Volume" }],
+        impuesto: [{ codigo: "01", codigoTarifaIVA: "08", tarifa: 13 }],
       }),
     ];
 
@@ -544,6 +836,45 @@ describe("calculateInvoiceSummary", () => {
     expect(summary.totalComprobante).toBe(45850);
   });
 
+  it("should sum discounts across multiple lines", () => {
+    const items = [
+      calculateLineItemTotals({
+        numeroLinea: 1,
+        codigoCabys: "4321000000000",
+        cantidad: 1,
+        unidadMedida: "Unid",
+        detalle: "Product A",
+        precioUnitario: 10000,
+        descuento: [
+          { montoDescuento: 1000, codigoDescuento: "01", naturalezaDescuento: "Promo A" },
+          { montoDescuento: 500, codigoDescuento: "02", naturalezaDescuento: "Promo B" },
+        ],
+        impuesto: [{ codigo: "01", codigoTarifaIVA: "08", tarifa: 13 }],
+      }),
+      calculateLineItemTotals({
+        numeroLinea: 2,
+        codigoCabys: "4321000000000",
+        cantidad: 1,
+        unidadMedida: "Unid",
+        detalle: "Product B",
+        precioUnitario: 20000,
+        descuento: [
+          { montoDescuento: 2000, codigoDescuento: "01", naturalezaDescuento: "Promo C" },
+        ],
+        impuesto: [{ codigo: "01", codigoTarifaIVA: "08", tarifa: 13 }],
+      }),
+    ];
+
+    const summary = calculateInvoiceSummary(items);
+    expect(summary.totalDescuentos).toBe(3500);
+    // Subtotals: 8500 + 18000 = 26500
+    expect(summary.totalVenta).toBe(26500);
+    expect(summary.totalVentaNeta).toBe(23000);
+    // Taxes: 1105 + 2340 = 3445
+    expect(summary.totalImpuesto).toBe(3445);
+    expect(summary.totalComprobante).toBe(26445);
+  });
+
   it("should include otros cargos in totalComprobante", () => {
     const items = [
       calculateLineItemTotals({
@@ -553,7 +884,7 @@ describe("calculateInvoiceSummary", () => {
         unidadMedida: "Unid",
         detalle: "Product",
         precioUnitario: 10000,
-        impuesto: [{ codigo: "01", codigoTarifa: "08", tarifa: 13 }],
+        impuesto: [{ codigo: "01", codigoTarifaIVA: "08", tarifa: 13 }],
       }),
     ];
 
@@ -572,9 +903,9 @@ describe("calculateInvoiceSummary", () => {
         detalle: "Taxed service",
         precioUnitario: 100000,
         esServicio: true,
-        impuesto: [{ codigo: "01", codigoTarifa: "08", tarifa: 13 }],
+        impuesto: [{ codigo: "01", codigoTarifaIVA: "08", tarifa: 13 }],
       }),
-      // Exempt merchandise
+      // Exempt merchandise (synthetic exempt tax)
       calculateLineItemTotals({
         numeroLinea: 2,
         codigoCabys: "1234500000000",
@@ -592,7 +923,7 @@ describe("calculateInvoiceSummary", () => {
         unidadMedida: "Unid",
         detalle: "Reduced rate product",
         precioUnitario: 2000,
-        impuesto: [{ codigo: "01", codigoTarifa: "04", tarifa: 4 }],
+        impuesto: [{ codigo: "01", codigoTarifaIVA: "04", tarifa: 4 }],
       }),
     ];
 
@@ -606,6 +937,166 @@ describe("calculateInvoiceSummary", () => {
     expect(summary.totalVenta).toBe(111000);
     expect(summary.totalImpuesto).toBe(13240); // 13000 + 240
     expect(summary.totalComprobante).toBe(124240);
+    // One entry per (codigo, codigoTarifaIVA), in first-appearance order
+    expect(summary.totalDesgloseImpuesto).toEqual([
+      { codigo: "01", codigoTarifaIVA: "08", totalMontoImpuesto: 13000 },
+      { codigo: "01", codigoTarifaIVA: "01", totalMontoImpuesto: 0 },
+      { codigo: "01", codigoTarifaIVA: "04", totalMontoImpuesto: 240 },
+    ]);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// calculateInvoiceSummary – totalDesgloseImpuesto (v4.4)
+// ---------------------------------------------------------------------------
+
+describe("calculateInvoiceSummary – totalDesgloseImpuesto", () => {
+  it("should group taxes by (codigo, codigoTarifaIVA) across lines", () => {
+    const items = [
+      calculateLineItemTotals({
+        numeroLinea: 1,
+        codigoCabys: "4321000000000",
+        cantidad: 1,
+        unidadMedida: "Unid",
+        detalle: "Line A at 13%",
+        precioUnitario: 100000,
+        impuesto: [{ codigo: "01", codigoTarifaIVA: "08", tarifa: 13 }],
+      }),
+      calculateLineItemTotals({
+        numeroLinea: 2,
+        codigoCabys: "4321000000000",
+        cantidad: 1,
+        unidadMedida: "Unid",
+        detalle: "Line B at 13%",
+        precioUnitario: 50000,
+        impuesto: [{ codigo: "01", codigoTarifaIVA: "08", tarifa: 13 }],
+      }),
+      calculateLineItemTotals({
+        numeroLinea: 3,
+        codigoCabys: "4321000000000",
+        cantidad: 1,
+        unidadMedida: "Unid",
+        detalle: "Line C at 4%",
+        precioUnitario: 10000,
+        impuesto: [{ codigo: "01", codigoTarifaIVA: "04", tarifa: 4 }],
+      }),
+    ];
+
+    const summary = calculateInvoiceSummary(items);
+    expect(summary.totalDesgloseImpuesto).toEqual([
+      { codigo: "01", codigoTarifaIVA: "08", totalMontoImpuesto: 19500 }, // 13000 + 6500
+      { codigo: "01", codigoTarifaIVA: "04", totalMontoImpuesto: 400 },
+    ]);
+  });
+
+  it("should keep non-IVA taxes in separate entries without codigoTarifaIVA", () => {
+    const items = [
+      calculateLineItemTotals({
+        numeroLinea: 1,
+        codigoCabys: "4321000000000",
+        cantidad: 1,
+        unidadMedida: "Unid",
+        detalle: "Multi-tax line",
+        precioUnitario: 10000,
+        impuesto: [
+          { codigo: "01", codigoTarifaIVA: "08", tarifa: 13 },
+          { codigo: "02", tarifa: 10 },
+        ],
+      }),
+    ];
+
+    const summary = calculateInvoiceSummary(items);
+    expect(summary.totalDesgloseImpuesto).toHaveLength(2);
+    expect(summary.totalDesgloseImpuesto[0]).toEqual({
+      codigo: "01",
+      codigoTarifaIVA: "08",
+      totalMontoImpuesto: 1300,
+    });
+    expect(summary.totalDesgloseImpuesto[1]).toEqual({
+      codigo: "02",
+      totalMontoImpuesto: 1000,
+    });
+    expect(summary.totalDesgloseImpuesto[1]).not.toHaveProperty("codigoTarifaIVA");
+  });
+
+  it("should report amounts net of exoneration in the breakdown", () => {
+    const items = [
+      calculateLineItemTotals({
+        numeroLinea: 1,
+        codigoCabys: "4321000000000",
+        cantidad: 1,
+        unidadMedida: "Sp",
+        detalle: "Exonerated line",
+        precioUnitario: 100000,
+        impuesto: [
+          {
+            codigo: "01",
+            codigoTarifaIVA: "08",
+            tarifa: 13,
+            exoneracion: {
+              tipoDocumento: "03",
+              numeroDocumento: "EX-DES-01",
+              nombreInstitucion: "02",
+              fechaEmision: "2025-01-01",
+              tarifaExonerada: 6.5,
+            },
+          },
+        ],
+      }),
+      calculateLineItemTotals({
+        numeroLinea: 2,
+        codigoCabys: "4321000000000",
+        cantidad: 1,
+        unidadMedida: "Sp",
+        detalle: "Plain 13% line",
+        precioUnitario: 100000,
+        impuesto: [{ codigo: "01", codigoTarifaIVA: "08", tarifa: 13 }],
+      }),
+    ];
+
+    const summary = calculateInvoiceSummary(items);
+    // Line 1 net: 13000 - 6500 = 6500; line 2 net: 13000 → grouped 19500
+    expect(summary.totalDesgloseImpuesto).toEqual([
+      { codigo: "01", codigoTarifaIVA: "08", totalMontoImpuesto: 19500 },
+    ]);
+    expect(summary.totalImpuesto).toBe(19500);
+  });
+
+  it("should order entries by first appearance", () => {
+    const items = [
+      calculateLineItemTotals({
+        numeroLinea: 1,
+        codigoCabys: "4321000000000",
+        cantidad: 1,
+        unidadMedida: "Unid",
+        detalle: "4% first",
+        precioUnitario: 10000,
+        impuesto: [{ codigo: "01", codigoTarifaIVA: "04", tarifa: 4 }],
+      }),
+      calculateLineItemTotals({
+        numeroLinea: 2,
+        codigoCabys: "4321000000000",
+        cantidad: 1,
+        unidadMedida: "Unid",
+        detalle: "13% second",
+        precioUnitario: 10000,
+        impuesto: [{ codigo: "01", codigoTarifaIVA: "08", tarifa: 13 }],
+      }),
+      calculateLineItemTotals({
+        numeroLinea: 3,
+        codigoCabys: "4321000000000",
+        cantidad: 1,
+        unidadMedida: "Unid",
+        detalle: "4% again",
+        precioUnitario: 20000,
+        impuesto: [{ codigo: "01", codigoTarifaIVA: "04", tarifa: 4 }],
+      }),
+    ];
+
+    const summary = calculateInvoiceSummary(items);
+    expect(summary.totalDesgloseImpuesto.map((d) => d.codigoTarifaIVA)).toEqual(["04", "08"]);
+    expect(summary.totalDesgloseImpuesto[0]?.totalMontoImpuesto).toBe(1200); // 400 + 800
+    expect(summary.totalDesgloseImpuesto[1]?.totalMontoImpuesto).toBe(1300);
   });
 });
 
@@ -652,7 +1143,7 @@ describe("calculateLineItemTotals – edge cases", () => {
       unidadMedida: "kg",
       detalle: "Micro quantity",
       precioUnitario: 10000,
-      impuesto: [{ codigo: "01", codigoTarifa: "08", tarifa: 13 }],
+      impuesto: [{ codigo: "01", codigoTarifaIVA: "08", tarifa: 13 }],
     };
     const result = calculateLineItemTotals(item);
     // montoTotal = 0.001 * 10000 = 10
@@ -670,11 +1161,12 @@ describe("calculateLineItemTotals – edge cases", () => {
       unidadMedida: "Unid",
       detalle: "Free promotional item",
       precioUnitario: 0,
-      impuesto: [{ codigo: "01", codigoTarifa: "08", tarifa: 13 }],
+      impuesto: [{ codigo: "01", codigoTarifaIVA: "08", tarifa: 13 }],
     };
     const result = calculateLineItemTotals(item);
     expect(result.montoTotal).toBe(0);
     expect(result.subTotal).toBe(0);
+    expect(result.baseImponible).toBe(0);
     expect(result.impuestoNeto).toBe(0);
     expect(result.montoTotalLinea).toBe(0);
   });
@@ -687,7 +1179,7 @@ describe("calculateLineItemTotals – edge cases", () => {
       unidadMedida: "Unid",
       detalle: "Expensive bulk",
       precioUnitario: 999999.99,
-      impuesto: [{ codigo: "01", codigoTarifa: "08", tarifa: 13 }],
+      impuesto: [{ codigo: "01", codigoTarifaIVA: "08", tarifa: 13 }],
     };
     const result = calculateLineItemTotals(item);
     // montoTotal = 100 * 999999.99 = 99999999
@@ -707,7 +1199,7 @@ describe("calculateLineItemTotals – edge cases", () => {
       detalle: "Multi-tax item",
       precioUnitario: 10000,
       impuesto: [
-        { codigo: "01", codigoTarifa: "08", tarifa: 13 },
+        { codigo: "01", codigoTarifaIVA: "08", tarifa: 13 },
         { codigo: "02", tarifa: 10 },
       ],
     };
@@ -724,35 +1216,58 @@ describe("calculateLineItemTotals – edge cases", () => {
     expect(result.montoTotalLinea).toBe(11300);
   });
 
-  it("should handle 100% exoneration", () => {
+  it("should count IVA calculo especial (07) and bienes usados (08) as IVA", () => {
+    const item: LineItemInput = {
+      numeroLinea: 1,
+      codigoCabys: "4321000000000",
+      cantidad: 1,
+      unidadMedida: "Unid",
+      detalle: "Special IVA regimes",
+      precioUnitario: 10000,
+      impuesto: [
+        { codigo: "07", codigoTarifaIVA: "08", tarifa: 13 },
+        { codigo: "08", codigoTarifaIVA: "08", tarifa: 13 },
+      ],
+    };
+    const result = calculateLineItemTotals(item);
+    // Both are IVA-related: 1300 + 1300 = 2600
+    expect(result.impuestoNeto).toBe(2600);
+    expect(result.montoTotalLinea).toBe(12600);
+  });
+
+  it("should handle 100% exoneration with discount applied first", () => {
     const item: LineItemInput = {
       numeroLinea: 1,
       codigoCabys: "4321000000000",
       cantidad: 1,
       unidadMedida: "Sp",
-      detalle: "Fully exonerated",
+      detalle: "Fully exonerated with discount",
       precioUnitario: 50000,
+      descuento: [
+        { montoDescuento: 10000, codigoDescuento: "01", naturalezaDescuento: "Discount" },
+      ],
       impuesto: [
         {
           codigo: "01",
-          codigoTarifa: "08",
+          codigoTarifaIVA: "08",
           tarifa: 13,
           exoneracion: {
             tipoDocumento: "03",
             numeroDocumento: "EX-100-2025",
-            nombreInstitucion: "Ministerio",
+            nombreInstitucion: "06",
             fechaEmision: "2025-06-01T00:00:00-06:00",
-            porcentajeExoneracion: 100,
+            tarifaExonerada: 13,
           },
         },
       ],
     };
     const result = calculateLineItemTotals(item);
     const tax = getFirstTax(result);
-    expect(tax.monto).toBe(6500); // full tax still recorded
-    expect(tax.exoneracion?.montoExoneracion).toBe(6500);
+    expect(result.subTotal).toBe(40000);
+    expect(tax.monto).toBe(5200); // full tax on discounted subtotal still recorded
+    expect(tax.exoneracion?.montoExoneracion).toBe(5200);
     expect(result.impuestoNeto).toBe(0);
-    expect(result.montoTotalLinea).toBe(50000);
+    expect(result.montoTotalLinea).toBe(40000);
   });
 });
 
@@ -787,6 +1302,10 @@ describe("calculateInvoiceSummary – edge cases", () => {
     expect(summary.totalVentaNeta).toBe(0);
     expect(summary.totalImpuesto).toBe(0);
     expect(summary.totalComprobante).toBe(0);
+    // Synthetic exempt entry still appears in the breakdown
+    expect(summary.totalDesgloseImpuesto).toEqual([
+      { codigo: "01", codigoTarifaIVA: "01", totalMontoImpuesto: 0 },
+    ]);
   });
 
   it("should handle summary with only services", () => {
@@ -799,7 +1318,7 @@ describe("calculateInvoiceSummary – edge cases", () => {
         detalle: "Service A",
         precioUnitario: 20000,
         esServicio: true,
-        impuesto: [{ codigo: "01", codigoTarifa: "08", tarifa: 13 }],
+        impuesto: [{ codigo: "01", codigoTarifaIVA: "08", tarifa: 13 }],
       }),
       calculateLineItemTotals({
         numeroLinea: 2,
@@ -833,7 +1352,7 @@ describe("calculateInvoiceSummary – edge cases", () => {
         detalle: "Product A",
         precioUnitario: 5000,
         esServicio: false,
-        impuesto: [{ codigo: "01", codigoTarifa: "08", tarifa: 13 }],
+        impuesto: [{ codigo: "01", codigoTarifaIVA: "08", tarifa: 13 }],
       }),
       calculateLineItemTotals({
         numeroLinea: 2,

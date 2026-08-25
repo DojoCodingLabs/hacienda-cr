@@ -172,6 +172,12 @@ describe("MCP Server", () => {
               tipo: "02",
               numero: "3101234567",
             },
+            ubicacion: {
+              provincia: "1",
+              canton: "01",
+              distrito: "01",
+              otrasSenas: "Sin otras senas",
+            },
             correoElectronico: "test@empresa.com",
           },
           receptor: {
@@ -181,7 +187,7 @@ describe("MCP Server", () => {
               numero: "101230456",
             },
           },
-          codigoActividad: "620100",
+          codigoActividadEmisor: "620100",
           lineItems: [
             {
               codigoCabys: "8310100000000",
@@ -193,7 +199,7 @@ describe("MCP Server", () => {
               impuesto: [
                 {
                   codigo: "01",
-                  codigoTarifa: "08",
+                  codigoTarifaIVA: "08",
                   tarifa: 13,
                 },
               ],
@@ -222,10 +228,16 @@ describe("MCP Server", () => {
           emisor: {
             nombre: "Exenta S.A.",
             identificacion: { tipo: "02", numero: "3109876543" },
+            ubicacion: {
+              provincia: "1",
+              canton: "01",
+              distrito: "01",
+              otrasSenas: "Sin otras senas",
+            },
             correoElectronico: "exenta@empresa.com",
           },
           receptor: { nombre: "Cliente Exento" },
-          codigoActividad: "620100",
+          codigoActividadEmisor: "620100",
           lineItems: [
             {
               codigoCabys: "8310100000000",
@@ -254,10 +266,16 @@ describe("MCP Server", () => {
           emisor: {
             nombre: "Gravada S.A.",
             identificacion: { tipo: "02", numero: "3101234567" },
+            ubicacion: {
+              provincia: "1",
+              canton: "01",
+              distrito: "01",
+              otrasSenas: "Sin otras senas",
+            },
             correoElectronico: "gravada@empresa.com",
           },
           receptor: { nombre: "Cliente Gravado" },
-          codigoActividad: "620100",
+          codigoActividadEmisor: "620100",
           lineItems: [
             {
               codigoCabys: "8310100000000",
@@ -266,7 +284,7 @@ describe("MCP Server", () => {
               detalle: "Servicio gravado",
               precioUnitario: 10000,
               esServicio: true,
-              impuesto: [{ codigo: "01", codigoTarifa: "08", tarifa: 13 }],
+              impuesto: [{ codigo: "01", codigoTarifaIVA: "08", tarifa: 13 }],
             },
           ],
         },
@@ -284,7 +302,7 @@ describe("MCP Server", () => {
         name: "create_invoice",
         arguments: {
           receptor: { nombre: "Cliente" },
-          codigoActividad: "620100",
+          codigoActividadEmisor: "620100",
           lineItems: [
             {
               codigoCabys: "8310100000000",
@@ -309,10 +327,16 @@ describe("MCP Server", () => {
           emisor: {
             nombre: "Multi S.A.",
             identificacion: { tipo: "02", numero: "3101234567" },
+            ubicacion: {
+              provincia: "1",
+              canton: "01",
+              distrito: "01",
+              otrasSenas: "Sin otras senas",
+            },
             correoElectronico: "multi@empresa.com",
           },
           receptor: { nombre: "Cliente Multi" },
-          codigoActividad: "620100",
+          codigoActividadEmisor: "620100",
           lineItems: [
             {
               codigoCabys: "8310100000000",
@@ -347,10 +371,16 @@ describe("MCP Server", () => {
           emisor: {
             nombre: "Descuento S.A.",
             identificacion: { tipo: "02", numero: "3101234567" },
+            ubicacion: {
+              provincia: "1",
+              canton: "01",
+              distrito: "01",
+              otrasSenas: "Sin otras senas",
+            },
             correoElectronico: "desc@empresa.com",
           },
           receptor: { nombre: "Cliente Descuento" },
-          codigoActividad: "620100",
+          codigoActividadEmisor: "620100",
           lineItems: [
             {
               codigoCabys: "8310100000000",
@@ -384,10 +414,16 @@ describe("MCP Server", () => {
           emisor: {
             nombre: "Test",
             identificacion: { tipo: "02", numero: "3101234567" },
+            ubicacion: {
+              provincia: "1",
+              canton: "01",
+              distrito: "01",
+              otrasSenas: "Sin otras senas",
+            },
             correoElectronico: "test@test.com",
           },
           receptor: { nombre: "Receiver" },
-          codigoActividad: "620100",
+          codigoActividadEmisor: "620100",
           lineItems: [],
         },
       });

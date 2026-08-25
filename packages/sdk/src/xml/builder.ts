@@ -20,18 +20,20 @@ const HACIENDA_NAMESPACE_BASE = "https://cdn.comprobanteselectronicos.go.cr/xml-
 const XSI_NAMESPACE = "http://www.w3.org/2001/XMLSchema-instance";
 
 /**
- * Map from document root element name to the Hacienda schema fragment.
- * Used to build the full namespace URI.
+ * Map from document root element name to the Hacienda namespace fragment.
+ * The official v4.4 target namespaces use lowerCamelCase fragments
+ * (e.g. ".../v4.4/facturaElectronica") while the root element and the
+ * XSD file names are PascalCase.
  */
 const SCHEMA_FRAGMENTS: Record<string, string> = {
-  FacturaElectronica: "FacturaElectronica",
-  NotaCreditoElectronica: "NotaCreditoElectronica",
-  NotaDebitoElectronica: "NotaDebitoElectronica",
-  TiqueteElectronico: "TiqueteElectronico",
-  FacturaElectronicaCompra: "FacturaElectronicaCompra",
-  FacturaElectronicaExportacion: "FacturaElectronicaExportacion",
-  ReciboElectronicoPago: "ReciboElectronicoPago",
-  MensajeReceptor: "MensajeReceptor",
+  FacturaElectronica: "facturaElectronica",
+  NotaCreditoElectronica: "notaCreditoElectronica",
+  NotaDebitoElectronica: "notaDebitoElectronica",
+  TiqueteElectronico: "tiqueteElectronico",
+  FacturaElectronicaCompra: "facturaElectronicaCompra",
+  FacturaElectronicaExportacion: "facturaElectronicaExportacion",
+  ReciboElectronicoPago: "reciboElectronicoPago",
+  MensajeReceptor: "mensajeReceptor",
 };
 
 /**
@@ -108,7 +110,8 @@ function createBuilder(): XMLBuilder {
  * ```ts
  * const xml = buildXml("FacturaElectronica", {
  *   Clave: "50601...",
- *   CodigoActividad: "620100",
+ *   ProveedorSistemas: "3101234567",
+ *   CodigoActividadEmisor: "620100",
  *   // ...
  * });
  * ```
@@ -129,7 +132,7 @@ export function buildXml(
   };
 
   if (includeSchemaLocation) {
-    rootAttributes["@_xsi:schemaLocation"] = `${namespace} ${schemaFragment}_V.4.4.xsd`;
+    rootAttributes["@_xsi:schemaLocation"] = `${namespace} ${rootName}_V4.4.xsd`;
   }
 
   // Wrap data inside root element with attributes

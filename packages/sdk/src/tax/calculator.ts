@@ -13,6 +13,7 @@ import type {
   Descuento,
   CodigoComercial,
   Exoneracion,
+  TotalDesgloseImpuesto,
 } from "@dojocoding/hacienda-shared";
 import { TaxCode } from "@dojocoding/hacienda-shared";
 
@@ -52,19 +53,27 @@ export interface LineItemTaxInput {
   /** Tax type code (e.g., "01" for IVA). */
   codigo: string;
 
-  /** IVA rate code. Required for IVA taxes. */
-  codigoTarifa?: string;
+  /** IVA rate code (CodigoTarifaIVA). Required for IVA taxes. */
+  codigoTarifaIVA?: string;
 
   /** Tax rate percentage (e.g., 13 for 13%). */
   tarifa: number;
 
-  /** Exoneration information. Optional. */
+  /** Exoneration information (v4.4 shape). Optional. */
   exoneracion?: {
+    /** Exoneration document type (TipoDocumentoEX1). */
     tipoDocumento: string;
+    /** Exoneration document number. */
     numeroDocumento: string;
+    /** Issuing institution code (NombreInstitucion, coded in v4.4). */
     nombreInstitucion: string;
+    /** Issue date (ISO 8601). */
     fechaEmision: string;
-    porcentajeExoneracion: number;
+    /**
+     * Exonerated tariff percentage points (TarifaExonerada, 0..tarifa).
+     * The exonerated amount is subTotal * tarifaExonerada / 100.
+     */
+    tarifaExonerada: number;
   };
 }
 
@@ -150,13 +159,13 @@ export interface CalculatedLineItem {
   /** Subtotal after discounts. */
   subTotal: number;
 
-  /** Base taxable amount. Optional. */
+  /** Base taxable amount. */
   baseImponible?: number;
 
-  /** Taxes applied to this line item. */
-  impuesto?: Impuesto[];
+  /** Taxes applied to this line item (v4.4 requires at least one). */
+  impuesto: Impuesto[];
 
-  /** Net IVA tax amount. Optional. */
+  /** Net IVA tax amount. */
   impuestoNeto?: number;
 
   /** Total line amount including taxes. */
@@ -205,49 +214,61 @@ export function calculateLineItemTotals(item: LineItemInput): CalculatedLineItem
   // BaseImponible = subTotal (taxable base)
   const baseImponible = subTotal;
 
-  // Calculate taxes
+  // Calculate taxes. v4.4 requires at least one Impuesto per line, so an
+  // untaxed line gets a synthetic exempt IVA entry (codigo 01, tarifa 0).
   const calculatedTaxes: Impuesto[] = [];
   let impuestoNeto = 0;
 
-  if (item.impuesto && item.impuesto.length > 0) {
-    for (const tax of item.impuesto) {
-      // Full tax amount = subTotal * tarifa / 100
-      const fullTaxAmount = round5((subTotal * tax.tarifa) / 100);
+  const taxInputs: LineItemTaxInput[] =
+    item.impuesto && item.impuesto.length > 0
+      ? item.impuesto
+      : [{ codigo: TaxCode.IVA, codigoTarifaIVA: "01", tarifa: 0 }];
 
-      let taxAmount = fullTaxAmount;
-      let exoneracion: Exoneracion | undefined;
+  for (const tax of taxInputs) {
+    // Full tax amount = subTotal * tarifa / 100
+    const fullTaxAmount = round5((subTotal * tax.tarifa) / 100);
 
-      // Handle exoneration
-      if (tax.exoneracion) {
-        const exonerationPortion = round5(
-          (fullTaxAmount * tax.exoneracion.porcentajeExoneracion) / 100,
+    let taxAmount = fullTaxAmount;
+    let exoneracion: Exoneracion | undefined;
+
+    // Handle exoneration: the exonerated amount is the portion of the
+    // taxable base covered by the exonerated tariff points.
+    if (tax.exoneracion) {
+      if (typeof tax.exoneracion.tarifaExonerada !== "number") {
+        throw new TypeError(
+          "exoneracion.tarifaExonerada must be a number (v4.4). " +
+            "The v4.3 field porcentajeExoneracion was replaced by tarifaExonerada " +
+            "(exonerated tariff percentage points, 0..tarifa).",
         );
-        taxAmount = round5(fullTaxAmount - exonerationPortion);
-
-        exoneracion = {
-          tipoDocumento: tax.exoneracion.tipoDocumento as Exoneracion["tipoDocumento"],
-          numeroDocumento: tax.exoneracion.numeroDocumento,
-          nombreInstitucion: tax.exoneracion.nombreInstitucion,
-          fechaEmision: tax.exoneracion.fechaEmision,
-          porcentajeExoneracion: tax.exoneracion.porcentajeExoneracion,
-          montoExoneracion: exonerationPortion,
-        };
       }
+      const exonerationPortion = round5((subTotal * tax.exoneracion.tarifaExonerada) / 100);
+      taxAmount = round5(Math.max(0, fullTaxAmount - exonerationPortion));
 
-      const calculatedTax: Impuesto = {
-        codigo: tax.codigo as Impuesto["codigo"],
-        tarifa: tax.tarifa,
-        monto: fullTaxAmount,
-        ...(tax.codigoTarifa ? { codigoTarifa: tax.codigoTarifa as Impuesto["codigoTarifa"] } : {}),
-        ...(exoneracion ? { exoneracion } : {}),
+      exoneracion = {
+        tipoDocumento: tax.exoneracion.tipoDocumento as Exoneracion["tipoDocumento"],
+        numeroDocumento: tax.exoneracion.numeroDocumento,
+        nombreInstitucion: tax.exoneracion.nombreInstitucion as Exoneracion["nombreInstitucion"],
+        fechaEmision: tax.exoneracion.fechaEmision,
+        tarifaExonerada: tax.exoneracion.tarifaExonerada,
+        montoExoneracion: exonerationPortion,
       };
+    }
 
-      calculatedTaxes.push(calculatedTax);
+    const calculatedTax: Impuesto = {
+      codigo: tax.codigo as Impuesto["codigo"],
+      tarifa: tax.tarifa,
+      monto: fullTaxAmount,
+      ...(tax.codigoTarifaIVA
+        ? { codigoTarifaIVA: tax.codigoTarifaIVA as Impuesto["codigoTarifaIVA"] }
+        : {}),
+      ...(exoneracion ? { exoneracion } : {}),
+    };
 
-      // ImpuestoNeto counts only the net IVA amount (after exoneration)
-      if (IVA_TAX_CODES.includes(tax.codigo)) {
-        impuestoNeto = round5(impuestoNeto + taxAmount);
-      }
+    calculatedTaxes.push(calculatedTax);
+
+    // ImpuestoNeto counts only the net IVA amount (after exoneration)
+    if (IVA_TAX_CODES.includes(tax.codigo)) {
+      impuestoNeto = round5(impuestoNeto + taxAmount);
     }
   }
 
@@ -265,6 +286,7 @@ export function calculateLineItemTotals(item: LineItemInput): CalculatedLineItem
     precioUnitario: item.precioUnitario,
     montoTotal,
     subTotal,
+    impuesto: calculatedTaxes,
     montoTotalLinea,
     esServicio: item.esServicio ?? false,
   };
@@ -277,11 +299,9 @@ export function calculateLineItemTotals(item: LineItemInput): CalculatedLineItem
     result.descuento = item.descuento;
   }
 
-  if (calculatedTaxes.length > 0) {
-    result.impuesto = calculatedTaxes;
-    result.baseImponible = baseImponible;
-    result.impuestoNeto = impuestoNeto;
-  }
+  result.impuesto = calculatedTaxes;
+  result.baseImponible = baseImponible;
+  result.impuestoNeto = impuestoNeto;
 
   return result;
 }
@@ -318,6 +338,8 @@ export interface InvoiceSummary {
   totalDescuentos: number;
   /** Net sales (totalVenta - totalDescuentos). */
   totalVentaNeta: number;
+  /** Per-tax-code totals breakdown (v4.4 TotalDesgloseImpuesto). */
+  totalDesgloseImpuesto: TotalDesgloseImpuesto[];
   /** Total IVA tax. */
   totalImpuesto: number;
   /** Grand total. */
@@ -357,12 +379,13 @@ function classifyLineItem(item: CalculatedLineItem): {
   const hasExoneration = item.impuesto.some((t: Impuesto) => t.exoneracion !== undefined);
 
   if (hasExoneration) {
-    // Calculate the exonerated portion based on exoneration percentages
+    // The exonerated base portion is the ratio of exonerated tariff points
+    // to the full tariff, applied to the subtotal.
     let totalExonerado = 0;
     for (const tax of item.impuesto) {
-      if (tax.exoneracion) {
+      if (tax.exoneracion && tax.tarifa !== undefined && tax.tarifa > 0) {
         totalExonerado = round5(
-          totalExonerado + (subTotal * tax.exoneracion.porcentajeExoneracion) / 100,
+          totalExonerado + (subTotal * tax.exoneracion.tarifaExonerada) / tax.tarifa,
         );
       }
     }
@@ -434,6 +457,25 @@ export function calculateInvoiceSummary(
     }
   }
 
+  // Per-(codigo, codigoTarifaIVA) net tax breakdown (v4.4 TotalDesgloseImpuesto)
+  const desglose = new Map<string, TotalDesgloseImpuesto>();
+  for (const item of items) {
+    for (const tax of item.impuesto) {
+      const netAmount = round5(Math.max(0, tax.monto - (tax.exoneracion?.montoExoneracion ?? 0)));
+      const key = `${tax.codigo}|${tax.codigoTarifaIVA ?? ""}`;
+      const existing = desglose.get(key);
+      if (existing) {
+        existing.totalMontoImpuesto = round5(existing.totalMontoImpuesto + netAmount);
+      } else {
+        desglose.set(key, {
+          codigo: tax.codigo,
+          ...(tax.codigoTarifaIVA ? { codigoTarifaIVA: tax.codigoTarifaIVA } : {}),
+          totalMontoImpuesto: netAmount,
+        });
+      }
+    }
+  }
+
   const totalGravado = round5(totalServGravados + totalMercanciasGravadas);
   const totalExento = round5(totalServExentos + totalMercanciasExentas);
   const totalExonerado = round5(totalServExonerado + totalMercExonerada);
@@ -455,6 +497,7 @@ export function calculateInvoiceSummary(
     totalVenta,
     totalDescuentos,
     totalVentaNeta,
+    totalDesgloseImpuesto: [...desglose.values()],
     totalImpuesto,
     totalComprobante,
   };

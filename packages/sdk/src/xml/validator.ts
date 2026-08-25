@@ -119,20 +119,22 @@ function validateBusinessRules(input: FacturaElectronicaInput): FacturaValidatio
       let taxIndex = 0;
 
       for (const tax of line.impuesto) {
-        // monto = subTotal * tarifa / 100
-        const expectedTaxAmount = round5((line.subTotal * tax.tarifa) / 100);
-        if (!amountsEqual(tax.monto, expectedTaxAmount)) {
-          errors.push({
-            path: `${prefix}.impuesto.${taxIndex}.monto`,
-            message: `Tax amount (${tax.monto}) must equal subTotal * tarifa / 100 (${expectedTaxAmount})`,
-          });
+        // monto = subTotal * tarifa / 100 (only when a rate is given)
+        if (tax.tarifa !== undefined) {
+          const expectedTaxAmount = round5((line.subTotal * tax.tarifa) / 100);
+          if (!amountsEqual(tax.monto, expectedTaxAmount)) {
+            errors.push({
+              path: `${prefix}.impuesto.${taxIndex}.monto`,
+              message: `Tax amount (${tax.monto}) must equal subTotal * tarifa / 100 (${expectedTaxAmount})`,
+            });
+          }
         }
 
-        // IVA tax codes should have codigoTarifa
-        if (IVA_TAX_CODES.includes(tax.codigo) && !tax.codigoTarifa) {
+        // IVA tax codes must have codigoTarifaIVA
+        if (IVA_TAX_CODES.includes(tax.codigo) && !tax.codigoTarifaIVA) {
           errors.push({
-            path: `${prefix}.impuesto.${taxIndex}.codigoTarifa`,
-            message: `IVA tax (code ${tax.codigo}) must specify a codigoTarifa (rate code)`,
+            path: `${prefix}.impuesto.${taxIndex}.codigoTarifaIVA`,
+            message: `IVA tax (code ${tax.codigo}) must specify a codigoTarifaIVA (rate code)`,
           });
         }
 
@@ -174,25 +176,31 @@ function validateBusinessRules(input: FacturaElectronicaInput): FacturaValidatio
     lineIndex++;
   }
 
-  // Rule: Summary total consistency
+  // Rule: Summary total consistency (v4.4: most totals are optional)
   const r = input.resumenFactura;
 
   // totalGravado = totalServGravados + totalMercanciasGravadas
-  const expectedTotalGravado = round5(r.totalServGravados + r.totalMercanciasGravadas);
-  if (!amountsEqual(r.totalGravado, expectedTotalGravado)) {
-    errors.push({
-      path: "resumenFactura.totalGravado",
-      message: `totalGravado (${r.totalGravado}) must equal totalServGravados + totalMercanciasGravadas (${expectedTotalGravado})`,
-    });
+  if (r.totalGravado !== undefined) {
+    const expectedTotalGravado = round5(
+      (r.totalServGravados ?? 0) + (r.totalMercanciasGravadas ?? 0),
+    );
+    if (!amountsEqual(r.totalGravado, expectedTotalGravado)) {
+      errors.push({
+        path: "resumenFactura.totalGravado",
+        message: `totalGravado (${r.totalGravado}) must equal totalServGravados + totalMercanciasGravadas (${expectedTotalGravado})`,
+      });
+    }
   }
 
   // totalExento = totalServExentos + totalMercanciasExentas
-  const expectedTotalExento = round5(r.totalServExentos + r.totalMercanciasExentas);
-  if (!amountsEqual(r.totalExento, expectedTotalExento)) {
-    errors.push({
-      path: "resumenFactura.totalExento",
-      message: `totalExento (${r.totalExento}) must equal totalServExentos + totalMercanciasExentas (${expectedTotalExento})`,
-    });
+  if (r.totalExento !== undefined) {
+    const expectedTotalExento = round5((r.totalServExentos ?? 0) + (r.totalMercanciasExentas ?? 0));
+    if (!amountsEqual(r.totalExento, expectedTotalExento)) {
+      errors.push({
+        path: "resumenFactura.totalExento",
+        message: `totalExento (${r.totalExento}) must equal totalServExentos + totalMercanciasExentas (${expectedTotalExento})`,
+      });
+    }
   }
 
   // totalExonerado (if present)
@@ -208,18 +216,20 @@ function validateBusinessRules(input: FacturaElectronicaInput): FacturaValidatio
     }
   }
 
-  // totalVenta = totalGravado + totalExento + totalExonerado
+  // totalVenta = totalGravado + totalExento + totalExonerado + totalNoSujeto
   const totalExonerado = r.totalExonerado ?? 0;
-  const expectedTotalVenta = round5(r.totalGravado + r.totalExento + totalExonerado);
+  const expectedTotalVenta = round5(
+    (r.totalGravado ?? 0) + (r.totalExento ?? 0) + totalExonerado + (r.totalNoSujeto ?? 0),
+  );
   if (!amountsEqual(r.totalVenta, expectedTotalVenta)) {
     errors.push({
       path: "resumenFactura.totalVenta",
-      message: `totalVenta (${r.totalVenta}) must equal totalGravado + totalExento + totalExonerado (${expectedTotalVenta})`,
+      message: `totalVenta (${r.totalVenta}) must equal totalGravado + totalExento + totalExonerado + totalNoSujeto (${expectedTotalVenta})`,
     });
   }
 
   // totalVentaNeta = totalVenta - totalDescuentos
-  const expectedTotalVentaNeta = round5(r.totalVenta - r.totalDescuentos);
+  const expectedTotalVentaNeta = round5(r.totalVenta - (r.totalDescuentos ?? 0));
   if (!amountsEqual(r.totalVentaNeta, expectedTotalVentaNeta)) {
     errors.push({
       path: "resumenFactura.totalVentaNeta",
@@ -227,11 +237,19 @@ function validateBusinessRules(input: FacturaElectronicaInput): FacturaValidatio
     });
   }
 
-  // totalImpuesto should match sum of line item impuestoNeto values
-  if (!amountsEqual(r.totalImpuesto, sumLineImpuestoNeto)) {
+  // totalImpuesto must match the sum of line item impuestoNeto values, and
+  // may only be omitted when the lines carry no tax at all.
+  if (r.totalImpuesto !== undefined) {
+    if (!amountsEqual(r.totalImpuesto, sumLineImpuestoNeto)) {
+      errors.push({
+        path: "resumenFactura.totalImpuesto",
+        message: `totalImpuesto (${r.totalImpuesto}) must equal sum of line item impuestoNeto (${sumLineImpuestoNeto})`,
+      });
+    }
+  } else if (sumLineImpuestoNeto > 0) {
     errors.push({
       path: "resumenFactura.totalImpuesto",
-      message: `totalImpuesto (${r.totalImpuesto}) must equal sum of line item impuestoNeto (${sumLineImpuestoNeto})`,
+      message: `totalImpuesto is required when line items carry tax (sum of impuestoNeto is ${sumLineImpuestoNeto})`,
     });
   }
 
@@ -239,7 +257,7 @@ function validateBusinessRules(input: FacturaElectronicaInput): FacturaValidatio
   const totalOtrosCargos = r.totalOtrosCargos ?? 0;
   const totalIVADevuelto = r.totalIVADevuelto ?? 0;
   const expectedTotalComprobante = round5(
-    r.totalVentaNeta + r.totalImpuesto + totalOtrosCargos - totalIVADevuelto,
+    r.totalVentaNeta + (r.totalImpuesto ?? 0) + totalOtrosCargos - totalIVADevuelto,
   );
   if (!amountsEqual(r.totalComprobante, expectedTotalComprobante)) {
     errors.push({

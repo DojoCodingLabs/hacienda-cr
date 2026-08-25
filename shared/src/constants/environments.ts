@@ -14,7 +14,7 @@ export type Environment = (typeof Environment)[keyof typeof Environment];
 
 /** API base URLs for each environment. */
 export const API_BASE_URLS = {
-  [Environment.SANDBOX]: "https://api-sandbox.comprobanteselectronicos.go.cr/recepcion/v1",
+  [Environment.SANDBOX]: "https://api.comprobanteselectronicos.go.cr/recepcion-sandbox/v1",
   [Environment.PRODUCTION]: "https://api.comprobanteselectronicos.go.cr/recepcion/v1",
 } as const;
 
@@ -37,7 +37,7 @@ export const IDP_LOGOUT_URLS = {
   [Environment.SANDBOX]:
     "https://idp.comprobanteselectronicos.go.cr/auth/realms/rut-stag/protocol/openid-connect/logout",
   [Environment.PRODUCTION]:
-    "https://idp.comprobanteselectronicos.go.cr/auth/realms/rut/protocol/openid-connect/token/logout",
+    "https://idp.comprobanteselectronicos.go.cr/auth/realms/rut/protocol/openid-connect/logout",
 } as const;
 
 /** Economic activity lookup API URL. */

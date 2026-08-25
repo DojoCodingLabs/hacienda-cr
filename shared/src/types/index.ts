@@ -18,6 +18,8 @@ export type {
   LineaDetalle,
   InformacionReferencia,
   OtroCargo,
+  MedioPago,
+  TotalDesgloseImpuesto,
   ResumenFactura,
   CodigoTipoMoneda,
   DocumentoElectronicoBase,

@@ -13,8 +13,10 @@ export const ClaveComponentsSchema = z.object({
   /** Date in DDMMYY format. */
   date: z.string().regex(/^\d{6}$/, "Date must be in DDMMYY format (6 digits)"),
 
-  /** Taxpayer ID, zero-padded to 12 digits. */
-  taxpayerId: z.string().regex(/^\d{12}$/, "Taxpayer ID must be exactly 12 digits (zero-padded)"),
+  /** Taxpayer ID, zero-padded to 12 characters (alphanumeric since the April 2026 revision). */
+  taxpayerId: z
+    .string()
+    .regex(/^[A-Za-z0-9]{12}$/, "Taxpayer ID must be exactly 12 alphanumeric characters"),
 
   /** Branch number, zero-padded to 3 digits. */
   branch: z.string().regex(/^\d{3}$/, "Branch must be exactly 3 digits"),
@@ -52,8 +54,10 @@ export const ClaveInputSchema = z.object({
   /** Emission date. */
   date: z.date(),
 
-  /** Taxpayer identification number (raw, without padding). 9-12 digits. */
-  taxpayerId: z.string().regex(/^\d{9,12}$/, "Taxpayer ID must be 9-12 digits"),
+  /** Taxpayer identification number (raw, without padding). 9-12 alphanumeric chars. */
+  taxpayerId: z
+    .string()
+    .regex(/^[A-Za-z0-9]{9,12}$/, "Taxpayer ID must be 9-12 alphanumeric characters"),
 
   /** Document type code. */
   documentType: z.enum([
@@ -91,8 +95,15 @@ export const ClaveInputSchema = z.object({
 
 export type ClaveInputParsed = z.infer<typeof ClaveInputSchema>;
 
-/** Schema validating a complete 50-digit clave string. */
+/**
+ * Schema validating a complete 50-character clave string.
+ * Since the April 2026 revision of v4.4 the taxpayer-ID segment
+ * (positions 10-21) may be alphanumeric; every other segment stays numeric.
+ */
 export const ClaveNumericaSchema = z
   .string()
   .length(50, "Clave numerica must be exactly 50 characters")
-  .regex(/^\d{50}$/, "Clave numerica must contain only digits");
+  .regex(
+    /^\d{9}[A-Za-z0-9]{12}\d{29}$/,
+    "Clave must be numeric except the taxpayer-ID segment (positions 10-21), which may be alphanumeric",
+  );

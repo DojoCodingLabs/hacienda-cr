@@ -75,9 +75,10 @@ Create a Factura Electronica (electronic invoice). Accepts emisor, receptor, and
 
 - `emisor` -- Issuer information (name, ID, email)
 - `receptor` -- Receiver information (name, optional ID, optional email)
-- `codigoActividad` -- CABYS activity code (6 digits)
+- `codigoActividadEmisor` -- Issuer economic activity code (6 digits)
+- `proveedorSistemas` -- Invoicing-system provider ID (optional, defaults to the emisor ID)
 - `condicionVenta` -- Sale condition code (default: `"01"` = cash)
-- `medioPago` -- Payment methods array (default: `["01"]` = cash)
+- `medioPago` -- Payment method code (default: `"01"` = cash; emitted inside ResumenFactura per v4.4)
 - `lineItems` -- Array of line items with CABYS code, quantity, unit, description, price, and optional tax/discount
 - `plazoCredito` -- Credit term in days (optional)
 
@@ -132,7 +133,7 @@ Generate a draft invoice template with sensible defaults. Returns JSON that can 
 - `receptorIdTipo` -- Receiver ID type (optional)
 - `receptorIdNumero` -- Receiver ID number (optional)
 - `receptorEmail` -- Receiver email (optional)
-- `codigoActividad` -- Activity code (default: `"620100"`)
+- `codigoActividadEmisor` -- Activity code (default: `"620100"`)
 - `description` -- Default line item description (default: `"Servicio profesional"`)
 - `amount` -- Default line item amount (default: `0`)
 - `includeIva` -- Include 13% IVA (default: `true`)

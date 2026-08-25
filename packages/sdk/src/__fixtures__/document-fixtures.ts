@@ -1,11 +1,13 @@
 /**
- * Test fixtures for all document type builders.
+ * Test fixtures for all document type builders (v4.4 structure).
  *
  * Provides sample data for each of the 7 document types + Mensaje Receptor
- * to test XML generation.
+ * to test XML generation. Amounts are internally consistent so fixtures
+ * also pass business-rule validation and XSD conformance checks.
  */
 
 import type {
+  FacturaElectronica,
   TiqueteElectronico,
   NotaCreditoElectronica,
   NotaDebitoElectronica,
@@ -13,11 +15,15 @@ import type {
   FacturaElectronicaExportacion,
   ReciboElectronicoPago,
   MensajeReceptor,
+  LineaDetalle,
+  ResumenFactura,
 } from "@dojocoding/hacienda-shared";
 
 // ---------------------------------------------------------------------------
 // Shared emisor / receptor used across fixtures
 // ---------------------------------------------------------------------------
+
+const PROVEEDOR_SISTEMAS_DEFAULT = "3101234567";
 
 const EMISOR_DEFAULT = {
   nombre: "Empresa Test S.A.",
@@ -30,7 +36,7 @@ const EMISOR_DEFAULT = {
     provincia: "1",
     canton: "01",
     distrito: "01",
-    barrio: "01",
+    barrio: "Barrio El Carmen",
     otrasSenas: "100m norte del parque central",
   },
   telefono: {
@@ -49,11 +55,11 @@ const RECEPTOR_DEFAULT = {
   correoElectronico: "compras@clienteejemplo.cr",
 };
 
-const SIMPLE_LINE_ITEM = {
+const SIMPLE_LINE_ITEM: LineaDetalle = {
   numeroLinea: 1,
   codigoCabys: "4321000000000",
   cantidad: 1,
-  unidadMedida: "Sp" as const,
+  unidadMedida: "Sp",
   detalle: "Servicio de consultoria en TI",
   precioUnitario: 100000,
   montoTotal: 100000,
@@ -61,8 +67,8 @@ const SIMPLE_LINE_ITEM = {
   baseImponible: 100000,
   impuesto: [
     {
-      codigo: "01" as const,
-      codigoTarifa: "08" as const,
+      codigo: "01",
+      codigoTarifaIVA: "08",
       tarifa: 13,
       monto: 13000,
     },
@@ -71,7 +77,7 @@ const SIMPLE_LINE_ITEM = {
   montoTotalLinea: 113000,
 };
 
-const SIMPLE_RESUMEN = {
+const SIMPLE_RESUMEN: ResumenFactura = {
   totalServGravados: 100000,
   totalServExentos: 0,
   totalMercanciasGravadas: 0,
@@ -81,8 +87,28 @@ const SIMPLE_RESUMEN = {
   totalVenta: 100000,
   totalDescuentos: 0,
   totalVentaNeta: 100000,
+  totalDesgloseImpuesto: [{ codigo: "01", codigoTarifaIVA: "08", totalMontoImpuesto: 13000 }],
   totalImpuesto: 13000,
+  medioPago: [{ tipoMedioPago: "01", totalMedioPago: 113000 }],
   totalComprobante: 113000,
+};
+
+// ---------------------------------------------------------------------------
+// Fixture: Factura Electronica (doc type 01)
+// ---------------------------------------------------------------------------
+
+/** Full invoice with receiver. */
+export const SIMPLE_FACTURA: FacturaElectronica = {
+  clave: "50601072500031012345670010000101000000000119999999",
+  proveedorSistemas: PROVEEDOR_SISTEMAS_DEFAULT,
+  codigoActividadEmisor: "620100",
+  numeroConsecutivo: "00100001010000000001",
+  fechaEmision: "2025-07-27T10:30:00-06:00",
+  emisor: EMISOR_DEFAULT,
+  receptor: RECEPTOR_DEFAULT,
+  condicionVenta: "01",
+  detalleServicio: [SIMPLE_LINE_ITEM],
+  resumenFactura: SIMPLE_RESUMEN,
 };
 
 // ---------------------------------------------------------------------------
@@ -92,12 +118,12 @@ const SIMPLE_RESUMEN = {
 /** Tiquete without receiver (most common case). */
 export const SIMPLE_TIQUETE: TiqueteElectronico = {
   clave: "50601072500031012345670010000401000000000119999999",
-  codigoActividad: "620100",
+  proveedorSistemas: PROVEEDOR_SISTEMAS_DEFAULT,
+  codigoActividadEmisor: "620100",
   numeroConsecutivo: "00100001040000000001",
   fechaEmision: "2025-07-27T10:30:00-06:00",
   emisor: EMISOR_DEFAULT,
   condicionVenta: "01",
-  medioPago: ["01"],
   detalleServicio: [SIMPLE_LINE_ITEM],
   resumenFactura: SIMPLE_RESUMEN,
 };
@@ -123,13 +149,13 @@ export const TIQUETE_WITH_RECEPTOR: TiqueteElectronico = {
 /** Credit note referencing an original invoice. */
 export const SIMPLE_NOTA_CREDITO: NotaCreditoElectronica = {
   clave: "50601072500031012345670010000301000000000119999999",
-  codigoActividad: "620100",
+  proveedorSistemas: PROVEEDOR_SISTEMAS_DEFAULT,
+  codigoActividadEmisor: "620100",
   numeroConsecutivo: "00100001030000000001",
   fechaEmision: "2025-08-01T10:00:00-06:00",
   emisor: EMISOR_DEFAULT,
   receptor: RECEPTOR_DEFAULT,
   condicionVenta: "01",
-  medioPago: ["01"],
   detalleServicio: [
     {
       ...SIMPLE_LINE_ITEM,
@@ -141,7 +167,7 @@ export const SIMPLE_NOTA_CREDITO: NotaCreditoElectronica = {
       impuesto: [
         {
           codigo: "01",
-          codigoTarifa: "08",
+          codigoTarifaIVA: "08",
           tarifa: 13,
           monto: 6500,
         },
@@ -160,7 +186,9 @@ export const SIMPLE_NOTA_CREDITO: NotaCreditoElectronica = {
     totalVenta: 50000,
     totalDescuentos: 0,
     totalVentaNeta: 50000,
+    totalDesgloseImpuesto: [{ codigo: "01", codigoTarifaIVA: "08", totalMontoImpuesto: 6500 }],
     totalImpuesto: 6500,
+    medioPago: [{ tipoMedioPago: "01", totalMedioPago: 56500 }],
     totalComprobante: 56500,
   },
   informacionReferencia: [
@@ -181,13 +209,13 @@ export const SIMPLE_NOTA_CREDITO: NotaCreditoElectronica = {
 /** Debit note referencing an original invoice. */
 export const SIMPLE_NOTA_DEBITO: NotaDebitoElectronica = {
   clave: "50601072500031012345670010000201000000000119999999",
-  codigoActividad: "620100",
+  proveedorSistemas: PROVEEDOR_SISTEMAS_DEFAULT,
+  codigoActividadEmisor: "620100",
   numeroConsecutivo: "00100001020000000001",
   fechaEmision: "2025-08-02T14:00:00-06:00",
   emisor: EMISOR_DEFAULT,
   receptor: RECEPTOR_DEFAULT,
   condicionVenta: "01",
-  medioPago: ["04"],
   detalleServicio: [
     {
       ...SIMPLE_LINE_ITEM,
@@ -199,7 +227,7 @@ export const SIMPLE_NOTA_DEBITO: NotaDebitoElectronica = {
       impuesto: [
         {
           codigo: "01",
-          codigoTarifa: "08",
+          codigoTarifaIVA: "08",
           tarifa: 13,
           monto: 3250,
         },
@@ -218,7 +246,9 @@ export const SIMPLE_NOTA_DEBITO: NotaDebitoElectronica = {
     totalVenta: 25000,
     totalDescuentos: 0,
     totalVentaNeta: 25000,
+    totalDesgloseImpuesto: [{ codigo: "01", codigoTarifaIVA: "08", totalMontoImpuesto: 3250 }],
     totalImpuesto: 3250,
+    medioPago: [{ tipoMedioPago: "04", totalMedioPago: 28250 }],
     totalComprobante: 28250,
   },
   informacionReferencia: [
@@ -239,7 +269,9 @@ export const SIMPLE_NOTA_DEBITO: NotaDebitoElectronica = {
 /** Purchase invoice (reverse charge). */
 export const SIMPLE_FACTURA_COMPRA: FacturaElectronicaCompra = {
   clave: "50601072500031012345670010000501000000000119999999",
-  codigoActividad: "620100",
+  proveedorSistemas: PROVEEDOR_SISTEMAS_DEFAULT,
+  codigoActividadEmisor: "620100",
+  codigoActividadReceptor: "620100",
   numeroConsecutivo: "00100001050000000001",
   fechaEmision: "2025-08-03T09:00:00-06:00",
   emisor: EMISOR_DEFAULT,
@@ -251,7 +283,6 @@ export const SIMPLE_FACTURA_COMPRA: FacturaElectronicaCompra = {
     },
   },
   condicionVenta: "01",
-  medioPago: ["01"],
   detalleServicio: [
     {
       numeroLinea: 1,
@@ -266,7 +297,7 @@ export const SIMPLE_FACTURA_COMPRA: FacturaElectronicaCompra = {
       impuesto: [
         {
           codigo: "01",
-          codigoTarifa: "08",
+          codigoTarifaIVA: "08",
           tarifa: 13,
           monto: 6500,
         },
@@ -285,9 +316,20 @@ export const SIMPLE_FACTURA_COMPRA: FacturaElectronicaCompra = {
     totalVenta: 50000,
     totalDescuentos: 0,
     totalVentaNeta: 50000,
+    totalDesgloseImpuesto: [{ codigo: "01", codigoTarifaIVA: "08", totalMontoImpuesto: 6500 }],
     totalImpuesto: 6500,
+    medioPago: [{ tipoMedioPago: "01", totalMedioPago: 56500 }],
     totalComprobante: 56500,
   },
+  informacionReferencia: [
+    {
+      tipoDoc: "99",
+      tipoDocOtros: "Comprobante de proveedor no registrado",
+      fechaEmision: "2025-08-03T09:00:00-06:00",
+      codigo: "04",
+      razon: "Respaldo de compra a proveedor no inscrito",
+    },
+  ],
 };
 
 // ---------------------------------------------------------------------------
@@ -297,17 +339,21 @@ export const SIMPLE_FACTURA_COMPRA: FacturaElectronicaCompra = {
 /** Export invoice with foreign buyer. */
 export const SIMPLE_FACTURA_EXPORTACION: FacturaElectronicaExportacion = {
   clave: "50601072500031012345670010000601000000000119999999",
-  codigoActividad: "620100",
+  proveedorSistemas: PROVEEDOR_SISTEMAS_DEFAULT,
+  codigoActividadEmisor: "620100",
   numeroConsecutivo: "00100001060000000001",
   fechaEmision: "2025-08-04T08:00:00-06:00",
   emisor: EMISOR_DEFAULT,
   receptor: {
     nombre: "Acme Corp USA",
-    identificacionExtranjero: "US-EIN-12-3456789",
+    identificacion: {
+      tipo: "05",
+      numero: "US-EIN-12-3456789",
+    },
+    otrasSenasExtranjero: "350 Fifth Avenue, New York, NY, USA",
     correoElectronico: "ap@acmecorp.com",
   },
   condicionVenta: "01",
-  medioPago: ["04"],
   detalleServicio: [
     {
       numeroLinea: 1,
@@ -318,6 +364,14 @@ export const SIMPLE_FACTURA_EXPORTACION: FacturaElectronicaExportacion = {
       precioUnitario: 75,
       montoTotal: 3000,
       subTotal: 3000,
+      impuesto: [
+        {
+          codigo: "01",
+          codigoTarifaIVA: "01",
+          tarifa: 0,
+          monto: 0,
+        },
+      ],
       montoTotalLinea: 3000,
     },
   ],
@@ -336,6 +390,7 @@ export const SIMPLE_FACTURA_EXPORTACION: FacturaElectronicaExportacion = {
     totalDescuentos: 0,
     totalVentaNeta: 3000,
     totalImpuesto: 0,
+    medioPago: [{ tipoMedioPago: "04", totalMedioPago: 3000 }],
     totalComprobante: 3000,
   },
 };
@@ -344,18 +399,55 @@ export const SIMPLE_FACTURA_EXPORTACION: FacturaElectronicaExportacion = {
 // Fixture: Recibo Electronico de Pago (doc type 07, payment receipt)
 // ---------------------------------------------------------------------------
 
-/** Payment receipt. */
+/** Payment receipt for a credit invoice. */
 export const SIMPLE_RECIBO_PAGO: ReciboElectronicoPago = {
   clave: "50601072500031012345670010000701000000000119999999",
-  codigoActividad: "620100",
+  proveedorSistemas: PROVEEDOR_SISTEMAS_DEFAULT,
+  codigoActividadEmisor: "620100",
   numeroConsecutivo: "00100001070000000001",
   fechaEmision: "2025-08-05T11:00:00-06:00",
   emisor: EMISOR_DEFAULT,
   receptor: RECEPTOR_DEFAULT,
-  condicionVenta: "01",
-  medioPago: ["04"],
-  detalleServicio: [SIMPLE_LINE_ITEM],
-  resumenFactura: SIMPLE_RESUMEN,
+  condicionVenta: "11",
+  detalleServicio: [
+    {
+      numeroLinea: 1,
+      codigoCabys: "4321000000000",
+      cantidad: 1,
+      unidadMedida: "Sp",
+      detalle: "Pago de factura de consultoria",
+      precioUnitario: 100000,
+      montoTotal: 100000,
+      subTotal: 100000,
+      impuesto: [
+        {
+          codigo: "01",
+          codigoTarifaIVA: "08",
+          tarifa: 13,
+          monto: 13000,
+        },
+      ],
+      impuestoNeto: 13000,
+      montoTotalLinea: 113000,
+    },
+  ],
+  resumenFactura: {
+    totalVenta: 100000,
+    totalVentaNeta: 100000,
+    totalDesgloseImpuesto: [{ codigo: "01", codigoTarifaIVA: "08", totalMontoImpuesto: 13000 }],
+    totalImpuesto: 13000,
+    medioPago: [{ tipoMedioPago: "04", totalMedioPago: 113000 }],
+    totalComprobante: 113000,
+  },
+  informacionReferencia: [
+    {
+      tipoDoc: "01",
+      numero: "50601072500031012345670010000101000000000119999999",
+      fechaEmision: "2025-07-27T10:30:00-06:00",
+      codigo: "04",
+      razon: "Pago de factura emitida a credito",
+    },
+  ],
 };
 
 // ---------------------------------------------------------------------------
@@ -372,6 +464,7 @@ export const MENSAJE_ACEPTACION_TOTAL: MensajeReceptor = {
   montoTotalImpuesto: 13000,
   codigoActividad: "620100",
   condicionImpuesto: "01",
+  montoTotalImpuestoAcreditar: 13000,
   totalFactura: 113000,
   numeroCedulaReceptor: "3109876543",
   numeroConsecutivoReceptor: "00100001050000000001",

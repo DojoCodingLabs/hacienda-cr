@@ -25,8 +25,8 @@ const VALID_SITUATIONS = new Set<string>(Object.values(Situation));
 export const ClaveInputSchema = z.object({
   date: z.date({ message: "date must be a valid Date object" }),
 
-  taxpayerId: z.string({ message: "taxpayerId must be a string" }).regex(/^\d{1,12}$/, {
-    message: "taxpayerId must be a numeric string between 1 and 12 digits long",
+  taxpayerId: z.string({ message: "taxpayerId must be a string" }).regex(/^[A-Za-z0-9]{1,12}$/, {
+    message: "taxpayerId must be an alphanumeric string between 1 and 12 characters long",
   }),
 
   branch: z
