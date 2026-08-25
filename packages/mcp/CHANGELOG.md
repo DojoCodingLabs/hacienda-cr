@@ -1,5 +1,17 @@
 # @dojocoding/hacienda-mcp
 
+## 0.3.0
+
+### Minor Changes (BREAKING — pre-1.0)
+
+- `create_invoice` and `draft_invoice` tools and the `factura-schema` resource now speak the v4.4 contract (`proveedorSistemas`, `codigoActividadEmisor`, required emisor `ubicacion`, single `medioPago` code emitted inside `ResumenFactura`, `codigoTarifaIVA`, `codigoDescuento`, ID types 05/06). `unidadMedida` is validated against the official catalog and location fields enforce the v4.4 bounds.
+
+### Patch Changes
+
+- Updated dependencies
+  - @dojocoding/hacienda-sdk@0.3.0
+  - @dojocoding/hacienda-shared@0.3.0
+
 ## 0.2.0
 
 ### Minor Changes

@@ -1,5 +1,22 @@
 # @dojocoding/hacienda-sdk
 
+## 0.3.0
+
+### Minor Changes (BREAKING — pre-1.0)
+
+- **Builders now emit the official Hacienda v4.4 document structure.** Previous releases emitted the v4.3 body under v4.4 namespaces and were rejected by schema validation. All 8 document types now validate against the official XSDs (both the 2024 base and the April 2026 revision, vendored under `schemas/`), enforced by an xmllint conformance suite in CI:
+  - `ProveedorSistemas` and `CodigoActividadEmisor` emitted at the root; `MedioPago` inside `ResumenFactura`; `CodigoCABYS`/`CodigoTarifaIVA` renames; `TotalDesgloseImpuesto` and NoSujeto totals; per-document variants (REP reduced schema, FEE line shape, NC/ND `PartidaArancelaria`).
+  - Namespaces corrected to the official lowerCamelCase fragments and `schemaLocation` to `*_V4.4.xsd`.
+  - Clave layer: v4.4 document-type codes (05 FEC / 06 FEE / 07 REP — the stale v4.3 confirmation codes are gone) and alphanumeric taxpayer segment per the April 2026 revision.
+  - Tax calculator: v4.4 exoneration semantics (`tarifaExonerada` tariff points), synthetic exempt-IVA entry for untaxed lines, `totalDesgloseImpuesto` computation, and clear errors for legacy v4.3-shaped inputs.
+  - Validator: v4.4 business rules; `totalImpuesto` required whenever line items carry tax.
+- Requires `@dojocoding/hacienda-shared@0.3.0`. See `MIGRATION.md` at the repository root.
+
+### Patch Changes
+
+- Updated dependencies
+  - @dojocoding/hacienda-shared@0.3.0
+
 ## 0.2.0
 
 ### Minor Changes
