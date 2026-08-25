@@ -1,5 +1,17 @@
 # @dojocoding/hacienda-cli
 
+## 0.3.0
+
+### Minor Changes (BREAKING — pre-1.0)
+
+- Draft wizard and templates produce v4.4-shaped documents (`proveedorSistemas`, `codigoActividadEmisor`, emisor `ubicacion`, payment methods inside `resumenFactura`). Tax-free lines carry the required exempt IVA entry and foreign receivers are collected as ID type 05, so `hacienda draft` output always passes `hacienda submit` validation. Pickers include the v4.4 payment methods (05/06/07) and IVA rates 09–11.
+
+### Patch Changes
+
+- Updated dependencies
+  - @dojocoding/hacienda-sdk@0.3.0
+  - @dojocoding/hacienda-shared@0.3.0
+
 ## 0.2.0
 
 ### Minor Changes
