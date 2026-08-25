@@ -12,6 +12,10 @@ import { writeFile } from "node:fs/promises";
 import { resolve } from "node:path";
 import { defineCommand } from "citty";
 import {
+  IdentificationType,
+  IDENTIFICATION_TYPE_NAMES,
+  SaleCondition,
+  SALE_CONDITION_NAMES,
   PaymentMethod,
   PAYMENT_METHOD_NAMES,
   IvaRateCode,
@@ -25,29 +29,38 @@ import { success, error, detail, info, outputJson, bold, cyan, dim } from "../ut
 // Constants for interactive prompts
 // ---------------------------------------------------------------------------
 
+/** Curated shortlist of the domestic registry types (05/06 are handled separately). */
 const IDENTIFICATION_TYPES = [
-  { code: "01", name: "Cedula Fisica" },
-  { code: "02", name: "Cedula Juridica" },
-  { code: "03", name: "DIMEX" },
-  { code: "04", name: "NITE" },
-] as const;
+  IdentificationType.CEDULA_FISICA,
+  IdentificationType.CEDULA_JURIDICA,
+  IdentificationType.DIMEX,
+  IdentificationType.NITE,
+].map((code) => ({ code, name: IDENTIFICATION_TYPE_NAMES[code] }));
 
-const SALE_CONDITIONS = [
-  { code: "01", name: "Contado" },
-  { code: "02", name: "Credito" },
-  { code: "99", name: "Otros" },
-] as const;
+/** Curated shortlist of the most common sale conditions for the interactive picker. */
+const SALE_CONDITIONS = [SaleCondition.CONTADO, SaleCondition.CREDITO, SaleCondition.OTROS].map(
+  (code) => ({ code, name: SALE_CONDITION_NAMES[code] }),
+);
 
 const PAYMENT_METHODS = Object.values(PaymentMethod).map((code) => ({
   code,
   name: PAYMENT_METHOD_NAMES[code],
 }));
 
-const IVA_RATES = Object.values(IvaRateCode).map((code) => ({
-  code,
-  name: IVA_RATE_NAMES[code],
-  rate: IVA_RATE_PERCENTAGES[code],
-}));
+/** Expired Ley 9635 transitional rates — kept out of the interactive picker. */
+const TRANSITIONAL_IVA_RATES: readonly IvaRateCode[] = [
+  IvaRateCode.TRANSITORIO_0,
+  IvaRateCode.TRANSITORIO_4,
+  IvaRateCode.TRANSITORIO_8,
+];
+
+const IVA_RATES = Object.values(IvaRateCode)
+  .filter((code) => !TRANSITIONAL_IVA_RATES.includes(code))
+  .map((code) => ({
+    code,
+    name: IVA_RATE_NAMES[code],
+    rate: IVA_RATE_PERCENTAGES[code],
+  }));
 
 /** Curated shortlist of the most common units for the interactive picker. */
 const COMMON_UNITS = [
