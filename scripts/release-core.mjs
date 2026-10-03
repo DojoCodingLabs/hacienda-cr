@@ -1,3 +1,4 @@
+import { setTimeout as sleep } from "node:timers/promises";
 import { createHash } from "node:crypto";
 export function integrity(buffer) {
   return `sha512-${createHash("sha512").update(buffer).digest("base64")}`;
@@ -32,6 +33,7 @@ export async function registryMetadata(name, version, fetchFn = fetch) {
     {
       signal: AbortSignal.timeout(15000),
       redirect: "error",
+      headers: { "Cache-Control": "no-cache" },
     },
   );
   if (response.status === 404) {
@@ -60,4 +62,22 @@ export async function publishPlan(plan, publish, verify) {
     if (artifact.action === "publish") await publish(artifact);
     await verify(artifact);
   }
+}
+
+/** A successful npm publish may precede registry indexing by several minutes. */
+export async function verifyPublishedArtifact(
+  artifact,
+  { lookup = registryMetadata, wait = sleep, attempts = 37, delayMs = 5000 } = {},
+) {
+  for (let attempt = 0; attempt < attempts; attempt++) {
+    const metadata = await lookup(artifact.name, artifact.version);
+    if (metadata !== null) {
+      publicationAction(metadata, artifact, true);
+      return;
+    }
+    if (attempt + 1 < attempts) await wait(delayMs);
+  }
+  throw new Error(
+    `Published version is not visible yet: ${artifact.name}. Use verified recovery after indexing completes.`,
+  );
 }

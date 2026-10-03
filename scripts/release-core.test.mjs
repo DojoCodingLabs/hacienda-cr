@@ -7,6 +7,7 @@ import {
   registryMetadata,
   planPublication,
   publishPlan,
+  verifyPublishedArtifact,
 } from "./release-core.mjs";
 const artifact = {
   name: "@example/sdk",
@@ -113,4 +114,58 @@ test("registry accepts npm's JSON-string version-not-found response", async () =
       async () => new Response(JSON.stringify("version not found: 9.9.9"), { status: 404 }),
     ),
   );
+});
+
+test("waits for registry indexing and verifies the exact artifact", async () => {
+  let lookups = 0,
+    waits = 0;
+  await verifyPublishedArtifact(artifact, {
+    lookup: async () => (++lookups < 3 ? null : metadata),
+    wait: async () => {
+      waits++;
+    },
+    attempts: 3,
+  });
+  assert.equal(lookups, 3);
+  assert.equal(waits, 2);
+});
+test("stops immediately on conflicting bytes or registry failures", async () => {
+  const wait = async () => {
+    throw new Error("should not wait");
+  };
+  await assert.rejects(
+    verifyPublishedArtifact(artifact, {
+      wait,
+      lookup: async () => ({ ...metadata, dist: { integrity: "different" } }),
+    }),
+    /differs/,
+  );
+  await assert.rejects(
+    verifyPublishedArtifact(artifact, {
+      wait,
+      lookup: async () => {
+        throw new Error("offline");
+      },
+    }),
+    /offline/,
+  );
+});
+test("bounds indexing waits without attempting another publish", async () => {
+  let lookups = 0,
+    waits = 0;
+  await assert.rejects(
+    verifyPublishedArtifact(artifact, {
+      lookup: async () => {
+        lookups++;
+        return null;
+      },
+      wait: async () => {
+        waits++;
+      },
+      attempts: 3,
+    }),
+    /not visible/,
+  );
+  assert.equal(lookups, 3);
+  assert.equal(waits, 2);
 });

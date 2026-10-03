@@ -6,8 +6,7 @@ import {
   validateRelease,
   planPublication,
   publishPlan,
-  registryMetadata,
-  publicationAction,
+  verifyPublishedArtifact,
 } from "./release-core.mjs";
 const root = resolve(import.meta.dirname, "..");
 const args = process.argv.slice(2);
@@ -89,11 +88,7 @@ if (mode === "prepare") {
         root,
         { stdio: "inherit" },
       ),
-    async (artifact) => {
-      const metadata = await registryMetadata(artifact.name, artifact.version);
-      if (metadata === null) throw new Error(`Published version not found: ${artifact.name}.`);
-      publicationAction(metadata, artifact, true);
-    },
+    (artifact) => verifyPublishedArtifact(artifact),
   );
   console.log(
     "All release artifacts published or verified as identical. Check npm dist-tags and provenance before announcing.",
