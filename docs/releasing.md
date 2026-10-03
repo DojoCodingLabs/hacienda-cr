@@ -32,7 +32,8 @@ When the version PR is approved and merged, create and push an annotated `v0.4.0
 tag pointing at that exact main commit. This triggers publish.yml. The workflow
 verifies the tag/main relationship, installs native xmllint, repeats preparation,
 then publishes the verified tarballs in shared -> SDK -> CLI -> MCP order.
-Publication is serialized across release tags. The root release command uses
+Publication is serialized across release tags. Dependency maps in final tarball
+manifests are canonicalized, preserving conditional-export order. The root release command uses
 this same verified path; Changesets publish is not a second supported path.
 
 ## Recover a partial release
@@ -40,10 +41,11 @@ this same verified path; Changesets publish is not a second supported path.
 npm publication is not atomic. If a package fails after an earlier publish,
 leave the original tag intact. Inspect the workflow failure and artifact download.
 Re-run publish.yml using workflow_dispatch with the same existing tag and resume
-checked. Registry lookups must succeed; 5xx, authentication/network errors or
+checked, and prepared_run_id set to the original successful preparation/publish
+run. Download its saved artifacts rather than rebuilding them. Registry lookups must succeed; 5xx, authentication/network errors or
 malformed metadata never count as an absent version.
 
-Recovery rebuilds and verifies artifacts, then skips only versions whose registry
+Recovery restores and verifies the saved artifacts, then skips only versions whose registry
 name, version and tarball integrity exactly match this release. Different bytes
 fail closed; never unpublish or overwrite a conflicting version. If a runner or
 build change causes different bytes, recover from the saved verified artifacts

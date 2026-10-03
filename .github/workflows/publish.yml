@@ -14,6 +14,11 @@ on:
         default: false
         type: boolean
 
+      prepared_run_id:
+        description: "Original workflow run containing verified artifacts (required for recovery)"
+        default: ""
+        type: string
+
 concurrency:
   group: npm-release
   cancel-in-progress: false
@@ -25,6 +30,7 @@ jobs:
     timeout-minutes: 20
     permissions:
       contents: read
+      actions: read
       id-token: write
     env:
       RELEASE_TAG: ${{ inputs.tag || github.ref_name }}
@@ -49,7 +55,31 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - name: Install native XSD conformance tool
         run: sudo apt-get update -qq && sudo apt-get install -y -qq libxml2-utils
+      - name: Require saved artifacts for recovery
+        env:
+          PREPARED_RUN_ID: ${{ inputs.prepared_run_id }}
+        run: |
+          if [ -n "$RELEASE_RESUME" ] && [ -z "$PREPARED_RUN_ID" ]; then
+            echo "Recovery requires the original prepared_run_id; do not rebuild published artifacts."
+            exit 1
+          fi
+          if [ -n "$PREPARED_RUN_ID" ] && [ -z "$RELEASE_RESUME" ]; then
+            echo "Saved artifacts require resume=true."
+            exit 1
+          fi
+      - name: Restore exact verified artifacts
+        if: inputs.prepared_run_id != ''
+        uses: actions/download-artifact@v4
+        with:
+          name: release-${{ env.RELEASE_TAG }}
+          path: .release
+          run-id: ${{ inputs.prepared_run_id }}
+          github-token: ${{ github.token }}
+      - name: Verify restored installed packages
+        if: inputs.prepared_run_id != ''
+        run: pnpm test:packages --pack-dir ".release/$RELEASE_TAG/packed"
       - name: Verify and prepare exact release artifacts
+        if: inputs.prepared_run_id == ''
         run: pnpm release:prepare --tag "$RELEASE_TAG" $RELEASE_RESUME
       - name: Publish with trusted publishing
         if: vars.NPM_TRUSTED_PUBLISHING == 'true'
