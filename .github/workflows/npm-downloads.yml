@@ -1,0 +1,47 @@
+name: Update npm lifetime downloads
+
+on:
+  schedule:
+    - cron: "17 8 * * *"
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - "scripts/update-npm-downloads*.mjs"
+      - ".github/workflows/npm-downloads.yml"
+
+concurrency:
+  group: npm-lifetime-downloads
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  update:
+    if: github.repository == 'DojoCodingLabs/hacienda-cr'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Verify counter calculation
+        run: node --test scripts/update-npm-downloads.test.mjs
+      - name: Fetch complete npm download history
+        run: node scripts/update-npm-downloads.mjs
+      - name: Commit updated counter
+        run: |
+          git add docs/npm-downloads.json
+          if git diff --cached --quiet; then
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "docs: update npm lifetime downloads"
+          git push origin HEAD:main
