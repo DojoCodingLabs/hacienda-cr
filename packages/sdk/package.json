@@ -1,18 +1,20 @@
 {
   "name": "@dojocoding/hacienda-sdk",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "Core SDK for Costa Rica electronic invoicing (Hacienda API v4.4)",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "exports": {
     ".": {
-      "import": "./dist/index.js",
-      "types": "./dist/index.d.ts"
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
     }
   },
   "files": [
-    "dist"
+    "dist",
+    "MIGRATION-v4.4.md",
+    "CHANGELOG.md"
   ],
   "keywords": [
     "costa-rica",
@@ -27,7 +29,9 @@
     "test": "vitest run",
     "lint": "eslint src/",
     "typecheck": "tsc --noEmit",
-    "clean": "rm -rf dist"
+    "clean": "rm -rf dist",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
     "@dojocoding/hacienda-shared": "workspace:*",
@@ -51,5 +55,11 @@
     "url": "https://github.com/DojoCodingLabs/hacienda-cr.git",
     "directory": "packages/sdk"
   },
-  "homepage": "https://github.com/DojoCodingLabs/hacienda-cr#readme"
+  "homepage": "https://github.com/DojoCodingLabs/hacienda-cr#readme",
+  "engines": {
+    "node": ">=22"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
 }

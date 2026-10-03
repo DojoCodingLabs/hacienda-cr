@@ -1,18 +1,19 @@
 {
   "name": "@dojocoding/hacienda-shared",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "Shared types, constants, and enums for Hacienda CR electronic invoicing",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "exports": {
     ".": {
-      "import": "./dist/index.js",
-      "types": "./dist/index.d.ts"
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
     }
   },
   "files": [
-    "dist"
+    "dist",
+    "CHANGELOG.md"
   ],
   "keywords": [
     "costa-rica",
@@ -27,7 +28,9 @@
     "test": "vitest run",
     "lint": "eslint src/",
     "typecheck": "tsc --noEmit",
-    "clean": "rm -rf dist"
+    "clean": "rm -rf dist",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
     "zod": "^4.6.5"
@@ -39,5 +42,11 @@
     "url": "https://github.com/DojoCodingLabs/hacienda-cr.git",
     "directory": "shared"
   },
-  "homepage": "https://github.com/DojoCodingLabs/hacienda-cr#readme"
+  "homepage": "https://github.com/DojoCodingLabs/hacienda-cr#readme",
+  "engines": {
+    "node": ">=22"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
 }

@@ -17,6 +17,10 @@
     },
     "clean": {
       "cache": false
+    },
+    "test:coverage": {
+      "dependsOn": ["build"],
+      "outputs": ["coverage/**"]
     }
   }
 }

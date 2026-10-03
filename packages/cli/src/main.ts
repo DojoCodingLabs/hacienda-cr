@@ -1,3 +1,4 @@
+import { readFileSync } from "node:fs";
 /**
  * Main CLI command definition.
  *
@@ -21,7 +22,11 @@ import {
 } from "./commands/index.js";
 
 export const PACKAGE_NAME = "@dojocoding/hacienda-cli" as const;
-export const VERSION = "0.0.1" as const;
+export const VERSION = (
+  JSON.parse(readFileSync(new URL("../package.json", import.meta.url), "utf8")) as {
+    version: string;
+  }
+).version;
 
 export const main = defineCommand({
   meta: {

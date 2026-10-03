@@ -15,12 +15,12 @@ Requires **Node.js 22+** (uses native `fetch` and `crypto.subtle`).
 ## Quick Start
 
 ```ts
-import { HaciendaClient, DocumentType, Situation } from "@dojocoding/hacienda-sdk";
+import { HaciendaClient, Environment, IdType } from "@dojocoding/hacienda-sdk";
 
 const client = new HaciendaClient({
-  environment: "sandbox",
+  environment: Environment.Sandbox,
   credentials: {
-    idType: "02",
+    idType: IdType.PersonaJuridica,
     idNumber: "3101234567",
     password: process.env.HACIENDA_PASSWORD!,
   },
@@ -149,4 +149,8 @@ const token = await client.getAccessToken();
 
 ## Full Documentation
 
-See the [root README](../../README.md) for comprehensive documentation with examples.
+See the [root README](https://github.com/DojoCodingLabs/hacienda-cr#readme) for comprehensive documentation with examples.
+
+## Migrating to 0.4.0
+
+See [migration guidance](MIGRATION-v4.4.md) for required provider IDs, strict XSD validation, request deadlines, cancellation, and submission retry behavior.

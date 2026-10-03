@@ -1,5 +1,21 @@
 # @dojocoding/hacienda-shared
 
+## 0.4.0
+
+- Declare Node.js 22+ and public package metadata; verify installed TypeScript consumers and ship corrected upgrade documentation.
+
+### Patch Changes
+
+- 4e89886: Harden cancellation, submission deadlines, response/XML limits, certificate
+  readiness, secret-safe diagnostics and retry semantics. Fix standalone MCP ESM
+  startup and validate inputs before sequence allocation. Update security-sensitive
+  dependencies and add hostile-input, cryptographic, local HTTP lifecycle,
+  multiprocess sequence and installed-package regression suites.
+
+  Submission timeout now covers POST and polling; POST/PATCH are not automatically
+  retried. HTTP requests default to a 30-second deadline and reject redirects.
+  See docs/security-hardening.md for input caps and remaining trust boundaries.
+
 ## 0.3.0
 
 ### Minor Changes (BREAKING — pre-1.0)

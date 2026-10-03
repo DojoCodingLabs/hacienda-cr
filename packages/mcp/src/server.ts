@@ -1,3 +1,4 @@
+import { readFileSync } from "node:fs";
 /**
  * MCP Server for Costa Rica electronic invoicing.
  *
@@ -19,7 +20,11 @@ import { registerResources } from "./resources/index.js";
 // ---------------------------------------------------------------------------
 
 const SERVER_NAME = "hacienda-cr";
-const SERVER_VERSION = "0.0.1";
+const SERVER_VERSION = (
+  JSON.parse(readFileSync(new URL("../package.json", import.meta.url), "utf8")) as {
+    version: string;
+  }
+).version;
 
 // ---------------------------------------------------------------------------
 // Factory

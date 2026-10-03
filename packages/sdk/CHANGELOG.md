@@ -1,5 +1,32 @@
 # @dojocoding/hacienda-sdk
 
+## 0.4.0
+
+- Declare Node.js 22+ and public package metadata; verify installed TypeScript consumers and ship corrected upgrade documentation.
+
+### Minor Changes
+
+- eaf7cff: Validate XML offline against the vendored Hacienda v4.4 schemas before submission.
+  Fix discount totals, reconcile summaries with detail, serialize sequence resets
+  and increments, and enforce concurrent API rate limits. Return nonzero CLI exit
+  codes for rejected submissions. MCP invoice creation requires the actual system
+  provider ID and validates generated documents; its JSON schema resource now
+  reflects the tool input schema.
+- 4e89886: Harden cancellation, submission deadlines, response/XML limits, certificate
+  readiness, secret-safe diagnostics and retry semantics. Fix standalone MCP ESM
+  startup and validate inputs before sequence allocation. Update security-sensitive
+  dependencies and add hostile-input, cryptographic, local HTTP lifecycle,
+  multiprocess sequence and installed-package regression suites.
+
+  Submission timeout now covers POST and polling; POST/PATCH are not automatically
+  retried. HTTP requests default to a 30-second deadline and reject redirects.
+  See docs/security-hardening.md for input caps and remaining trust boundaries.
+
+### Patch Changes
+
+- Updated dependencies [4e89886]
+  - @dojocoding/hacienda-shared@0.4.0
+
 ## 0.3.0
 
 ### Minor Changes (BREAKING — pre-1.0)

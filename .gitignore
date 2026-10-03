@@ -42,3 +42,6 @@ pnpm-debug.log*
 config.toml
 credentials.enc
 sequences.json
+
+# Verified local release artifacts
+.release/
