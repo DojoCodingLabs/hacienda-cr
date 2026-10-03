@@ -26,7 +26,7 @@
     "prepare": "husky",
     "test:packages": "node scripts/verify-packages.mjs",
     "verify": "node scripts/verify.mjs",
-    "test:scripts": "node --test scripts",
+    "test:scripts": "node scripts/run-script-tests.mjs",
     "test:coverage": "turbo run test:coverage",
     "release:prepare": "node scripts/release.mjs prepare",
     "release:publish": "node scripts/release.mjs publish",
