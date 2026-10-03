@@ -16,7 +16,55 @@ Toolkit open-source en TypeScript para trabajar con comprobantes electrónicos v
 [![Licencia MIT](https://img.shields.io/badge/Licencia-MIT-FF7151?labelColor=201E3D)](LICENSE)
 [![Node.js 22+](https://img.shields.io/badge/Node.js-22%2B-201E3D)](https://nodejs.org)
 
-[Empezar](#empezá-acá) · [Documentación](#documentación) · [Contribuir](#desarrollo-y-contribuciones) · [Reportar un problema](https://github.com/DojoCodingLabs/hacienda-cr/issues/new)
+[Casos de uso](#qué-podés-construir) · [Empezar](#empezá-acá) · [Documentación](#documentación) · [Contribuir](#desarrollo-y-contribuciones) · [Reportar un problema](https://github.com/DojoCodingLabs/hacienda-cr/issues/new)
+
+## La visión: facturación dentro de tu producto
+
+**Que cada venta pueda convertirse en un comprobante electrónico desde el mismo lugar donde ocurre.** Un checkout, una caja, un sistema de gestión o una conversación con un asistente pueden ser el punto de partida.
+
+Hacienda CR aporta una base común para construir esos flujos: tu aplicación define la experiencia, conecta sus datos y usa el toolkit para generar, firmar, enviar y consultar comprobantes. La integración con Hacienda pasa a formar parte de tu producto, con código abierto que podés inspeccionar y adaptar.
+
+La visión es una infraestructura abierta de facturación electrónica para Costa Rica: que más equipos puedan lanzar productos con facturación integrada y dedicar su esfuerzo a las necesidades de sus clientes.
+
+## Qué podés construir
+
+### 1. Un SaaS que factura desde su propio panel
+
+**Para equipos que desarrollan software de gestión o servicios por suscripción.** Al cerrar una orden o registrar un cobro, tu backend toma los datos del cliente, calcula los impuestos y genera el comprobante. Tu panel muestra si Hacienda lo aceptó o rechazó, junto con el motivo.
+
+**Valor para tu cliente:** gestionar su operación y su facturación en una misma experiencia. Usá el **SDK**; tu aplicación administra las empresas, sus credenciales, los cobros y la programación de renovaciones.
+
+### 2. Una tienda que conecta pedidos con comprobantes
+
+**Para ecommerce y plataformas de ventas.** Cuando tu sistema confirma el pago de un pedido, podés iniciar el flujo de factura electrónica con el **SDK** y asociar la clave y el estado al pedido. Ante una devolución, podés construir una nota de crédito referenciada al comprobante original.
+
+**Valor para tu negocio:** evitar volver a digitar una venta para facturarla. Tu tienda conecta su proveedor de pagos y decide cuándo emitir y cómo entregar el comprobante al comprador.
+
+### 3. Un punto de venta con facturación integrada
+
+**Para productos de caja, restaurantes y comercios.** Al cerrar una venta, tu aplicación puede generar una factura o un tiquete, calcular el IVA y enviar el XML firmado mediante el **SDK**. Para un ajuste posterior, puede generar la nota de crédito o débito correspondiente.
+
+**Valor para el comercio:** convertir la facturación en un paso del flujo de caja, usando los datos que ya capturó el negocio.
+
+### 4. Un ERP que incorpora el ciclo de comprobantes
+
+**Para equipos que integran ventas, compras y contabilidad.** Podés conectar una orden con su factura, consultar el estado en Hacienda y construir mensajes de receptor para aceptar o rechazar comprobantes recibidos. Tu sistema conserva la relación entre la operación y sus documentos.
+
+**Valor para el equipo administrativo:** seguir cada comprobante desde su sistema de gestión. Usá el **SDK** para la integración y la **CLI** para consultas y validaciones operativas.
+
+### 5. Automatización para un despacho contable
+
+**Para desarrolladores que apoyan a contadores o administran varias empresas.** Un script puede usar perfiles de la **CLI** para validar archivos, consultar comprobantes y devolver resultados con `--json`. Antes de enviar una factura, `--dry-run` permite revisar el XML generado.
+
+**Valor para el despacho:** transformar tareas repetidas en flujos reproducibles y detectar errores antes del envío. El equipo define los datos de entrada y revisa los resultados.
+
+### 6. Un asistente que prepara la factura por vos
+
+**Para productos con asistentes de IA y equipos que usan clientes MCP.** Una persona describe el servicio, el cliente y el monto; el asistente usa el **servidor MCP** para preparar el borrador, consultar al contribuyente y generar XML sin firmar. Después, tu flujo permite revisar los datos y completar la firma y el envío con el **SDK o la CLI**.
+
+**Valor para quien factura:** pasar de una conversación a un documento estructurado, con una etapa de revisión antes de emitirlo.
+
+**Elegí un flujo y probalo en sandbox:** empezá con una operación de tu producto, generá su comprobante y consultá la respuesta de Hacienda. Los ejemplos de abajo te dan el punto de entrada para cada herramienta.
 
 ## Elegí tu herramienta
 
