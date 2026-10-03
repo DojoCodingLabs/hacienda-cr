@@ -8,6 +8,7 @@
 import { describe, it, expect, beforeAll, afterAll, vi, beforeEach } from "vitest";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 
+import { getNextSequence } from "@dojocoding/hacienda-sdk";
 import { createServer } from "./server.js";
 import { createLinkedTransports } from "./testing/in-memory-transport.js";
 
@@ -165,6 +166,33 @@ describe("MCP Server", () => {
   // -------------------------------------------------------------------------
 
   describe("create_invoice", () => {
+    it("rejects invalid line items before allocating a sequence", async () => {
+      const result = await client.callTool({
+        name: "create_invoice",
+        arguments: {
+          proveedorSistemas: "3101234567",
+          codigoActividadEmisor: "620100",
+          emisor: {
+            nombre: "Test Company",
+            identificacion: { tipo: "02", numero: "3101234567" },
+            ubicacion: { provincia: "1", canton: "01", distrito: "01", otrasSenas: "Test address" },
+            correoElectronico: "test@example.com",
+          },
+          receptor: { nombre: "Test Client", identificacion: { tipo: "02", numero: "3109876543" } },
+          lineItems: [
+            {
+              codigoCabys: "invalid",
+              cantidad: 1,
+              unidadMedida: "Unid",
+              detalle: "Test item",
+              precioUnitario: 100,
+            },
+          ],
+        },
+      });
+      expect(result.isError).toBe(true);
+      expect(getNextSequence).not.toHaveBeenCalled();
+    });
     it("should create an invoice and return XML", async () => {
       const result = await client.callTool({
         name: "create_invoice",

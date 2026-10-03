@@ -9,6 +9,7 @@
  * @module api/retry
  */
 
+import { sleep, withSignal } from "./cancellation.js";
 import { ApiError } from "../errors.js";
 import { isRetryableStatus } from "./error-codes.js";
 
@@ -20,6 +21,8 @@ import { isRetryableStatus } from "./error-codes.js";
 export interface RetryOptions {
   /** Maximum number of retry attempts (default: 3). */
   readonly maxRetries?: number;
+  /** Cancellation applies to attempts and backoff waits. */
+  readonly signal?: AbortSignal;
   /** Initial delay in milliseconds before the first retry (default: 1000). */
   readonly initialDelayMs?: number;
   /** Multiplier for exponential backoff (default: 2). */
@@ -29,7 +32,7 @@ export interface RetryOptions {
 }
 
 /** Default retry configuration. */
-const DEFAULT_RETRY_OPTIONS: Required<RetryOptions> = {
+const DEFAULT_RETRY_OPTIONS: Required<Omit<RetryOptions, "signal">> = {
   maxRetries: 3,
   initialDelayMs: 1000,
   backoffMultiplier: 2,
@@ -64,13 +67,28 @@ const DEFAULT_RETRY_OPTIONS: Required<RetryOptions> = {
  */
 export async function withRetry<T>(fn: () => Promise<T>, options?: RetryOptions): Promise<T> {
   const config = { ...DEFAULT_RETRY_OPTIONS, ...options };
+  if (
+    !Number.isInteger(config.maxRetries) ||
+    config.maxRetries < 0 ||
+    config.maxRetries > 100 ||
+    !Number.isFinite(config.initialDelayMs) ||
+    config.initialDelayMs < 0 ||
+    !Number.isFinite(config.maxDelayMs) ||
+    config.maxDelayMs < 0 ||
+    config.maxDelayMs > 2147483647 ||
+    !Number.isFinite(config.backoffMultiplier) ||
+    config.backoffMultiplier < 1
+  ) {
+    throw new RangeError("Invalid retry limits.");
+  }
   let lastError: unknown;
-  let delay = config.initialDelayMs;
+  let delay = Math.min(config.initialDelayMs, config.maxDelayMs);
 
   for (let attempt = 0; attempt <= config.maxRetries; attempt++) {
     try {
-      return await fn();
+      return await withSignal(fn, config.signal);
     } catch (error) {
+      config.signal?.throwIfAborted();
       lastError = error;
 
       // Don't retry on the last attempt
@@ -84,7 +102,7 @@ export async function withRetry<T>(fn: () => Promise<T>, options?: RetryOptions)
       }
 
       // Wait with exponential backoff
-      await sleep(delay);
+      await sleep(delay, config.signal);
       delay = Math.min(delay * config.backoffMultiplier, config.maxDelayMs);
     }
   }
@@ -119,9 +137,4 @@ function isRetryableError(error: unknown): boolean {
   }
 
   return false;
-}
-
-/** Promise-based sleep. */
-function sleep(ms: number): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, ms));
 }

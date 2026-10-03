@@ -40,6 +40,8 @@ const OID_CERT_BAG = "1.2.840.113549.1.12.10.1.3";
  * @throws {SigningError} If the .p12 cannot be parsed or credentials extracted.
  */
 export async function loadP12(p12Buffer: Buffer, pin: string): Promise<P12Credentials> {
+  if (p12Buffer.length > 1024 * 1024)
+    throw new SigningError("Certificate exceeds the 1 MiB input limit.");
   try {
     // 1. Parse the PKCS#12 structure with node-forge
     const p12DerString = forge.util.binary.raw.encode(new Uint8Array(p12Buffer));
@@ -55,6 +57,8 @@ export async function loadP12(p12Buffer: Buffer, pin: string): Promise<P12Creden
     }
 
     const forgeKey = keyBagArray[0].key;
+    if (forgeKey.n.bitLength() < 2048)
+      throw new SigningError("RSA keys must be at least 2048 bits.");
     const pemKey = forge.pki.privateKeyToPem(forgeKey);
 
     // 3. Extract the certificate
@@ -66,6 +70,13 @@ export async function loadP12(p12Buffer: Buffer, pin: string): Promise<P12Creden
     }
 
     const forgeCert = certBagArray[0].cert;
+
+    const now = new Date();
+    if (now < forgeCert.validity.notBefore || now > forgeCert.validity.notAfter)
+      throw new SigningError("Certificate is not currently valid.");
+    const publicKey = forgeCert.publicKey as forge.pki.rsa.PublicKey;
+    if (!publicKey.n || !publicKey.n.equals(forgeKey.n) || !publicKey.e.equals(forgeKey.e))
+      throw new SigningError("Certificate and private key do not match.");
 
     // 4. Convert certificate to DER and PEM
     const certDerBytes = forge.asn1.toDer(forge.pki.certificateToAsn1(forgeCert)).getBytes();

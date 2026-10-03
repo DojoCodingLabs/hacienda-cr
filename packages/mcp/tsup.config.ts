@@ -10,6 +10,8 @@ export default defineConfig({
   // Keep dependencies external — this is a Node library/CLI, not a browser bundle.
   // tsup bundles workspace deps by default, but external packages should stay external.
   external: [
+    "@dojocoding/hacienda-sdk",
+    "@dojocoding/hacienda-shared",
     "xmllint-wasm",
     "@modelcontextprotocol/sdk",
     "@modelcontextprotocol/sdk/server/mcp.js",
@@ -17,5 +19,4 @@ export default defineConfig({
     "zod",
     "zod/v4",
   ],
-  noExternal: ["@dojocoding/hacienda-sdk", "@dojocoding/hacienda-shared"],
 });

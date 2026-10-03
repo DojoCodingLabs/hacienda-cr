@@ -12,6 +12,8 @@
 
 import type { TokenManager } from "../auth/token-manager.js";
 import type { EnvironmentConfig } from "../auth/types.js";
+import { readResponseText } from "./response-limits.js";
+import { withSignal } from "./cancellation.js";
 import { ApiError } from "../errors.js";
 import { getHttpStatusDescription } from "./error-codes.js";
 import { RateLimiter } from "./rate-limiter.js";
@@ -33,6 +35,8 @@ export interface HttpClientOptions {
   readonly fetchFn?: typeof fetch;
   /** Optional retry configuration. */
   readonly retryOptions?: RetryOptions;
+  /** Per-request budget, including auth, retries, and response reads (default 30s). */
+  readonly requestTimeoutMs?: number;
   /** Optional rate limiter configuration. Set to `false` to disable. */
   readonly rateLimiterOptions?: RateLimiterOptions | false;
 }
@@ -51,6 +55,8 @@ export interface RequestOptions {
   readonly skipAuth?: boolean;
   /** Whether to skip retry logic (default: false). */
   readonly skipRetry?: boolean;
+  /** Abort the request, authentication wait, response read, and retries. */
+  readonly signal?: AbortSignal;
 }
 
 /** A typed HTTP response. */
@@ -89,9 +95,17 @@ export class HttpClient {
   private readonly tokenManager: TokenManager;
   private readonly fetchFn: typeof fetch;
   private readonly retryOptions: RetryOptions | undefined;
+  private readonly requestTimeoutMs: number;
   private readonly rateLimiter: RateLimiter | undefined;
 
   constructor(options: HttpClientOptions) {
+    this.requestTimeoutMs = options.requestTimeoutMs ?? 30000;
+    if (
+      !Number.isFinite(this.requestTimeoutMs) ||
+      this.requestTimeoutMs <= 0 ||
+      this.requestTimeoutMs > 2147483647
+    )
+      throw new RangeError("Invalid HTTP request timeout.");
     this.baseUrl = options.envConfig.apiBaseUrl;
     this.tokenManager = options.tokenManager;
     this.fetchFn = options.fetchFn ?? globalThis.fetch;
@@ -116,7 +130,7 @@ export class HttpClient {
    */
   async get<T = unknown>(
     path: string,
-    options?: Partial<Pick<RequestOptions, "headers" | "skipAuth" | "skipRetry">>,
+    options?: Partial<Pick<RequestOptions, "headers" | "skipAuth" | "skipRetry" | "signal">>,
   ): Promise<HttpResponse<T>> {
     return this.request<T>({ method: "GET", path, ...options });
   }
@@ -132,7 +146,7 @@ export class HttpClient {
   async post<T = unknown>(
     path: string,
     body?: unknown,
-    options?: Partial<Pick<RequestOptions, "headers" | "skipAuth" | "skipRetry">>,
+    options?: Partial<Pick<RequestOptions, "headers" | "skipAuth" | "skipRetry" | "signal">>,
   ): Promise<HttpResponse<T>> {
     return this.request<T>({ method: "POST", path, body, ...options });
   }
@@ -149,6 +163,23 @@ export class HttpClient {
    * @throws {ApiError} If the request fails or the server returns an error.
    */
   async request<T = unknown>(options: RequestOptions): Promise<HttpResponse<T>> {
+    const timeout = new AbortController();
+    const signal = options.signal
+      ? AbortSignal.any([options.signal, timeout.signal])
+      : timeout.signal;
+    const timer = setTimeout(
+      () => timeout.abort(new DOMException("HTTP request timed out.", "TimeoutError")),
+      this.requestTimeoutMs,
+    );
+    try {
+      return await this.performRequest<T>({ ...options, signal });
+    } finally {
+      clearTimeout(timer);
+    }
+  }
+
+  private async performRequest<T>(options: RequestOptions): Promise<HttpResponse<T>> {
+    options.signal?.throwIfAborted();
     const execute = async (): Promise<HttpResponse<T>> => {
       const url = `${this.baseUrl}${options.path}`;
 
@@ -160,7 +191,7 @@ export class HttpClient {
 
       // Inject auth header
       if (!options.skipAuth) {
-        const token = await this.tokenManager.getAccessToken();
+        const token = await withSignal(() => this.tokenManager.getAccessToken(), options.signal);
         headers["Authorization"] = `Bearer ${token}`;
       }
 
@@ -175,12 +206,17 @@ export class HttpClient {
         const doFetch = () =>
           this.fetchFn(url, {
             method: options.method,
+            signal: options.signal,
+            redirect: "error",
             headers,
             body: options.body !== undefined ? JSON.stringify(options.body) : undefined,
           });
 
-        response = this.rateLimiter ? await this.rateLimiter.execute(doFetch) : await doFetch();
+        response = this.rateLimiter
+          ? await this.rateLimiter.execute(doFetch, options.signal)
+          : await withSignal(doFetch, options.signal);
       } catch (error) {
+        options.signal?.throwIfAborted();
         throw new ApiError(
           `Network error calling ${options.method} ${options.path}: ${
             error instanceof Error ? error.message : String(error)
@@ -192,7 +228,10 @@ export class HttpClient {
       }
 
       // Parse the response body
-      const data = await this.parseResponseBody<T>(response);
+      const data = await withSignal(
+        () => this.parseResponseBody<T>(response, options.signal),
+        options.signal,
+      );
 
       // Check for HTTP errors
       if (!response.ok) {
@@ -212,11 +251,11 @@ export class HttpClient {
     };
 
     // Wrap with retry unless explicitly skipped
-    if (options.skipRetry) {
+    if (options.skipRetry || !["GET", "PUT", "DELETE"].includes(options.method)) {
       return execute();
     }
 
-    return withRetry(execute, this.retryOptions);
+    return withRetry(execute, { ...this.retryOptions, signal: options.signal });
   }
 
   // -------------------------------------------------------------------------
@@ -226,24 +265,13 @@ export class HttpClient {
   /**
    * Parses the response body based on content type.
    */
-  private async parseResponseBody<T>(response: Response): Promise<T> {
-    const contentType = response.headers.get("Content-Type") ?? "";
-
-    if (contentType.includes("application/json")) {
-      return (await response.json()) as T;
-    }
-
-    if (contentType.includes("application/xml") || contentType.includes("text/xml")) {
-      return (await response.text()) as T;
-    }
-
-    // For empty responses (e.g., 204 No Content)
-    const text = await response.text();
-    if (!text) {
-      return undefined as T;
-    }
-
-    // Try to parse as JSON
+  private async parseResponseBody<T>(response: Response, signal?: AbortSignal): Promise<T> {
+    const contentType = (response.headers.get("Content-Type") ?? "").toLowerCase();
+    const text = await readResponseText(response, 8 * 1024 * 1024, signal);
+    if (!text) return undefined as T;
+    if (contentType.includes("application/json")) return JSON.parse(text) as T;
+    if (contentType.includes("application/xml") || contentType.includes("text/xml"))
+      return text as T;
     try {
       return JSON.parse(text) as T;
     } catch {

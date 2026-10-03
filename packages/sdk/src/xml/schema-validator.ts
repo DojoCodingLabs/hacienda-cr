@@ -1,8 +1,12 @@
 /** Offline validation against the official Hacienda v4.4 XML schemas. */
+import { checkXmlInput } from "./input-limits.js";
 import { DOMParser } from "@xmldom/xmldom";
 import { XMLValidator } from "fast-xml-parser";
 import { validateXML } from "xmllint-wasm";
 import { DOCUMENT_SCHEMAS, xmldsig } from "./schemas/index.js";
+
+let activeValidations = 0;
+const MAX_CONCURRENT_VALIDATIONS = 4;
 
 export interface DocumentXmlValidationResult {
   valid: boolean;
@@ -23,16 +27,21 @@ export async function validateDocumentXml(
     hasSignature: false,
     issues: [message],
   });
-  if (/<!DOCTYPE|<!ENTITY/i.test(xml))
-    return failure("DOCTYPE and entity declarations are not supported.");
+  const inputIssue = checkXmlInput(xml);
+  if (inputIssue) return failure(inputIssue);
   const syntax = XMLValidator.validate(xml);
   if (syntax !== true) return failure(syntax.err.msg);
+  if (activeValidations >= MAX_CONCURRENT_VALIDATIONS)
+    return failure("XML validation is busy; retry after an active validation finishes.");
+  activeValidations++;
   try {
     const doc = new DOMParser().parseFromString(xml, "application/xml");
     const root = doc.documentElement;
     if (!root) return failure("Missing document root element.");
     const rootElement = root.localName ?? root.nodeName;
-    const source = DOCUMENT_SCHEMAS[rootElement];
+    const source = Object.hasOwn(DOCUMENT_SCHEMAS, rootElement)
+      ? DOCUMENT_SCHEMAS[rootElement]
+      : undefined;
     if (!source) return failure(`Unknown document root element: ${rootElement}`);
     const hasSignature =
       doc.getElementsByTagNameNS("http://www.w3.org/2000/09/xmldsig#", "Signature").length > 0;
@@ -66,5 +75,7 @@ export async function validateDocumentXml(
     };
   } catch (error) {
     return failure(error instanceof Error ? error.message : String(error));
+  } finally {
+    activeValidations--;
   }
 }

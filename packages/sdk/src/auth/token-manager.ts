@@ -1,3 +1,5 @@
+import { withSignal } from "../api/cancellation.js";
+import { readResponseText } from "../api/response-limits.js";
 /**
  * OAuth2 ROPC token manager with auto-refresh for the Hacienda IDP.
  *
@@ -228,56 +230,84 @@ export class TokenManager {
    * Sends a token request to the IDP and stores the result.
    */
   private async requestToken(body: URLSearchParams): Promise<void> {
-    let response: Response;
+    const controller = new AbortController();
+    const timer = setTimeout(
+      () => controller.abort(new DOMException("Token request timed out.", "TimeoutError")),
+      30000,
+    );
     try {
-      response = await this.fetchFn(this.envConfig.idpTokenUrl, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/x-www-form-urlencoded",
-        },
-        body: body.toString(),
-      });
-    } catch (error) {
-      throw new AuthError(
-        AuthErrorCode.TOKEN_REQUEST_FAILED,
-        `Token request failed: network error.`,
-        error,
-      );
-    }
-
-    if (!response.ok) {
-      let detail = "";
+      let response: Response;
       try {
-        const errorBody = (await response.json()) as Record<string, unknown>;
-        detail = ` — ${errorBody["error_description"] ?? errorBody["error"] ?? response.statusText}`;
-      } catch {
-        detail = ` — ${response.statusText}`;
+        response = await withSignal(
+          () =>
+            this.fetchFn(this.envConfig.idpTokenUrl, {
+              method: "POST",
+              signal: controller.signal,
+              redirect: "error",
+              headers: {
+                "Content-Type": "application/x-www-form-urlencoded",
+              },
+              body: body.toString(),
+            }),
+          controller.signal,
+        );
+      } catch (error) {
+        throw new AuthError(
+          AuthErrorCode.TOKEN_REQUEST_FAILED,
+          `Token request failed: network error.`,
+          error,
+        );
       }
 
-      throw new AuthError(
-        AuthErrorCode.TOKEN_REQUEST_FAILED,
-        `Token request failed with status ${response.status.toString()}${detail}`,
-      );
+      if (!response.ok) {
+        let detail = "";
+        try {
+          const errorBody = JSON.parse(
+            await readResponseText(response, 65536, controller.signal),
+          ) as Record<string, unknown>;
+          const code = errorBody["error"];
+          if (typeof code === "string" && /^[a-z_]{1,64}$/.test(code)) detail = ` — ${code}`;
+        } catch {
+          detail = "";
+        }
+
+        throw new AuthError(
+          AuthErrorCode.TOKEN_REQUEST_FAILED,
+          `Token request failed with status ${response.status.toString()}${detail}`,
+        );
+      }
+
+      const text = await readResponseText(response, 65536, controller.signal);
+      let json: unknown;
+      try {
+        json = JSON.parse(text);
+      } catch {
+        // JSON parse errors can include raw response fragments containing credentials.
+        throw new AuthError(
+          AuthErrorCode.INVALID_TOKEN_RESPONSE,
+          "Invalid token response from IDP.",
+        );
+      }
+
+      const parseResult = TokenResponseSchema.safeParse(json);
+      if (!parseResult.success) {
+        throw new AuthError(
+          AuthErrorCode.INVALID_TOKEN_RESPONSE,
+          "Invalid token response from IDP.",
+        );
+      }
+
+      const tokenData = parseResult.data;
+      const now = Date.now();
+
+      this.tokenState = {
+        accessToken: tokenData.access_token,
+        refreshToken: tokenData.refresh_token,
+        accessTokenExpiresAt: now + tokenData.expires_in * 1000,
+        refreshTokenExpiresAt: now + tokenData.refresh_expires_in * 1000,
+      };
+    } finally {
+      clearTimeout(timer);
     }
-
-    const json: unknown = await response.json();
-
-    const parseResult = TokenResponseSchema.safeParse(json);
-    if (!parseResult.success) {
-      throw new AuthError(
-        AuthErrorCode.INVALID_TOKEN_RESPONSE,
-        `Invalid token response from IDP: ${parseResult.error.message}`,
-      );
-    }
-
-    const tokenData = parseResult.data;
-    const now = Date.now();
-
-    this.tokenState = {
-      accessToken: tokenData.access_token,
-      refreshToken: tokenData.refresh_token,
-      accessTokenExpiresAt: now + tokenData.expires_in * 1000,
-      refreshTokenExpiresAt: now + tokenData.refresh_expires_in * 1000,
-    };
   }
 }
