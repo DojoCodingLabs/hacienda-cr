@@ -37,6 +37,7 @@
     "smol-toml": "^1.6.0",
     "xadesjs": "^2.4.5",
     "xmldsigjs": "^2.5.5",
+    "xmllint-wasm": "^5.3.0",
     "xpath": "^0.0.34",
     "zod": "^4.3.6"
   },

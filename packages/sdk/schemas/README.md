@@ -22,4 +22,6 @@ Diff between the generations (verified structurally identical otherwise):
 adds 13–16 (REP also adds 17); `TipoDocReferenciaType` adds 19–20.
 See `docs/specs/v4.4-compliance.md`.
 
-These files are test fixtures, not published npm assets.
+These files support the conformance tests and the offline runtime validator.
+The SDK build embeds the 2026 schemas as strings; the raw XSD files are not
+copied into the published npm package.

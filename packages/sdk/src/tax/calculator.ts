@@ -362,17 +362,17 @@ function classifyLineItem(item: CalculatedLineItem): {
   exento: number;
   exonerado: number;
 } {
-  const subTotal = item.subTotal;
+  const grossAmount = item.montoTotal;
 
   if (!item.impuesto || item.impuesto.length === 0) {
     // No taxes at all => exempt
-    return { gravado: 0, exento: subTotal, exonerado: 0 };
+    return { gravado: 0, exento: grossAmount, exonerado: 0 };
   }
 
   // Check if all taxes have rate 0 => exempt
   const allZeroRate = item.impuesto.every((t: Impuesto) => t.tarifa === 0);
   if (allZeroRate) {
-    return { gravado: 0, exento: subTotal, exonerado: 0 };
+    return { gravado: 0, exento: grossAmount, exonerado: 0 };
   }
 
   // Check for exonerations
@@ -380,32 +380,32 @@ function classifyLineItem(item: CalculatedLineItem): {
 
   if (hasExoneration) {
     // The exonerated base portion is the ratio of exonerated tariff points
-    // to the full tariff, applied to the subtotal.
+    // to the full tariff, applied to gross sales.
     let totalExonerado = 0;
     for (const tax of item.impuesto) {
       if (tax.exoneracion && tax.tarifa !== undefined && tax.tarifa > 0) {
         totalExonerado = round5(
-          totalExonerado + (subTotal * tax.exoneracion.tarifaExonerada) / tax.tarifa,
+          totalExonerado + (grossAmount * tax.exoneracion.tarifaExonerada) / tax.tarifa,
         );
       }
     }
     totalExonerado = round5(totalExonerado);
 
     // If 100% exonerated, all goes to exonerado
-    if (totalExonerado >= subTotal) {
-      return { gravado: 0, exento: 0, exonerado: subTotal };
+    if (totalExonerado >= grossAmount) {
+      return { gravado: 0, exento: 0, exonerado: grossAmount };
     }
 
     // Partial exoneration: the non-exonerated portion is gravado
     return {
-      gravado: round5(subTotal - totalExonerado),
+      gravado: round5(grossAmount - totalExonerado),
       exento: 0,
       exonerado: totalExonerado,
     };
   }
 
   // Standard taxed item
-  return { gravado: subTotal, exento: 0, exonerado: 0 };
+  return { gravado: grossAmount, exento: 0, exonerado: 0 };
 }
 
 /**

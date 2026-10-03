@@ -120,6 +120,8 @@ export {
   getNamespaceUri,
   getSchemaFragment,
   validateFacturaInput,
+  validateDocumentXml,
+  type DocumentXmlValidationResult,
   type BuildXmlOptions,
   type FacturaValidationError,
   type FacturaValidationResult,

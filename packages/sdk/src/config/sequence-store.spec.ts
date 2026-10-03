@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
-import { mkdtemp, rm, readFile, writeFile } from "node:fs/promises";
+import { mkdtemp, rm, readFile, writeFile, mkdir, stat } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import {
@@ -295,27 +295,38 @@ describe("concurrent access safety", () => {
     const opts = { configDir: temp.dir };
     const count = 10;
 
-    // Fire all calls concurrently — file-based storage without locks may produce
-    // duplicate sequence numbers due to read-modify-write races, but should never
-    // crash or corrupt data. For production use, callers should serialize access.
-    const promises = Array.from({ length: count }, () =>
-      getNextSequence("01", "001", "00001", opts),
+    const results = await Promise.all(
+      Array.from({ length: count }, () => getNextSequence("01", "001", "00001", opts)),
     );
-
-    const results = await Promise.all(promises);
-
-    // All calls should resolve successfully (no crashes)
-    expect(results).toHaveLength(count);
-
-    // All values should be positive
-    for (const val of results) {
-      expect(val).toBeGreaterThanOrEqual(1);
-    }
-
-    // The final persisted value should be at least 1
-    const final = await getCurrentSequence("01", "001", "00001", opts);
-    expect(final).toBeGreaterThanOrEqual(1);
+    expect(new Set(results).size).toBe(count);
+    expect(results.slice().sort((a, b) => a - b)).toEqual(
+      Array.from({ length: count }, (_, i) => i + 1),
+    );
+    expect(await getCurrentSequence("01", "001", "00001", opts)).toBe(count);
   });
+  it("preserves unrelated counters during concurrent resets and increments", async () => {
+    const options = { configDir: temp.dir };
+    await Promise.all([
+      ...Array.from({ length: 10 }, () => getNextSequence("01", "001", "00001", options)),
+      ...Array.from({ length: 5 }, (_, i) =>
+        resetSequence(`reset-${i}`, "001", "00001", 50, options),
+      ),
+    ]);
+    expect(await getCurrentSequence("01", "001", "00001", options)).toBe(10);
+    for (let i = 0; i < 5; i++)
+      expect(await getCurrentSequence(`reset-${i}`, "001", "00001", options)).toBe(50);
+  });
+
+  it("times out without stealing an existing lock", async () => {
+    const lock = join(temp.dir, ".sequences.lock");
+    await mkdir(lock);
+    await writeFile(join(lock, "owner"), "still running");
+    await expect(getNextSequence("01", "001", "00001", { configDir: temp.dir })).rejects.toThrow(
+      "Failed to acquire sequence lock",
+    );
+    expect((await stat(lock)).isDirectory()).toBe(true);
+    expect(await readFile(join(lock, "owner"), "utf8")).toBe("still running");
+  }, 10000);
 });
 
 describe("edge cases", () => {

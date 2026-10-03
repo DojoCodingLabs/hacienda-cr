@@ -827,13 +827,13 @@ describe("calculateInvoiceSummary", () => {
     ];
 
     const summary = calculateInvoiceSummary(items);
-    expect(summary.totalMercanciasGravadas).toBe(45000);
+    expect(summary.totalMercanciasGravadas).toBe(50000);
     expect(summary.totalDescuentos).toBe(5000);
-    expect(summary.totalVenta).toBe(45000);
-    expect(summary.totalVentaNeta).toBe(40000);
+    expect(summary.totalVenta).toBe(50000);
+    expect(summary.totalVentaNeta).toBe(45000);
     // Tax on 45000 subtotal: 5850
     expect(summary.totalImpuesto).toBe(5850);
-    expect(summary.totalComprobante).toBe(45850);
+    expect(summary.totalComprobante).toBe(50850);
   });
 
   it("should sum discounts across multiple lines", () => {
@@ -867,12 +867,12 @@ describe("calculateInvoiceSummary", () => {
 
     const summary = calculateInvoiceSummary(items);
     expect(summary.totalDescuentos).toBe(3500);
-    // Subtotals: 8500 + 18000 = 26500
-    expect(summary.totalVenta).toBe(26500);
-    expect(summary.totalVentaNeta).toBe(23000);
+    // Gross sales: 10000 + 20000 = 30000; deduct discounts once.
+    expect(summary.totalVenta).toBe(30000);
+    expect(summary.totalVentaNeta).toBe(26500);
     // Taxes: 1105 + 2340 = 3445
     expect(summary.totalImpuesto).toBe(3445);
-    expect(summary.totalComprobante).toBe(26445);
+    expect(summary.totalComprobante).toBe(29945);
   });
 
   it("should include otros cargos in totalComprobante", () => {
@@ -1375,4 +1375,25 @@ describe("calculateInvoiceSummary – edge cases", () => {
     expect(summary.totalImpuesto).toBe(1950);
     expect(summary.totalComprobante).toBe(24950);
   });
+});
+
+it("deducts discounts once across taxed and exempt lines", () => {
+  for (const impuesto of [undefined, [{ codigo: "01", codigoTarifaIVA: "08", tarifa: 13 }]]) {
+    const line = calculateLineItemTotals({
+      numeroLinea: 1,
+      codigoCabys: "8310100000000",
+      cantidad: 1,
+      unidadMedida: "Unid",
+      detalle: "Discounted sale",
+      precioUnitario: 100,
+      descuento: [
+        { montoDescuento: 10, codigoDescuento: "01" as const, naturalezaDescuento: "Discount" },
+      ],
+      impuesto,
+    });
+    const summary = calculateInvoiceSummary([line]);
+    expect(summary.totalVenta).toBe(100);
+    expect(summary.totalVentaNeta).toBe(90);
+    expect(summary.totalComprobante).toBe(line.montoTotalLinea);
+  }
 });

@@ -12,71 +12,8 @@ import { readFile } from "node:fs/promises";
 import { resolve, extname } from "node:path";
 import { defineCommand } from "citty";
 import { FacturaElectronicaSchema } from "@dojocoding/hacienda-shared";
-import { validateFacturaInput } from "@dojocoding/hacienda-sdk";
+import { validateFacturaInput, validateDocumentXml } from "@dojocoding/hacienda-sdk";
 import { success, error, info, outputJson } from "../utils/format.js";
-
-// ---------------------------------------------------------------------------
-// XML validation helpers
-// ---------------------------------------------------------------------------
-
-/** Known Hacienda document root element names. */
-const KNOWN_ROOT_ELEMENTS = [
-  "FacturaElectronica",
-  "TiqueteElectronico",
-  "NotaCreditoElectronica",
-  "NotaDebitoElectronica",
-  "FacturaElectronicaCompra",
-  "FacturaElectronicaExportacion",
-  "MensajeReceptor",
-];
-
-/** Required elements that should be present in most document types. */
-const REQUIRED_ELEMENTS = ["Clave", "NumeroConsecutivo", "FechaEmision", "Emisor"];
-
-interface XmlValidationResult {
-  valid: boolean;
-  rootElement?: string;
-  issues: string[];
-  hasSignature: boolean;
-}
-
-function validateXmlStructure(xml: string): XmlValidationResult {
-  const issues: string[] = [];
-
-  // Detect root element
-  const rootMatch = /<(\w+)[\s>]/.exec(xml.replace(/<\?xml[^?]*\?>\s*/, ""));
-  const rootElement = rootMatch?.[1];
-
-  if (!rootElement) {
-    issues.push("Cannot detect root XML element");
-    return { valid: false, issues, hasSignature: false };
-  }
-
-  if (!KNOWN_ROOT_ELEMENTS.includes(rootElement)) {
-    issues.push(
-      `Unknown root element <${rootElement}>. Expected one of: ${KNOWN_ROOT_ELEMENTS.join(", ")}`,
-    );
-  }
-
-  // Check required elements (except for MensajeReceptor which has a different structure)
-  if (rootElement !== "MensajeReceptor") {
-    for (const elem of REQUIRED_ELEMENTS) {
-      if (!xml.includes(`<${elem}>`)) {
-        issues.push(`Missing required element <${elem}>`);
-      }
-    }
-  }
-
-  // Check for signature
-  const hasSignature = xml.includes("<ds:Signature") || xml.includes("<Signature");
-
-  return {
-    valid: issues.length === 0,
-    rootElement,
-    issues,
-    hasSignature,
-  };
-}
 
 // ---------------------------------------------------------------------------
 // Command definition
@@ -206,7 +143,7 @@ async function validateXml(
   filePath: string,
   jsonOutput: boolean,
 ): Promise<void> {
-  const result = validateXmlStructure(fileContent);
+  const result = await validateDocumentXml(fileContent);
 
   if (jsonOutput) {
     outputJson({

@@ -16,6 +16,7 @@ import type { SubmissionRequest } from "@dojocoding/hacienda-shared";
 import {
   buildFacturaXml,
   validateFacturaInput,
+  validateDocumentXml,
   signAndEncode,
   submitAndWait,
 } from "@dojocoding/hacienda-sdk";
@@ -126,6 +127,10 @@ export const submitCommand = defineCommand({
       // for enums while the type uses branded enum types
       const xml = buildFacturaXml(validation.data as unknown as FacturaElectronica);
 
+      const xmlValidation = await validateDocumentXml(xml);
+      if (!xmlValidation.valid)
+        throw new Error(`XML schema validation failed: ${xmlValidation.issues.join("; ")}`);
+
       if (args["dry-run"]) {
         if (args.json) {
           outputJson({
@@ -185,6 +190,15 @@ export const submitCommand = defineCommand({
       }
       const signedXmlBase64 = await signAndEncode(xml, p12Buffer, p12Pin);
 
+      const signedValidation = await validateDocumentXml(
+        Buffer.from(signedXmlBase64, "base64").toString("utf-8"),
+        { requireSignature: true },
+      );
+      if (!signedValidation.valid)
+        throw new Error(
+          `Signed XML schema validation failed: ${signedValidation.issues.join("; ")}`,
+        );
+
       // Build submission request
       const invoiceDoc = validation.data;
       const receptor = invoiceDoc.receptor?.identificacion
@@ -217,6 +231,8 @@ export const submitCommand = defineCommand({
           }
         },
       });
+
+      if (!result.accepted) process.exitCode = 1;
 
       if (args.json) {
         outputJson({

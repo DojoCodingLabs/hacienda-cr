@@ -9,3 +9,5 @@ export {
   type FacturaValidationError,
   type FacturaValidationResult,
 } from "./validator.js";
+
+export { validateDocumentXml, type DocumentXmlValidationResult } from "./schema-validator.js";

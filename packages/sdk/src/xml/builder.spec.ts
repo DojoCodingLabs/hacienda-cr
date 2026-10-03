@@ -10,6 +10,9 @@ import { buildXml, getNamespaceUri, getSchemaFragment } from "./builder.js";
 // ---------------------------------------------------------------------------
 
 describe("getNamespaceUri", () => {
+  it("maps a document root name to its official namespace fragment", () => {
+    expect(getNamespaceUri("FacturaElectronica")).toBe(getNamespaceUri("facturaElectronica"));
+  });
   it("should build namespace URI for the facturaElectronica fragment", () => {
     expect(getNamespaceUri("facturaElectronica")).toBe(
       "https://cdn.comprobanteselectronicos.go.cr/xml-schemas/v4.4/facturaElectronica",

@@ -14,6 +14,8 @@ import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 
 import {
   buildFacturaXml,
+  validateFacturaInput,
+  validateDocumentXml,
   buildClave,
   DocumentType,
   Situation,
@@ -107,15 +109,13 @@ const ReceptorInputSchema = z.object({
   correoElectronico: z.string().optional().describe("Email address"),
 });
 
-const CreateInvoiceInputSchema = z.object({
+export const CreateInvoiceInputSchema = z.object({
   emisor: EmisorInputSchema.describe("Invoice issuer (emisor)"),
   receptor: ReceptorInputSchema.describe("Invoice receiver (receptor)"),
   proveedorSistemas: z
     .string()
-    .optional()
-    .describe(
-      "Invoicing-system provider ID (ProveedorSistemas, v4.4). Defaults to the emisor's ID number",
-    ),
+    .regex(/^\d{9,12}$/)
+    .describe("Actual invoicing-system provider identification number (ProveedorSistemas)"),
   codigoActividadEmisor: z.string().describe("Issuer economic activity code (6 digits)"),
   condicionVenta: z
     .string()
@@ -212,7 +212,7 @@ export function registerCreateInvoiceTool(server: McpServer): void {
         // 7. Assemble the full factura input
         const factura: FacturaElectronica = {
           clave,
-          proveedorSistemas: args.proveedorSistemas ?? args.emisor.identificacion.numero,
+          proveedorSistemas: args.proveedorSistemas,
           codigoActividadEmisor: args.codigoActividadEmisor,
           numeroConsecutivo,
           fechaEmision,
@@ -278,8 +278,16 @@ export function registerCreateInvoiceTool(server: McpServer): void {
           },
         };
 
-        // 8. Build the XML
+        const validation = validateFacturaInput(factura);
+        if (!validation.valid)
+          throw new Error(
+            validation.errors.map((issue) => `${issue.path}: ${issue.message}`).join("; "),
+          );
+
+        // 8. Build and validate the unsigned XML before returning it.
         const xml = buildFacturaXml(factura);
+        const xmlValidation = await validateDocumentXml(xml);
+        if (!xmlValidation.valid) throw new Error(xmlValidation.issues.join("; "));
 
         return {
           content: [

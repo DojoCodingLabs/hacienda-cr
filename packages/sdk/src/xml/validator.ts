@@ -176,6 +176,31 @@ function validateBusinessRules(input: FacturaElectronicaInput): FacturaValidatio
     lineIndex++;
   }
 
+  // Reconcile the summary against detail lines, not just against itself.
+  const detailTotals = {
+    totalVenta: round5(input.detalleServicio.reduce((sum, line) => sum + line.montoTotal, 0)),
+    totalDescuentos: round5(
+      input.detalleServicio.reduce(
+        (sum, line) =>
+          sum + (line.descuento ?? []).reduce((n, discount) => n + discount.montoDescuento, 0),
+        0,
+      ),
+    ),
+    totalVentaNeta: round5(input.detalleServicio.reduce((sum, line) => sum + line.subTotal, 0)),
+    totalOtrosCargos: round5(
+      (input.otrosCargos ?? []).reduce((sum, charge) => sum + charge.montoCargo, 0),
+    ),
+  };
+  for (const [field, expected] of Object.entries(detailTotals)) {
+    const actual = input.resumenFactura[field as keyof typeof detailTotals] ?? 0;
+    if (!amountsEqual(actual, expected)) {
+      errors.push({
+        path: `resumenFactura.${field}`,
+        message: `${field} (${actual}) must match detail amounts (${expected})`,
+      });
+    }
+  }
+
   // Rule: Summary total consistency (v4.4: most totals are optional)
   const r = input.resumenFactura;
 

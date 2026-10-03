@@ -59,6 +59,16 @@ export class RateLimiter {
 
   constructor(options?: RateLimiterOptions) {
     const config = { ...DEFAULT_RATE_LIMITER_OPTIONS, ...options };
+    if (
+      !Number.isInteger(config.maxRequests) ||
+      config.maxRequests < 1 ||
+      !Number.isFinite(config.windowMs) ||
+      config.windowMs <= 0
+    ) {
+      throw new RangeError(
+        "Rate limits require a positive integer maxRequests and positive windowMs.",
+      );
+    }
     this.maxRequests = config.maxRequests;
     this.windowMs = config.windowMs;
     this.timestamps = [];
@@ -73,7 +83,6 @@ export class RateLimiter {
    */
   async execute<T>(fn: () => Promise<T>): Promise<T> {
     await this.waitForSlot();
-    this.recordRequest();
     return fn();
   }
 
@@ -100,26 +109,16 @@ export class RateLimiter {
    * Waits until a request slot is available within the current window.
    */
   private async waitForSlot(): Promise<void> {
-    this.pruneExpired();
-
-    if (this.timestamps.length < this.maxRequests) {
-      return;
-    }
-
-    // Calculate how long to wait until the oldest request falls outside
-    // the window
-    const oldest = this.timestamps[0];
-    if (oldest === undefined) {
-      return;
-    }
-
-    const now = Date.now();
-    const waitMs = oldest + this.windowMs - now;
-
-    if (waitMs > 0) {
-      await sleep(waitMs);
-      // After waiting, prune again to free the slot
+    while (true) {
       this.pruneExpired();
+      if (this.timestamps.length < this.maxRequests) {
+        // Reserve synchronously before yielding to another caller.
+        this.recordRequest();
+        return;
+      }
+      const oldest = this.timestamps[0];
+      if (oldest === undefined) continue;
+      await sleep(Math.max(1, oldest + this.windowMs - Date.now()));
     }
   }
 
