@@ -53,17 +53,33 @@ hacienda auth switch production    # Switch to "production" profile
 
 ### `hacienda submit <file>`
 
-Submit an electronic invoice to Hacienda. Reads a JSON file, validates it, builds XML, and submits.
+Submit a Factura Electronica to Hacienda. Reads a complete invoice JSON file,
+validates input and XML against the bundled v4.4 XSD, signs, submits, and polls
+for a terminal status. This command currently uses the Factura builder; other
+document types require the SDK submission flow. It does not accept signed XML
+or the simplified `lineItems` input used by MCP.
 
 ```bash
 hacienda submit invoice.json --dry-run    # Validate and preview XML
 hacienda submit invoice.json              # Submit to Hacienda
+hacienda submit invoice.json --profile sandbox --p12 cert.p12 --json
 ```
 
-| Argument    | Description                               | Default    |
-| ----------- | ----------------------------------------- | ---------- |
-| `file`      | Path to JSON invoice file                 | (required) |
-| `--dry-run` | Validate and build XML without submitting | `false`    |
+| Argument    | Description                                                     | Default                                       |
+| ----------- | --------------------------------------------------------------- | --------------------------------------------- |
+| `file`      | Path to JSON invoice file                                       | (required)                                    |
+| `--dry-run` | Validate and build XML without submitting                       | `false`                                       |
+| `--profile` | Saved authentication profile                                    | `default`                                     |
+| `--p12`     | Certificate path                                                | `$HACIENDA_P12_PATH`, then profile `p12_path` |
+| `--pin`     | Certificate PIN (prefer env var to avoid process-list exposure) | `$HACIENDA_P12_PIN`                           |
+| `--json`    | Machine-readable output                                         | `false`                                       |
+
+The dry run needs no credentials or certificate. Real submission requires the
+selected profile, `HACIENDA_PASSWORD`, certificate, and PIN. The package's HTTP
+client does not automatically retry POST in SDK 0.4.0; GET retains bounded network/5xx retries. After a timeout, network
+failure, or duplicate-clave response, query the original clave with
+`hacienda status <clave> --profile sandbox --json` before deciding another send.
+See the [sandbox walkthrough](https://github.com/DojoCodingLabs/hacienda-cr/blob/main/docs/sandbox-guide.md) for a complete sample.
 
 ### `hacienda status <clave>`
 
@@ -99,7 +115,7 @@ hacienda get 50601012400310123456700100001010000000001199999999
 Sign an XML document with a .p12 certificate (XAdES-EPES).
 
 ```bash
-hacienda sign invoice.xml --p12 cert.p12 --output signed.xml  # PIN from HACIENDA_P12_PIN
+hacienda sign invoice.xml --p12 cert.p12 --pin 1234 --output signed.xml
 hacienda sign invoice.xml   # Uses HACIENDA_P12_PATH and HACIENDA_P12_PIN env vars
 ```
 
@@ -116,7 +132,7 @@ Validate an invoice file (JSON or XML) against schemas and business rules.
 
 ```bash
 hacienda validate invoice.json    # JSON: Zod schema + business rules
-hacienda validate document.xml    # XML: offline Hacienda v4.4 XSD validation
+hacienda validate document.xml    # XML: bundled v4.4 XSD (unsigned drafts allowed)
 ```
 
 ### `hacienda lookup <cedula>`
@@ -154,7 +170,9 @@ hacienda draft --output my-invoice.json           # Custom output path
 
 ## Full Documentation
 
-See the [root README](https://github.com/DojoCodingLabs/hacienda-cr#readme) for comprehensive documentation with examples.
+See the [command reference](https://github.com/DojoCodingLabs/hacienda-cr/blob/main/docs/reference.md#cli--referencia-de-comandos),
+[sandbox walkthrough](https://github.com/DojoCodingLabs/hacienda-cr/blob/main/docs/sandbox-guide.md), and
+[production integration guide](https://github.com/DojoCodingLabs/hacienda-cr/blob/main/docs/production-integration.md).
 
 ## Migrating to 0.4.0
 

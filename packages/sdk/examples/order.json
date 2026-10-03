@@ -1,0 +1,45 @@
+{
+  "proveedorSistemas": "3101234567",
+  "codigoActividadEmisor": "620100",
+  "emisor": {
+    "nombre": "Empresa de ejemplo S.A.",
+    "identificacion": {
+      "tipo": "02",
+      "numero": "3101234567"
+    },
+    "correoElectronico": "facturacion@example.com",
+    "ubicacion": {
+      "provincia": "1",
+      "canton": "01",
+      "distrito": "01",
+      "otrasSenas": "San José centro, edificio de ejemplo"
+    }
+  },
+  "receptor": {
+    "nombre": "Cliente de ejemplo S.R.L.",
+    "identificacion": {
+      "tipo": "02",
+      "numero": "3109876543"
+    },
+    "correoElectronico": "cliente@example.com"
+  },
+  "condicionVenta": "01",
+  "medioPago": "01",
+  "lineItems": [
+    {
+      "codigoCabys": "8310100000000",
+      "cantidad": 2,
+      "unidadMedida": "Sp",
+      "detalle": "Horas de consultoría de ejemplo",
+      "precioUnitario": 50000,
+      "esServicio": true,
+      "impuesto": [
+        {
+          "codigo": "01",
+          "codigoTarifaIVA": "08",
+          "tarifa": 13
+        }
+      ]
+    }
+  ]
+}
