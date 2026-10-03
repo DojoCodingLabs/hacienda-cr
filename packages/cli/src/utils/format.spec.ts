@@ -23,8 +23,11 @@ import type { TableColumn } from "./format.js";
 // ---------------------------------------------------------------------------
 
 describe("ANSI color helpers", () => {
+  beforeEach(() => {
+    vi.stubEnv("NO_COLOR", "");
+  });
   afterEach(() => {
-    delete process.env["NO_COLOR"];
+    vi.unstubAllEnvs();
   });
 
   it("bold wraps text with bold ANSI codes", () => {
@@ -69,7 +72,7 @@ describe("ANSI color helpers", () => {
 
 describe("colorStatus", () => {
   afterEach(() => {
-    delete process.env["NO_COLOR"];
+    vi.unstubAllEnvs();
   });
 
   it("colors 'aceptado' green", () => {
@@ -113,7 +116,7 @@ describe("formatTable", () => {
   });
 
   afterEach(() => {
-    delete process.env["NO_COLOR"];
+    vi.unstubAllEnvs();
   });
 
   const columns: TableColumn[] = [
@@ -201,7 +204,7 @@ describe("message helpers", () => {
   });
 
   afterEach(() => {
-    delete process.env["NO_COLOR"];
+    vi.unstubAllEnvs();
   });
 
   it("success logs with checkmark", () => {

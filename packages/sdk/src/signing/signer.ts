@@ -1,3 +1,5 @@
+import { XMLValidator } from "fast-xml-parser";
+import { checkXmlInput } from "../xml/input-limits.js";
 /**
  * XAdES-EPES XML signing for Hacienda Costa Rica.
  *
@@ -76,6 +78,10 @@ function ensureInitialized(): void {
  * ```
  */
 export async function signXml(xml: string, p12Buffer: Buffer, p12Pin: string): Promise<string> {
+  const issue = checkXmlInput(xml);
+  if (issue) throw new SigningError(issue);
+  if (XMLValidator.validate(xml) !== true)
+    throw new SigningError("Malformed XML cannot be signed.");
   ensureInitialized();
 
   try {

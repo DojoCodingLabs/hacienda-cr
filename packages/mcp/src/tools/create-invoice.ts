@@ -49,19 +49,30 @@ const DescuentoInputSchema = z.object({
 });
 
 const LineItemInputSchema = z.object({
-  codigoCabys: z.string().describe("CABYS code (13 digits)"),
+  codigoCabys: z
+    .string()
+    .regex(/^\d{13}$/)
+    .describe("CABYS code (13 digits)"),
   cantidad: z.number().positive().describe("Quantity"),
   unidadMedida: z
     .enum(UNITS_OF_MEASURE)
     .describe('Unit of measure from the official v4.4 catalog (e.g. "Unid", "Sp", "Kg", "h")'),
-  detalle: z.string().describe("Item description (max 200 chars)"),
+  detalle: z.string().min(3).max(200).describe("Item description (max 200 chars)"),
   precioUnitario: z.number().min(0).describe("Unit price before taxes"),
   esServicio: z
     .boolean()
     .optional()
     .describe("Whether this is a service (true) or merchandise (false). Defaults to false"),
-  impuesto: z.array(ImpuestoInputSchema).optional().describe("Taxes to apply to this line item"),
-  descuento: z.array(DescuentoInputSchema).optional().describe("Discounts for this line item"),
+  impuesto: z
+    .array(ImpuestoInputSchema)
+    .max(10)
+    .optional()
+    .describe("Taxes to apply to this line item"),
+  descuento: z
+    .array(DescuentoInputSchema)
+    .max(5)
+    .optional()
+    .describe("Discounts for this line item"),
 });
 
 const IdentificacionInputSchema = z.object({
@@ -130,6 +141,7 @@ export const CreateInvoiceInputSchema = z.object({
   lineItems: z
     .array(LineItemInputSchema)
     .min(1)
+    .max(1000)
     .describe("Invoice line items (at least one required)"),
   plazoCredito: z
     .string()
@@ -185,9 +197,9 @@ export function registerCreateInvoiceTool(server: McpServer): void {
         const branch = DEFAULT_BRANCH; // "001"
         const pos = DEFAULT_POS; // "00001"
 
-        const sequence = await getNextSequence(docTypeCode, branch, pos);
+        const sequence = 1; // Provisional key: validate before consuming a real sequence.
 
-        const clave = buildClave({
+        let clave = buildClave({
           date: now,
           taxpayerId,
           documentType: DocumentType.FACTURA_ELECTRONICA,
@@ -197,7 +209,7 @@ export function registerCreateInvoiceTool(server: McpServer): void {
 
         // 4. Build consecutive number (branch + POS + doc type + sequence)
         const seq = String(sequence).padStart(10, "0");
-        const numeroConsecutivo = `${branch}${pos}${docTypeCode}${seq}`;
+        let numeroConsecutivo = `${branch}${pos}${docTypeCode}${seq}`;
 
         // 5. Format emission date
         const fechaEmision = now.toISOString();
@@ -285,9 +297,22 @@ export function registerCreateInvoiceTool(server: McpServer): void {
           );
 
         // 8. Build and validate the unsigned XML before returning it.
-        const xml = buildFacturaXml(factura);
+        let xml = buildFacturaXml(factura);
         const xmlValidation = await validateDocumentXml(xml);
         if (!xmlValidation.valid) throw new Error(xmlValidation.issues.join("; "));
+
+        const allocatedSequence = await getNextSequence(docTypeCode, branch, pos);
+        clave = buildClave({
+          date: now,
+          taxpayerId,
+          documentType: DocumentType.FACTURA_ELECTRONICA,
+          sequence: allocatedSequence,
+          situation: Situation.NORMAL,
+        });
+        numeroConsecutivo = `${branch}${pos}${docTypeCode}${String(allocatedSequence).padStart(10, "0")}`;
+        factura.clave = clave;
+        factura.numeroConsecutivo = numeroConsecutivo;
+        xml = buildFacturaXml(factura);
 
         return {
           content: [

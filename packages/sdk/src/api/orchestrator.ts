@@ -10,6 +10,7 @@
 import type { SubmissionRequest } from "@dojocoding/hacienda-shared";
 import { HaciendaStatus } from "@dojocoding/hacienda-shared";
 
+import { sleep, withSignal } from "./cancellation.js";
 import { ApiError } from "../errors.js";
 import type { HttpClient } from "./http-client.js";
 import type { ParsedStatusResponse } from "./submission.js";
@@ -28,8 +29,10 @@ import {
 export interface SubmitAndWaitOptions {
   /** Polling interval in milliseconds (default: 3000 = 3s). */
   readonly pollIntervalMs?: number;
-  /** Maximum time to wait in milliseconds (default: 60000 = 60s). */
+  /** Maximum time for submission and polling in milliseconds (default: 60000 = 60s). */
   readonly timeoutMs?: number;
+  /** Cancel submission, polling, and all waits. */
+  readonly signal?: AbortSignal;
   /** Optional callback invoked on each poll iteration. */
   readonly onPoll?: (status: ParsedStatusResponse, attempt: number) => void;
 }
@@ -102,74 +105,98 @@ export async function submitAndWait(
   const pollIntervalMs = options?.pollIntervalMs ?? DEFAULTS.pollIntervalMs;
   const timeoutMs = options?.timeoutMs ?? DEFAULTS.timeoutMs;
 
-  // 1. Submit the document
-  const submissionResponse = await submitDocument(httpClient, request);
-
-  // 2. Poll for status
-  const startTime = Date.now();
+  if (
+    !Number.isFinite(timeoutMs) ||
+    timeoutMs <= 0 ||
+    timeoutMs > 2147483647 ||
+    !Number.isFinite(pollIntervalMs) ||
+    pollIntervalMs < 0 ||
+    pollIntervalMs > 2147483647
+  ) {
+    throw new RangeError("Invalid submission timeout or polling interval.");
+  }
   let pollAttempts = 0;
-
-  while (true) {
-    // Check timeout
-    const elapsed = Date.now() - startTime;
-    if (elapsed >= timeoutMs) {
-      throw new ApiError(
-        `Polling timed out after ${String(timeoutMs)}ms (${String(pollAttempts)} attempts). ` +
-          `Last status for clave ${request.clave} was not terminal.`,
+  const timeout = new AbortController();
+  const signal = options?.signal
+    ? AbortSignal.any([options.signal, timeout.signal])
+    : timeout.signal;
+  const deadline = Date.now() + timeoutMs;
+  const expire = () =>
+    timeout.abort(
+      new ApiError(
+        `Submission/polling timed out after ${String(timeoutMs)}ms (${String(pollAttempts)} attempts).`,
         undefined,
         { clave: request.clave, pollAttempts },
+      ),
+    );
+  const checkDeadline = () => {
+    if (Date.now() >= deadline) expire();
+    signal.throwIfAborted();
+  };
+  const timer = setTimeout(expire, timeoutMs);
+  try {
+    checkDeadline();
+    const submissionResponse = await withSignal(
+      () => submitDocument(httpClient, request, { signal }),
+      signal,
+    );
+    while (true) {
+      checkDeadline();
+      // Wait before polling (except on the first attempt, give Hacienda a moment)
+      await sleep(
+        Math.min(
+          deadline - Date.now(),
+          pollAttempts === 0 ? Math.min(pollIntervalMs, 1000) : pollIntervalMs,
+        ),
+        signal,
       );
-    }
+      checkDeadline();
 
-    // Wait before polling (except on the first attempt, give Hacienda a moment)
-    await sleep(pollAttempts === 0 ? Math.min(pollIntervalMs, 1000) : pollIntervalMs);
+      pollAttempts++;
 
-    pollAttempts++;
-
-    let statusResponse: ParsedStatusResponse;
-    try {
-      statusResponse = await getStatus(httpClient, request.clave);
-    } catch (error) {
-      // If we get a 404, the document may not be indexed yet — keep polling
-      if (error instanceof ApiError && error.statusCode === 404) {
-        continue;
-      }
-      throw error;
-    }
-
-    // Invoke the poll callback if provided
-    if (options?.onPoll) {
-      options.onPoll(statusResponse, pollAttempts);
-    }
-
-    // Check if we've reached a terminal status
-    if (isTerminalStatus(statusResponse.status)) {
-      const accepted = statusResponse.status === HaciendaStatus.ACEPTADO;
-      let rejectionReason: string | undefined;
-
-      if (!accepted && statusResponse.responseXml) {
-        rejectionReason = extractRejectionReason(statusResponse.responseXml);
+      let statusResponse: ParsedStatusResponse;
+      try {
+        statusResponse = await withSignal(
+          () => getStatus(httpClient, request.clave, { signal }),
+          signal,
+        );
+        checkDeadline();
+      } catch (error) {
+        // If we get a 404, the document may not be indexed yet — keep polling
+        if (error instanceof ApiError && error.statusCode === 404) {
+          continue;
+        }
+        throw error;
       }
 
-      return {
-        accepted,
-        status: statusResponse.status,
-        clave: statusResponse.clave,
-        date: statusResponse.date,
-        responseXml: statusResponse.responseXml,
-        rejectionReason,
-        submissionStatus: submissionResponse.status,
-        pollAttempts,
-      };
+      // Invoke the poll callback if provided
+      if (options?.onPoll) {
+        options.onPoll(statusResponse, pollAttempts);
+        checkDeadline();
+      }
+
+      // Check if we've reached a terminal status
+      if (isTerminalStatus(statusResponse.status)) {
+        const accepted = statusResponse.status === HaciendaStatus.ACEPTADO;
+        let rejectionReason: string | undefined;
+
+        if (!accepted && statusResponse.responseXml) {
+          rejectionReason = extractRejectionReason(statusResponse.responseXml);
+        }
+
+        return {
+          accepted,
+          status: statusResponse.status,
+          clave: statusResponse.clave,
+          date: statusResponse.date,
+          responseXml: statusResponse.responseXml,
+          rejectionReason,
+          submissionStatus: submissionResponse.status,
+          pollAttempts,
+        };
+      }
     }
+  } finally {
+    clearTimeout(timer);
   }
-}
-
-// ---------------------------------------------------------------------------
-// Internal helpers
-// ---------------------------------------------------------------------------
-
-/** Promise-based sleep. */
-function sleep(ms: number): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, ms));
 }

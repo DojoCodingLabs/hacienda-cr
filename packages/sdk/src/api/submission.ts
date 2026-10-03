@@ -67,10 +67,14 @@ export interface ParsedStatusResponse {
 export async function submitDocument(
   httpClient: HttpClient,
   request: SubmissionRequest,
+  options?: { signal?: AbortSignal },
 ): Promise<SubmissionResponse> {
   let response: HttpResponse<SubmissionResponse>;
   try {
-    response = await httpClient.post<SubmissionResponse>("/recepcion", request);
+    response = await httpClient.post<SubmissionResponse>("/recepcion", request, {
+      ...options,
+      skipRetry: true,
+    });
   } catch (error) {
     if (error instanceof ApiError) {
       // Enrich the error message for known status codes
@@ -119,8 +123,9 @@ export async function submitDocument(
 export async function getStatus(
   httpClient: HttpClient,
   clave: string,
+  options?: { signal?: AbortSignal },
 ): Promise<ParsedStatusResponse> {
-  const response = await httpClient.get<StatusResponse>(`/recepcion/${clave}`);
+  const response = await httpClient.get<StatusResponse>(`/recepcion/${clave}`, options);
   const data = response.data;
 
   // Decode the Base64 response XML if present

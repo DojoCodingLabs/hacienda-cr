@@ -30,7 +30,7 @@
     "clean": "rm -rf dist"
   },
   "dependencies": {
-    "zod": "^4.3.6"
+    "zod": "^4.6.5"
   },
   "license": "MIT",
   "author": "Dojo Coding Labs <dev@dojocoding.io> (https://dojocoding.io)",

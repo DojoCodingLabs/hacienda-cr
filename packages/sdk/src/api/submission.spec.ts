@@ -52,7 +52,7 @@ describe("submitDocument", () => {
 
     const response = await submitDocument(client, request);
 
-    expect(mockPost).toHaveBeenCalledWith("/recepcion", request);
+    expect(mockPost).toHaveBeenCalledWith("/recepcion", request, { skipRetry: true });
     expect(response.status).toBe(201);
     expect(response.location).toBe("/recepcion/12345");
   });
@@ -120,6 +120,7 @@ describe("getStatus", () => {
 
     expect(mockGet).toHaveBeenCalledWith(
       "/recepcion/50601012300310123456700100001010000000001199999999",
+      undefined,
     );
     expect(result.clave).toBe("50601012300310123456700100001010000000001199999999");
     expect(result.status).toBe("aceptado");

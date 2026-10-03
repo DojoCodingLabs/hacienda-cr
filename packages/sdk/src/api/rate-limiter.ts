@@ -1,3 +1,4 @@
+import { sleep, withSignal } from "./cancellation.js";
 /**
  * Token bucket rate limiter for Hacienda API requests.
  *
@@ -81,9 +82,9 @@ export class RateLimiter {
    * @param fn - The async operation to execute.
    * @returns The result of the operation.
    */
-  async execute<T>(fn: () => Promise<T>): Promise<T> {
-    await this.waitForSlot();
-    return fn();
+  async execute<T>(fn: () => Promise<T>, signal?: AbortSignal): Promise<T> {
+    await this.waitForSlot(signal);
+    return withSignal(fn, signal);
   }
 
   /**
@@ -108,8 +109,9 @@ export class RateLimiter {
   /**
    * Waits until a request slot is available within the current window.
    */
-  private async waitForSlot(): Promise<void> {
+  private async waitForSlot(signal?: AbortSignal): Promise<void> {
     while (true) {
+      signal?.throwIfAborted();
       this.pruneExpired();
       if (this.timestamps.length < this.maxRequests) {
         // Reserve synchronously before yielding to another caller.
@@ -118,7 +120,7 @@ export class RateLimiter {
       }
       const oldest = this.timestamps[0];
       if (oldest === undefined) continue;
-      await sleep(Math.max(1, oldest + this.windowMs - Date.now()));
+      await sleep(Math.max(1, oldest + this.windowMs - Date.now()), signal);
     }
   }
 
@@ -138,13 +140,4 @@ export class RateLimiter {
       this.timestamps.shift();
     }
   }
-}
-
-// ---------------------------------------------------------------------------
-// Helpers
-// ---------------------------------------------------------------------------
-
-/** Promise-based sleep. */
-function sleep(ms: number): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, ms));
 }

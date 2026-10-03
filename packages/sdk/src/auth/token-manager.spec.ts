@@ -359,7 +359,8 @@ describe("TokenManager", () => {
       } catch (error) {
         expect(error).toBeInstanceOf(AuthError);
         const authErr = error as AuthError;
-        expect(authErr.message).toContain("Invalid user credentials");
+        expect(authErr.message).toContain("invalid_grant");
+        expect(authErr.message).not.toContain("Invalid user credentials");
         expect(authErr.code).toBe(AuthErrorCode.TOKEN_REQUEST_FAILED);
       }
     });
