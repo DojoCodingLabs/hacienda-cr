@@ -19,6 +19,14 @@ system xmllint. Verification fails clearly when the conformance tool is absent.
 regressions and installed tarballs. It disables live credential tests even if
 credentials are present in your shell. No real Hacienda documents are submitted.
 
+## Repository guidance
+
+Agents should start with [AGENTS.md](AGENTS.md) and the relevant package guidance.
+See [architecture](docs/architecture.md) for ownership and the document lifecycle,
+and [testing](docs/testing.md) for focused checks and live-test isolation.
+Documentation-only changes do not require a Changeset unless they accompany a
+published-package behavior change.
+
 ## Working on one package
 
 ```sh
