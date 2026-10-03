@@ -1,5 +1,7 @@
 # Audit-fix migration notes
 
+[SDK reference](https://github.com/DojoCodingLabs/hacienda-cr/blob/main/docs/reference.md) · [Sandbox walkthrough](https://github.com/DojoCodingLabs/hacienda-cr/blob/main/docs/sandbox-guide.md) · [Production integration](https://github.com/DojoCodingLabs/hacienda-cr/blob/main/docs/production-integration.md)
+
 Continue using the v4.4 fields introduced in the root `MIGRATION.md`.
 The MCP `create_invoice` tool now requires `proveedorSistemas`: supply the actual
 invoicing system provider identification number. Draft templates leave it as a

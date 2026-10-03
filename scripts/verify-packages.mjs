@@ -117,6 +117,11 @@ import {Client} from "@modelcontextprotocol/sdk/client/index.js";
 import {StdioClientTransport} from "@modelcontextprotocol/sdk/client/stdio.js";
 const xml=buildFacturaXml(SIMPLE_INVOICE);
 const result=await validateDocumentXml(xml); assert.equal(result.valid,true,JSON.stringify(result.issues));
+const example="./node_modules/@dojocoding/hacienda-sdk/examples/sandbox.mjs";
+execFileSync(process.execPath,[example,"prepare","./node_modules/@dojocoding/hacienda-sdk/examples/order.json","./example-run"],{timeout:15000});
+const prepared=JSON.parse(await readFile("./example-run/invoice.json","utf8"));
+assert.equal(prepared.resumenFactura.totalComprobante,113000);
+assert.deepEqual(prepared.resumenFactura.medioPago,[{tipoMedioPago:"01",totalMedioPago:113000}]);
 await createServer().close();
 await writeFile("invoice.json",JSON.stringify(SIMPLE_INVOICE)); await writeFile("invoice.xml",xml);
 const cli="./node_modules/@dojocoding/hacienda-cli/dist/index.js";
@@ -142,7 +147,7 @@ try {
   assert.ok(schema.required.includes("proveedorSistemas"));
 } catch(error) { console.error(stderr); throw error; }
 finally { clearTimeout(timer); await client.close(); }
-console.log("Installed metadata, strict TypeScript examples, ESM SDK, CLI validation/dry-run, and MCP stdio checks passed.");
+console.log("Installed metadata, strict TypeScript examples, packaged sandbox preparation, ESM SDK, CLI validation/dry-run, and MCP stdio checks passed.");
 `,
   );
   process.stdout.write(run(process.execPath, ["smoke.mjs"], consumer));

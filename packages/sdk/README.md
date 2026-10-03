@@ -30,6 +30,12 @@ await client.authenticate();
 const token = await client.getAccessToken();
 ```
 
+For a runnable invoice → validation → signing → submission → status workflow,
+follow the [sandbox walkthrough](https://github.com/DojoCodingLabs/hacienda-cr/blob/main/docs/sandbox-guide.md) using
+[`examples/sandbox.mjs`](https://github.com/DojoCodingLabs/hacienda-cr/blob/main/packages/sdk/examples/sandbox.mjs) and [`examples/order.json`](https://github.com/DojoCodingLabs/hacienda-cr/blob/main/packages/sdk/examples/order.json).
+For application architecture, see the [production integration guide](https://github.com/DojoCodingLabs/hacienda-cr/blob/main/docs/production-integration.md).
+Review the [v4.4 migration notes](MIGRATION-v4.4.md) before adapting existing inputs.
+
 ## API Reference
 
 ### Client
@@ -61,18 +67,19 @@ const token = await client.getAccessToken();
 
 ### XML
 
-| Export                         | Type     | Description                                              |
-| ------------------------------ | -------- | -------------------------------------------------------- |
-| `buildXml()`                   | Function | Low-level XML builder with namespace support             |
-| `buildFacturaXml()`            | Function | Builds a Factura Electronica XML document                |
-| `buildTiqueteXml()`            | Function | Builds a Tiquete Electronico XML document                |
-| `buildNotaCreditoXml()`        | Function | Builds a Nota de Credito Electronica XML document        |
-| `buildNotaDebitoXml()`         | Function | Builds a Nota de Debito Electronica XML document         |
-| `buildFacturaCompraXml()`      | Function | Builds a Factura Electronica de Compra XML document      |
-| `buildFacturaExportacionXml()` | Function | Builds a Factura Electronica de Exportacion XML document |
-| `buildReciboPagoXml()`         | Function | Builds a Recibo Electronico de Pago XML document         |
-| `buildMensajeReceptorXml()`    | Function | Builds a Mensaje Receptor XML document                   |
-| `validateFacturaInput()`       | Function | Validates factura data against business rules            |
+| Export                         | Type     | Description                                                                 |
+| ------------------------------ | -------- | --------------------------------------------------------------------------- |
+| `buildXml()`                   | Function | Low-level XML builder with namespace support                                |
+| `buildFacturaXml()`            | Function | Builds a Factura Electronica XML document                                   |
+| `buildTiqueteXml()`            | Function | Builds a Tiquete Electronico XML document                                   |
+| `buildNotaCreditoXml()`        | Function | Builds a Nota de Credito Electronica XML document                           |
+| `buildNotaDebitoXml()`         | Function | Builds a Nota de Debito Electronica XML document                            |
+| `buildFacturaCompraXml()`      | Function | Builds a Factura Electronica de Compra XML document                         |
+| `buildFacturaExportacionXml()` | Function | Builds a Factura Electronica de Exportacion XML document                    |
+| `buildReciboPagoXml()`         | Function | Builds a Recibo Electronico de Pago XML document                            |
+| `buildMensajeReceptorXml()`    | Function | Builds a Mensaje Receptor XML document                                      |
+| `validateFacturaInput()`       | Function | Validates factura data against business rules                               |
+| `validateDocumentXml()`        | Function | Validates against bundled v4.4 XSD; optionally requires signature structure |
 
 ### Tax Calculation
 
@@ -92,19 +99,20 @@ const token = await client.getAccessToken();
 
 ### API Client
 
-| Export                     | Type     | Description                                   |
-| -------------------------- | -------- | --------------------------------------------- |
-| `HttpClient`               | Class    | Typed HTTP client with auth header injection  |
-| `RateLimiter`              | Class    | Request rate limiter                          |
-| `submitDocument()`         | Function | Submits a document (POST /recepcion)          |
-| `getStatus()`              | Function | Gets document status (GET /recepcion/{clave}) |
-| `submitAndWait()`          | Function | Submits and polls until terminal status       |
-| `withRetry()`              | Function | Wraps an async operation with retry logic     |
-| `listComprobantes()`       | Function | Lists comprobantes with filters               |
-| `getComprobante()`         | Function | Gets full comprobante details by clave        |
-| `lookupTaxpayer()`         | Function | Looks up taxpayer by cedula (public API)      |
-| `isTerminalStatus()`       | Function | Checks if a status is final                   |
-| `extractRejectionReason()` | Function | Extracts rejection reason from response XML   |
+| Export                     | Type     | Description                                               |
+| -------------------------- | -------- | --------------------------------------------------------- |
+| `HttpClient`               | Class    | Typed HTTP client with auth header injection              |
+| `bootstrapClient()`        | Function | Creates an authenticated HTTP client from a saved profile |
+| `RateLimiter`              | Class    | Request rate limiter                                      |
+| `submitDocument()`         | Function | Submits a document (POST /recepcion)                      |
+| `getStatus()`              | Function | Gets document status (GET /recepcion/{clave})             |
+| `submitAndWait()`          | Function | Submits and polls until terminal status                   |
+| `withRetry()`              | Function | Wraps an async operation with retry logic                 |
+| `listComprobantes()`       | Function | Lists comprobantes with filters                           |
+| `getComprobante()`         | Function | Gets full comprobante details by clave                    |
+| `lookupTaxpayer()`         | Function | Looks up taxpayer by cedula (public API)                  |
+| `isTerminalStatus()`       | Function | Checks if a status is final                               |
+| `extractRejectionReason()` | Function | Extracts rejection reason from response XML               |
 
 ### Configuration
 
@@ -117,6 +125,12 @@ const token = await client.getAccessToken();
 | `getNextSequence()`    | Function | Gets and increments the next document sequence    |
 | `getCurrentSequence()` | Function | Gets the current sequence without incrementing    |
 | `resetSequence()`      | Function | Resets a document sequence to 0                   |
+
+Sequence helpers take `(documentType, branch, pos, options)`; `resetSequence`
+takes `(documentType, branch, pos, value, options)`. The local counter key does
+not include issuer, profile, or environment. Use `options.configDir` to isolate
+local counters, or allocate transactionally in your application's database for
+multiple hosts. See [sequence allocation](https://github.com/DojoCodingLabs/hacienda-cr/blob/main/docs/production-integration.md#consecutivos-y-aislamiento-por-empresa).
 
 ### Logging
 
@@ -149,7 +163,9 @@ const token = await client.getAccessToken();
 
 ## Full Documentation
 
-See the [root README](https://github.com/DojoCodingLabs/hacienda-cr#readme) for comprehensive documentation with examples.
+See the [SDK reference](https://github.com/DojoCodingLabs/hacienda-cr/blob/main/docs/reference.md#sdk--documentación-completa),
+[sandbox walkthrough](https://github.com/DojoCodingLabs/hacienda-cr/blob/main/docs/sandbox-guide.md), and
+[production integration guide](https://github.com/DojoCodingLabs/hacienda-cr/blob/main/docs/production-integration.md).
 
 ## Migrating to 0.4.0
 

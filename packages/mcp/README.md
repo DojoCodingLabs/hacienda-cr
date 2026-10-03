@@ -65,22 +65,64 @@ const transport = new StdioServerTransport();
 await server.connect(transport);
 ```
 
+## Authentication and document lifecycle
+
+`lookup_taxpayer`, `draft_invoice`, and `create_invoice` do not need IDP
+authentication. `draft_invoice` produces a template with provider and issuer
+location placeholders. Complete these and review the activity, CABYS, taxes,
+and customer before passing it to `create_invoice`.
+
+`create_invoice` returns **unsigned XML**, its clave, and calculated totals. It
+does not sign or submit to Hacienda. It increments the default local sequence
+store for document type `01`, branch `001`, POS `00001`; the counter does not
+separate issuers or environments. Save the returned XML and clave before
+handing them to your backend for validation, signing, submission, and status
+tracking. Repeating `create_invoice` allocates a new number and clave.
+
+`check_status`, `list_documents`, and `get_document` need a saved profile and
+`HACIENDA_PASSWORD` in the **MCP server process**. First create the profile with
+the CLI (using the corresponding password in its environment):
+
+```bash
+hacienda auth login --cedula-type 02 --cedula 3101234567 \
+  --environment sandbox --profile sandbox
+```
+
+Replace the identification with your issuer's. Select `profile: "sandbox"`
+when calling these tools; all three default to `"default"`. A desktop client's
+server may not inherit your terminal's environment. Use your client's secret
+or environment configuration to supply `HACIENDA_PASSWORD` to the server. The
+password is not stored by `auth login`; saving a profile alone is insufficient.
+Restart the server after updating profiles or credentials because authenticated
+clients are cached by profile name.
+
+For a complete SDK handoff, see the [sandbox walkthrough](https://github.com/DojoCodingLabs/hacienda-cr/blob/main/docs/sandbox-guide.md#usar-la-cli-o-mcp-en-el-mismo-flujo).
+For multiple companies or application instances, see the
+[production integration guide](https://github.com/DojoCodingLabs/hacienda-cr/blob/main/docs/production-integration.md).
+
 ## Tools
 
 ### `create_invoice`
 
-Create a Factura Electronica (electronic invoice). Accepts emisor, receptor, and line items. Automatically computes taxes, totals, generates the clave numerica, and builds the XML.
+Create a Factura Electronica (electronic invoice). Automatically computes taxes,
+totals, generates the clave numerica, validates input and XSD, and returns
+unsigned XML. Local validation does not imply Hacienda acceptance.
 
 **Parameters:**
 
-- `emisor` -- Issuer information (name, ID, email)
+- `proveedorSistemas` -- Required identification of the invoicing system provider (9–12 digits)
+- `emisor` -- Issuer information: name, ID, email, and required `ubicacion` with `provincia`, `canton`, `distrito`, `otrasSenas`; optional `nombreComercial`
 - `receptor` -- Receiver information (name, optional ID, optional email)
-- `codigoActividadEmisor` -- Issuer economic activity code (6 digits)
-- `proveedorSistemas` -- Actual invoicing-system provider ID (required; no issuer fallback)
+- `codigoActividadEmisor` -- Issuer economic activity code (6 digits), distinct from each item's 13-digit CABYS code
 - `condicionVenta` -- Sale condition code (default: `"01"` = cash)
-- `medioPago` -- Payment method code (default: `"01"` = cash; emitted inside ResumenFactura per v4.4)
-- `lineItems` -- Array of line items with CABYS code, quantity, unit, description, price, and optional tax/discount
+- `medioPago` -- Single payment-method string (default: `"01"` = cash); emitted with its amount inside `ResumenFactura`
+- `lineItems` -- Array of 1–1000 items with `codigoCabys`, `cantidad`, `unidadMedida`, `detalle`, `precioUnitario`, optional `impuesto` (up to 10), `descuento` (up to 5), and `esServicio` (defaults to `false`; set `true` for services)
 - `plazoCredito` -- Credit term in days (optional)
+
+`plazoCredito` is a string and is required for credit sales (`condicionVenta: "02"`).
+Tax inputs contain `codigo`, `tarifa`, and optional `codigoTarifaIVA`; discount
+inputs contain `montoDescuento`, `naturalezaDescuento`, and `codigoDescuento` (defaults to `"01"`). The tool calculates
+the resulting amounts.
 
 ### `check_status`
 
@@ -89,6 +131,7 @@ Check the processing status of a document by its 50-digit clave numerica.
 **Parameters:**
 
 - `clave` -- The 50-digit clave numerica
+- `profile` -- Saved profile name (default: `"default"`); requires server password environment
 
 ### `list_documents`
 
@@ -102,6 +145,7 @@ List recent electronic documents with optional filters.
 - `receptorIdentificacion` -- Filter by receiver ID (optional)
 - `fechaDesde` -- Start date filter, ISO 8601 (optional)
 - `fechaHasta` -- End date filter, ISO 8601 (optional)
+- `profile` -- Saved profile name (default: `"default"`); requires server password environment
 
 ### `get_document`
 
@@ -110,6 +154,7 @@ Get full details of an electronic document by its 50-digit clave numerica.
 **Parameters:**
 
 - `clave` -- The 50-digit clave numerica
+- `profile` -- Saved profile name (default: `"default"`); requires server password environment
 
 ### `lookup_taxpayer`
 
@@ -121,7 +166,10 @@ Look up a Costa Rica taxpayer by identification number (cedula). Returns name, I
 
 ### `draft_invoice`
 
-Generate a draft invoice template with sensible defaults. Returns JSON that can be passed to `create_invoice`.
+Generate a draft invoice template. Fill in `proveedorSistemas` and issuer
+location placeholders, review the default CABYS/activity and tax inputs, then
+pass the completed JSON to `create_invoice`. It is not the full invoice JSON
+accepted by CLI `submit`.
 
 **Parameters:**
 
@@ -149,7 +197,9 @@ Generate a draft invoice template with sensible defaults. Returns JSON that can 
 
 ## Full Documentation
 
-See the [root README](https://github.com/DojoCodingLabs/hacienda-cr#readme) for comprehensive documentation with examples.
+See the [MCP reference](https://github.com/DojoCodingLabs/hacienda-cr/blob/main/docs/reference.md#mcp-server--integración-con-ia),
+[sandbox walkthrough](https://github.com/DojoCodingLabs/hacienda-cr/blob/main/docs/sandbox-guide.md), and
+[production integration guide](https://github.com/DojoCodingLabs/hacienda-cr/blob/main/docs/production-integration.md).
 
 ## Migrating to 0.4.0
 

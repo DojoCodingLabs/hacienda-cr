@@ -4,6 +4,10 @@
 
 Ejemplos y referencia detallada del SDK, la CLI y el servidor MCP.
 
+Para ejecutar un flujo completo, seguí [Tu primera factura en sandbox](sandbox-guide.md).
+Para integrarlo con pedidos, empresas y workers, consultá la [guía de producción](production-integration.md).
+Los cambios de entradas y validación están en las [notas v4.4](../packages/sdk/MIGRATION-v4.4.md).
+
 ## SDK — Documentación completa
 
 ### HaciendaClient
@@ -25,7 +29,7 @@ const client = new HaciendaClient({
   // Opcional
   p12Path: "/ruta/al/certificado.p12", // Para firma digital
   p12Pin: process.env.HACIENDA_P12_PIN, // PIN del .p12
-  fetchFn: customFetch, // Implementación fetch personalizada
+  // fetchFn: customFetch, // Implementación fetch personalizada (definila antes de usarla)
 });
 ```
 
@@ -70,6 +74,7 @@ Ejemplo completo de una Factura Electrónica — el flujo es igual para los dem�
 ```ts
 import {
   buildFacturaXml,
+  validateFacturaInput,
   calculateLineItemTotals,
   calculateInvoiceSummary,
   buildClave,
@@ -91,7 +96,7 @@ const lineas: LineItemInput[] = [
     impuesto: [
       {
         codigo: "01", // IVA
-        codigoTarifa: "08", // Tarifa general 13%
+        codigoTarifaIVA: "08", // Tarifa general 13%
         tarifa: 13,
       },
     ],
@@ -107,7 +112,7 @@ const lineas: LineItemInput[] = [
     impuesto: [
       {
         codigo: "01",
-        codigoTarifa: "08",
+        codigoTarifaIVA: "08",
         tarifa: 13,
       },
     ],
@@ -143,7 +148,7 @@ const numeroConsecutivo = "00100001010000000001";
 const factura = {
   clave,
   proveedorSistemas: "3101234567",
-  codigoActividad: "620100",
+  codigoActividadEmisor: "620100",
   numeroConsecutivo,
   fechaEmision: new Date().toISOString(),
   emisor: {
@@ -158,26 +163,39 @@ const factura = {
     correoElectronico: "pagos@cliente.co.cr",
   },
   condicionVenta: "01", // Contado
-  medioPago: ["01"], // Efectivo
   detalleServicio: lineasCalculadas,
-  resumenFactura: resumen,
+  resumenFactura: {
+    ...resumen,
+    medioPago: [{ tipoMedioPago: "01", totalMedioPago: resumen.totalComprobante }],
+  },
 };
 
-const xml = buildFacturaXml(factura);
+const validacion = validateFacturaInput(factura);
+if (!validacion.valid) throw new Error(JSON.stringify(validacion.errors));
+// La validación anterior comprueba los códigos y campos antes del builder tipado.
+const xml = buildFacturaXml(factura as Parameters<typeof buildFacturaXml>[0]);
 ```
 
-**Validación de XML:**
+**Validación de entrada y XML:**
 
 ```ts
-import { validateFacturaInput } from "@dojocoding/hacienda-sdk";
+import { validateFacturaInput, validateDocumentXml } from "@dojocoding/hacienda-sdk";
 
-const resultado = validateFacturaInput(datosFactura);
+const resultado = validateFacturaInput(factura);
 if (!resultado.valid) {
   for (const err of resultado.errors) {
     console.error(`${err.path}: ${err.message}`);
   }
 }
+
+const esquema = await validateDocumentXml(xml); // Permite un borrador sin firma
+if (!esquema.valid) console.error(esquema.issues);
+// Antes de enviar: await validateDocumentXml(xmlFirmado, { requireSignature: true })
 ```
+
+`validateDocumentXml()` usa los XSD v4.4 incluidos, sin acceder a la red. La
+firma presente se valida estructuralmente; no verifica su autenticidad
+criptográfica ni garantiza aceptación de Hacienda.
 
 ### Cálculo de IVA
 
@@ -195,7 +213,7 @@ const item: LineItemInput = {
   detalle: "Horas de consultoría",
   precioUnitario: 75000,
   esServicio: true,
-  impuesto: [{ codigo: "01", codigoTarifa: "08", tarifa: 13 }],
+  impuesto: [{ codigo: "01", codigoTarifaIVA: "08", tarifa: 13 }],
 };
 
 const calculado: CalculatedLineItem = calculateLineItemTotals(item);
@@ -214,18 +232,18 @@ const resumen: InvoiceSummary = calculateInvoiceSummary([calculado]);
 
 ```ts
 const itemExonerado: LineItemInput = {
-  // ...campos base
+  ...item, // Campos del ejemplo anterior
   impuesto: [
     {
       codigo: "01",
-      codigoTarifa: "08",
+      codigoTarifaIVA: "08",
       tarifa: 13,
       exoneracion: {
         tipoDocumento: "01",
         numeroDocumento: "AL-001-2025",
-        nombreInstitucion: "MEIC",
+        nombreInstitucion: "01", // Código ilustrativo de institución, no un nombre libre
         fechaEmision: "2025-01-01T00:00:00",
-        porcentajeExoneracion: 100,
+        tarifaExonerada: 13, // Puntos de la tarifa; 13 de 13 en este ejemplo
       },
     },
   ],
@@ -245,10 +263,11 @@ import { buildClave, parseClave, DocumentType, Situation } from "@dojocoding/hac
 
 // Generar clave
 const clave = buildClave({
-  date: new Date("2025-07-15"),
+  date: new Date(2025, 6, 15), // Fecha local: 15 de julio
   taxpayerId: "3101234567",
   documentType: DocumentType.FACTURA_ELECTRONICA,
   sequence: 42,
+  securityCode: "12345678", // Fijo solo para que este ejemplo sea reproducible
   situation: Situation.NORMAL,
   branch: "001", // Opcional, default "001"
   pos: "00001", // Opcional, default "00001"
@@ -326,8 +345,8 @@ const httpClient = new HttpClient({ envConfig, tokenManager });
 const resultado = await submitAndWait(
   httpClient,
   {
-    clave: "50601...",
-    fecha: new Date().toISOString(),
+    clave: factura.clave,
+    fecha: factura.fechaEmision,
     emisor: {
       tipoIdentificacion: "02",
       numeroIdentificacion: "3101234567",
@@ -346,9 +365,14 @@ const resultado = await submitAndWait(
 if (resultado.accepted) {
   console.log("¡Comprobante aceptado por Hacienda!");
 } else {
-  console.log("Rechazado:", resultado.rejectionReason);
+  console.log("Estado terminal:", resultado.status, resultado.rejectionReason);
 }
 ```
+
+Los estados terminales son `aceptado`, `rechazado` y `error`. `timeoutMs` limita
+el envío y polling juntos; `signal` permite cancelar requests y esperas. Un
+timeout del pipeline lanza `ApiError`; conservá la clave y continuá consultando
+con `getStatus()` antes de decidir otro envío. Ver [reintentos y recuperación](production-integration.md#reintentos-y-resultados-inciertos).
 
 **Opción granular — control total:**
 
@@ -359,7 +383,7 @@ import { submitDocument, getStatus, isTerminalStatus } from "@dojocoding/haciend
 const response = await submitDocument(httpClient, solicitud);
 
 // Consultar estado
-const status = await getStatus(httpClient, "50601...");
+const status = await getStatus(httpClient, factura.clave);
 if (isTerminalStatus(status.status)) {
   console.log("Estado final:", status.status);
 }
@@ -377,20 +401,28 @@ const lista = await listComprobantes(httpClient, {
   fechaEmisionHasta: "2025-12-31",
 });
 
-const detalle = await getComprobante(httpClient, "50601...");
+const detalle = await getComprobante(httpClient, factura.clave);
 ```
 
 **Reintentos con backoff exponencial:**
 
-```ts
-import { withRetry } from "@dojocoding/hacienda-sdk";
+`HttpClient` usa `withRetry()` para GET/PUT/DELETE ante red y 5xx; no reintenta
+4xx. En 0.4.0, POST/PATCH no se reintentan automáticamente y `submitDocument()`
+desactiva explícitamente el replay. Evitá envolver envíos con `withRetry()` o
+duplicar las capas de retry. Configurá los reintentos de consultas en el cliente:
 
-const resultado = await withRetry(() => submitDocument(httpClient, solicitud), {
-  maxRetries: 3,
-  initialDelayMs: 1000,
-  backoffMultiplier: 2,
+```ts
+const httpClientConReintentos = new HttpClient({
+  envConfig,
+  tokenManager,
+  retryOptions: { maxRetries: 3, initialDelayMs: 1000, backoffMultiplier: 2 },
 });
 ```
+
+Guardá la solicitud antes de enviar y reconciliá la misma clave ante un
+resultado incierto. `requestTimeoutMs` configura el presupuesto HTTP (30 segundos
+por defecto), incluyendo autenticación, reintentos y lectura de la respuesta. El helper
+`withRetry()` está disponible para operaciones que no tengan reintentos propios.
 
 ### Consulta de contribuyentes
 
@@ -442,9 +474,16 @@ const perfiles = await listProfiles();
 await deleteProfile("perfil-viejo");
 
 // Gestión de consecutivos (numeración automática)
-const consecutivo = await getNextSequence("02", "3101234567", "01", "001", "00001");
-await resetSequence("02", "3101234567", "01", "001", "00001");
+const opciones = { configDir: "/ruta/durable/sandbox/3101234567" };
+const consecutivo = await getNextSequence("01", "001", "00001", opciones);
+// Solo para un contador de prueba sin documentos emitidos:
+await resetSequence("01", "001", "00001", 0, opciones);
 ```
+
+El contador local se agrupa por tipo de documento, sucursal y terminal; no
+incluye empresa, ambiente ni perfil. Aislá directorios en uso local y usá una
+reserva transaccional en base de datos para múltiples hosts. No reinicies un
+contador utilizado para emisión. Ver [consecutivos](production-integration.md#consecutivos-y-aislamiento-por-empresa).
 
 **Seguridad:** Las contraseñas y PINs **nunca** se almacenan en archivos de configuración. Siempre van por variables de entorno:
 
@@ -576,13 +615,29 @@ hacienda auth switch produccion # Cambiar a un perfil específico
 
 ### `hacienda submit`
 
-Enviar un comprobante electrónico a Hacienda.
+Enviar una Factura Electrónica JSON completa a Hacienda. Valida entrada y XSD,
+firma, envía y consulta el estado terminal. Para otros tipos de documento, usá
+el SDK; este comando no acepta XML firmado ni entradas MCP simplificadas.
 
 ```bash
 hacienda submit factura.json --dry-run   # Vista previa del XML
 hacienda submit factura.json             # Enviar de verdad
 hacienda submit factura.json --json      # Salida JSON
+hacienda submit factura.json --profile sandbox --p12 certificado.p12 --json
 ```
+
+| Opción      | Uso y valor predeterminado                                                              |
+| ----------- | --------------------------------------------------------------------------------------- |
+| `file`      | Archivo JSON requerido                                                                  |
+| `--dry-run` | Generar y validar XML sin autenticación, firma ni envío; default `false`                |
+| `--profile` | Perfil de autenticación; default `default`                                              |
+| `--p12`     | Ruta al certificado; precedencia: argumento, `HACIENDA_P12_PATH`, `p12_path` del perfil |
+| `--pin`     | PIN; default `HACIENDA_P12_PIN`. Preferí la variable para evitar exposición en procesos |
+| `--json`    | Salida estructurada; default `false`                                                    |
+
+Para envío real necesitás `HACIENDA_PASSWORD`, certificado y PIN. Ante un
+resultado incierto, consultá la misma clave con el mismo perfil antes de
+decidir otro envío. Ver el [recorrido completo](sandbox-guide.md).
 
 ### `hacienda status`
 
@@ -666,6 +721,12 @@ hacienda draft --template nota-credito --output nc.json
 ---
 
 ## MCP Server — Integración con IA
+
+Consultá la [guía MCP](../packages/mcp/README.md#authentication-and-document-lifecycle)
+para los parámetros actuales, placeholders y autenticación de consultas.
+`create_invoice` devuelve XML sin firmar y consume un consecutivo local.
+Las consultas de documentos requieren un perfil guardado y `HACIENDA_PASSWORD`
+en el proceso del servidor; cada herramienta acepta `profile` (default `default`).
 
 El paquete `@dojocoding/hacienda-mcp` expone el SDK como servidor MCP ([Model Context Protocol](https://modelcontextprotocol.io)), permitiendo que asistentes de IA generen borradores y XML de facturas de forma conversacional. `create_invoice` devuelve XML sin firmar; la firma y el envío se realizan con el SDK o la CLI.
 

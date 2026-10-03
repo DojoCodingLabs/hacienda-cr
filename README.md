@@ -176,6 +176,9 @@ Herramientas: `draft_invoice`, `create_invoice`, `lookup_taxpayer`, `check_statu
 
 ## Documentación
 
+- [Tu primera factura en sandbox](docs/sandbox-guide.md): ejemplo ejecutable desde los datos de una venta hasta la respuesta de Hacienda, con recuperación de estado.
+- [Integrar facturación en tu producto](docs/production-integration.md): pedidos, workers, persistencia, empresas, consecutivos y reintentos en producción.
+- [Migración de entradas a v4.4](packages/sdk/MIGRATION-v4.4.md): campos requeridos, pagos, descuentos y validación XSD.
 - [Referencia completa del SDK](docs/reference.md#sdk--documentación-completa): autenticación, XML, impuestos, claves, firma, API, configuración, logging y errores.
 - [Referencia de comandos](docs/reference.md#cli--referencia-de-comandos): opciones y ejemplos de la CLI.
 - [Integración MCP](docs/reference.md#mcp-server--integración-con-ia): configuración del cliente y recursos.
