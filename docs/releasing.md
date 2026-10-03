@@ -56,8 +56,10 @@ pnpm release:publish --tag v0.4.0 --resume
 Run this in a correctly authenticated provenance-capable CI environment after
 restoring `.release/v0.4.0` and the exact release commit. The script verifies every
 file/commit before writing to npm and verifies each registry artifact afterwards.
-If a successful publish is briefly not visible in the registry, inspect the
-registry and use recovery; do not assume it failed to publish.
+After a successful publish, verification waits up to 37 lookups with five-second
+intervals for npm indexing, always checking the exact integrity once visible.
+If that bounded wait expires, inspect the registry and use recovery; do not assume
+it failed to publish. Registry errors and conflicting bytes fail immediately.
 
 Once all four versions exist, check npm dist-tags (`latest`), provenance and fresh
 installations of the registry artifacts. Announce only after all packages pass.
