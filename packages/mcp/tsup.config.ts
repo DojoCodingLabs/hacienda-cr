@@ -10,6 +10,7 @@ export default defineConfig({
   // Keep dependencies external — this is a Node library/CLI, not a browser bundle.
   // tsup bundles workspace deps by default, but external packages should stay external.
   external: [
+    "xmllint-wasm",
     "@modelcontextprotocol/sdk",
     "@modelcontextprotocol/sdk/server/mcp.js",
     "@modelcontextprotocol/sdk/server/stdio.js",

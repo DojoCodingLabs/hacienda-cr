@@ -31,6 +31,7 @@ vi.mock("@dojocoding/hacienda-sdk", async (importOriginal) => {
   return {
     ...actual,
     lookupTaxpayer: mockLookupTaxpayer,
+    getNextSequence: vi.fn().mockResolvedValue(1),
     getStatus: mockGetStatus,
     listComprobantes: mockListComprobantes,
     getComprobante: mockGetComprobante,
@@ -107,6 +108,8 @@ describe("MCP Server", () => {
       const toolNames = tools.map((t) => t.name);
 
       expect(toolNames).toContain("create_invoice");
+      const createInvoice = tools.find((tool) => tool.name === "create_invoice");
+      expect(createInvoice?.inputSchema.required).toContain("proveedorSistemas");
       expect(toolNames).toContain("check_status");
       expect(toolNames).toContain("list_documents");
       expect(toolNames).toContain("get_document");
@@ -187,6 +190,7 @@ describe("MCP Server", () => {
               numero: "101230456",
             },
           },
+          proveedorSistemas: "3101234567",
           codigoActividadEmisor: "620100",
           lineItems: [
             {
@@ -236,7 +240,11 @@ describe("MCP Server", () => {
             },
             correoElectronico: "exenta@empresa.com",
           },
-          receptor: { nombre: "Cliente Exento" },
+          receptor: {
+            nombre: "Cliente Exento",
+            identificacion: { tipo: "02", numero: "3109876543" },
+          },
+          proveedorSistemas: "3101234567",
           codigoActividadEmisor: "620100",
           lineItems: [
             {
@@ -274,7 +282,11 @@ describe("MCP Server", () => {
             },
             correoElectronico: "gravada@empresa.com",
           },
-          receptor: { nombre: "Cliente Gravado" },
+          receptor: {
+            nombre: "Cliente Gravado",
+            identificacion: { tipo: "02", numero: "3109876543" },
+          },
+          proveedorSistemas: "3101234567",
           codigoActividadEmisor: "620100",
           lineItems: [
             {
@@ -301,7 +313,8 @@ describe("MCP Server", () => {
       const result = await client.callTool({
         name: "create_invoice",
         arguments: {
-          receptor: { nombre: "Cliente" },
+          receptor: { nombre: "Cliente", identificacion: { tipo: "02", numero: "3109876543" } },
+          proveedorSistemas: "3101234567",
           codigoActividadEmisor: "620100",
           lineItems: [
             {
@@ -335,7 +348,11 @@ describe("MCP Server", () => {
             },
             correoElectronico: "multi@empresa.com",
           },
-          receptor: { nombre: "Cliente Multi" },
+          receptor: {
+            nombre: "Cliente Multi",
+            identificacion: { tipo: "02", numero: "3109876543" },
+          },
+          proveedorSistemas: "3101234567",
           codigoActividadEmisor: "620100",
           lineItems: [
             {
@@ -379,7 +396,11 @@ describe("MCP Server", () => {
             },
             correoElectronico: "desc@empresa.com",
           },
-          receptor: { nombre: "Cliente Descuento" },
+          receptor: {
+            nombre: "Cliente Descuento",
+            identificacion: { tipo: "02", numero: "3109876543" },
+          },
+          proveedorSistemas: "3101234567",
           codigoActividadEmisor: "620100",
           lineItems: [
             {
@@ -403,7 +424,7 @@ describe("MCP Server", () => {
       const text = getTextContent(result.content as { type: string; text: string }[]);
       expect(text).toContain("Descuento por volumen");
       expect(text).toContain("<MontoDescuento>10000</MontoDescuento>");
-      expect(text).toContain("Total: 80000");
+      expect(text).toContain("Total: 90000");
       expect(text).toContain("<TotalDescuentos>10000</TotalDescuentos>");
     });
 
@@ -422,7 +443,8 @@ describe("MCP Server", () => {
             },
             correoElectronico: "test@test.com",
           },
-          receptor: { nombre: "Receiver" },
+          receptor: { nombre: "Receiver", identificacion: { tipo: "02", numero: "3109876543" } },
+          proveedorSistemas: "3101234567",
           codigoActividadEmisor: "620100",
           lineItems: [],
         },

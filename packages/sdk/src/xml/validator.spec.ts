@@ -708,3 +708,44 @@ describe("validateFacturaInput — edge cases", () => {
     expect(result.errors.some((e) => e.path.includes("totalDesgloseImpuesto"))).toBe(true);
   });
 });
+describe("summary reconciliation regressions", () => {
+  it("rejects an internally consistent summary unrelated to its lines", () => {
+    const invoice = structuredClone(SIMPLE_INVOICE);
+    Object.assign(invoice.resumenFactura, {
+      totalServGravados: 900000,
+      totalGravado: 900000,
+      totalVenta: 900000,
+      totalVentaNeta: 900000,
+      totalComprobante: 913000,
+    });
+    expect(
+      validateFacturaInput(invoice).errors.some(
+        (issue) => issue.path === "resumenFactura.totalVenta",
+      ),
+    ).toBe(true);
+  });
+
+  it("rejects discounts unrelated to detail discounts", () => {
+    const invoice = structuredClone(DISCOUNT_INVOICE);
+    Object.assign(invoice.resumenFactura, {
+      totalDescuentos: 10000,
+      totalVentaNeta: 40000,
+      totalComprobante: 45850,
+    });
+    expect(
+      validateFacturaInput(invoice).errors.some(
+        (issue) => issue.path === "resumenFactura.totalDescuentos",
+      ),
+    ).toBe(true);
+  });
+
+  it("rejects charges absent from detail", () => {
+    const invoice = structuredClone(SIMPLE_INVOICE);
+    Object.assign(invoice.resumenFactura, { totalOtrosCargos: 500, totalComprobante: 113500 });
+    expect(
+      validateFacturaInput(invoice).errors.some(
+        (issue) => issue.path === "resumenFactura.totalOtrosCargos",
+      ),
+    ).toBe(true);
+  });
+});

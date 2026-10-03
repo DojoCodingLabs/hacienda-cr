@@ -44,16 +44,12 @@ async function acquireLock(lockPath: string): Promise<() => Promise<void>> {
         (error as NodeJS.ErrnoException).code === "EEXIST"
       ) {
         if (Date.now() >= deadline) {
-          // Stale lock — force remove and retry
-          try {
-            await rm(lockPath, { recursive: true });
-          } catch {
-            throw new Error(
-              `Failed to acquire sequence lock at ${lockPath} after ${String(LOCK_TIMEOUT_MS)}ms. ` +
-                `If this persists, manually remove the lock directory.`,
-            );
-          }
-          continue;
+          // Elapsed time does not prove that the owner is dead. Never steal
+          // a live lock: doing so lets two writers allocate the same number.
+          throw new Error(
+            `Failed to acquire sequence lock at ${lockPath} after ${String(LOCK_TIMEOUT_MS)}ms. ` +
+              `Check that no writer is running before manually removing the lock directory.`,
+          );
         }
         await new Promise((resolve) => setTimeout(resolve, LOCK_RETRY_MS));
         continue;
@@ -258,8 +254,18 @@ export async function resetSequence(
   value = 0,
   options: SequenceStoreOptions = {},
 ): Promise<void> {
-  const key = buildSequenceKey(docType, branch, pos);
-  const sequences = await readSequenceFile(options.configDir);
-  sequences[key] = value;
-  await writeSequenceFile(sequences, options.configDir);
+  if (!Number.isInteger(value) || value < 0 || value > MAX_SEQUENCE) {
+    throw new RangeError(`Sequence must be an integer between 0 and ${MAX_SEQUENCE}.`);
+  }
+  const configDir = getConfigDir(options.configDir);
+  await ensureConfigDir(options.configDir);
+  const unlock = await acquireLock(join(configDir, ".sequences.lock"));
+  try {
+    const key = buildSequenceKey(docType, branch, pos);
+    const sequences = await readSequenceFile(options.configDir);
+    sequences[key] = value;
+    await writeSequenceFile(sequences, options.configDir);
+  } finally {
+    await unlock();
+  }
 }

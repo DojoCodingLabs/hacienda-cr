@@ -87,6 +87,19 @@ describe("RateLimiter", () => {
     });
   });
 
+  it("reserves slots for simultaneous callers and rechecks after waking", async () => {
+    const limiter = new RateLimiter({ maxRequests: 1, windowMs: 1000 });
+    const fn = vi.fn().mockResolvedValue("ok");
+    const requests = Array.from({ length: 5 }, () => limiter.execute(fn));
+    await vi.advanceTimersByTimeAsync(0);
+    expect(fn).toHaveBeenCalledTimes(1);
+    for (let i = 2; i <= 5; i++) {
+      await vi.advanceTimersByTimeAsync(1000);
+      expect(fn).toHaveBeenCalledTimes(i);
+    }
+    await Promise.all(requests);
+  });
+
   describe("availableTokens", () => {
     it("starts at maxRequests", () => {
       const limiter = new RateLimiter({ maxRequests: 7, windowMs: 1000 });

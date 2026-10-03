@@ -240,16 +240,16 @@ export const DISCOUNT_INVOICE: FacturaElectronica = {
   resumenFactura: {
     totalServGravados: 0,
     totalServExentos: 0,
-    totalMercanciasGravadas: 45000,
+    totalMercanciasGravadas: 50000,
     totalMercanciasExentas: 0,
-    totalGravado: 45000,
+    totalGravado: 50000,
     totalExento: 0,
-    totalVenta: 45000,
+    totalVenta: 50000,
     totalDescuentos: 5000,
-    totalVentaNeta: 40000,
+    totalVentaNeta: 45000,
     totalImpuesto: 5850,
-    medioPago: [{ tipoMedioPago: "01", totalMedioPago: 45850 }],
-    totalComprobante: 45850,
+    medioPago: [{ tipoMedioPago: "01", totalMedioPago: 50850 }],
+    totalComprobante: 50850,
   },
 };
 

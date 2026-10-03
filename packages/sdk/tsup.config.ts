@@ -7,4 +7,5 @@ export default defineConfig({
   clean: true,
   target: "node22",
   outDir: "dist",
+  loader: { ".xsd": "text" },
 });

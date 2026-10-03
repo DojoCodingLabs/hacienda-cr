@@ -43,7 +43,7 @@ const SCHEMA_FRAGMENTS: Record<string, string> = {
  * @returns The full namespace URI.
  */
 export function getNamespaceUri(schemaName: string): string {
-  return `${HACIENDA_NAMESPACE_BASE}/${schemaName}`;
+  return `${HACIENDA_NAMESPACE_BASE}/${getSchemaFragment(schemaName)}`;
 }
 
 /**
