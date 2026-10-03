@@ -49,6 +49,8 @@ el SDK recibe de una a cuatro entradas con sus montos dentro de
 El recorrido calcula una venta en CRC sin otros cargos; para otras operaciones,
 adaptá el resumen y su conciliación antes de construir el documento.
 
+La entrada simplificada admite IVA ordinario (`impuesto[].codigo: "01"`) y los campos de línea que recibe `calculateLineItemTotals()`, sin `numeroLinea` ni montos calculados. `esServicio` debe ser un booleano JSON (`true` o `false`), no texto. El ejemplo rechaza campos de pedido, línea, impuesto o exoneración que su mapping no conserva, incluyendo `resumenFactura`, `otrosCargos` y `unidadMedidaComercial`, antes de reservar un consecutivo. Para moneda extranjera, regímenes especiales o campos adicionales, adaptá el mapping y validá la factura completa con el SDK; no agregues esos campos al pedido esperando que se transmitan automáticamente.
+
 ## Generar y revisar
 
 ```bash
@@ -90,9 +92,9 @@ Si vence el tiempo de espera, se pierde la conexión o el proceso se interrumpe,
 node packages/sdk/examples/sandbox.mjs status /tmp/hacienda-sandbox/run-001
 ```
 
-Este comando autentica y consulta; no firma, no envía ni asigna otro consecutivo. Cuando existe `request.json`, toma su clave y emisor, aunque el borrador original haya cambiado. Guarda la última respuesta en `status.json`. Si sigue `recibido` o `procesando`, repetí la consulta más tarde. Un 404 inmediato puede indicar que el documento todavía no fue indexado; no prueba por sí solo que el envío falló.
+Este comando autentica y consulta; no firma, no envía ni asigna otro consecutivo. Cuando existe `request.json`, toma su clave y emisor, aunque el borrador original haya cambiado. Guarda la última respuesta en `status.json`. El código de salida 0 indica que la consulta se completó; comprobá `status` para distinguir aceptación, rechazo, error o procesamiento pendiente. Si sigue `recibido` o `procesando`, repetí la consulta más tarde. Un 404 inmediato puede indicar que el documento todavía no fue indexado; no prueba por sí solo que el envío falló.
 
-`submit` comprueba que el JSON no cambió respecto del XML preparado y no permite sobrescribir los archivos de un intento anterior. Si encontrás un error antes del primer envío, preservá ese directorio y prepará la entrada corregida en otro; después de un intento, consultá y reconciliá antes de emitir cualquier documento nuevo. Conservá el directorio y revisá el estado antes de decidir una recuperación manual. No borres el marcador ni prepares otra factura para resolver un timeout. El ejemplo es un recorrido local; la reconciliación y los reintentos durables corresponden a tu aplicación.
+`submit` comprueba que el JSON no cambió respecto del XML preparado y no permite sobrescribir los archivos de un intento anterior. La presencia de `signed.xml`, `request.json` o `attempt.json` bloquea otro envío antes de autenticar, incluso si el proceso se interrumpió entre esas escrituras. Las respuestas de polling y consulta deben coincidir con la clave guardada antes de registrarse. Si encontrás un error antes del primer envío, preservá ese directorio y prepará la entrada corregida en otro; después de un intento, consultá y reconciliá antes de emitir cualquier documento nuevo. Conservá el directorio y revisá el estado antes de decidir una recuperación manual. No borres el marcador ni prepares otra factura para resolver un timeout. El ejemplo es un recorrido local; la reconciliación y los reintentos durables corresponden a tu aplicación.
 
 ## Usar la CLI o MCP en el mismo flujo
 

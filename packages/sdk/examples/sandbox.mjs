@@ -1,6 +1,6 @@
 // Run from the repository after pnpm build, or copy into an ESM project
 // with @dojocoding/hacienda-sdk installed. Always targets sandbox.
-import { mkdir, readFile, writeFile } from "node:fs/promises";
+import { mkdir, readFile, stat, writeFile } from "node:fs/promises";
 import { resolve, join } from "node:path";
 import {
   ApiError,
@@ -76,6 +76,101 @@ async function optionalJson(directory, name) {
   }
 }
 
+function checkFields(value, allowed, path) {
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    throw new Error(`${path} must be an object.`);
+  }
+  for (const key of Object.keys(value)) {
+    if (!allowed.includes(key)) {
+      throw new Error(
+        `${path}.${key} is not supported by this simplified example. Adapt the SDK mapping explicitly before using this field.`,
+      );
+    }
+  }
+}
+
+function checkOrder(order) {
+  checkFields(
+    order,
+    [
+      "proveedorSistemas",
+      "codigoActividadEmisor",
+      "codigoActividadReceptor",
+      "emisor",
+      "receptor",
+      "condicionVenta",
+      "condicionVentaOtros",
+      "plazoCredito",
+      "medioPago",
+      "medioPagoOtros",
+      "lineItems",
+      "informacionReferencia",
+      "otros",
+    ],
+    "order",
+  );
+  if (!Array.isArray(order.lineItems) || order.lineItems.length === 0) {
+    throw new Error("order.lineItems must contain at least one item.");
+  }
+  order.lineItems.forEach((item, index) => {
+    const path = `order.lineItems.${index}`;
+    checkFields(
+      item,
+      [
+        "codigoCabys",
+        "codigoComercial",
+        "cantidad",
+        "unidadMedida",
+        "detalle",
+        "precioUnitario",
+        "descuento",
+        "impuesto",
+        "esServicio",
+      ],
+      path,
+    );
+    if (item.esServicio !== undefined && typeof item.esServicio !== "boolean") {
+      throw new Error(`${path}.esServicio must be a boolean.`);
+    }
+    if (item.impuesto !== undefined) {
+      if (!Array.isArray(item.impuesto)) throw new Error(`${path}.impuesto must be an array.`);
+      item.impuesto.forEach((tax, taxIndex) => {
+        const taxPath = `${path}.impuesto.${taxIndex}`;
+        checkFields(tax, ["codigo", "codigoTarifaIVA", "tarifa", "exoneracion"], taxPath);
+        if (tax.codigo !== "01")
+          throw new Error(`${taxPath}.codigo must be 01 (ordinary IVA) in this example.`);
+        if (tax.exoneracion !== undefined) {
+          checkFields(
+            tax.exoneracion,
+            [
+              "tipoDocumento",
+              "numeroDocumento",
+              "nombreInstitucion",
+              "fechaEmision",
+              "tarifaExonerada",
+            ],
+            `${taxPath}.exoneracion`,
+          );
+        }
+      });
+    }
+  });
+}
+
+async function hasFile(directory, name) {
+  try {
+    await stat(join(directory, name));
+    return true;
+  } catch (error) {
+    if (error.code === "ENOENT") return false;
+    throw error;
+  }
+}
+
+function checkStatusIdentity(status, clave) {
+  if (status.clave !== clave) throw new Error("Status response does not match the saved clave.");
+}
+
 async function main() {
   if (!input || extra.length || !["prepare", "submit", "status"].includes(command)) {
     throw new Error(usage);
@@ -84,9 +179,8 @@ async function main() {
 
   if (command === "prepare") {
     const order = JSON.parse(await readFile(resolve(input), "utf8"));
-    if (!Array.isArray(order.lineItems) || order.lineItems.length === 0) {
-      throw new Error("order.lineItems must contain at least one item.");
-    }
+    // Reject unsupported fields before calculation can silently discard them.
+    checkOrder(order);
     const items = order.lineItems.map((item, index) =>
       calculateLineItemTotals({ ...item, numeroLinea: index + 1 }),
     );
@@ -154,7 +248,7 @@ async function main() {
       : invoice.emisor.identificacion;
     const httpClient = await authenticatedClient(issuer);
     const status = await getStatus(httpClient, clave);
-    if (status.clave !== clave) throw new Error("Status response does not match the saved clave.");
+    checkStatusIdentity(status, clave);
     // Refresh status without replacing the original submission result.
     await writeFile(join(directory, "status.json"), JSON.stringify(status, null, 2) + "\n", {
       mode: 0o600,
@@ -162,7 +256,11 @@ async function main() {
     console.log(`${clave}: ${status.status}. Saved status.json.`);
     return;
   }
-  if (savedRequest || (await optionalJson(directory, "attempt.json"))) {
+  if (
+    savedRequest ||
+    (await hasFile(directory, "attempt.json")) ||
+    (await hasFile(directory, "signed.xml"))
+  ) {
     throw new Error(
       "A submission snapshot already exists. Run status with the same directory; do not submit again.",
     );
@@ -206,7 +304,10 @@ async function main() {
   });
   try {
     const result = await submitAndWait(httpClient, request, {
-      onPoll: (status) => console.log(`Processing: ${status.status}`),
+      onPoll: (status) => {
+        checkStatusIdentity(status, request.clave);
+        console.log(`Processing: ${status.status}`);
+      },
     });
     await saveJson(directory, "result.json", result);
     console.log(`${result.clave}: ${result.status}. ${result.rejectionReason ?? ""}`);
