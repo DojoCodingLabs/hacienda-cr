@@ -32,13 +32,13 @@ Este flujo permite responder rápido al checkout o caja mientras el backend cont
 
 Una estructura mínima de persistencia puede usar estas entidades:
 
-| Entidad   | Campos sugeridos y restricciones                                                                                            |
-| --------- | --------------------------------------------------------------------------------------------------------------------------- |
-| Intención | `tenantId`, `environment`, `operationId`, `purpose`; restricción única sobre esa combinación                                |
-| Contador  | `tenantId`, `issuerId`, `environment`, `documentType`, `branch`, `pos`, `nextSequence`                                      |
-| Documento | Intención, clave única por ambiente, consecutivo, fecha, versión de entrada, XML firmado, estado local y estado de Hacienda |
-| Intento   | Documento, fecha de inicio, solicitud guardada, respuesta HTTP o error de transporte                                        |
-| Consulta  | Documento, fecha, estado, respuesta XML, próximo intento y error de consulta si hubo                                        |
+| Entidad   | Campos sugeridos y restricciones                                                                                              |
+| --------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| Intención | `tenantId`, `environment`, `operationId`, `purpose`; restricción única sobre esa combinación                                  |
+| Contador  | `issuerId`, `environment`, `documentType`, `branch`, `pos`, `nextSequence`; restricción única sobre los primeros cinco campos |
+| Documento | Intención, clave única por ambiente, consecutivo, fecha, versión de entrada, XML firmado, estado local y estado de Hacienda   |
+| Intento   | Documento, fecha de inicio, solicitud guardada, respuesta HTTP o error de transporte                                          |
+| Consulta  | Documento, fecha, estado, respuesta XML, próximo intento y error de consulta si hubo                                          |
 
 `purpose` permite distinguir una factura de una nota de crédito o una renovación. Guardá la clave exacta: `buildClave()` genera un código de seguridad aleatorio cuando no lo especificás, por lo que volver a llamarlo no reproduce necesariamente el mismo documento.
 
@@ -49,6 +49,8 @@ Después de iniciar el envío, conservá una versión inmutable de la solicitud.
 `getNextSequence(documentType, branch, pos, { configDir })` usa un archivo `sequences.json` y un lock local. La clave interna es `documentType-branch-pos`; **no incluye empresa, perfil ni ambiente**. Cambiar de perfil CLI o MCP no crea un contador separado. MCP usa actualmente el directorio predeterminado y sucursal `001` / terminal `00001`.
 
 En una integración local con SDK, podés separar contadores mediante `configDir` por emisor y ambiente. En un backend con múltiples procesos, hosts o contenedores, reservá el consecutivo con una transacción y actualización atómica en tu base de datos, con el alcance de la tabla anterior. Coordiná todos los sistemas que emitan para la misma empresa, sucursal y terminal.
+
+El contador pertenece a la identidad fiscal del emisor. `issuerId` debe identificar de forma canónica el tipo y número de identificación, compartido entre todos sus registros de tenant. Si dos tenants representan al mismo emisor, deben compartir ese contador; agregar `tenantId` a su clave única crearía dos series independientes y permitiría repetir un consecutivo. Conservá el tenant en la intención y el documento para autorización, pero coordiná la reserva por emisor, ambiente, tipo, sucursal y terminal.
 
 Usá ese mismo número para `numeroConsecutivo` y `buildClave({ sequence, branch, pos, ... })`. Guardá la reserva y el documento de manera durable. No reinicies contadores ni reutilices números para resolver fallos de envío. Un lock local tampoco coordina archivos distintos o discos efímeros. Ante un lock abandonado, verificá que su escritor terminó antes de retirarlo manualmente.
 
