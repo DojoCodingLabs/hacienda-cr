@@ -2,70 +2,71 @@ name: Publish
 
 on:
   push:
-    tags:
-      - "v*"
+    tags: ["v*"]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Existing release tag (vX.Y.Z)"
+        required: true
+        type: string
+      resume:
+        description: "Recover a partial publish; skip only identical verified tarballs"
+        default: false
+        type: boolean
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
+  group: npm-release
   cancel-in-progress: false
 
 jobs:
   publish:
-    name: Build, Test & Publish to npm
+    name: Verify artifacts and publish to npm
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 20
     permissions:
       contents: read
       id-token: write
-
+    env:
+      RELEASE_TAG: ${{ inputs.tag || github.ref_name }}
+      RELEASE_RESUME: ${{ inputs.resume && '--resume' || '' }}
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - uses: actions/checkout@v4
         with:
-          node-version-file: ".nvmrc"
-          cache: "pnpm"
-          registry-url: "https://registry.npmjs.org"
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: Lint
-        run: pnpm lint
-
-      - name: Format check
-        run: pnpm format
-
-      - name: Typecheck
-        run: pnpm typecheck
-
-      - name: Build
-        run: pnpm build
-
-      - name: Test
-        run: pnpm test
-
-      - name: Publish @dojocoding/hacienda-shared
-        run: pnpm --filter @dojocoding/hacienda-shared publish --access public --no-git-checks
+          ref: ${{ inputs.tag || github.ref }}
+          fetch-depth: 0
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: pnpm
+      - name: Pin npm with trusted-publishing support
+        run: npm install --global npm@11.21.0
+      - name: Require a release tag on main
+        run: |
+          git rev-parse --verify "refs/tags/$RELEASE_TAG"
+          test "$(git rev-parse "refs/tags/$RELEASE_TAG^{commit}")" = "$(git rev-parse HEAD)"
+          git merge-base --is-ancestor HEAD origin/main
+      - run: pnpm install --frozen-lockfile
+      - name: Install native XSD conformance tool
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq libxml2-utils
+      - name: Verify and prepare exact release artifacts
+        run: pnpm release:prepare --tag "$RELEASE_TAG" $RELEASE_RESUME
+      - name: Publish with trusted publishing
+        if: vars.NPM_TRUSTED_PUBLISHING == 'true'
+        run: pnpm release:publish --tag "$RELEASE_TAG" $RELEASE_RESUME
+      - name: Publish with existing token until trusted publishers are configured
+        if: vars.NPM_TRUSTED_PUBLISHING != 'true'
+        run: |
+          printf '//registry.npmjs.org/:_authToken=${NODE_AUTH_TOKEN}\n' > "$NPM_CONFIG_USERCONFIG"
+          pnpm release:publish --tag "$RELEASE_TAG" $RELEASE_RESUME
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-
-      - name: Publish @dojocoding/hacienda-sdk
-        run: pnpm --filter @dojocoding/hacienda-sdk publish --access public --no-git-checks
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-
-      - name: Publish @dojocoding/hacienda-cli
-        run: pnpm --filter @dojocoding/hacienda-cli publish --access public --no-git-checks
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-
-      - name: Publish @dojocoding/hacienda-mcp
-        run: pnpm --filter @dojocoding/hacienda-mcp publish --access public --no-git-checks
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          NPM_CONFIG_USERCONFIG: ${{ runner.temp }}/hacienda-npmrc
+      - name: Save prepared artifacts for inspection and recovery
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-${{ env.RELEASE_TAG }}
+          path: .release/
+          if-no-files-found: ignore
+          include-hidden-files: true

@@ -19,3 +19,26 @@ return a nonzero exit code in both text and JSON modes.
 Sequence resets and increments share a lock. A timeout does not remove another
 writer's lock. After a crash, verify no writer is running before manually
 removing the reported lock directory.
+
+## HTTP and submission behavior in 0.4.0
+
+`submitAndWait` applies its timeout to submission and polling together. Pass an
+`AbortSignal` through its options to cancel the operation. HTTP requests default
+to a 30-second budget including authentication, retries and response reads; use
+`HttpClientOptions.requestTimeoutMs` to configure it. Token requests have an
+independent 30-second cap. Authenticated requests reject redirects.
+
+POST/PATCH calls are no longer automatically retried. After an ambiguous failure,
+query status with the same clave before deciding whether to resubmit; a lost
+response does not mean Hacienda did not receive the document.
+
+Validation/signing rejects XML over 8 MiB, more than 128 levels or 100,000
+elements, DTD/entity declarations, and malformed signing input. At most four XSD
+validations run concurrently; retry a busy result after one completes. API
+responses are capped at 8 MiB and token responses at 64 KiB. Signing requires a
+currently valid RSA certificate of at least 2048 bits with a matching private key;
+PKCS#12 input is capped at 1 MiB.
+
+See the [security scope and remaining boundaries](https://github.com/DojoCodingLabs/hacienda-cr/blob/main/docs/security-hardening.md),
+including the unpatched Forge verification advisory. These checks do not establish
+certificate-chain trust or real Hacienda acceptance.

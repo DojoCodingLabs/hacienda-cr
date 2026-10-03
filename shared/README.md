@@ -42,4 +42,4 @@ This package is used internally by `@dojocoding/hacienda-sdk`, `@dojocoding/haci
 npm install @dojocoding/hacienda-shared
 ```
 
-This package is typically consumed as a workspace dependency via `workspace:*`.
+Applications can import its public types, enums and validation schemas directly. Internal workspace dependencies are resolved to release versions when packed.

@@ -79,8 +79,9 @@ No audit advisory is suppressed by configuration.
 - [OWASP XML security](https://cheatsheetseries.owasp.org/cheatsheets/XML_Security_Cheat_Sheet.html)
 - [OWASP XXE prevention](https://cheatsheetseries.owasp.org/cheatsheets/XML_External_Entity_Prevention_Cheat_Sheet.html)
 
-No real Hacienda documents are submitted by these offline suites. The existing
-credential-gated lifecycle test is a placeholder; live acceptance remains a
-separate explicitly enabled sandbox-validation task. XSD checks establish
+No real Hacienda documents are submitted by these offline suites. The sandbox lifecycle test is explicitly opt-in through
+HACIENDA_SANDBOX_E2E=1 and pnpm test:sandbox; it uses an operator-supplied invoice
+and real sandbox credentials. Live acceptance has not been executed during this
+hardening/release-preparation work. XSD checks establish
 structure, not signature authenticity; the crypto regression checks integrity
 with a self-signed test certificate, not institutional trust.

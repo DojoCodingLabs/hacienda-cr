@@ -35,20 +35,8 @@ jobs:
       - name: Install xmllint (XSD conformance suite)
         run: sudo apt-get update -qq && sudo apt-get install -y -qq libxml2-utils
 
-      - name: Lint
-        run: pnpm lint
-
-      - name: Format check
-        run: pnpm format
-
-      - name: Typecheck
-        run: pnpm typecheck
-
-      - name: Build
-        run: pnpm build
-
-      - name: Test
-        run: pnpm test
+      - name: Verify source and installed consumers
+        run: pnpm verify
 
   packages:
     name: Packed ESM & MCP (Node ${{ matrix.node }})

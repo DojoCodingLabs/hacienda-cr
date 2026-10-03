@@ -1,8 +1,17 @@
+import { readFile } from "node:fs/promises";
+import {
+  TokenManager,
+  Environment,
+  getEnvironmentConfig,
+  signAndEncode,
+  validateFacturaInput,
+} from "../index.js";
+import { FacturaElectronicaSchema } from "@dojocoding/hacienda-shared";
 /**
  * End-to-end pipeline integration test.
  *
  * Tests the full document lifecycle: build XML -> sign -> submit -> poll.
- * Skips when real credentials are not available (CI / local dev without env vars).
+ * Runs only when explicitly authorized by HACIENDA_SANDBOX_E2E=1.
  * Also includes a fully mocked pipeline test that always runs.
  */
 
@@ -12,31 +21,55 @@ import type { StatusResponse, SubmissionRequest } from "@dojocoding/hacienda-sha
 
 import { buildFacturaXml } from "../documents/index.js";
 import { submitAndWait } from "./orchestrator.js";
-import type { HttpClient, HttpResponse } from "./http-client.js";
+import { HttpClient } from "./http-client.js";
+import type { HttpResponse } from "./http-client.js";
 import { SIMPLE_INVOICE } from "../__fixtures__/invoices.js";
 
 // ---------------------------------------------------------------------------
 // Environment detection
 // ---------------------------------------------------------------------------
 
-const HAS_CREDENTIALS = Boolean(
-  process.env["HACIENDA_USERNAME"] &&
-  process.env["HACIENDA_PASSWORD"] &&
-  process.env["HACIENDA_P12_PATH"] &&
-  process.env["HACIENDA_P12_PIN"],
-);
+const LIVE_SANDBOX_ENABLED = process.env["HACIENDA_SANDBOX_E2E"] === "1";
 
-// ---------------------------------------------------------------------------
-// E2E test (skipped without credentials)
-// ---------------------------------------------------------------------------
-
-describe.skipIf(!HAS_CREDENTIALS)("e2e pipeline (real credentials)", () => {
-  it("builds XML, signs, submits, and polls to terminal status", async () => {
-    // This test would use real credentials and the sandbox environment.
-    // It is skipped in CI and on machines without credentials configured.
-    // When run with real credentials, it validates the full pipeline end-to-end.
-    expect(HAS_CREDENTIALS).toBe(true);
-  });
+describe.skipIf(!LIVE_SANDBOX_ENABLED)("e2e pipeline (explicit sandbox submission)", () => {
+  it("builds, signs, submits and receives acceptance from the sandbox", async () => {
+    const required = (name: string): string => {
+      const value = process.env[name];
+      if (!value) throw new Error(`Missing sandbox test variable: ${name}`);
+      return value;
+    };
+    const invoice = FacturaElectronicaSchema.parse(
+      JSON.parse(await readFile(required("HACIENDA_SANDBOX_INVOICE"), "utf8")),
+    );
+    const business = validateFacturaInput(invoice);
+    expect(business.valid, business.errors.join("; ")).toBe(true);
+    const envConfig = getEnvironmentConfig(Environment.Sandbox);
+    const tokens = new TokenManager({ envConfig });
+    await tokens.authenticate({
+      username: required("HACIENDA_USERNAME"),
+      password: required("HACIENDA_PASSWORD"),
+    });
+    const xml = await signAndEncode(
+      buildFacturaXml(invoice),
+      await readFile(required("HACIENDA_P12_PATH")),
+      required("HACIENDA_P12_PIN"),
+    );
+    const result = await submitAndWait(
+      new HttpClient({ envConfig, tokenManager: tokens }),
+      {
+        clave: invoice.clave,
+        fecha: invoice.fechaEmision,
+        emisor: {
+          tipoIdentificacion: invoice.emisor.identificacion.tipo,
+          numeroIdentificacion: invoice.emisor.identificacion.numero,
+        },
+        comprobanteXml: xml,
+      },
+      { timeoutMs: 60000 },
+    );
+    expect(result.accepted, result.rejectionReason).toBe(true);
+    expect(result.status).toBe(HaciendaStatus.ACEPTADO);
+  }, 90000);
 });
 
 // ---------------------------------------------------------------------------

@@ -99,7 +99,7 @@ hacienda get 50601012400310123456700100001010000000001199999999
 Sign an XML document with a .p12 certificate (XAdES-EPES).
 
 ```bash
-hacienda sign invoice.xml --p12 cert.p12 --pin 1234 --output signed.xml
+hacienda sign invoice.xml --p12 cert.p12 --output signed.xml  # PIN from HACIENDA_P12_PIN
 hacienda sign invoice.xml   # Uses HACIENDA_P12_PATH and HACIENDA_P12_PIN env vars
 ```
 
@@ -116,7 +116,7 @@ Validate an invoice file (JSON or XML) against schemas and business rules.
 
 ```bash
 hacienda validate invoice.json    # JSON: Zod schema + business rules
-hacienda validate document.xml    # XML: structural validation
+hacienda validate document.xml    # XML: offline Hacienda v4.4 XSD validation
 ```
 
 ### `hacienda lookup <cedula>`
@@ -154,4 +154,8 @@ hacienda draft --output my-invoice.json           # Custom output path
 
 ## Full Documentation
 
-See the [root README](../../README.md) for comprehensive documentation with examples.
+See the [root README](https://github.com/DojoCodingLabs/hacienda-cr#readme) for comprehensive documentation with examples.
+
+## Migrating to 0.4.0
+
+Read the [migration guide](https://github.com/DojoCodingLabs/hacienda-cr/blob/main/packages/sdk/MIGRATION-v4.4.md) before upgrading.

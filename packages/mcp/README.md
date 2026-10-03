@@ -76,7 +76,7 @@ Create a Factura Electronica (electronic invoice). Accepts emisor, receptor, and
 - `emisor` -- Issuer information (name, ID, email)
 - `receptor` -- Receiver information (name, optional ID, optional email)
 - `codigoActividadEmisor` -- Issuer economic activity code (6 digits)
-- `proveedorSistemas` -- Invoicing-system provider ID (optional, defaults to the emisor ID)
+- `proveedorSistemas` -- Actual invoicing-system provider ID (required; no issuer fallback)
 - `condicionVenta` -- Sale condition code (default: `"01"` = cash)
 - `medioPago` -- Payment method code (default: `"01"` = cash; emitted inside ResumenFactura per v4.4)
 - `lineItems` -- Array of line items with CABYS code, quantity, unit, description, price, and optional tax/discount
@@ -149,4 +149,8 @@ Generate a draft invoice template with sensible defaults. Returns JSON that can 
 
 ## Full Documentation
 
-See the [root README](../../README.md) for comprehensive documentation with examples.
+See the [root README](https://github.com/DojoCodingLabs/hacienda-cr#readme) for comprehensive documentation with examples.
+
+## Migrating to 0.4.0
+
+Read the [migration guide](https://github.com/DojoCodingLabs/hacienda-cr/blob/main/packages/sdk/MIGRATION-v4.4.md) before upgrading.

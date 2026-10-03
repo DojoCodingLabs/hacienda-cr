@@ -23,7 +23,7 @@ pnpm --filter @dojocoding/hacienda-sdk test
 pnpm --filter @dojocoding/hacienda-sdk test clave.spec.ts   # Single test file
 ```
 
-**Build order matters:** Turbo handles this automatically — `shared` builds first, then `sdk`, then `cli`/`mcp`. Always run `pnpm build` before `pnpm test` on a fresh clone.
+**Build order matters:** Turbo handles this automatically — `shared` builds first, then `sdk`, then `cli`/`mcp`. `pnpm test` builds dependencies automatically. `pnpm verify` runs the complete offline checks, including packed consumers.
 
 ## Monorepo Structure
 
@@ -109,7 +109,7 @@ Production API users and the .p12 llave criptográfica are issued from the TRIBU
 
 ## Build & Test Details
 
-- **tsup** builds each package to ESM in `dist/`. CLI adds `#!/usr/bin/env node` banner. MCP bundles workspace deps but externalizes third-party.
+- **tsup** builds each package to ESM in `dist/`. CLI adds `#!/usr/bin/env node` banner. MCP keeps SDK/shared and third-party dependencies external.
 - **Vitest** with globals enabled (no need to import `describe`/`it`/`expect`). V8 coverage provider.
 - **TypeScript** targets ES2023, strict mode, `noUncheckedIndexedAccess: true`.
 - **Turbo** caches build outputs (`dist/**`) and test coverage (`coverage/**`). Lint/typecheck depend on `^build`.
@@ -129,7 +129,7 @@ Production API users and the .p12 llave criptográfica are issued from the TRIBU
 
 ## Implementation Notes
 
-- Token lifecycle: access token ~5min (cache in memory, refresh 30s before expiry), refresh token ~10hrs (persist to disk)
+- Token lifecycle: access token ~5min (cache in memory, refresh 30s before expiry), refresh token ~10hrs (in memory only)
 - All XML must validate against the official v4.4 XSD schemas vendored in `packages/sdk/schemas/2024/v4.4/` — the `xsd-conformance.integration.spec.ts` suite enforces this via `xmllint` (skips when xmllint is unavailable)
 - The April 22, 2026 revision of the v4.4 schemas is mandatory 2026-11-01 (alphanumeric clave/cédulas, reference codes 13-17/19-20) — see `docs/specs/v4.4-compliance.md`
 - Critical path: monorepo setup → types/clave → XML builder (Factura) → signing → API submission → end-to-end test

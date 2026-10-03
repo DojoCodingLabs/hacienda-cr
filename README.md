@@ -205,11 +205,7 @@ Usá Node.js 22+ y la versión de pnpm declarada en `package.json`.
 git clone https://github.com/DojoCodingLabs/hacienda-cr.git
 cd hacienda-cr
 pnpm install
-pnpm build
-pnpm test
-pnpm lint
-pnpm typecheck
-pnpm format
+pnpm verify
 ```
 
 ```text
@@ -235,3 +231,5 @@ Gracias a [CRLibre/API_Hacienda](https://github.com/CRLibre/API_Hacienda) y [CRL
 <p align="center">
   <a href="https://dojocoding.io"><img src="docs/assets/dojocoding-mark.png" alt="Logo oficial de Dojo Coding" width="48" /></a>
 </p>
+
+Guías para contribuidores: [desarrollo y pruebas](CONTRIBUTING.md) y [versionado y publicación](docs/releasing.md).
