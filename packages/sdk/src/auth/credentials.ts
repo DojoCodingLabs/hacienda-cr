@@ -25,7 +25,10 @@ const ID_TYPE_PREFIX: Readonly<Record<IdType, string>> = {
 };
 
 /**
- * Builds the Hacienda-formatted username from identification components.
+ * Builds the legacy username from identification components.
+ *
+ * This cannot reproduce usernames issued by Tico Factura. Prefer passing the
+ * issued username directly to loadCredentials(), including its domain.
  *
  * Format: `{prefix}-{tipo_cedula}-{cedula}`
  *
@@ -89,7 +92,10 @@ export function loadCredentials(input: CredentialInput): AuthCredentials {
     );
   }
 
-  const username = buildUsername(validated.idType, validated.idNumber);
+  const username =
+    validated.username !== undefined
+      ? validated.username
+      : buildUsername(validated.idType, validated.idNumber);
 
   return {
     username,

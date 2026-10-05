@@ -29,6 +29,57 @@ describe("buildUsername", () => {
 // ---------------------------------------------------------------------------
 
 describe("loadCredentials", () => {
+  it.each([
+    "cpf-01-1234-5678@stag.comprobanteselectronicos.go.cr",
+    "cpf-03-0276-2009@stag.comprobanteselectronicos.go.cr",
+    "cpj-02-3101-234567@comprobanteselectronicos.go.cr",
+  ])("preserves issued username %s without requiring taxpayer fields", (username) => {
+    expect(loadCredentials({ username, password: "secret" })).toEqual({
+      username,
+      password: "secret",
+    });
+  });
+
+  it("prefers the issued username over identification-based construction", () => {
+    const username = "cpf-01-1234-5678@stag.comprobanteselectronicos.go.cr";
+    expect(
+      loadCredentials({
+        username,
+        idType: IdType.PersonaFisica,
+        idNumber: "112345678",
+        password: "secret",
+      }).username,
+    ).toBe(username);
+  });
+
+  it.each(["", " ", " user@stag.comprobanteselectronicos.go.cr", "user\nname"])(
+    "rejects invalid explicit usernames without falling back: %j",
+    (username) => {
+      expect(() =>
+        loadCredentials({
+          username,
+          idType: IdType.PersonaFisica,
+          idNumber: "112345678",
+          password: "secret",
+        }),
+      ).toThrow(AuthError);
+    },
+  );
+
+  it("requires identification components when no username is supplied", () => {
+    expect(() => loadCredentials({ password: "secret" } as never)).toThrow(AuthError);
+  });
+
+  it("keeps taxpayer ID validation independent of the issued username", () => {
+    expect(() =>
+      loadCredentials({
+        username: "cpf-01-1234-5678@stag.comprobanteselectronicos.go.cr",
+        idNumber: "12345678",
+        password: "secret",
+      }),
+    ).toThrow(AuthError);
+  });
+
   it("loads valid credentials and builds the username", () => {
     const creds = loadCredentials({
       idType: IdType.PersonaJuridica,

@@ -3,6 +3,7 @@
  */
 
 import { z } from "zod";
+import { IdpUsernameSchema } from "../auth/types.js";
 
 /**
  * Valid Hacienda API environments.
@@ -33,7 +34,10 @@ export const ProfileSchema = z.object({
   environment: EnvironmentSchema,
   cedula_type: CedulaTypeSchema,
   cedula: z.string().min(9).max(12),
-  p12_path: z.string().min(1),
+  /** Issued IDP username, independent of the taxpayer ID. */
+  username: IdpUsernameSchema.optional(),
+  /** Empty until a signing certificate is configured by the user. */
+  p12_path: z.string(),
 });
 
 export type Profile = z.infer<typeof ProfileSchema>;

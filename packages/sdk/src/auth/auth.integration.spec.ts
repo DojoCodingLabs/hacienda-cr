@@ -3,7 +3,7 @@
  *
  * These tests are SKIPPED by default. To run them, set these environment variables:
  *
- *   HACIENDA_USERNAME="cpj-02-3101234567"  (Hacienda-formatted username)
+ *   HACIENDA_USERNAME="cpf-01-1234-5678@stag.comprobanteselectronicos.go.cr"  (full issued username)
  *   HACIENDA_PASSWORD="your-sandbox-password"
  *
  * Then run:

@@ -23,6 +23,7 @@ const client = new HaciendaClient({
   credentials: {
     idType: IdType.PersonaJuridica, // PersonaFisica, PersonaJuridica, DIMEX, NITE
     idNumber: "3101234567", // Cédula de 9-12 dígitos
+    username: process.env.HACIENDA_USERNAME!, // Full issued IDP username.
     password: process.env.HACIENDA_PASSWORD!,
   },
 
@@ -337,6 +338,7 @@ await tokenManager.authenticate(
   loadCredentials({
     idType: IdType.PersonaJuridica,
     idNumber: "3101234567",
+    username: process.env.HACIENDA_USERNAME!, // Full issued IDP username.
     password: process.env.HACIENDA_PASSWORD!,
   }),
 );
@@ -490,6 +492,13 @@ contador utilizado para emisión. Ver [consecutivos](production-integration.md#c
 - `HACIENDA_PASSWORD` — Contraseña del IDP
 - `HACIENDA_P12_PIN` — PIN del certificado .p12
 
+El usuario IDP se suministra como `credentials.username` o a `loadCredentials({
+username, password })`, exactamente como lo emite Hacienda, con guiones y dominio.
+No se infiere su número a partir de la cédula. Sin `username` se conserva el
+formato legado de `buildUsername()`. En CLI/MCP, `HACIENDA_USERNAME` tiene
+precedencia sobre `username` guardado en el perfil; la cédula fiscal se conserva
+por separado. Cambiá usuario y contraseña juntos al cambiar de empresa o ambiente.
+
 ### Logging estructurado
 
 Logger integrado con niveles configurables y soporte para JSON (ideal para producción).
@@ -582,17 +591,20 @@ hacienda auth login \
   --profile default
 
 # Contraseña por variable de entorno (recomendado)
+# Copy the full issued username, including hyphens and domain.
+export HACIENDA_USERNAME="cpf-01-1234-5678@stag.comprobanteselectronicos.go.cr"
 export HACIENDA_PASSWORD="tu-contraseña"
-hacienda auth login --cedula-type 02 --cedula 3101234567
+hacienda auth login --cedula-type 01 --cedula 112345678
 ```
 
-| Argumento       | Descripción                                               |
-| --------------- | --------------------------------------------------------- |
-| `--cedula-type` | `01` (Física), `02` (Jurídica), `03` (DIMEX), `04` (NITE) |
-| `--cedula`      | Número de identificación                                  |
-| `--password`    | Contraseña del IDP (o usar `HACIENDA_PASSWORD`)           |
-| `--environment` | `sandbox` (default) o `production`                        |
-| `--profile`     | Nombre del perfil (default: `default`)                    |
+| Argumento       | Descripción                                                          |
+| --------------- | -------------------------------------------------------------------- |
+| `--cedula-type` | `01` (Física), `02` (Jurídica), `03` (DIMEX), `04` (NITE)            |
+| `--cedula`      | Número de identificación                                             |
+| `--username`    | Usuario IDP completo (o `HACIENDA_USERNAME`); se guarda en el perfil |
+| `--password`    | Contraseña del IDP (o usar `HACIENDA_PASSWORD`)                      |
+| `--environment` | `sandbox` (default) o `production`                                   |
+| `--profile`     | Nombre del perfil (default: `default`)                               |
 
 ### `hacienda auth status`
 

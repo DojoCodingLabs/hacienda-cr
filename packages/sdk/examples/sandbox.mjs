@@ -54,6 +54,7 @@ async function authenticatedClient(issuer) {
   const tokenManager = new TokenManager({ envConfig });
   await tokenManager.authenticate(
     loadCredentials({
+      username: requiredEnv("HACIENDA_USERNAME"),
       idType: issuer.tipo,
       idNumber: issuer.numero,
       password: requiredEnv("HACIENDA_PASSWORD"),

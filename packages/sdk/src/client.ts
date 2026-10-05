@@ -30,7 +30,7 @@ import { loadCredentials } from "./auth/credentials.js";
 import { getEnvironmentConfig } from "./auth/environment.js";
 import { TokenManager } from "./auth/token-manager.js";
 import type { TokenManagerOptions } from "./auth/token-manager.js";
-import { Environment, IdType, AuthError } from "./auth/types.js";
+import { Environment, CredentialInputSchema, AuthError } from "./auth/types.js";
 import type { AuthCredentials } from "./auth/types.js";
 import { buildClave } from "./clave/build-clave.js";
 import { parseClave } from "./clave/parse-clave.js";
@@ -51,21 +51,7 @@ export const HaciendaClientOptionsSchema = z.object({
   }),
 
   /** Taxpayer credentials for IDP authentication. */
-  credentials: z.object({
-    /** Identification type code (01-04). */
-    idType: z.nativeEnum(IdType, {
-      message:
-        "Invalid identification type. Must be 01 (Fisica), 02 (Juridica), 03 (DIMEX), or 04 (NITE).",
-    }),
-    /** Identification number (cedula). */
-    idNumber: z
-      .string()
-      .min(9, "Identification number must be at least 9 digits.")
-      .max(12, "Identification number must be at most 12 digits.")
-      .regex(/^\d+$/, "Identification number must contain only digits."),
-    /** Password for the Hacienda IDP. */
-    password: z.string().min(1, "Password is required."),
-  }),
+  credentials: CredentialInputSchema,
 
   /** Optional path to .p12 certificate file (used for signing, not auth). */
   p12Path: z.string().min(1).optional(),
@@ -149,9 +135,7 @@ export class HaciendaClient {
     // (which also validates the credential fields).
     try {
       this.authCredentials = loadCredentials({
-        idType: this.options.credentials.idType,
-        idNumber: this.options.credentials.idNumber,
-        password: this.options.credentials.password,
+        ...this.options.credentials,
         p12Path: this.options.p12Path,
         p12Pin: this.options.p12Pin,
       });

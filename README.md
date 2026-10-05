@@ -86,7 +86,7 @@ Necesitás **Node.js 22+**. Para autenticarte, usá tus credenciales del IDP de 
 npm install @dojocoding/hacienda-sdk
 ```
 
-Definí `HACIENDA_PASSWORD` en tu entorno y ejecutá este ejemplo en un módulo TypeScript:
+Definí `HACIENDA_USERNAME` y `HACIENDA_PASSWORD` en tu entorno y ejecutá este ejemplo en un módulo TypeScript:
 
 ```ts
 import {
@@ -102,6 +102,7 @@ const client = new HaciendaClient({
   credentials: {
     idType: IdType.PersonaJuridica,
     idNumber: "3101234567", // Reemplazá por tu cédula jurídica.
+    username: process.env.HACIENDA_USERNAME!, // Full issued IDP username.
     password: process.env.HACIENDA_PASSWORD!,
   },
 });
@@ -126,7 +127,7 @@ Continuá con [creación de documentos](docs/reference.md#creación-de-documento
 ```bash
 npm install -g @dojocoding/hacienda-cli
 
-# Definí HACIENDA_PASSWORD antes de autenticarte.
+# Definí HACIENDA_USERNAME y HACIENDA_PASSWORD antes de autenticarte.
 hacienda auth login --cedula-type 02 --cedula 3101234567 --environment sandbox
 
 # Creá y validá un borrador.
@@ -186,11 +187,12 @@ Herramientas: `draft_invoice`, `create_invoice`, `lookup_taxpayer`, `check_statu
 
 ### Credenciales y configuración
 
-| Variable            | Uso                                                          |
-| ------------------- | ------------------------------------------------------------ |
-| `HACIENDA_PASSWORD` | Contraseña del IDP de Hacienda.                              |
-| `HACIENDA_P12_PATH` | Ruta al certificado `.p12` para los comandos que la admiten. |
-| `HACIENDA_P12_PIN`  | PIN del certificado `.p12`.                                  |
+| Variable            | Uso                                                                    |
+| ------------------- | ---------------------------------------------------------------------- |
+| `HACIENDA_USERNAME` | Usuario IDP completo emitido por Hacienda; conserva guiones y dominio. |
+| `HACIENDA_PASSWORD` | Contraseña del IDP de Hacienda.                                        |
+| `HACIENDA_P12_PATH` | Ruta al certificado `.p12` para los comandos que la admiten.           |
+| `HACIENDA_P12_PIN`  | PIN del certificado `.p12`.                                            |
 
 Los perfiles se guardan en `~/.hacienda-cr/config.toml`. Las contraseñas y PINs se suministran por variables de entorno y no se guardan en los perfiles. Empezá con `sandbox` antes de usar credenciales de producción.
 

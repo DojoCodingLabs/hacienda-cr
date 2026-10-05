@@ -166,7 +166,7 @@ export async function loadConfig(
   const env = options.env ?? process.env;
 
   return {
-    profile: result.data,
+    profile: { ...result.data, username: env.HACIENDA_USERNAME ?? result.data.username },
     profileName,
     password: env.HACIENDA_PASSWORD,
     p12Pin: env.HACIENDA_P12_PIN,

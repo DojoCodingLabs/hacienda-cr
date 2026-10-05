@@ -71,6 +71,7 @@ try {
   await writeFile(
     join(consumer, "consumer.ts"),
     example +
+      '\nconst issuedUsernameClient = new HaciendaClient({ environment: Environment.Sandbox, credentials: { username: \"cpf-01-1234-5678@stag.comprobanteselectronicos.go.cr\", password: \"synthetic\" } });\nexport { issuedUsernameClient };\n' +
       '\nimport { createServer } from "@dojocoding/hacienda-mcp";\nimport { FacturaElectronicaSchema } from "@dojocoding/hacienda-shared";\nexport const extra = {createServer, FacturaElectronicaSchema};\n',
   );
   for (const resolution of ["NodeNext", "Bundler"]) {
@@ -111,10 +112,20 @@ import assert from "node:assert/strict";
 import {writeFile, readFile} from "node:fs/promises";
 import {execFileSync} from "node:child_process";
 import {SIMPLE_INVOICE} from "./fixtures.mjs";
-import {buildFacturaXml,validateDocumentXml} from "@dojocoding/hacienda-sdk";
+import {buildFacturaXml,validateDocumentXml,HaciendaClient,Environment,loadCredentials} from "@dojocoding/hacienda-sdk";
 import {createServer} from "@dojocoding/hacienda-mcp";
 import {Client} from "@modelcontextprotocol/sdk/client/index.js";
 import {StdioClientTransport} from "@modelcontextprotocol/sdk/client/stdio.js";
+const issuedUsername="cpf-01-1234-5678@stag.comprobanteselectronicos.go.cr";
+assert.deepEqual(loadCredentials({username:issuedUsername,password:"synthetic"}),{username:issuedUsername,password:"synthetic"});
+let tokenRequests=0;
+const issuedClient=new HaciendaClient({environment:Environment.Sandbox,credentials:{username:issuedUsername,password:"synthetic"},fetchFn:async(url,init)=>{
+  tokenRequests++;
+  assert.ok(String(url).includes("/rut-stag/"));
+  assert.equal(new URLSearchParams(init.body).get("username"),issuedUsername);
+  return new Response(JSON.stringify({access_token:"synthetic-access",refresh_token:"synthetic-refresh",expires_in:300,refresh_expires_in:36000,token_type:"bearer"}),{status:200});
+}});
+await issuedClient.authenticate(); assert.equal(tokenRequests,1); assert.equal(issuedClient.isAuthenticated,true);
 const xml=buildFacturaXml(SIMPLE_INVOICE);
 const result=await validateDocumentXml(xml); assert.equal(result.valid,true,JSON.stringify(result.issues));
 const example="./node_modules/@dojocoding/hacienda-sdk/examples/sandbox.mjs";

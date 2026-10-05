@@ -21,14 +21,17 @@ All commands support `--json` for machine-readable JSON output.
 Authenticate with the Hacienda IDP and save the profile to `~/.hacienda-cr/config.toml`.
 
 ```bash
+# Copy the full issued username, including hyphens and domain.
+export HACIENDA_USERNAME="cpf-01-1234-5678@stag.comprobanteselectronicos.go.cr"
 export HACIENDA_PASSWORD="your-password"
-hacienda auth login --cedula-type 02 --cedula 3101234567 --environment sandbox
+hacienda auth login --cedula-type 01 --cedula 112345678 --environment sandbox
 ```
 
 | Argument        | Description                                       | Default              |
 | --------------- | ------------------------------------------------- | -------------------- |
 | `--cedula-type` | `01` Fisica, `02` Juridica, `03` DIMEX, `04` NITE | (required)           |
 | `--cedula`      | Identification number (9-12 digits)               | (required)           |
+| `--username`    | Full issued IDP username; saved in profile        | `$HACIENDA_USERNAME` |
 | `--password`    | IDP password (prefer `HACIENDA_PASSWORD` env var) | `$HACIENDA_PASSWORD` |
 | `--environment` | `sandbox` or `production`                         | `sandbox`            |
 | `--profile`     | Profile name                                      | `default`            |
