@@ -1,5 +1,15 @@
 # @dojocoding/hacienda-mcp
 
+## 0.4.1
+
+### Patch Changes
+
+- Updated dependencies
+- Updated dependencies [7c800ab]
+- Updated dependencies [682bce8]
+  - @dojocoding/hacienda-shared@0.4.1
+  - @dojocoding/hacienda-sdk@0.4.1
+
 ## 0.4.0
 
 - Declare Node.js 22+ and public package metadata; verify installed TypeScript consumers and ship corrected upgrade documentation.

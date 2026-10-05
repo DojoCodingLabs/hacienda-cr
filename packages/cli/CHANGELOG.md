@@ -1,5 +1,16 @@
 # @dojocoding/hacienda-cli
 
+## 0.4.1
+
+### Patch Changes
+
+- 7c800ab: Accept the full IDP username issued by Tico Factura without changing hyphens or the environment domain. SDK credentials support `username` plus `password`, with the existing identification-based format retained as a fallback. CLI login accepts `--username` or `HACIENDA_USERNAME`, saves the username separately from the taxpayer ID, and shared CLI/MCP bootstrap restores it (with an environment override). Profiles may omit a configured signing certificate by using an empty certificate path, allowing login to save successfully.
+- Updated dependencies
+- Updated dependencies [7c800ab]
+- Updated dependencies [682bce8]
+  - @dojocoding/hacienda-shared@0.4.1
+  - @dojocoding/hacienda-sdk@0.4.1
+
 ## 0.4.0
 
 - Declare Node.js 22+ and public package metadata; verify installed TypeScript consumers and ship corrected upgrade documentation.

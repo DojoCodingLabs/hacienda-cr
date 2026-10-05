@@ -1,5 +1,11 @@
 # @dojocoding/hacienda-shared
 
+## 0.4.1
+
+### Patch Changes
+
+- Align the shared package with the coordinated 0.4.1 SDK, CLI, and MCP patch release. No shared schema or runtime behavior changes are included.
+
 ## 0.4.0
 
 - Declare Node.js 22+ and public package metadata; verify installed TypeScript consumers and ship corrected upgrade documentation.
