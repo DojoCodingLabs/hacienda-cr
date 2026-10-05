@@ -42,6 +42,7 @@ globalThis.fetch = async (url, options) => {
   assert.match(String(url), /rut-stag|recepcion-sandbox/);
   appendFileSync(process.env.NETWORK_LOG, options.method + " " + String(url) + "\\n");
   if (String(url).includes("/token")) {
+    assert.equal(new URLSearchParams(options.body).get("username"), "cpj-02-3101-234567@stag.comprobanteselectronicos.go.cr");
     if (process.env.MOCK_MODE === "concurrent") {
       const barrier = process.env.RUN_DIRECTORY + "/auth-barrier";
       appendFileSync(barrier, "ready\\n");
@@ -82,7 +83,8 @@ function runOptions(mode, directory) {
     timeout: 15000,
     env: {
       ...process.env,
-      HACIENDA_USERNAME: "",
+      HACIENDA_USERNAME:
+        mode === "missing-username" ? "" : "cpj-02-3101-234567@stag.comprobanteselectronicos.go.cr",
       HACIENDA_SANDBOX_E2E: "",
       HACIENDA_PASSWORD: "synthetic-password",
       HACIENDA_P12_PIN: "test-pin",
@@ -352,4 +354,14 @@ test("two submitters that both pass the initial guard send only once", async () 
     1,
   );
   assert.equal(JSON.parse(readFileSync(join(directory, "result.json"), "utf8")).accepted, true);
+});
+
+test("missing issued username fails before any network request", () => {
+  const { directory } = prepare("missing-username");
+  const before = networkLog();
+  const result = run(["submit", directory], "missing-username", directory);
+  assert.equal(result.status, 1);
+  assert.match(result.stderr, /Set HACIENDA_USERNAME/);
+  assert.equal(networkLog(), before);
+  assert.equal(existsSync(join(directory, "attempt.json")), false);
 });

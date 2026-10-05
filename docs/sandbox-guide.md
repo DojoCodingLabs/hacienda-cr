@@ -66,9 +66,19 @@ El contador del ejemplo vive en `.sandbox-sequences/<tipo>-<cedula>/` dentro del
 
 ## Firmar y enviar
 
+Copiá el **usuario completo** de Tico Factura → Credenciales de pruebas →
+«Usuario para el envío del XML firmado». Conservá guiones y
+`@stag.comprobanteselectronicos.go.cr`; no rellenés ni reconstruyás el número
+que aparece dentro del usuario. La identificación del emisor en `order.json`
+sigue siendo su cédula fiscal válida, separada del usuario IDP. La
+[guía oficial de Hacienda](https://www.hacienda.go.cr/docs/GuiaparaCredencialesEntornodepruebas.pdf)
+muestra cómo copiar o descargar estas credenciales.
+
 Suministrá los secretos con tu mecanismo habitual de variables de entorno. En una terminal zsh podés capturarlos sin escribirlos en el historial:
 
 ```bash
+read -r 'HACIENDA_USERNAME?Usuario IDP sandbox completo: '
+export HACIENDA_USERNAME
 read -rs 'HACIENDA_PASSWORD?Contraseña IDP sandbox: '
 export HACIENDA_PASSWORD
 read -rs 'HACIENDA_P12_PIN?PIN del certificado: '
@@ -113,7 +123,7 @@ hacienda auth login --cedula-type 02 --cedula 3101234567 \
 hacienda submit /tmp/hacienda-sandbox/run-001/invoice.json --profile sandbox --json
 ```
 
-Reemplazá tipo y cédula por los del emisor. La CLI usa el certificado de `--p12`, `HACIENDA_P12_PATH` o el perfil y el PIN de `--pin` o `HACIENDA_P12_PIN`. La CLI también usa el envío sin replay del SDK 0.4.0. Ante una respuesta incierta, consultá con `hacienda status <clave> --profile sandbox --json` antes de decidir otro envío.
+Reemplazá tipo y cédula por los del emisor. La CLI usa `--username` o `HACIENDA_USERNAME` y guarda ese usuario en el perfil para posteriores consultas y envíos. La CLI usa el certificado de `--p12`, `HACIENDA_P12_PATH` o el perfil y el PIN de `--pin` o `HACIENDA_P12_PIN`. La CLI también usa el envío sin replay del SDK 0.4.0. Ante una respuesta incierta, consultá con `hacienda status <clave> --profile sandbox --json` antes de decidir otro envío.
 
 MCP `draft_invoice` devuelve una plantilla con placeholders que debés completar antes de llamar `create_invoice`. Este último devuelve XML **sin firmar** y asigna un consecutivo local. Guardá su XML y clave; completá firma y envío con funciones del SDK. `hacienda sign` puede firmar ese XML, pero `hacienda submit` recibe una factura JSON completa, no XML firmado ni el JSON simplificado de MCP. Ver [configuración y autenticación MCP](../packages/mcp/README.md#authentication-and-document-lifecycle).
 

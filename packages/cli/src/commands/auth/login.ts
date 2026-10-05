@@ -35,6 +35,11 @@ export const loginCommand = defineCommand({
       description: "Identification number (cedula)",
       required: false,
     },
+    username: {
+      type: "string",
+      description: "Full issued IDP username (or set HACIENDA_USERNAME env var)",
+      required: false,
+    },
     password: {
       type: "string",
       description: "IDP password (or set HACIENDA_PASSWORD env var)",
@@ -60,6 +65,7 @@ export const loginCommand = defineCommand({
     try {
       const cedulaType = args["cedula-type"];
       const cedula = args.cedula;
+      const username = args.username ?? process.env["HACIENDA_USERNAME"];
       const password = args.password ?? process.env["HACIENDA_PASSWORD"];
       const environment = args.environment as string;
       const profileName = args.profile as string;
@@ -105,6 +111,7 @@ export const loginCommand = defineCommand({
 
       // Load credentials (validates format)
       const credentials = loadCredentials({
+        username,
         idType: cedulaType as IdType,
         idNumber: cedula,
         password,
@@ -121,6 +128,7 @@ export const loginCommand = defineCommand({
         environment: environment as "sandbox" | "production",
         cedula_type: cedulaType as "01" | "02" | "03" | "04",
         cedula,
+        ...(username !== undefined ? { username } : {}),
         p12_path: "", // Will be set during signing setup
       };
       await saveConfig(profile, profileName);

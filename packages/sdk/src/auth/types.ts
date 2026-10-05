@@ -45,7 +45,7 @@ export enum IdType {
 }
 
 /** Zod schema for credential input validation. */
-export const CredentialInputSchema = z.object({
+const LegacyCredentialInputSchema = z.object({
   /** Identification type code. */
   idType: z.nativeEnum(IdType, {
     error:
@@ -65,12 +65,26 @@ export const CredentialInputSchema = z.object({
   p12Pin: z.string().optional(),
 });
 
+/** Issued IDP username; preserve every character, including hyphens and domain. */
+export const IdpUsernameSchema = z
+  .string()
+  .min(1, "IDP username is required.")
+  .regex(/^\S+$/, "IDP username must not contain whitespace.");
+
+/** Accept an issued username, or the legacy identification-based credentials. */
+export const CredentialInputSchema = z.union([
+  LegacyCredentialInputSchema.extend({ username: z.undefined().optional() }),
+  LegacyCredentialInputSchema.partial({ idType: true, idNumber: true }).extend({
+    username: IdpUsernameSchema,
+  }),
+]);
+
 /** Validated credential input. */
 export type CredentialInput = z.infer<typeof CredentialInputSchema>;
 
 /** Resolved credentials ready for authentication. */
 export interface AuthCredentials {
-  /** Hacienda-formatted username (e.g. cpf-01-0123456789). */
+  /** Issued IDP username, or a legacy identification-based username. */
   readonly username: string;
   /** Password for the Hacienda IDP. */
   readonly password: string;

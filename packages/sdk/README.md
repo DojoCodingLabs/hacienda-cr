@@ -22,6 +22,7 @@ const client = new HaciendaClient({
   credentials: {
     idType: IdType.PersonaJuridica,
     idNumber: "3101234567",
+    username: process.env.HACIENDA_USERNAME!, // Full issued IDP username.
     password: process.env.HACIENDA_PASSWORD!,
   },
 });
@@ -29,6 +30,14 @@ const client = new HaciendaClient({
 await client.authenticate();
 const token = await client.getAccessToken();
 ```
+
+Set `HACIENDA_USERNAME` to the complete username copied from Tico Factura,
+including every hyphen and the domain (for example,
+`cpf-01-1234-5678@stag.comprobanteselectronicos.go.cr`). `credentials.username`
+is sent unchanged and can be used with just `password`; identification fields
+are optional in this mode. If supplied, they remain validated taxpayer IDs.
+Without `username`, the SDK retains the legacy `buildUsername(idType, idNumber)`
+fallback. It cannot infer an issued username from a taxpayer ID.
 
 For a runnable invoice → validation → signing → submission → status workflow,
 follow the [sandbox walkthrough](https://github.com/DojoCodingLabs/hacienda-cr/blob/main/docs/sandbox-guide.md) using

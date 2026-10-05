@@ -66,6 +66,7 @@ export async function bootstrapClient(options: BootstrapOptions = {}): Promise<B
   const environment = EnvironmentEnumSchema.parse(config.profile.environment);
 
   const credentials = loadCredentials({
+    username: config.profile.username,
     idType,
     idNumber: config.profile.cedula,
     password: config.password,

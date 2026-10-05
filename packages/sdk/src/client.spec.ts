@@ -207,6 +207,43 @@ describe("HaciendaClient", () => {
   // -----------------------------------------------------------------------
 
   describe("authenticate", () => {
+    it.each([
+      [
+        Environment.Sandbox,
+        "cpf-01-1234-5678@stag.comprobanteselectronicos.go.cr",
+        "rut-stag",
+        "api-stag",
+      ],
+      [
+        Environment.Production,
+        "cpj-02-3101-234567@comprobanteselectronicos.go.cr",
+        "rut",
+        "api-prod",
+      ],
+    ])(
+      "sends the full issued username in %s, including re-authentication",
+      async (environment, username, realm, clientId) => {
+        const fetchFn = mockFetch(makeTokenResponse());
+        const client = new HaciendaClient({
+          environment: environment as Environment,
+          credentials: { username, password: "test-password" },
+          fetchFn,
+        });
+        await client.authenticate();
+        // Both tokens have expired: TokenManager must reuse the same issued username.
+        vi.advanceTimersByTime(36001 * 1000);
+        await client.getAccessToken();
+        expect(fetchFn).toHaveBeenCalledTimes(2);
+        for (const [url, init] of fetchFn.mock.calls) {
+          expect(url).toContain(`/realms/${realm}/`);
+          const body = new URLSearchParams(init?.body as string);
+          expect(body.get("username")).toBe(username);
+          expect(body.get("client_id")).toBe(clientId);
+          expect(body.get("grant_type")).toBe("password");
+        }
+      },
+    );
+
     it("authenticates successfully and sets isAuthenticated", async () => {
       const fetchFn = mockFetch(makeTokenResponse());
       const client = createClient(fetchFn);
