@@ -1,7 +1,7 @@
 # Contributing
 
-Use Node.js 22+ and the pnpm version in package.json. With Corepack available,
-run `corepack enable`; otherwise install pnpm 9.15.4 using the supported pnpm
+Use Node.js 22.13+ and the pnpm version in package.json. With Corepack available,
+run `corepack enable`; otherwise install pnpm 12.10.1 using the supported pnpm
 installation instructions. Clone the repository, then:
 
 ```sh
