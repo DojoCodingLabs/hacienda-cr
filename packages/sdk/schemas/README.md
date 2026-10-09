@@ -37,30 +37,39 @@ Provenance of the four documents in `2024/v4.4/` (all downloaded 2026-10-08
 from the ATV surface, `https://atv.hacienda.go.cr/ATV/ComprobanteElectronico/`,
 `docs/esquemas/2024/v4.4/`, plain `curl`/`wget` agents, no credentials):
 
-- `ANEXOS Y ESTRUCTURAS_V4.4.pdf` — annexes/structures document (decision 9).
-- `Codigodemoneda_V4.4.pdf` — currency codes (note 13.1).
-- `Codificacionubicacion_V4.4.rar` — location codes (note 14). ATV publishes
-  this auxiliary as a `.rar` containing `Codificacionubicacion_V4.4.xlsx`; no
-  CSV is published on any official surface today, so the archive is vendored
-  byte-for-byte as published (decision recorded in review).
+- `ANEXOS Y ESTRUCTURAS_V4.4.pdf` — annexes/structures document, vendored
+  byte-for-byte because Anexo 2 inside it is the citation source for the
+  `policy` block below.
+- `Codigodemoneda_V4.4.pdf` — currency codes, the official catalog behind
+  `CodigoMonedaType` (see `docs/specs/v4.4-compliance.md` §1.9).
+- `Codificacionubicacion_V4.4.rar` — location codes (barrio/cantón/código
+  postal catalog). ATV publishes this auxiliary as a `.rar` containing
+  `Codificacionubicacion_V4.4.xlsx`; no CSV is published on any official
+  surface today, so the archive is vendored byte-for-byte as published.
 - `Resolucion_General_sobre_disposiciones_tecnicas_comprobantes_electronicos_para_efectos_tributarios.pdf`
-  — the v4.4 signing policy (decision 9), served from
+  — the v4.4 signing policy cited by Anexo 2, served from
   `https://cdn.comprobanteselectronicos.go.cr/xml-schemas/` (the literal
   `xades:Identifier` in Anexo 2 points at `/xmlschemas/…` without the hyphen and
-  returns 403; the file lives at `/xml-schemas/…`).
+  returns 403; the file lives at `/xml-schemas/…` — `policy.resolvedUrl` records
+  the working one).
 
 The `policy` block quotes Anexo 2 of `ANEXOS Y ESTRUCTURAS_V4.4.pdf` verbatim:
 `identifier`, `digestMethod` (`http://www.w3.org/2001/04/xmlenc#sha256`),
 `digestValue` (`DWxin1xWOeI8OuWQXazh4VjLWAaCLAA954em7DMh0h8=`, Base64 of the
-SHA-256 of the vendored policy PDF), `citation`, `sourceSurface`, `sdkStatus`.
+SHA-256 of the vendored policy PDF), `citation`, `sourceSurface`, `resolvedUrl`
+(working URL for the verbatim `identifier`, which 403s), `sdkStatus`.
 The INDENT quotes this digest incorrectly as `DWxin1xWOel8…` (43 chars); the
 value above is the one printed in the PDF itself. `sdkStatus` is
-`pending-sdk-migration`: `shared` still declares a different policy
-(`XADES_POLICY_HASH`), so the correction is a separate, versioned change
-(phase 3). Allowed values: `pending-sdk-migration`, `aligned` — a new value
-requires updating this README.
+`pending-sdk-migration`: the signer still uses the old SHA-1/v4.1 policy
+(`XADES_POLICY_HASH`, see `docs/specs/v4.4-compliance.md` §1.10 and §3.5), so
+the correction is a separate, versioned change (phase 3). Allowed values:
+`pending-sdk-migration`, `aligned` — a new value requires updating this README.
 
 Field semantics:
+
+- `vendored` — always `true` for entries in this manifest: the bytes are
+  committed to this repository. It would be `false` only for a file declared
+  but intentionally not committed (none today).
 
 - `currentSet` — the set **in force today** (`2024/v4.4`; the April 2026
   revision becomes mandatory 2026-11-01). `nextSet` — published but not yet
@@ -78,8 +87,13 @@ Field semantics:
 
 ## Unverified assumptions
 
-Two assumptions are **not verified** and are recorded here on purpose
-(decisions 7 and 11, decision 8): (1) these files may be redistributed inside
-the npm package without further restrictions, and (2) the official surfaces
-remain reachable from CI. If either fails, update this section together with
-the affected behavior.
+Two assumptions are **not verified** and are recorded here on purpose:
+
+1. The official documents in `2024/` and `2026/` (government PDFs and the
+   RAR) may be **redistributed in this public repository** without further
+   restrictions. They are not covered by the repository's MIT license, and
+   they are deliberately _not_ part of the published npm package (the build
+   embeds only the 2026 XSDs as strings).
+2. The official surfaces remain reachable from CI.
+
+If either fails, update this section together with the affected behavior.
