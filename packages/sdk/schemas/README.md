@@ -82,8 +82,10 @@ Field semantics:
   byte-for-byte.
 - `lastSyncedAt` — date of the **last `spec:update` run** (the only command
   that writes the manifest; `spec:check` is read-only and never touches
-  `downloadedAt` or `lastSyncedAt`). The semantics will change to "last job
-  run" when the scheduled job exists.
+  `downloadedAt` or `lastSyncedAt`). The monthly drift job
+  (`.github/workflows/spec-drift.yml`) runs `spec:check` and reports through
+  GitHub issues, but phase 2 — running `spec:update` from the job — does not
+  exist yet, so the semantics stay "last `spec:update` run" until then.
 - `surfaces[]` — each official surface declares `id`, `type`, and its
   addressing fields: `url` for `atv-page` (HTML listing, version discovery) and
   `cdn-xml-schemas`; `baseUrl` plus `knownFiles[]` for `known-file-probe`.
@@ -122,6 +124,16 @@ or discard it with `git checkout -- packages/sdk/schemas/`. Surface names are
 treated as untrusted input: a name that turns into a path traversal after
 decoding is rejected, every write stays inside `packages/sdk/schemas/`,
 redirects that leave `https:` are refused, and each download is capped in size.
+
+The monthly workflow `.github/workflows/spec-drift.yml` (1st of the month,
+06:00 Costa Rica, plus manual dispatch) runs `spec:check` and opens or
+comments on a GitHub issue labeled `spec-drift`, deduplicating by a
+SHA-256 fingerprint of the report. It never writes the manifest or the
+vendored files. If the reporter in `scripts/spec-watch/lib/report.mjs` is
+ever reformatted (for example, indentation changes), the fingerprint of an
+unchanged drift changes too and the job will open **one new issue** for the
+same drift — close the old one by hand; the dedupe does not protect against
+format changes of the report itself.
 
 ## Unverified assumptions
 
