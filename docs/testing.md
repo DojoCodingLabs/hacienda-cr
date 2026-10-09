@@ -77,25 +77,6 @@ counterpart is `node scripts/spec-verify.mjs`, which `pnpm verify` already runs.
 Routine development uses only mocked HTTP in `scripts/spec-watch/*.test.mjs`;
 run the live commands only when authorized to touch the official surfaces.
 
-### Scheduled drift job (phase 1)
-
-`.github/workflows/spec-drift.yml` runs `pnpm spec:check` on the 1st of each
-month at 06:00 Costa Rica (`0 12 1 * *` UTC) and on manual dispatch. On
-differences (exit `1`) it opens (or comments on) a GitHub issue labeled
-`spec-drift` with the full report and a fingerprint marker; on any operational
-failure it fails the job without touching issues and never prints "sin cambios".
-The job is report-only: it never runs `spec:update`, never changes
-`currentSet`, and never commits or opens PRs (`permissions: contents: read`).
-Phase 2 — running `spec:update` from the job — does not exist yet; vendorization
-stays manual. To retry manually:
-
-```sh
-gh workflow run spec-drift.yml --ref <branch>
-```
-
-A failed run (exit `2`) notifies by email only the last editor of the workflow
-file, per GitHub's notification settings; a more reliable channel is backlog.
-
 `src/auth/auth.integration.spec.ts` in the SDK contacts the sandbox IDP when
 `HACIENDA_USERNAME` and `HACIENDA_PASSWORD` are available. Credential presence
 alone does not authorize an agent to run it.
