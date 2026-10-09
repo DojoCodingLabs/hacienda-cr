@@ -3,8 +3,7 @@
   "tasks": {
     "build": {
       "dependsOn": ["^build"],
-      "outputs": ["dist/**"],
-      "inputs": ["$TURBO_DEFAULT$", "schemas/**"]
+      "outputs": ["dist/**"]
     },
     "test": {
       "dependsOn": ["build"],
