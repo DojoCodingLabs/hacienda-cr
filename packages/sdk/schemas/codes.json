@@ -1,0 +1,2764 @@
+{
+  "schemaVersion": 1,
+  "currentSet": "2024/v4.4",
+  "generatedFrom": [
+    "2024/v4.4/FacturaElectronicaCompra_V4.4.xsd",
+    "2024/v4.4/FacturaElectronicaExportacion_V4.4.xsd",
+    "2024/v4.4/FacturaElectronica_V4.4.xsd",
+    "2024/v4.4/MensajeHacienda_V4.4.xsd",
+    "2024/v4.4/MensajeReceptor_V4.4.xsd",
+    "2024/v4.4/NotaCreditoElectronica_V4.4.xsd",
+    "2024/v4.4/NotaDebitoElectronica_V4.4.xsd",
+    "2024/v4.4/ReciboElectronicoPago_V4.4.xsd",
+    "2024/v4.4/TiqueteElectronico_V4.4.xsd"
+  ],
+  "tables": [
+    {
+      "key": "CodigoDescuentoType",
+      "kind": "named-simple-type",
+      "name": "CodigoDescuentoType",
+      "description": "Los tipos de descuentos a utilizar en el campo \"Código del Descuento\" del Descuento",
+      "sources": [
+        "2024/v4.4/FacturaElectronicaCompra_V4.4.xsd",
+        "2024/v4.4/FacturaElectronicaExportacion_V4.4.xsd",
+        "2024/v4.4/FacturaElectronica_V4.4.xsd",
+        "2024/v4.4/NotaCreditoElectronica_V4.4.xsd",
+        "2024/v4.4/NotaDebitoElectronica_V4.4.xsd",
+        "2024/v4.4/TiqueteElectronico_V4.4.xsd"
+      ],
+      "values": [
+        {
+          "code": "01",
+          "description": "Descuento por Regalía"
+        },
+        {
+          "code": "02",
+          "description": "Descuento por Regalía IVA Cobrado al Cliente"
+        },
+        {
+          "code": "03",
+          "description": "Descuento por Bonificación"
+        },
+        {
+          "code": "04",
+          "description": "Descuento por volumen"
+        },
+        {
+          "code": "05",
+          "description": "Descuento por Temporada (estacional)"
+        },
+        {
+          "code": "06",
+          "description": "Descuento promocional"
+        },
+        {
+          "code": "07",
+          "description": "Descuento Comercial"
+        },
+        {
+          "code": "08",
+          "description": "Descuento por frecuencia"
+        },
+        {
+          "code": "09",
+          "description": "Descuento sostenido"
+        },
+        {
+          "code": "99",
+          "description": "Otros descuentos"
+        }
+      ]
+    },
+    {
+      "key": "CodigoImpuestoType",
+      "kind": "named-simple-type",
+      "name": "CodigoImpuestoType",
+      "description": "Código del impuesto: 01 Impuesto al valor agregado, 02 Impuesto Selectivo de Consumo, 03 Impuesto único a los combustivos, 04 Impuesto específico de bebidas alcohólicas, 05 Impuesto específico sobre las bebidas envasadas sin contenido alcohólico y jabones de tocador, 06 Impuesto a los productos de tabaco, 07 IVA (cálculo especial), 08 IVA Regimen de Bienes Usados (Factor), 12 Impuesto Especifico al cemento, 99 Otros",
+      "sources": [
+        "2024/v4.4/FacturaElectronicaCompra_V4.4.xsd",
+        "2024/v4.4/FacturaElectronicaExportacion_V4.4.xsd",
+        "2024/v4.4/FacturaElectronica_V4.4.xsd",
+        "2024/v4.4/NotaCreditoElectronica_V4.4.xsd",
+        "2024/v4.4/NotaDebitoElectronica_V4.4.xsd",
+        "2024/v4.4/ReciboElectronicoPago_V4.4.xsd",
+        "2024/v4.4/TiqueteElectronico_V4.4.xsd"
+      ],
+      "values": [
+        {
+          "code": "01",
+          "description": "Impuesto al Valor Agregado"
+        },
+        {
+          "code": "02",
+          "description": "Impuesto Selectivo de Consumo"
+        },
+        {
+          "code": "03",
+          "description": "Impuesto unico a los combustivos"
+        },
+        {
+          "code": "04",
+          "description": "Impuesto especifico de bebidas alcohólicas"
+        },
+        {
+          "code": "05",
+          "description": "impuesto especifico sobre las bebidas envasadas sin contenido alcoholico y jabones de tocador"
+        },
+        {
+          "code": "06",
+          "description": "impuesto a los productos de tabaco"
+        },
+        {
+          "code": "07",
+          "description": "IVA (cálculo especial)"
+        },
+        {
+          "code": "08",
+          "description": "IVA Régimen de Bienes Usados (Factor)"
+        },
+        {
+          "code": "12",
+          "description": "Impuesto Especifico al Cemento"
+        },
+        {
+          "code": "99",
+          "description": "Otros"
+        }
+      ]
+    },
+    {
+      "key": "CodigoMonedaType/CodigoMoneda",
+      "kind": "element-anonymous",
+      "name": "CodigoMoneda",
+      "description": "Código de la moneda",
+      "sources": [
+        "2024/v4.4/FacturaElectronicaCompra_V4.4.xsd",
+        "2024/v4.4/FacturaElectronicaExportacion_V4.4.xsd",
+        "2024/v4.4/FacturaElectronica_V4.4.xsd",
+        "2024/v4.4/NotaCreditoElectronica_V4.4.xsd",
+        "2024/v4.4/NotaDebitoElectronica_V4.4.xsd",
+        "2024/v4.4/ReciboElectronicoPago_V4.4.xsd",
+        "2024/v4.4/TiqueteElectronico_V4.4.xsd"
+      ],
+      "values": [
+        {
+          "code": "AED"
+        },
+        {
+          "code": "AFN"
+        },
+        {
+          "code": "ALL"
+        },
+        {
+          "code": "AMD"
+        },
+        {
+          "code": "ANG"
+        },
+        {
+          "code": "AOA"
+        },
+        {
+          "code": "ARS"
+        },
+        {
+          "code": "AUD"
+        },
+        {
+          "code": "AWG"
+        },
+        {
+          "code": "AZN"
+        },
+        {
+          "code": "BAM"
+        },
+        {
+          "code": "BBD"
+        },
+        {
+          "code": "BDT"
+        },
+        {
+          "code": "BGN"
+        },
+        {
+          "code": "BHD"
+        },
+        {
+          "code": "BIF"
+        },
+        {
+          "code": "BMD"
+        },
+        {
+          "code": "BND"
+        },
+        {
+          "code": "BOB"
+        },
+        {
+          "code": "BOV"
+        },
+        {
+          "code": "BRL"
+        },
+        {
+          "code": "BSD"
+        },
+        {
+          "code": "BTN"
+        },
+        {
+          "code": "BWP"
+        },
+        {
+          "code": "BYR"
+        },
+        {
+          "code": "BZD"
+        },
+        {
+          "code": "CAD"
+        },
+        {
+          "code": "CDF"
+        },
+        {
+          "code": "CHE"
+        },
+        {
+          "code": "CHF"
+        },
+        {
+          "code": "CHW"
+        },
+        {
+          "code": "CLF"
+        },
+        {
+          "code": "CLP"
+        },
+        {
+          "code": "CNY"
+        },
+        {
+          "code": "COP"
+        },
+        {
+          "code": "COU"
+        },
+        {
+          "code": "CRC"
+        },
+        {
+          "code": "CUC"
+        },
+        {
+          "code": "CUP"
+        },
+        {
+          "code": "CVE"
+        },
+        {
+          "code": "CZK"
+        },
+        {
+          "code": "DJF"
+        },
+        {
+          "code": "DKK"
+        },
+        {
+          "code": "DOP"
+        },
+        {
+          "code": "DZD"
+        },
+        {
+          "code": "EGP"
+        },
+        {
+          "code": "ERN"
+        },
+        {
+          "code": "ETB"
+        },
+        {
+          "code": "EUR"
+        },
+        {
+          "code": "FJD"
+        },
+        {
+          "code": "FKP"
+        },
+        {
+          "code": "GBP"
+        },
+        {
+          "code": "GEL"
+        },
+        {
+          "code": "GHS"
+        },
+        {
+          "code": "GIP"
+        },
+        {
+          "code": "GMD"
+        },
+        {
+          "code": "GNF"
+        },
+        {
+          "code": "GTQ"
+        },
+        {
+          "code": "GYD"
+        },
+        {
+          "code": "HKD"
+        },
+        {
+          "code": "HNL"
+        },
+        {
+          "code": "HRK"
+        },
+        {
+          "code": "HTG"
+        },
+        {
+          "code": "HUF"
+        },
+        {
+          "code": "IDR"
+        },
+        {
+          "code": "ILS"
+        },
+        {
+          "code": "INR"
+        },
+        {
+          "code": "IQD"
+        },
+        {
+          "code": "IRR"
+        },
+        {
+          "code": "ISK"
+        },
+        {
+          "code": "JMD"
+        },
+        {
+          "code": "JOD"
+        },
+        {
+          "code": "JPY"
+        },
+        {
+          "code": "KES"
+        },
+        {
+          "code": "KGS"
+        },
+        {
+          "code": "KHR"
+        },
+        {
+          "code": "KMF"
+        },
+        {
+          "code": "KPW"
+        },
+        {
+          "code": "KRW"
+        },
+        {
+          "code": "KWD"
+        },
+        {
+          "code": "KYD"
+        },
+        {
+          "code": "KZT"
+        },
+        {
+          "code": "LAK"
+        },
+        {
+          "code": "LBP"
+        },
+        {
+          "code": "LKR"
+        },
+        {
+          "code": "LRD"
+        },
+        {
+          "code": "LSL"
+        },
+        {
+          "code": "LYD"
+        },
+        {
+          "code": "MAD"
+        },
+        {
+          "code": "MDL"
+        },
+        {
+          "code": "MGA"
+        },
+        {
+          "code": "MKD"
+        },
+        {
+          "code": "MMK"
+        },
+        {
+          "code": "MNT"
+        },
+        {
+          "code": "MOP"
+        },
+        {
+          "code": "MRO"
+        },
+        {
+          "code": "MUR"
+        },
+        {
+          "code": "MVR"
+        },
+        {
+          "code": "MWK"
+        },
+        {
+          "code": "MXN"
+        },
+        {
+          "code": "MXV"
+        },
+        {
+          "code": "MYR"
+        },
+        {
+          "code": "MZN"
+        },
+        {
+          "code": "NAD"
+        },
+        {
+          "code": "NGN"
+        },
+        {
+          "code": "NIO"
+        },
+        {
+          "code": "NOK"
+        },
+        {
+          "code": "NPR"
+        },
+        {
+          "code": "NZD"
+        },
+        {
+          "code": "OMR"
+        },
+        {
+          "code": "PAB"
+        },
+        {
+          "code": "PEN"
+        },
+        {
+          "code": "PGK"
+        },
+        {
+          "code": "PHP"
+        },
+        {
+          "code": "PKR"
+        },
+        {
+          "code": "PLN"
+        },
+        {
+          "code": "PYG"
+        },
+        {
+          "code": "QAR"
+        },
+        {
+          "code": "RON"
+        },
+        {
+          "code": "RSD"
+        },
+        {
+          "code": "RUB"
+        },
+        {
+          "code": "RWF"
+        },
+        {
+          "code": "SAR"
+        },
+        {
+          "code": "SBD"
+        },
+        {
+          "code": "SCR"
+        },
+        {
+          "code": "SDG"
+        },
+        {
+          "code": "SEK"
+        },
+        {
+          "code": "SGD"
+        },
+        {
+          "code": "SHP"
+        },
+        {
+          "code": "SLL"
+        },
+        {
+          "code": "SOS"
+        },
+        {
+          "code": "SRD"
+        },
+        {
+          "code": "SSP"
+        },
+        {
+          "code": "STD"
+        },
+        {
+          "code": "SVC"
+        },
+        {
+          "code": "SYP"
+        },
+        {
+          "code": "SZL"
+        },
+        {
+          "code": "THB"
+        },
+        {
+          "code": "TJS"
+        },
+        {
+          "code": "TMT"
+        },
+        {
+          "code": "TND"
+        },
+        {
+          "code": "TOP"
+        },
+        {
+          "code": "TRY"
+        },
+        {
+          "code": "TTD"
+        },
+        {
+          "code": "TWD"
+        },
+        {
+          "code": "TZS"
+        },
+        {
+          "code": "UAH"
+        },
+        {
+          "code": "UGX"
+        },
+        {
+          "code": "USD"
+        },
+        {
+          "code": "USN"
+        },
+        {
+          "code": "UYI"
+        },
+        {
+          "code": "UYU"
+        },
+        {
+          "code": "UZS"
+        },
+        {
+          "code": "VEF"
+        },
+        {
+          "code": "VND"
+        },
+        {
+          "code": "VUV"
+        },
+        {
+          "code": "WST"
+        },
+        {
+          "code": "XAF"
+        },
+        {
+          "code": "XCD"
+        },
+        {
+          "code": "XDR"
+        },
+        {
+          "code": "XOF"
+        },
+        {
+          "code": "XPF"
+        },
+        {
+          "code": "XSU"
+        },
+        {
+          "code": "XUA"
+        },
+        {
+          "code": "YER"
+        },
+        {
+          "code": "ZAR"
+        },
+        {
+          "code": "ZMW"
+        },
+        {
+          "code": "ZWL"
+        }
+      ]
+    },
+    {
+      "key": "CodigoReferenciaType",
+      "kind": "named-simple-type",
+      "name": "CodigoReferenciaType",
+      "sources": [
+        "2024/v4.4/FacturaElectronicaCompra_V4.4.xsd",
+        "2024/v4.4/FacturaElectronicaExportacion_V4.4.xsd",
+        "2024/v4.4/FacturaElectronica_V4.4.xsd",
+        "2024/v4.4/NotaCreditoElectronica_V4.4.xsd",
+        "2024/v4.4/NotaDebitoElectronica_V4.4.xsd",
+        "2024/v4.4/ReciboElectronicoPago_V4.4.xsd",
+        "2024/v4.4/TiqueteElectronico_V4.4.xsd"
+      ],
+      "values": [
+        {
+          "code": "01",
+          "description": "Anula documento de referencia"
+        },
+        {
+          "code": "02",
+          "description": "Corrige texto de ocumento de referencia"
+        },
+        {
+          "code": "04",
+          "description": "Referencia a otro documento"
+        },
+        {
+          "code": "05",
+          "description": "Sustituye comprobante provisional por contigencia"
+        },
+        {
+          "code": "06",
+          "description": "Devolución de mercancía"
+        },
+        {
+          "code": "07",
+          "description": "Sustituye comprobante electrónico"
+        },
+        {
+          "code": "08",
+          "description": "Factura Endosada"
+        },
+        {
+          "code": "09",
+          "description": "Nota de crédito financiera"
+        },
+        {
+          "code": "10",
+          "description": "Nota de débito financiera"
+        },
+        {
+          "code": "11",
+          "description": "Proveedor No Domiciliado"
+        },
+        {
+          "code": "12",
+          "description": "Crédito por exoneración posterior a la facturación"
+        },
+        {
+          "code": "99",
+          "description": "Otros"
+        }
+      ]
+    },
+    {
+      "key": "CodigoTarifaIVAType",
+      "kind": "named-simple-type",
+      "name": "CodigoTarifaIVAType",
+      "description": "Cuando se trata del IVA las tarifas y códigos a utilizar son las siguientes",
+      "sources": [
+        "2024/v4.4/FacturaElectronicaCompra_V4.4.xsd",
+        "2024/v4.4/FacturaElectronicaExportacion_V4.4.xsd",
+        "2024/v4.4/FacturaElectronica_V4.4.xsd",
+        "2024/v4.4/NotaCreditoElectronica_V4.4.xsd",
+        "2024/v4.4/NotaDebitoElectronica_V4.4.xsd",
+        "2024/v4.4/ReciboElectronicoPago_V4.4.xsd",
+        "2024/v4.4/TiqueteElectronico_V4.4.xsd"
+      ],
+      "values": [
+        {
+          "code": "01",
+          "description": "Tarifa 0% (Artículo 32, num 1, RLIVA)"
+        },
+        {
+          "code": "02",
+          "description": "Tarifa reducida 1%"
+        },
+        {
+          "code": "03",
+          "description": "Tarifa reducida 2%"
+        },
+        {
+          "code": "04",
+          "description": "Tarifa reducida 4%"
+        },
+        {
+          "code": "05",
+          "description": "Transitorio 0%"
+        },
+        {
+          "code": "06",
+          "description": "Transitorio 4%"
+        },
+        {
+          "code": "07",
+          "description": "Tarifa transitoria 8%"
+        },
+        {
+          "code": "08",
+          "description": "Tarifa general 13%"
+        },
+        {
+          "code": "09",
+          "description": "Tarifa reducida 0.5%"
+        },
+        {
+          "code": "10",
+          "description": "Tarifa Exenta"
+        },
+        {
+          "code": "11",
+          "description": "Tarifa 0% sin derecho a crédito"
+        }
+      ]
+    },
+    {
+      "key": "CodigoType/Tipo",
+      "kind": "element-anonymous",
+      "name": "Tipo",
+      "description": "Será obligatorio para las líneas de detalle que utilicen uno de los códigos de producto/servicio de \"surtidos\" que estén habilitados en el CAByS. En el caso de la inclusión de paquetes, surtidos o combos, entendidos como la combinación de más de dos productos con diferentes códigos de producto/servicio, se debe seleccionar el código 03 \"Código del producto asignado por la industria\" de la nota 12 e incluir en el campo \"código\" el respectivo código \"SKU\", GTIN o equivalentes, con el que el paquete este identificado en la industria. Estos códigos deben ser verificables en los catálogos disponibles en la industria.",
+      "sources": [
+        "2024/v4.4/FacturaElectronicaCompra_V4.4.xsd",
+        "2024/v4.4/FacturaElectronicaExportacion_V4.4.xsd",
+        "2024/v4.4/FacturaElectronica_V4.4.xsd",
+        "2024/v4.4/NotaCreditoElectronica_V4.4.xsd",
+        "2024/v4.4/NotaDebitoElectronica_V4.4.xsd",
+        "2024/v4.4/TiqueteElectronico_V4.4.xsd"
+      ],
+      "values": [
+        {
+          "code": "01",
+          "description": "Código del producto del vendedor"
+        },
+        {
+          "code": "02",
+          "description": "Código del producto del comprador"
+        },
+        {
+          "code": "03",
+          "description": "código del producto asignado por la industria"
+        },
+        {
+          "code": "04",
+          "description": "código de uso interno"
+        },
+        {
+          "code": "99",
+          "description": "Otros"
+        }
+      ]
+    },
+    {
+      "key": "ExoneracionType/NombreInstitucion",
+      "kind": "element-anonymous",
+      "name": "NombreInstitucion",
+      "description": "Nombre de la institución o dependencia que emitió la exoneración",
+      "sources": [
+        "2024/v4.4/FacturaElectronicaCompra_V4.4.xsd",
+        "2024/v4.4/FacturaElectronica_V4.4.xsd",
+        "2024/v4.4/NotaCreditoElectronica_V4.4.xsd",
+        "2024/v4.4/NotaDebitoElectronica_V4.4.xsd",
+        "2024/v4.4/TiqueteElectronico_V4.4.xsd"
+      ],
+      "values": [
+        {
+          "code": "01",
+          "description": "Ministerio de Hacienda"
+        },
+        {
+          "code": "02",
+          "description": "Ministerio de Relaciones Exteriores y Culto"
+        },
+        {
+          "code": "03",
+          "description": "Ministerio de Agricultura y Ganadería"
+        },
+        {
+          "code": "04",
+          "description": "Ministerio de Economía, Industria y Comercio"
+        },
+        {
+          "code": "05",
+          "description": "Cruz Roja Costarricense"
+        },
+        {
+          "code": "06",
+          "description": "Benemérito Cuerpo de Bomberos de Costa Rica"
+        },
+        {
+          "code": "07",
+          "description": "Asociación Obras del Espíritu Santo"
+        },
+        {
+          "code": "08",
+          "description": "Federación Cruzada Nacional de protección al Anciano (Fecrunapa)"
+        },
+        {
+          "code": "09",
+          "description": "Escuela de Agricultura de la Región Húmeda (EARTH)"
+        },
+        {
+          "code": "10",
+          "description": "Instituto Centroamericano de Administración de Empresas (INCAE)"
+        },
+        {
+          "code": "11",
+          "description": "Junta de Protección Social (JPS)"
+        },
+        {
+          "code": "12",
+          "description": "Autoridad Reguladora de los Servicios Públicos (Aresep)"
+        },
+        {
+          "code": "99",
+          "description": "Otros"
+        }
+      ]
+    },
+    {
+      "key": "ExoneracionType/TipoDocumento",
+      "kind": "element-anonymous",
+      "name": "TipoDocumento",
+      "description": "Tipo de documento de exoneración o autorización. 01 Compras Autorizadas, 02 Ventas exentas a diplomáticos, 03 Autorizado por Ley Especial, 04 Exenciones Dirección General de Hacienda, 05 Transitorio V, 06 Transitorio IX, 07 Transitorio XVII, 99 Otros",
+      "sources": ["2024/v4.4/FacturaElectronicaExportacion_V4.4.xsd"],
+      "values": [
+        {
+          "code": "01",
+          "description": "Compras Autorizadas"
+        },
+        {
+          "code": "02",
+          "description": "Ventas exentas a diplomáticos"
+        },
+        {
+          "code": "03",
+          "description": "Autorizado por Ley Especial"
+        },
+        {
+          "code": "04",
+          "description": "Exenciones Direccion General de Hacienda"
+        },
+        {
+          "code": "05",
+          "description": "Transitorio V"
+        },
+        {
+          "code": "06",
+          "description": "Transitorio IX"
+        },
+        {
+          "code": "07",
+          "description": "Transitorio XVII"
+        },
+        {
+          "code": "99",
+          "description": "Otros"
+        }
+      ]
+    },
+    {
+      "key": "FacturaElectronica/CondicionVenta",
+      "kind": "element-anonymous",
+      "name": "CondicionVenta",
+      "description": "Condiciones de la venta: 01 Contado, 02 Crédito, 03 Consignación, 04 Apartado, 05 Arrendamiento con opción de compra, 06 Arrendamiento en función financiera, 07 Cobro a favor de un tercero, 08 servicxios prestados al estado a credito, 09 pago del servicio prestado al estado,10 venta a crédito hasta 90 dias,11 pago de venta a crédito en IVA hasta 90 dias, 99 Otros",
+      "sources": ["2024/v4.4/FacturaElectronica_V4.4.xsd"],
+      "values": [
+        {
+          "code": "01",
+          "description": "Contado"
+        },
+        {
+          "code": "02",
+          "description": "Crédito"
+        },
+        {
+          "code": "03",
+          "description": "Consignación"
+        },
+        {
+          "code": "04",
+          "description": "Apartado"
+        },
+        {
+          "code": "05",
+          "description": "Arrendamiento con opción de compra"
+        },
+        {
+          "code": "06",
+          "description": "Arrendamiento en función financiera"
+        },
+        {
+          "code": "07",
+          "description": "Cobro a favor de un tercero"
+        },
+        {
+          "code": "08",
+          "description": "Servicios prestados al Estado a crédito"
+        },
+        {
+          "code": "10",
+          "description": "Venta a crédito en IVA hasta 90 días (Artículo 27, LIVA)"
+        },
+        {
+          "code": "12",
+          "description": "Venta Mercancía No Nacionalizada"
+        },
+        {
+          "code": "13",
+          "description": "Venta Bienes Usados No Contribuyente"
+        },
+        {
+          "code": "14",
+          "description": "Arrendamiento Operativo"
+        },
+        {
+          "code": "15",
+          "description": "Arrendamiento Financiero"
+        },
+        {
+          "code": "99",
+          "description": "Otros"
+        }
+      ]
+    },
+    {
+      "key": "FacturaElectronica/DetalleServicio/LineaDetalle/DetalleSurtido/LineaDetalleSurtido/CodigoComercialSurtido/TipoSurtido",
+      "kind": "element-anonymous",
+      "name": "TipoSurtido",
+      "sources": ["2024/v4.4/FacturaElectronica_V4.4.xsd"],
+      "values": [
+        {
+          "code": "01",
+          "description": "Código del producto del vendedor"
+        },
+        {
+          "code": "02",
+          "description": "Código del producto del comprador"
+        },
+        {
+          "code": "03",
+          "description": "código del producto asignado por la industria"
+        },
+        {
+          "code": "04",
+          "description": "código de uso interno"
+        },
+        {
+          "code": "99",
+          "description": "Otros"
+        }
+      ]
+    },
+    {
+      "key": "FacturaElectronica/DetalleServicio/LineaDetalle/DetalleSurtido/LineaDetalleSurtido/IVACobradoFabricaSurtido",
+      "kind": "element-anonymous",
+      "name": "IVACobradoFabricaSurtido",
+      "description": "En este campo se indicará si el Impuesto al Valor Agregado fue cobrado a nivel de fábrica, por lo que deberá ser utilizado únicamente por los obligados tributarios a realizar el pago de esta forma. Se convierte en obligatorio cuando el IVA se cobra o se cobró a nivel de fábrica. Al hacer uso del presente campo el producto se entenderá exento para el código 02, por lo cual no deberá llenar el subnodo de impuestos para el cálculo del IVA. ▪Para el código 01 el emisor puede separar los impuestos que está cobrando en la fábrica.",
+      "sources": ["2024/v4.4/FacturaElectronica_V4.4.xsd"],
+      "values": [
+        {
+          "code": "01",
+          "description": "Venta de bienes con IVA según el sistema especial de determinación de IVA a nivel de fábrica (Se utiliza cuando se está cobrando el IVA a nivel de fábrica"
+        },
+        {
+          "code": "02",
+          "description": "Ventas exentas según el sistema especial de determinación de IVA a nivel de fábrica, mayorista y aduanas (se utiliza cuando el producto se encuentra exento ya que el bien soporto el cobro de impuestos a nivel de fábrica)."
+        }
+      ]
+    },
+    {
+      "key": "FacturaElectronica/DetalleServicio/LineaDetalle/IVACobradoFabrica",
+      "kind": "element-anonymous",
+      "name": "IVACobradoFabrica",
+      "description": "En este campo se indicará si el Impuesto al Valor Agregado fue cobrado a nivel de fábrica, por lo que deberá ser utilizado únicamente por los obligados tributarios a realizar el pago de esta forma. Se convierte en obligatorio cuando el IVA se cobra o se cobró a nivel de fábrica. Al hacer uso del presente campo el producto se entenderá exento para el código 02, por lo cual no deberá llenar el subnodo de impuestos para el cálculo del IVA. Para el código 01 el emisor puede separar los impuestos que está cobrando en la fábrica.",
+      "sources": ["2024/v4.4/FacturaElectronica_V4.4.xsd"],
+      "values": [
+        {
+          "code": "01",
+          "description": "Venta de bienes con IVA según el sistema especial de determinación de IVA a nivel de fábrica (Se utiliza cuando se está cobrando el IVA a nivel de fábrica"
+        },
+        {
+          "code": "02",
+          "description": "Ventas exentas según el sistema especial de determinación de IVA a nivel de fábrica, mayorista y aduanas (se utiliza cuando el producto se encuentra exento ya que el bien soporto el cobro de impuestos a nivel de fábrica)."
+        }
+      ]
+    },
+    {
+      "key": "FacturaElectronica/ResumenFactura/MedioPago/TipoMedioPago",
+      "kind": "element-anonymous",
+      "name": "TipoMedioPago",
+      "description": "Corresponde al medio de pago empleado: 01 - Efectivo, 02 - Tarjeta, 03 - Cheque, 04 - Transferencia - depósito bancario, 05 - Recaudado por terceros, 06 - SINPE MOVIL, 07 - Plataforma Digital, 99 - Otros",
+      "sources": ["2024/v4.4/FacturaElectronica_V4.4.xsd"],
+      "values": [
+        {
+          "code": "01",
+          "description": "Efectivo"
+        },
+        {
+          "code": "02",
+          "description": "Tarjeta"
+        },
+        {
+          "code": "03",
+          "description": "Cheque"
+        },
+        {
+          "code": "04",
+          "description": "Transferencia - depósito bancario"
+        },
+        {
+          "code": "05",
+          "description": "Recaudado por terceros"
+        },
+        {
+          "code": "06",
+          "description": "SINPE MOVIL"
+        },
+        {
+          "code": "07",
+          "description": "Plataforma Digital"
+        },
+        {
+          "code": "99",
+          "description": "Otros"
+        }
+      ]
+    },
+    {
+      "key": "FacturaElectronicaCompra/CondicionVenta",
+      "kind": "element-anonymous",
+      "name": "CondicionVenta",
+      "description": "Condiciones de la venta: 01 Contado, 02 Crédito, 03 Consignación, 04 Apartado, 05 Arrendamiento con opción de compra, 06 Arrendamiento en función financiera, 07 Cobro a favor de un tercero, 08 servicxios prestados al estado a credito, 09 pago del servicio prestado al estado,10 venta a credito hasta 90 dias,11 pago de venta a credito en IVA hasta 90 dias, 99 Otros",
+      "sources": ["2024/v4.4/FacturaElectronicaCompra_V4.4.xsd"],
+      "values": [
+        {
+          "code": "01",
+          "description": "Contado"
+        },
+        {
+          "code": "02",
+          "description": "Crédito"
+        },
+        {
+          "code": "03",
+          "description": "Consignación"
+        },
+        {
+          "code": "04",
+          "description": "Apartado"
+        },
+        {
+          "code": "05",
+          "description": "Arrendamiento con opción de compra"
+        },
+        {
+          "code": "06",
+          "description": "Arrendamiento en función financiera"
+        },
+        {
+          "code": "07",
+          "description": "Cobro a favor de un tercero"
+        },
+        {
+          "code": "08",
+          "description": "Servicios prestados al Estado a crédito"
+        },
+        {
+          "code": "10",
+          "description": "Venta a crédito en IVA hasta 90 días (Artículo 27, LIVA)"
+        },
+        {
+          "code": "13",
+          "description": "Venta Bienes Usados No Contribuyente"
+        },
+        {
+          "code": "14",
+          "description": "Arrendamiento Operativo"
+        },
+        {
+          "code": "15",
+          "description": "Arrendamiento Financiero"
+        },
+        {
+          "code": "99",
+          "description": "Otros"
+        }
+      ]
+    },
+    {
+      "key": "FacturaElectronicaCompra/ResumenFactura/MedioPago/TipoMedioPago",
+      "kind": "element-anonymous",
+      "name": "TipoMedioPago",
+      "description": "Corresponde al medio de pago empleado: 01 - Efectivo, 02 - Tarjeta, 03 - Cheque, 04 - Transferencia - depósito bancario, 05 - Recaudado por terceros, 06 - SINPE MOVIL, 07 - Plataforma Digital, 99 - Otros",
+      "sources": ["2024/v4.4/FacturaElectronicaCompra_V4.4.xsd"],
+      "values": [
+        {
+          "code": "01",
+          "description": "Efectivo"
+        },
+        {
+          "code": "02",
+          "description": "Tarjeta"
+        },
+        {
+          "code": "03",
+          "description": "Cheque"
+        },
+        {
+          "code": "04",
+          "description": "Transferencia - depósito bancario"
+        },
+        {
+          "code": "05",
+          "description": "Recaudado por terceros"
+        },
+        {
+          "code": "06",
+          "description": "SINPE MOVIL"
+        },
+        {
+          "code": "07",
+          "description": "Plataforma Digital"
+        },
+        {
+          "code": "99",
+          "description": "Otros"
+        }
+      ]
+    },
+    {
+      "key": "FacturaElectronicaExportacion/CondicionVenta",
+      "kind": "element-anonymous",
+      "name": "CondicionVenta",
+      "description": "Condiciones de la venta: 01 Contado, 02 Crédito, 03 Consignación, 04 Apartado, 05 Arrendamiento con opción de compra, 06 Arrendamiento en función financiera, 07 Cobro a favor de un tercero, 08 servicxios prestados al estado a credito, 09 pago del servicio prestado al estado,10 venta a credito hasta 90 dias,11 pago de venta a credito en IVA hasta 90 dias, 99 Otros",
+      "sources": ["2024/v4.4/FacturaElectronicaExportacion_V4.4.xsd"],
+      "values": [
+        {
+          "code": "01",
+          "description": "Contado"
+        },
+        {
+          "code": "02",
+          "description": "Crédito"
+        },
+        {
+          "code": "03",
+          "description": "Consignación"
+        },
+        {
+          "code": "04",
+          "description": "Apartado"
+        },
+        {
+          "code": "05",
+          "description": "Arrendamiento con opción de compra"
+        },
+        {
+          "code": "06",
+          "description": "Arrendamiento en función financiera"
+        },
+        {
+          "code": "07",
+          "description": "Cobro a favor de un tercero"
+        },
+        {
+          "code": "08",
+          "description": "Servicios prestados al Estado a crédito"
+        },
+        {
+          "code": "10",
+          "description": "Venta a crédito en IVA hasta 90 días (Artículo 27, LIVA)"
+        },
+        {
+          "code": "13",
+          "description": "Venta Bienes Usados No Contribuyente"
+        },
+        {
+          "code": "14",
+          "description": "Arrendamiento Operativo"
+        },
+        {
+          "code": "15",
+          "description": "Arrendamiento Financiero"
+        },
+        {
+          "code": "99",
+          "description": "Otros"
+        }
+      ]
+    },
+    {
+      "key": "FacturaElectronicaExportacion/DetalleServicio/LineaDetalle/DetalleSurtido/LineaDetalleSurtido/CodigoComercialSurtido/TipoSurtido",
+      "kind": "element-anonymous",
+      "name": "TipoSurtido",
+      "sources": ["2024/v4.4/FacturaElectronicaExportacion_V4.4.xsd"],
+      "values": [
+        {
+          "code": "01",
+          "description": "Código del producto del vendedor"
+        },
+        {
+          "code": "02",
+          "description": "Código del producto del comprador"
+        },
+        {
+          "code": "03",
+          "description": "código del producto asignado por la industria"
+        },
+        {
+          "code": "04",
+          "description": "código de uso interno"
+        },
+        {
+          "code": "99",
+          "description": "Otros"
+        }
+      ]
+    },
+    {
+      "key": "FacturaElectronicaExportacion/ResumenFactura/MedioPago/TipoMedioPago",
+      "kind": "element-anonymous",
+      "name": "TipoMedioPago",
+      "description": "Corresponde al medio de pago empleado: 01 - Efectivo, 02 - Tarjeta, 03 - Cheque, 04 - Transferencia - depósito bancario, 05 - Recaudado por terceros, 06 - SINPE MOVIL, 07 - Plataforma Digital, 99 - Otros",
+      "sources": ["2024/v4.4/FacturaElectronicaExportacion_V4.4.xsd"],
+      "values": [
+        {
+          "code": "01",
+          "description": "Efectivo"
+        },
+        {
+          "code": "02",
+          "description": "Tarjeta"
+        },
+        {
+          "code": "03",
+          "description": "Cheque"
+        },
+        {
+          "code": "04",
+          "description": "Transferencia - depósito bancario"
+        },
+        {
+          "code": "05",
+          "description": "Recaudado por terceros"
+        },
+        {
+          "code": "06",
+          "description": "SINPE MOVIL"
+        },
+        {
+          "code": "07",
+          "description": "Plataforma Digital"
+        },
+        {
+          "code": "99",
+          "description": "Otros"
+        }
+      ]
+    },
+    {
+      "key": "IdentificacionType/Tipo",
+      "kind": "element-anonymous",
+      "name": "Tipo",
+      "description": "Tipo de identificación: 01 Cédula Física, 02 Cédula Jurídica, 03 DIMEX, 04 NITE, 05 Extranjero No Domiciliado, 06 No Contribuyente",
+      "sources": [
+        "2024/v4.4/FacturaElectronicaCompra_V4.4.xsd",
+        "2024/v4.4/FacturaElectronicaExportacion_V4.4.xsd",
+        "2024/v4.4/FacturaElectronica_V4.4.xsd",
+        "2024/v4.4/NotaCreditoElectronica_V4.4.xsd",
+        "2024/v4.4/NotaDebitoElectronica_V4.4.xsd",
+        "2024/v4.4/ReciboElectronicoPago_V4.4.xsd",
+        "2024/v4.4/TiqueteElectronico_V4.4.xsd"
+      ],
+      "values": [
+        {
+          "code": "01",
+          "description": "Cedula Fisica"
+        },
+        {
+          "code": "02",
+          "description": "Cedula Juridica"
+        },
+        {
+          "code": "03",
+          "description": "DIMEX"
+        },
+        {
+          "code": "04",
+          "description": "NITE"
+        },
+        {
+          "code": "05",
+          "description": "Extranjero No Domiciliado"
+        },
+        {
+          "code": "06",
+          "description": "No Contribuyente"
+        }
+      ]
+    },
+    {
+      "key": "MensajeHacienda/Mensaje",
+      "kind": "element-anonymous",
+      "name": "Mensaje",
+      "description": "Codigo del mensaje de respuesta. 1 aceptado, 3 rechazado",
+      "sources": ["2024/v4.4/MensajeHacienda_V4.4.xsd"],
+      "values": [
+        {
+          "code": "1",
+          "description": "Aceptado"
+        },
+        {
+          "code": "3",
+          "description": "Rechazado"
+        }
+      ]
+    },
+    {
+      "key": "MensajeHacienda/TipoIdentificacionEmisor",
+      "kind": "element-anonymous",
+      "name": "TipoIdentificacionEmisor",
+      "description": "Tipo de identificacion: 01 Cedula Fisica, 02 Cedula Juridica, 03 DIMEX, 04 NITE, 05 Extranjero No Domiciliado, 06 No Contribuyente",
+      "sources": ["2024/v4.4/MensajeHacienda_V4.4.xsd"],
+      "values": [
+        {
+          "code": "01",
+          "description": "Cedula Fisica"
+        },
+        {
+          "code": "02",
+          "description": "Cedula Juridica"
+        },
+        {
+          "code": "03",
+          "description": "DIMEX"
+        },
+        {
+          "code": "04",
+          "description": "NITE"
+        },
+        {
+          "code": "05",
+          "description": "Extranjero No Domiciliado"
+        },
+        {
+          "code": "06",
+          "description": "No Contribuyente"
+        }
+      ]
+    },
+    {
+      "key": "MensajeHacienda/TipoIdentificacionReceptor",
+      "kind": "element-anonymous",
+      "name": "TipoIdentificacionReceptor",
+      "description": "Tipo de identificacion: 01 Cedula Fisica, 02 Cedula Juridica, 03 DIMEX, 04 NITE, 05 Extranjero No Domiciliado, 06 No Contribuyente",
+      "sources": ["2024/v4.4/MensajeHacienda_V4.4.xsd"],
+      "values": [
+        {
+          "code": "01",
+          "description": "Cedula Fisica"
+        },
+        {
+          "code": "02",
+          "description": "Cedula Juridica"
+        },
+        {
+          "code": "03",
+          "description": "DIMEX"
+        },
+        {
+          "code": "04",
+          "description": "NITE"
+        },
+        {
+          "code": "05",
+          "description": "Extranjero No Domiciliado"
+        },
+        {
+          "code": "06",
+          "description": "No Contribuyente"
+        }
+      ]
+    },
+    {
+      "key": "MensajeReceptor/CondicionImpuesto",
+      "kind": "element-anonymous",
+      "name": "CondicionImpuesto",
+      "description": "Condición del IVA. 01 General Credito IVA, 02 General Crédito parcial del IVA, 03 Bienes de Capital, 04 Gasto corriente no genera crédito, 05 Proporcionalidad",
+      "sources": ["2024/v4.4/MensajeReceptor_V4.4.xsd"],
+      "values": [
+        {
+          "code": "01"
+        },
+        {
+          "code": "02"
+        },
+        {
+          "code": "03"
+        },
+        {
+          "code": "04"
+        },
+        {
+          "code": "05"
+        }
+      ]
+    },
+    {
+      "key": "MensajeReceptor/Mensaje",
+      "kind": "element-anonymous",
+      "name": "Mensaje",
+      "description": "Codigo del mensaje de respuesta. 1 aceptado, 2 aceptado parcialmente, 3 rechazado",
+      "sources": ["2024/v4.4/MensajeReceptor_V4.4.xsd"],
+      "values": [
+        {
+          "code": "1",
+          "description": "Aceptado"
+        },
+        {
+          "code": "2",
+          "description": "Aceptado Parcialmente"
+        },
+        {
+          "code": "3",
+          "description": "Rechazado"
+        }
+      ]
+    },
+    {
+      "key": "NotaCreditoElectronica/CondicionVenta",
+      "kind": "element-anonymous",
+      "name": "CondicionVenta",
+      "description": "Condiciones de la venta: 01 Contado, 02 Crédito, 03 Consignación, 04 Apartado, 05 Arrendamiento con opción de compra, 06 Arrendamiento en función financiera, 07 Cobro a favor de un tercero, 08 servicxios prestados al estado a credito, 09 pago del servicio prestado al estado,10 venta a credito hasta 90 dias,11 pago de venta a credito en IVA hasta 90 dias, 99 Otros",
+      "sources": ["2024/v4.4/NotaCreditoElectronica_V4.4.xsd"],
+      "values": [
+        {
+          "code": "01",
+          "description": "Contado"
+        },
+        {
+          "code": "02",
+          "description": "Crédito"
+        },
+        {
+          "code": "03",
+          "description": "Consignación"
+        },
+        {
+          "code": "04",
+          "description": "Apartado"
+        },
+        {
+          "code": "05",
+          "description": "Arrendamiento con opción de compra"
+        },
+        {
+          "code": "06",
+          "description": "Arrendamiento en función financiera"
+        },
+        {
+          "code": "07",
+          "description": "Cobro a favor de un tercero"
+        },
+        {
+          "code": "08",
+          "description": "Servicios prestados al Estado a crédito"
+        },
+        {
+          "code": "09",
+          "description": "Pago del servicios prestado al Estado"
+        },
+        {
+          "code": "10",
+          "description": "Venta a crédito en IVA hasta 90 días (Artículo 27, LIVA)"
+        },
+        {
+          "code": "11",
+          "description": "Pago de venta a crédito en IVA hasta 90 días (Artículo 27, LIVA)"
+        },
+        {
+          "code": "12",
+          "description": "Venta Mercancía No Nacionalizada"
+        },
+        {
+          "code": "13",
+          "description": "Venta Bienes Usados No Contribuyente"
+        },
+        {
+          "code": "14",
+          "description": "Arrendamiento Operativo"
+        },
+        {
+          "code": "15",
+          "description": "Arrendamiento Financiero"
+        },
+        {
+          "code": "99",
+          "description": "Otros"
+        }
+      ]
+    },
+    {
+      "key": "NotaCreditoElectronica/DetalleServicio/LineaDetalle/DetalleSurtido/LineaDetalleSurtido/CodigoComercialSurtido/TipoSurtido",
+      "kind": "element-anonymous",
+      "name": "TipoSurtido",
+      "sources": ["2024/v4.4/NotaCreditoElectronica_V4.4.xsd"],
+      "values": [
+        {
+          "code": "01",
+          "description": "Código del producto del vendedor"
+        },
+        {
+          "code": "02",
+          "description": "Código del producto del comprador"
+        },
+        {
+          "code": "03",
+          "description": "código del producto asignado por la industria"
+        },
+        {
+          "code": "04",
+          "description": "código de uso interno"
+        },
+        {
+          "code": "99",
+          "description": "Otros"
+        }
+      ]
+    },
+    {
+      "key": "NotaCreditoElectronica/DetalleServicio/LineaDetalle/DetalleSurtido/LineaDetalleSurtido/IVACobradoFabricaSurtido",
+      "kind": "element-anonymous",
+      "name": "IVACobradoFabricaSurtido",
+      "description": "En este campo se indicará si el Impuesto al Valor Agregado fue cobrado a nivel de fábrica, por lo que deberá ser utilizado únicamente por los obligados tributarios a realizar el pago de esta forma. Se convierte en obligatorio cuando el IVA se cobra o se cobró a nivel de fábrica. Al hacer uso del presente campo el producto se entenderá exento para el código 02, por lo cual no deberá llenar el subnodo de impuestos para el cálculo del IVA. ▪Para el código 01 el emisor puede separar los impuestos que está cobrando en la fábrica.",
+      "sources": ["2024/v4.4/NotaCreditoElectronica_V4.4.xsd"],
+      "values": [
+        {
+          "code": "01",
+          "description": "Venta de bienes con IVA según el sistema especial de determinación de IVA a nivel de fábrica (Se utiliza cuando se está cobrando el IVA a nivel de fábrica"
+        },
+        {
+          "code": "02",
+          "description": "Ventas exentas según el sistema especial de determinación de IVA a nivel de fábrica, mayorista y aduanas (se utiliza cuando el producto se encuentra exento ya que el bien soporto el cobro de impuestos a nivel de fábrica)."
+        }
+      ]
+    },
+    {
+      "key": "NotaCreditoElectronica/DetalleServicio/LineaDetalle/IVACobradoFabrica",
+      "kind": "element-anonymous",
+      "name": "IVACobradoFabrica",
+      "description": "En este campo se indicará si el Impuesto al Valor Agregado fue cobrado a nivel de fábrica, por lo que deberá ser utilizado únicamente por los obligados tributarios a realizar el pago de esta forma. Se convierte en obligatorio cuando el IVA se cobra o se cobró a nivel de fábrica. Al hacer uso del presente campo el producto se entenderá exento para el código 02, por lo cual no deberá llenar el subnodo de impuestos para el cálculo del IVA. Para el código 01 el emisor puede separar los impuestos que está cobrando en la fábrica.",
+      "sources": ["2024/v4.4/NotaCreditoElectronica_V4.4.xsd"],
+      "values": [
+        {
+          "code": "01",
+          "description": "Venta de bienes con IVA según el sistema especial de determinación de IVA a nivel de fábrica (Se utiliza cuando se está cobrando el IVA a nivel de fábrica"
+        },
+        {
+          "code": "02",
+          "description": "Ventas exentas según el sistema especial de determinación de IVA a nivel de fábrica, mayorista y aduanas (se utiliza cuando el producto se encuentra exento ya que el bien soporto el cobro de impuestos a nivel de fábrica)."
+        }
+      ]
+    },
+    {
+      "key": "NotaCreditoElectronica/ResumenFactura/MedioPago/TipoMedioPago",
+      "kind": "element-anonymous",
+      "name": "TipoMedioPago",
+      "description": "Corresponde al medio de pago empleado: 01 - Efectivo, 02 - Tarjeta, 03 - Cheque, 04 - Transferencia - depósito bancario, 05 - Recaudado por terceros, 06 - SINPE MOVIL, 07 - Plataforma Digital, 99 - Otros",
+      "sources": ["2024/v4.4/NotaCreditoElectronica_V4.4.xsd"],
+      "values": [
+        {
+          "code": "01",
+          "description": "Efectivo"
+        },
+        {
+          "code": "02",
+          "description": "Tarjeta"
+        },
+        {
+          "code": "03",
+          "description": "Cheque"
+        },
+        {
+          "code": "04",
+          "description": "Transferencia - depósito bancario"
+        },
+        {
+          "code": "05",
+          "description": "Recaudado por terceros"
+        },
+        {
+          "code": "06",
+          "description": "SINPE MOVIL"
+        },
+        {
+          "code": "07",
+          "description": "Plataforma Digital"
+        },
+        {
+          "code": "99",
+          "description": "Otros"
+        }
+      ]
+    },
+    {
+      "key": "NotaDebitoElectronica/CondicionVenta",
+      "kind": "element-anonymous",
+      "name": "CondicionVenta",
+      "description": "Condiciones de la venta: 01 Contado, 02 Crédito, 03 Consignación, 04 Apartado, 05 Arrendamiento con opción de compra, 06 Arrendamiento en función financiera, 07 Cobro a favor de un tercero, 08 servicxios prestados al estado a credito, 09 pago del servicio prestado al estado, 10 venta a credito hasta 90 dias,11 pago de venta a credito en IVA hasta 90 dias, 99 Otros",
+      "sources": ["2024/v4.4/NotaDebitoElectronica_V4.4.xsd"],
+      "values": [
+        {
+          "code": "01",
+          "description": "Contado"
+        },
+        {
+          "code": "02",
+          "description": "Crédito"
+        },
+        {
+          "code": "03",
+          "description": "Consignación"
+        },
+        {
+          "code": "04",
+          "description": "Apartado"
+        },
+        {
+          "code": "05",
+          "description": "Arrendamiento con opción de compra"
+        },
+        {
+          "code": "06",
+          "description": "Arrendamiento en función financiera"
+        },
+        {
+          "code": "07",
+          "description": "Cobro a favor de un tercero"
+        },
+        {
+          "code": "08",
+          "description": "Servicios prestados al Estado a crédito"
+        },
+        {
+          "code": "09",
+          "description": "Pago del servicios prestado al Estado"
+        },
+        {
+          "code": "10",
+          "description": "Venta a crédito en IVA hasta 90 días (Artículo 27, LIVA)"
+        },
+        {
+          "code": "11",
+          "description": "Pago de venta a crédito en IVA hasta 90 días (Artículo 27, LIVA)"
+        },
+        {
+          "code": "12",
+          "description": "Venta Mercancía No Nacionalizada"
+        },
+        {
+          "code": "13",
+          "description": "Venta Bienes Usados No Contribuyente"
+        },
+        {
+          "code": "14",
+          "description": "Arrendamiento Operativo"
+        },
+        {
+          "code": "15",
+          "description": "Arrendamiento Financiero"
+        },
+        {
+          "code": "99",
+          "description": "Otros"
+        }
+      ]
+    },
+    {
+      "key": "NotaDebitoElectronica/DetalleServicio/LineaDetalle/DetalleSurtido/LineaDetalleSurtido/CodigoComercialSurtido/TipoSurtido",
+      "kind": "element-anonymous",
+      "name": "TipoSurtido",
+      "sources": ["2024/v4.4/NotaDebitoElectronica_V4.4.xsd"],
+      "values": [
+        {
+          "code": "01",
+          "description": "Código del producto del vendedor"
+        },
+        {
+          "code": "02",
+          "description": "Código del producto del comprador"
+        },
+        {
+          "code": "03",
+          "description": "código del producto asignado por la industria"
+        },
+        {
+          "code": "04",
+          "description": "código de uso interno"
+        },
+        {
+          "code": "99",
+          "description": "Otros"
+        }
+      ]
+    },
+    {
+      "key": "NotaDebitoElectronica/DetalleServicio/LineaDetalle/DetalleSurtido/LineaDetalleSurtido/IVACobradoFabricaSurtido",
+      "kind": "element-anonymous",
+      "name": "IVACobradoFabricaSurtido",
+      "description": "En este campo se indicará si el Impuesto al Valor Agregado fue cobrado a nivel de fábrica, por lo que deberá ser utilizado únicamente por los obligados tributarios a realizar el pago de esta forma. Se convierte en obligatorio cuando el IVA se cobra o se cobró a nivel de fábrica. Al hacer uso del presente campo el producto se entenderá exento para el código 02, por lo cual no deberá llenar el subnodo de impuestos para el cálculo del IVA. ▪Para el código 01 el emisor puede separar los impuestos que está cobrando en la fábrica.",
+      "sources": ["2024/v4.4/NotaDebitoElectronica_V4.4.xsd"],
+      "values": [
+        {
+          "code": "01",
+          "description": "Venta de bienes con IVA según el sistema especial de determinación de IVA a nivel de fábrica (Se utiliza cuando se está cobrando el IVA a nivel de fábrica"
+        },
+        {
+          "code": "02",
+          "description": "Ventas exentas según el sistema especial de determinación de IVA a nivel de fábrica, mayorista y aduanas (se utiliza cuando el producto se encuentra exento ya que el bien soporto el cobro de impuestos a nivel de fábrica)."
+        }
+      ]
+    },
+    {
+      "key": "NotaDebitoElectronica/DetalleServicio/LineaDetalle/IVACobradoFabrica",
+      "kind": "element-anonymous",
+      "name": "IVACobradoFabrica",
+      "description": "En este campo se indicará si el Impuesto al Valor Agregado fue cobrado a nivel de fábrica, por lo que deberá ser utilizado únicamente por los obligados tributarios a realizar el pago de esta forma. Se convierte en obligatorio cuando el IVA se cobra o se cobró a nivel de fábrica. Al hacer uso del presente campo el producto se entenderá exento para el código 02, por lo cual no deberá llenar el subnodo de impuestos para el cálculo del IVA. Para el código 01 el emisor puede separar los impuestos que está cobrando en la fábrica.",
+      "sources": ["2024/v4.4/NotaDebitoElectronica_V4.4.xsd"],
+      "values": [
+        {
+          "code": "01",
+          "description": "Venta de bienes con IVA según el sistema especial de determinación de IVA a nivel de fábrica (Se utiliza cuando se está cobrando el IVA a nivel de fábrica"
+        },
+        {
+          "code": "02",
+          "description": "Ventas exentas según el sistema especial de determinación de IVA a nivel de fábrica, mayorista y aduanas (se utiliza cuando el producto se encuentra exento ya que el bien soporto el cobro de impuestos a nivel de fábrica)."
+        }
+      ]
+    },
+    {
+      "key": "NotaDebitoElectronica/ResumenFactura/MedioPago/TipoMedioPago",
+      "kind": "element-anonymous",
+      "name": "TipoMedioPago",
+      "description": "Corresponde al medio de pago empleado: 01 - Efectivo, 02 - Tarjeta, 03 - Cheque, 04 - Transferencia - depósito bancario, 05 - Recaudado por terceros, 06 - SINPE MOVIL, 07 - Plataforma Digital, 99 - Otros",
+      "sources": ["2024/v4.4/NotaDebitoElectronica_V4.4.xsd"],
+      "values": [
+        {
+          "code": "01",
+          "description": "Efectivo"
+        },
+        {
+          "code": "02",
+          "description": "Tarjeta"
+        },
+        {
+          "code": "03",
+          "description": "Cheque"
+        },
+        {
+          "code": "04",
+          "description": "Transferencia - depósito bancario"
+        },
+        {
+          "code": "05",
+          "description": "Recaudado por terceros"
+        },
+        {
+          "code": "06",
+          "description": "SINPE MOVIL"
+        },
+        {
+          "code": "07",
+          "description": "Plataforma Digital"
+        },
+        {
+          "code": "99",
+          "description": "Otros"
+        }
+      ]
+    },
+    {
+      "key": "ReciboElectronicoPago/CondicionVenta",
+      "kind": "element-anonymous",
+      "name": "CondicionVenta",
+      "description": "Condiciones de la venta: 01 Contado, 02 Crédito, 03 Consignación, 04 Apartado, 05 Arrendamiento con opción de compra, 06 Arrendamiento en función financiera, 07 Cobro a favor de un tercero, 08 servicxios prestados al estado a credito, 09 pago del servicio prestado al estado,10 venta a crédito hasta 90 dias,11 pago de venta a crédito en IVA hasta 90 dias, 99 Otros",
+      "sources": ["2024/v4.4/ReciboElectronicoPago_V4.4.xsd"],
+      "values": [
+        {
+          "code": "09",
+          "description": "Pago del servicios prestado al Estado"
+        },
+        {
+          "code": "11",
+          "description": "Pago de venta a crédito en IVA hasta 90 días (Artículo 27, LIVA)"
+        }
+      ]
+    },
+    {
+      "key": "ReciboElectronicoPago/ResumenFactura/MedioPago/TipoMedioPago",
+      "kind": "element-anonymous",
+      "name": "TipoMedioPago",
+      "description": "Corresponde al medio de pago empleado: 01 - Efectivo, 02 - Tarjeta, 03 - Cheque, 04 - Transferencia - depósito bancario, 05 - Recaudado por terceros, 06 - SINPE MOVIL, 07 - Plataforma Digital, 99 - Otros",
+      "sources": ["2024/v4.4/ReciboElectronicoPago_V4.4.xsd"],
+      "values": [
+        {
+          "code": "01",
+          "description": "Efectivo"
+        },
+        {
+          "code": "02",
+          "description": "Tarjeta"
+        },
+        {
+          "code": "03",
+          "description": "Cheque"
+        },
+        {
+          "code": "04",
+          "description": "Transferencia - depósito bancario"
+        },
+        {
+          "code": "05",
+          "description": "Recaudado por terceros"
+        },
+        {
+          "code": "06",
+          "description": "SINPE MOVIL"
+        },
+        {
+          "code": "07",
+          "description": "Plataforma Digital"
+        },
+        {
+          "code": "99",
+          "description": "Otros"
+        }
+      ]
+    },
+    {
+      "key": "TipoDocOtrosCargosType",
+      "kind": "named-simple-type",
+      "name": "TipoDocOtrosCargosType",
+      "description": "Tipo de documento otros cargos",
+      "sources": [
+        "2024/v4.4/FacturaElectronicaCompra_V4.4.xsd",
+        "2024/v4.4/FacturaElectronicaExportacion_V4.4.xsd",
+        "2024/v4.4/FacturaElectronica_V4.4.xsd",
+        "2024/v4.4/NotaCreditoElectronica_V4.4.xsd",
+        "2024/v4.4/NotaDebitoElectronica_V4.4.xsd",
+        "2024/v4.4/TiqueteElectronico_V4.4.xsd"
+      ],
+      "values": [
+        {
+          "code": "01",
+          "description": "Contribución parafiscal"
+        },
+        {
+          "code": "02",
+          "description": "Timbre de la Cruz Roja"
+        },
+        {
+          "code": "03",
+          "description": "Timbre de Benemérito Cuerpo de Bomberos de Costa Rica"
+        },
+        {
+          "code": "04",
+          "description": "Cobro de un tercero"
+        },
+        {
+          "code": "05",
+          "description": "Costos de Exportación"
+        },
+        {
+          "code": "06",
+          "description": "Impuesto de servicio 10%"
+        },
+        {
+          "code": "07",
+          "description": "Timbre de Colegios Profesionales"
+        },
+        {
+          "code": "08",
+          "description": "Depósitos de Garantía"
+        },
+        {
+          "code": "09",
+          "description": "Multas o Penalizaciones"
+        },
+        {
+          "code": "10",
+          "description": "Intereses Moratorios"
+        },
+        {
+          "code": "99",
+          "description": "Otros Cargos"
+        }
+      ]
+    },
+    {
+      "key": "TipoDocReferenciaType",
+      "kind": "named-simple-type",
+      "name": "TipoDocReferenciaType",
+      "sources": [
+        "2024/v4.4/FacturaElectronicaCompra_V4.4.xsd",
+        "2024/v4.4/FacturaElectronicaExportacion_V4.4.xsd",
+        "2024/v4.4/FacturaElectronica_V4.4.xsd",
+        "2024/v4.4/NotaCreditoElectronica_V4.4.xsd",
+        "2024/v4.4/NotaDebitoElectronica_V4.4.xsd",
+        "2024/v4.4/ReciboElectronicoPago_V4.4.xsd",
+        "2024/v4.4/TiqueteElectronico_V4.4.xsd"
+      ],
+      "values": [
+        {
+          "code": "01",
+          "description": "Factura electrónica"
+        },
+        {
+          "code": "02",
+          "description": "Nota de debido electrónica"
+        },
+        {
+          "code": "03",
+          "description": "nota de crédito electrónica"
+        },
+        {
+          "code": "04",
+          "description": "Tiquete electrónico"
+        },
+        {
+          "code": "05",
+          "description": "Nota de despacho"
+        },
+        {
+          "code": "06",
+          "description": "Contrato"
+        },
+        {
+          "code": "07",
+          "description": "Procedimiento"
+        },
+        {
+          "code": "08",
+          "description": "Comprobante emitido en contigencia"
+        },
+        {
+          "code": "09",
+          "description": "Devolución mercadería"
+        },
+        {
+          "code": "10",
+          "description": "Comprobante electrónico rechazado por el Ministerio de Hacienda"
+        },
+        {
+          "code": "11",
+          "description": "Sustituye factura rechazada por el Receptor del comprobante"
+        },
+        {
+          "code": "12",
+          "description": "Sustituye Factura de exportación"
+        },
+        {
+          "code": "13",
+          "description": "Facturación mes vencido"
+        },
+        {
+          "code": "99",
+          "description": "Otros"
+        },
+        {
+          "code": "14",
+          "description": "Comprobante aportado por contribuyente de Régimen Especial."
+        },
+        {
+          "code": "15",
+          "description": "Sustituye una Factura electrónica de Compra"
+        },
+        {
+          "code": "16",
+          "description": "Comprobante de Proveedor No Domiciliado"
+        },
+        {
+          "code": "17",
+          "description": "Nota de Crédito a Factura Electrónica de Compra"
+        },
+        {
+          "code": "18",
+          "description": "Nota de Débito a Factura Electrónica de Compra"
+        }
+      ]
+    },
+    {
+      "key": "TipoExoneracionType",
+      "kind": "named-simple-type",
+      "name": "TipoExoneracionType",
+      "sources": [
+        "2024/v4.4/FacturaElectronicaCompra_V4.4.xsd",
+        "2024/v4.4/FacturaElectronica_V4.4.xsd",
+        "2024/v4.4/NotaCreditoElectronica_V4.4.xsd",
+        "2024/v4.4/NotaDebitoElectronica_V4.4.xsd",
+        "2024/v4.4/TiqueteElectronico_V4.4.xsd"
+      ],
+      "values": [
+        {
+          "code": "01",
+          "description": "Compras autorizadas por la Dirección General de Tributación"
+        },
+        {
+          "code": "02",
+          "description": "Ventas exentas a diplomáticos"
+        },
+        {
+          "code": "03",
+          "description": "Autorizado por Ley Especial"
+        },
+        {
+          "code": "04",
+          "description": "Exenciones Dirección General de Hacienda Autorización Local Genérica"
+        },
+        {
+          "code": "05",
+          "description": "Exenciones Dirección General de Hacienda Transitorio V (servicios de ingeniería, arquitectura, topografía obra civil)"
+        },
+        {
+          "code": "06",
+          "description": "Servicios turísticos inscritos ante el Instituto Costarricense de Turismo (ICT)"
+        },
+        {
+          "code": "07",
+          "description": "Transitorio XVII (Recolección, Clasificación, almacenamiento de Reciclaje y reutilizable)"
+        },
+        {
+          "code": "08",
+          "description": "Exoneración a Zona Franca"
+        },
+        {
+          "code": "09",
+          "description": "Exoneración de servicios complementarios para la exportación articulo 11 RLIVA"
+        },
+        {
+          "code": "10",
+          "description": "Órgano de las corporaciones municipales"
+        },
+        {
+          "code": "11",
+          "description": "Exenciones Dirección General de Hacienda Autorización de Impuesto Local Concreta"
+        },
+        {
+          "code": "99",
+          "description": "Otros"
+        }
+      ]
+    },
+    {
+      "key": "TipoTransaccionType",
+      "kind": "named-simple-type",
+      "name": "TipoTransaccionType",
+      "description": "Tipos de transacción para el caso de transacciones con tratamientos tributarios específicos",
+      "sources": [
+        "2024/v4.4/FacturaElectronicaCompra_V4.4.xsd",
+        "2024/v4.4/FacturaElectronicaExportacion_V4.4.xsd",
+        "2024/v4.4/FacturaElectronica_V4.4.xsd",
+        "2024/v4.4/NotaCreditoElectronica_V4.4.xsd",
+        "2024/v4.4/NotaDebitoElectronica_V4.4.xsd"
+      ],
+      "values": [
+        {
+          "code": "01",
+          "description": "Venta Normal de Bienes y Servicios (Transacción General)"
+        },
+        {
+          "code": "02",
+          "description": "Mercancía de Autoconsumo exento"
+        },
+        {
+          "code": "03",
+          "description": "Mercancía de Autoconsumo gravado"
+        },
+        {
+          "code": "04",
+          "description": "Servicio de Autoconsumo exento"
+        },
+        {
+          "code": "05",
+          "description": "Servicio de Autoconsumo gravado"
+        },
+        {
+          "code": "06",
+          "description": "Cuota de afiliación"
+        },
+        {
+          "code": "07",
+          "description": "Cuota de afiliación Exenta"
+        },
+        {
+          "code": "08",
+          "description": "Bienes de Capital para el emisor"
+        },
+        {
+          "code": "09",
+          "description": "Bienes de Capital para el receptor"
+        },
+        {
+          "code": "10",
+          "description": "Bienes de Capital para el emisor y el receptor"
+        },
+        {
+          "code": "11",
+          "description": "Bienes de capital de autoconsumo exento para el emisor"
+        },
+        {
+          "code": "12",
+          "description": "Bienes de capital sin contraprestación a terceros exento para el emisor"
+        },
+        {
+          "code": "13",
+          "description": "Sin contraprestación a terceros"
+        }
+      ]
+    },
+    {
+      "key": "TiqueteElectronico/CondicionVenta",
+      "kind": "element-anonymous",
+      "name": "CondicionVenta",
+      "description": "Condiciones de la venta: 01 Contado, 02 Crédito, 03 Consignación, 04 Apartado, 05 Arrendamiento con opción de compra, 06 Arrendamiento en función financiera, 07 Cobro a favor de un tercero, 08 servicios prestados al estado a crédito, 09 pago del servicio prestado al estado,10 venta a crédito hasta 90 dias,11 pago de venta a credito en IVA hasta 90 dias, 99 Otros",
+      "sources": ["2024/v4.4/TiqueteElectronico_V4.4.xsd"],
+      "values": [
+        {
+          "code": "01",
+          "description": "Contado"
+        },
+        {
+          "code": "02",
+          "description": "Crédito"
+        },
+        {
+          "code": "03",
+          "description": "Consignación"
+        },
+        {
+          "code": "04",
+          "description": "Apartado"
+        },
+        {
+          "code": "05",
+          "description": "Arrendamiento con opción de compra"
+        },
+        {
+          "code": "06",
+          "description": "Arrendamiento en función financiera"
+        },
+        {
+          "code": "07",
+          "description": "Cobro a favor de un tercero"
+        },
+        {
+          "code": "08",
+          "description": "Servicios prestados al Estado a crédito"
+        },
+        {
+          "code": "10",
+          "description": "Venta a crédito en IVA hasta 90 días (Artículo 27, LIVA)"
+        },
+        {
+          "code": "13",
+          "description": "Venta Bienes Usados No Contribuyente"
+        },
+        {
+          "code": "14",
+          "description": "Arrendamiento Operativo"
+        },
+        {
+          "code": "15",
+          "description": "Arrendamiento Financiero"
+        },
+        {
+          "code": "99",
+          "description": "Otros"
+        }
+      ]
+    },
+    {
+      "key": "TiqueteElectronico/DetalleServicio/LineaDetalle/DetalleSurtido/LineaDetalleSurtido/CodigoComercialSurtido/TipoSurtido",
+      "kind": "element-anonymous",
+      "name": "TipoSurtido",
+      "sources": ["2024/v4.4/TiqueteElectronico_V4.4.xsd"],
+      "values": [
+        {
+          "code": "01",
+          "description": "Código del producto del vendedor"
+        },
+        {
+          "code": "02",
+          "description": "Código del producto del comprador"
+        },
+        {
+          "code": "03",
+          "description": "código del producto asignado por la industria"
+        },
+        {
+          "code": "04",
+          "description": "código de uso interno"
+        },
+        {
+          "code": "99",
+          "description": "Otros"
+        }
+      ]
+    },
+    {
+      "key": "TiqueteElectronico/DetalleServicio/LineaDetalle/DetalleSurtido/LineaDetalleSurtido/IVACobradoFabricaSurtido",
+      "kind": "element-anonymous",
+      "name": "IVACobradoFabricaSurtido",
+      "description": "En este campo se indicará si el Impuesto al Valor Agregado fue cobrado a nivel de fábrica, por lo que deberá ser utilizado únicamente por los obligados tributarios a realizar el pago de esta forma. Se convierte en obligatorio cuando el IVA se cobra o se cobró a nivel de fábrica. Al hacer uso del presente campo el producto se entenderá exento para el código 02, por lo cual no deberá llenar el subnodo de impuestos para el cálculo del IVA. ▪Para el código 01 el emisor puede separar los impuestos que está cobrando en la fábrica.",
+      "sources": ["2024/v4.4/TiqueteElectronico_V4.4.xsd"],
+      "values": [
+        {
+          "code": "01",
+          "description": "Venta de bienes con IVA según el sistema especial de determinación de IVA a nivel de fábrica (Se utiliza cuando se está cobrando el IVA a nivel de fábrica"
+        },
+        {
+          "code": "02",
+          "description": "Ventas exentas según el sistema especial de determinación de IVA a nivel de fábrica, mayorista y aduanas (se utiliza cuando el producto se encuentra exento ya que el bien soporto el cobro de impuestos a nivel de fábrica)."
+        }
+      ]
+    },
+    {
+      "key": "TiqueteElectronico/DetalleServicio/LineaDetalle/IVACobradoFabrica",
+      "kind": "element-anonymous",
+      "name": "IVACobradoFabrica",
+      "description": "En este campo se indicará si el Impuesto al Valor Agregado fue cobrado a nivel de fábrica, por lo que deberá ser utilizado únicamente por los obligados tributarios a realizar el pago de esta forma. Se convierte en obligatorio cuando el IVA se cobra o se cobró a nivel de fábrica. Al hacer uso del presente campo el producto se entenderá exento para el código 02, por lo cual no deberá llenar el subnodo de impuestos para el cálculo del IVA. Para el código 01 el emisor puede separar los impuestos que está cobrando en la fábrica.",
+      "sources": ["2024/v4.4/TiqueteElectronico_V4.4.xsd"],
+      "values": [
+        {
+          "code": "01",
+          "description": "Venta de bienes con IVA según el sistema especial de determinación de IVA a nivel de fábrica (Se utiliza cuando se está cobrando el IVA a nivel de fábrica"
+        },
+        {
+          "code": "02",
+          "description": "Ventas exentas según el sistema especial de determinación de IVA a nivel de fábrica, mayorista y aduanas (se utiliza cuando el producto se encuentra exento ya que el bien soporto el cobro de impuestos a nivel de fábrica)."
+        }
+      ]
+    },
+    {
+      "key": "TiqueteElectronico/ResumenFactura/MedioPago/TipoMedioPago",
+      "kind": "element-anonymous",
+      "name": "TipoMedioPago",
+      "description": "Corresponde al medio de pago empleado: 01 - Efectivo, 02 - Tarjeta, 03 - Cheque, 04 - Transferencia - depósito bancario, 05 - Recaudado por terceros, 06 - SINPE MOVIL, 07 - Plataforma Digital, 99 - Otros",
+      "sources": ["2024/v4.4/TiqueteElectronico_V4.4.xsd"],
+      "values": [
+        {
+          "code": "01",
+          "description": "Efectivo"
+        },
+        {
+          "code": "02",
+          "description": "Tarjeta"
+        },
+        {
+          "code": "03",
+          "description": "Cheque"
+        },
+        {
+          "code": "04",
+          "description": "Transferencia - depósito bancario"
+        },
+        {
+          "code": "05",
+          "description": "Recaudado por terceros"
+        },
+        {
+          "code": "06",
+          "description": "SINPE MOVIL"
+        },
+        {
+          "code": "07",
+          "description": "Plataforma Digital"
+        },
+        {
+          "code": "99",
+          "description": "Otros"
+        }
+      ]
+    },
+    {
+      "key": "UnidadMedidaType",
+      "kind": "named-simple-type",
+      "name": "UnidadMedidaType",
+      "description": "Unidades de Medida basadas en el estándar RTC 443:2010",
+      "sources": [
+        "2024/v4.4/FacturaElectronicaCompra_V4.4.xsd",
+        "2024/v4.4/FacturaElectronicaExportacion_V4.4.xsd",
+        "2024/v4.4/FacturaElectronica_V4.4.xsd",
+        "2024/v4.4/NotaCreditoElectronica_V4.4.xsd",
+        "2024/v4.4/NotaDebitoElectronica_V4.4.xsd",
+        "2024/v4.4/TiqueteElectronico_V4.4.xsd"
+      ],
+      "values": [
+        {
+          "code": "1",
+          "description": "uno (índice de refracción)"
+        },
+        {
+          "code": "´",
+          "description": "minuto"
+        },
+        {
+          "code": "´´",
+          "description": "segundo"
+        },
+        {
+          "code": "°C",
+          "description": "grado Celsius"
+        },
+        {
+          "code": "1/m",
+          "description": "1 por metro"
+        },
+        {
+          "code": "A",
+          "description": "Ampere"
+        },
+        {
+          "code": "A/m",
+          "description": "ampere por metro"
+        },
+        {
+          "code": "A/m²",
+          "description": "ampere por metro cuadrado"
+        },
+        {
+          "code": "Acv",
+          "description": "Activo Virtual"
+        },
+        {
+          "code": "Al",
+          "description": "Alquiler de uso habitacional"
+        },
+        {
+          "code": "Alc",
+          "description": "Alquiler de uso comercial"
+        },
+        {
+          "code": "B",
+          "description": "bel"
+        },
+        {
+          "code": "Bq",
+          "description": "Becquerel"
+        },
+        {
+          "code": "C",
+          "description": "coulomb"
+        },
+        {
+          "code": "C/kg",
+          "description": "coulomb por kilogramo"
+        },
+        {
+          "code": "C/m²",
+          "description": "coulomb por metro cuadrado"
+        },
+        {
+          "code": "C/m³",
+          "description": "coulomb por metro cúbico"
+        },
+        {
+          "code": "Cc",
+          "description": "Cajuela de café"
+        },
+        {
+          "code": "Cd",
+          "description": "Candela"
+        },
+        {
+          "code": "cd/m²",
+          "description": "candela por metro cuadrado"
+        },
+        {
+          "code": "Cm",
+          "description": "Comisiones"
+        },
+        {
+          "code": "cm",
+          "description": "centímetro"
+        },
+        {
+          "code": "Cu",
+          "description": "cuartillos de café"
+        },
+        {
+          "code": "D",
+          "description": "día"
+        },
+        {
+          "code": "eV",
+          "description": "electronvolt"
+        },
+        {
+          "code": "F",
+          "description": "farad"
+        },
+        {
+          "code": "F/m",
+          "description": "farad por metro"
+        },
+        {
+          "code": "Fa",
+          "description": "fanega de café"
+        },
+        {
+          "code": "G",
+          "description": "Gramo"
+        },
+        {
+          "code": "Gal",
+          "description": "Galón"
+        },
+        {
+          "code": "Gy",
+          "description": "gray"
+        },
+        {
+          "code": "Gy/s",
+          "description": "gray por segundo"
+        },
+        {
+          "code": "h",
+          "description": "hora"
+        },
+        {
+          "code": "H",
+          "description": "henry"
+        },
+        {
+          "code": "H/m",
+          "description": "henry por metro"
+        },
+        {
+          "code": "Hz",
+          "description": "hertz"
+        },
+        {
+          "code": "I",
+          "description": "Intereses"
+        },
+        {
+          "code": "J",
+          "description": "Joule"
+        },
+        {
+          "code": "J/(kg·K)",
+          "description": "joule por kilogramo kelvin"
+        },
+        {
+          "code": "J/(mol·K)",
+          "description": "joule por mol kelvin"
+        },
+        {
+          "code": "J/K",
+          "description": "joule por kelvin"
+        },
+        {
+          "code": "J/kg",
+          "description": "joule por kilogramo"
+        },
+        {
+          "code": "J/m³",
+          "description": "joule por metro cúbico"
+        },
+        {
+          "code": "J/mol",
+          "description": "joule por mol"
+        },
+        {
+          "code": "K",
+          "description": "Kelvin"
+        },
+        {
+          "code": "Kat",
+          "description": "katal"
+        },
+        {
+          "code": "kat/m³",
+          "description": "katal por metro cúbico"
+        },
+        {
+          "code": "Kg",
+          "description": "Kilogramo"
+        },
+        {
+          "code": "kg/m³",
+          "description": "kilogramo por metro cúbico"
+        },
+        {
+          "code": "Km",
+          "description": "Kilometro"
+        },
+        {
+          "code": "Kw",
+          "description": "kilovatios"
+        },
+        {
+          "code": "kWh",
+          "description": "Kilovatios por hora"
+        },
+        {
+          "code": "L",
+          "description": "litro"
+        },
+        {
+          "code": "Lm",
+          "description": "lumen"
+        },
+        {
+          "code": "Ln",
+          "description": "pulgada"
+        },
+        {
+          "code": "Lx",
+          "description": "lux"
+        },
+        {
+          "code": "M",
+          "description": "Metro"
+        },
+        {
+          "code": "m/s",
+          "description": "metro por segundo"
+        },
+        {
+          "code": "m/s²",
+          "description": "metro por segundo cuadrado"
+        },
+        {
+          "code": "m²",
+          "description": "metro cuadrado"
+        },
+        {
+          "code": "m³",
+          "description": "metro cúbico"
+        },
+        {
+          "code": "Min",
+          "description": "minuto"
+        },
+        {
+          "code": "mL",
+          "description": "mililitro"
+        },
+        {
+          "code": "Mm",
+          "description": "Milímetro"
+        },
+        {
+          "code": "Mol",
+          "description": "Mol"
+        },
+        {
+          "code": "mol/m³",
+          "description": "mol por metro cúbico"
+        },
+        {
+          "code": "N",
+          "description": "newton"
+        },
+        {
+          "code": "N/m",
+          "description": "newton por metro"
+        },
+        {
+          "code": "N·m",
+          "description": "newton metro"
+        },
+        {
+          "code": "Np",
+          "description": "neper"
+        },
+        {
+          "code": "º",
+          "description": "grado"
+        },
+        {
+          "code": "Os",
+          "description": "Otro tipo de servicio"
+        },
+        {
+          "code": "Otros",
+          "description": "Se debe indicar la descripción de la medida a utilizar"
+        },
+        {
+          "code": "Oz",
+          "description": "Onzas"
+        },
+        {
+          "code": "Pa",
+          "description": "pascal"
+        },
+        {
+          "code": "Pa·s",
+          "description": "pascal segundo"
+        },
+        {
+          "code": "Qq",
+          "description": "Quintal"
+        },
+        {
+          "code": "Rad",
+          "description": "radián"
+        },
+        {
+          "code": "rad/s",
+          "description": "radián por segundo"
+        },
+        {
+          "code": "rad/s²",
+          "description": "radián por segundo cuadrado"
+        },
+        {
+          "code": "S",
+          "description": "Segundo"
+        },
+        {
+          "code": "s",
+          "description": "siemens"
+        },
+        {
+          "code": "Sp",
+          "description": "Servicios Profesionales"
+        },
+        {
+          "code": "Spe",
+          "description": "Servicios personales"
+        },
+        {
+          "code": "Sr",
+          "description": "estereorradián"
+        },
+        {
+          "code": "St",
+          "description": "Servicios técnicos"
+        },
+        {
+          "code": "Sv",
+          "description": "sievert"
+        },
+        {
+          "code": "t",
+          "description": "tesla"
+        },
+        {
+          "code": "T",
+          "description": "tonelada"
+        },
+        {
+          "code": "U",
+          "description": "unidad de masa atómica unificada"
+        },
+        {
+          "code": "Ua",
+          "description": "unidad astronómica"
+        },
+        {
+          "code": "Unid",
+          "description": "Unidad"
+        },
+        {
+          "code": "V",
+          "description": "volt"
+        },
+        {
+          "code": "V/m",
+          "description": "volt por metro"
+        },
+        {
+          "code": "W",
+          "description": "Watt"
+        },
+        {
+          "code": "W/(m·K)",
+          "description": "watt por metro kevin"
+        },
+        {
+          "code": "W/(m²·sr)",
+          "description": "watt por metro cuadrado estereorradián"
+        },
+        {
+          "code": "W/m²",
+          "description": "watt por metro cuadrado"
+        },
+        {
+          "code": "W/sr",
+          "description": "watt por estereorradián"
+        },
+        {
+          "code": "Wb",
+          "description": "weber"
+        },
+        {
+          "code": "Ω",
+          "description": "ohm"
+        }
+      ]
+    }
+  ]
+}
