@@ -74,7 +74,7 @@ test("3.1 árbol íntegro pasa con exit 0 y anuncia los archivos verificados", (
   assert.equal(result.stderr, "");
 });
 
-test("3.1 un byte alterado falla con ruta, esperado, obtenido y remedio git diff", (t) => {
+test("3.1 un byte alterado falla con ruta, esperado, obtenido y remedio git diff + pnpm spec:update", (t) => {
   const content = "<xsd:schema/>schema contents</xsd:schema>";
   const dir = fixture(t, {
     files: [entry("2024/v4.4/FacturaElectronica.xsd", content)],
@@ -87,7 +87,7 @@ test("3.1 un byte alterado falla con ruta, esperado, obtenido y remedio git diff
     /spec:verify: 2024\/v4\.4\/FacturaElectronica\.xsd: sha256=[0-9a-f]{64} \(esperado\) vs sha256=[0-9a-f]{64} \(obtenido\)/,
   );
   assert.ok(result.stderr.includes("git diff"));
-  assert.ok(!result.stderr.includes("spec:update"));
+  assert.ok(result.stderr.includes("pnpm spec:update"));
 });
 
 test("3.2 un archivo vendored: true ausente falla con la plantilla falta", (t) => {
