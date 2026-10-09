@@ -8,7 +8,7 @@ const schemasDir = override
   ? resolve(process.cwd(), override)
   : join(root, "packages", "sdk", "schemas");
 
-const ALLOWLIST = ["manifest.json", "README.md"];
+const ALLOWLIST = ["manifest.json", "README.md", "codes.json"];
 const REMEDY =
   "spec:verify: remedio: revisa git diff; si el cambio es legítimo, ejecuta pnpm spec:update y revisa su diff antes de commitear";
 
@@ -170,7 +170,7 @@ if (manifest !== null) {
           if (dir === schemasDir && ALLOWLIST.includes(entry.name)) continue;
           if (declared.has(relPath)) continue;
           violations.push(
-            `spec:verify: ${relPath}: no declarado (allowlist en la raíz: manifest.json, README.md)`,
+            `spec:verify: ${relPath}: no declarado (allowlist en la raíz: manifest.json, README.md, codes.json)`,
           );
         }
       };

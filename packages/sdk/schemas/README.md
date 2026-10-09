@@ -26,6 +26,25 @@ These files support the conformance tests and the offline runtime validator.
 The SDK build embeds the 2026 schemas as strings; the raw XSD files are not
 copied into the published npm package.
 
+## `codes.json`
+
+Derived catalog of the official code enumerations embedded in the XSDs of the
+**current** set (`manifest.json` → `currentSet`). Generated offline by
+`pnpm codes:extract`; committed so consumers can diff it like any other
+vendored artifact.
+
+- One table per enumeration-bearing type. Key = named `xs:simpleType` name, or
+  the ancestor path of named `xs:element`/`xs:complexType` containers for
+  anonymous types (e.g. `MensajeHacienda/TipoIdentificacionEmisor`).
+- `sources[]` paths are relative to this directory (same convention as
+  `manifest.json` → `files[].path`).
+- Codes are compared byte-for-byte (no Unicode normalization, no trim, no
+  case folding). Descriptions are entity-decoded, trimmed, and
+  whitespace-collapsed; divergent descriptions for the same code across XSDs
+  keep the first source and emit a `codes:extract:` warning.
+- The SDK does **not** consume this file yet (phase 2 of the codes work).
+  Regenerate after any legitimate schema refresh that changes enumerations.
+
 ## `manifest.json`
 
 Machine-readable inventory of this folder: official surfaces consulted, sets
