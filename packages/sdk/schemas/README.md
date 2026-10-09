@@ -28,9 +28,7 @@ copied into the published npm package.
 
 ## `codes.json`
 
-Derived catalog of the official code enumerations embedded in the XSDs **and
-in the vendored auxiliary sources** (`ANEXOS Y ESTRUCTURAS_V4.4.pdf`,
-`Codigodemoneda_V4.4.pdf`, `Codificacionubicacion_V4.4.rar`) of the
+Derived catalog of the official code enumerations embedded in the XSDs of the
 **current** set (`manifest.json` → `currentSet`). Generated offline by
 `pnpm codes:extract`; committed so consumers can diff it like any other
 vendored artifact.
@@ -44,25 +42,6 @@ vendored artifact.
   case folding). Descriptions are entity-decoded, trimmed, and
   whitespace-collapsed; divergent descriptions for the same code across XSDs
   keep the first source and emit a `codes:extract:` warning.
-- Tables whose key exists only in an auxiliary source have
-  `kind: "aux-table"`: the four location tables
-  (`CodificacionUbicacion/{Provincia,Canton,Distrito,Barrio}`, from the RAR)
-  and the ANEXOS-only note tables (`Nota3/...`). Their values omit the
-  per-value `sources[]`; the table's `sources[]` names the single source.
-  Merged tables (XSD + auxiliary with a shared key) keep `sources[]` per
-  value.
-- **Composite location codes:** in the source, cantón/distrito/barrio codes
-  restart inside every parent (cantón `1` exists in every provincia), so
-  lower-level codes are composed as `provincia[.cantón[.distrito[.barrio]]]`
-  with a literal `.` separator and components kept byte-for-byte from the
-  source (no padding, no normalization). Lookup example: cantón 5 of
-  provincia 3 is `3.5`; its distrito 1 is `3.5.1`; its barrio 1 is
-  `3.5.1.1`. Codes are unique within each table.
-- The disposition of ANEXOS notes that are _not_ extracted (covered by XSD,
-  informative, or out of scope) is declared canonically in the capability
-  spec `openspec/specs/codes-extraction/spec.md`; this README only
-  references it (it is synced from the change delta when the change is
-  archived — never edited by hand in advance).
 - The SDK does **not** consume this file yet (phase 2 of the codes work).
   Regenerate after any legitimate schema refresh that changes enumerations.
 
