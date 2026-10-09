@@ -1,0 +1,138 @@
+name: Spec drift
+
+on:
+  schedule:
+    - cron: "0 12 1 * *" # día 1, 12:00 UTC = 06:00 Costa Rica
+  workflow_dispatch:
+
+# Evita que un dispatch solapado corra en paralelo al cron.
+concurrency:
+  group: spec-drift
+  cancel-in-progress: false
+
+# Solo lectura de repo + issues: el job no puede commitear ni abrir PR.
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  check:
+    name: spec:check → issue spec-drift
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: ".nvmrc"
+          cache: "pnpm"
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      # spec:check usa solo node:* y fetch; sin binarios externos (verificado
+      # en check-core.mjs y su grafo de imports). No hace falta xmllint.
+      - name: Run spec:check
+        id: check
+        shell: bash
+        run: |
+          set +e
+          pnpm spec:check > "$RUNNER_TEMP/spec-check.out" 2> "$RUNNER_TEMP/spec-check.err"
+          code=$?
+          echo "code=$code" >> "$GITHUB_OUTPUT"
+
+      - name: No drift
+        if: steps.check.outputs.code == '0'
+        shell: bash
+        run: cat "$RUNNER_TEMP/spec-check.out"
+
+      # Rama de fallo operativo: código 2 y cualquier código distinto de 0 y 1.
+      # El código original va en el mensaje; el job sale SIEMPRE con 2.
+      # El veredicto "sin cambios" jamás se emite aquí.
+      - name: Operational failure
+        if: steps.check.outputs.code != '0' && steps.check.outputs.code != '1'
+        shell: bash
+        run: |
+          echo "spec:check falló con código ${{ steps.check.outputs.code }}:"
+          cat "$RUNNER_TEMP/spec-check.err"
+          exit 2
+
+      - name: Report drift
+        if: steps.check.outputs.code == '1'
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+
+          REPORT="$RUNNER_TEMP/spec-check.out"
+          BODY="$RUNNER_TEMP/body.md"
+
+          # Cada operación de gh que falle termina el job con código 2 y el
+          # nombre de la operación: "no pude reportar" nunca es "sin cambios".
+          run_gh() {
+            if ! "$@"; then
+              echo "spec-drift: falló la operación de GitHub: $*" >&2
+              exit 2
+            fi
+          }
+
+          # Huella determinista: SHA-256 del informe con whitespace final por
+          # línea recortado (el informe de spec:check no tiene timestamps).
+          FP=$(sed -E 's/[[:space:]]+$//' "$REPORT" | sha256sum | cut -d' ' -f1)
+          MARKER="<!-- spec-drift-fingerprint: $FP -->"
+
+          # Cuerpo del issue: informe + huella; truncado a ~60 KB si excede
+          # el límite de GitHub (~65 KB), con nota. El íntegro queda en el log.
+          MAX_BYTES=61440
+          REPORT_SIZE=$(wc -c < "$REPORT")
+          if [ "$REPORT_SIZE" -gt "$MAX_BYTES" ]; then
+            head -c "$MAX_BYTES" "$REPORT" > "$BODY"
+            printf '\n[informe truncado — completo en los logs del job]\n%s\n' "$MARKER" >> "$BODY"
+          else
+            cp "$REPORT" "$BODY"
+            printf '%s\n' "$MARKER" >> "$BODY"
+          fi
+
+          # Etiqueta canónica; --force reaplica color/descripción si ya existe.
+          run_gh gh label create spec-drift \
+            --force \
+            --color B60304 \
+            --description "Hacienda spec drift detected by spec:check"
+
+          # Issues abiertos con la etiqueta. El parser es defensivo: cuerpos
+          # sin el marcador de huella simplemente no coinciden.
+          if ! EXISTING=$(gh issue list --label spec-drift --state open --json number,body --limit 200); then
+            echo "spec-drift: falló la operación de GitHub: gh issue list" >&2
+            exit 2
+          fi
+
+          MATCH=$(printf '%s' "$EXISTING" | jq -r --arg fp "$FP" \
+            '[.[] | select(.body != null and (.body | contains($fp)))][0].number // empty')
+
+          if [ -n "$MATCH" ]; then
+            run_gh gh issue comment "$MATCH" --body-file "$BODY"
+            echo "spec-drift: deriva comentada en el issue #$MATCH (huella $FP)"
+            exit 0
+          fi
+
+          # Issue nuevo: referenciar otros issues abiertos con la etiqueta.
+          RELATED=$(printf '%s' "$EXISTING" | jq -r '.[].number' | grep -v '^$' || true)
+          if [ -n "$RELATED" ]; then
+            {
+              printf '\nRelacionado con'
+              for n in $RELATED; do printf ' #%s' "$n"; done
+              printf '\n'
+            } >> "$BODY"
+          fi
+
+          TITLE="[spec-drift] Deriva detectada en superficies de Hacienda"
+          run_gh gh issue create --title "$TITLE" --label spec-drift --body-file "$BODY"
+          echo "spec-drift: issue abierto con huella $FP"
