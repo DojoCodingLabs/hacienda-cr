@@ -80,41 +80,10 @@ Field semantics:
   whose bytes were confirmed identical to the vendored files. Initially
   2026-10-08 for both sets: fresh downloads on that date matched the repo
   byte-for-byte.
-- `lastSyncedAt` — date of the **last `spec:update` run** (the only command
-  that writes the manifest; `spec:check` is read-only and never touches
-  `downloadedAt` or `lastSyncedAt`). The semantics will change to "last job
-  run" when the scheduled job exists.
-- `surfaces[]` — each official surface declares `id`, `type`, and its
-  addressing fields: `url` for `atv-page` (HTML listing, version discovery) and
-  `cdn-xml-schemas`; `baseUrl` plus `knownFiles[]` for `known-file-probe`.
-  OVi is a probe, not a listing: the TRIBU-CR portal is a SPA and
-  `https://www.hacienda.go.cr/docs/` publishes no parseable index, so the nine
-  flat XSDs are probed file-by-file (HEAD validators, GET + SHA-256 when they
-  change or when there is no baseline yet). The probe never enumerates: new
-  files or versions appear only through the ATV listing.
-- `files[].lastModified` (optional, probe surfaces only) — `Last-Modified`
-  baseline recorded by the last `spec:update` download, used by `spec:check`
-  to skip downloads when HEAD confirms it; it is absent until the first
-  `spec:update` run records it.
-
-## Watching the surfaces
-
-Two root commands compare this folder against what Hacienda publishes today
-(requires network; neither runs inside `pnpm verify`):
-
-- `pnpm spec:check` — read-only. Downloads/probes the declared surfaces,
-  compares hashes and versions, prints a report ordered by severity (1 new
-  version, 2 hash drift, 3 added/removed, 4 auxiliary changes), and exits `0`
-  only when there are no differences and the canary passes; `1` on
-  differences; `2` on operational failure (empty listing, below `MIN_LINKS`,
-  missing known file, unreachable surface, `knownFiles` not answering 200).
-- `pnpm spec:update` — applies real differences: re-downloads the watched
-  files (including probe drift on any set), rewrites vendorized files and the
-  manifest (`sha256`, `bytes`, `downloadedAt`, `lastSyncedAt`, `lastModified`
-  baselines), then runs `spec:verify` as a gate. It never commits or stages:
-  review the diff first. A failed canary or an unreachable surface writes
-  nothing. `currentSet` changes only via an explicit
-  `pnpm spec:update --set <id>`.
+- `lastSyncedAt` — today a **manually written date** (2026-10-08); the
+  semantics change to "last `spec:update` run" once `spec:check`/`spec:update`
+  exist. `spec:check` will never write the manifest and therefore never updates
+  `downloadedAt`; only `spec:update` does.
 
 ## Unverified assumptions
 

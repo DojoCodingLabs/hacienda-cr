@@ -10,7 +10,7 @@ const schemasDir = override
 
 const ALLOWLIST = ["manifest.json", "README.md"];
 const REMEDY =
-  "spec:verify: remedio: revisa git diff; si el cambio es legítimo, ejecuta pnpm spec:update y revisa su diff antes de commitear";
+  "spec:verify: remedio: revisa git diff; si el cambio es legítimo, actualiza manifest.json y revisa su diff antes de commitear";
 
 const violations = [];
 const manifestError = (detail, expected) =>

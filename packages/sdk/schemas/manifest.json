@@ -14,19 +14,8 @@
     },
     {
       "id": "ovi",
-      "type": "known-file-probe",
-      "baseUrl": "https://www.hacienda.go.cr/docs/",
-      "knownFiles": [
-        "FacturaElectronica_V4.4.xsd",
-        "FacturaElectronicaCompra_V4.4.xsd",
-        "FacturaElectronicaExportacion_V4.4.xsd",
-        "MensajeHacienda_V4.4.xsd",
-        "MensajeReceptor_V4.4.xsd",
-        "NotaCreditoElectronica_V4.4.xsd",
-        "NotaDebitoElectronica_V4.4.xsd",
-        "ReciboElectronicoPago_V4.4.xsd",
-        "TiqueteElectronico_V4.4.xsd"
-      ]
+      "url": "https://www.hacienda.go.cr/docs/",
+      "type": "ovi-list"
     },
     {
       "id": "cdn",

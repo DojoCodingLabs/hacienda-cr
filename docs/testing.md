@@ -31,10 +31,6 @@ pnpm test:scripts
 pnpm test:packages
 ```
 
-`pnpm test:scripts` runs every `scripts/**/*.test.mjs` recursively (including
-`scripts/spec-watch/spec-watch.test.mjs`), always with mocked HTTP and no
-credentials.
-
 The `env -u` examples use a POSIX shell. On other platforms, unset those variables
 in the test process or use the full offline verification wrapper.
 `pnpm test` runs through Turbo and builds before tests, but does not clear live
@@ -42,17 +38,16 @@ test variables. `test:watch` and `test:coverage` are available per package; the 
 `pnpm test:coverage` runs coverage across packages. Clear live switches for those
 commands too unless live access was explicitly authorized.
 
-| Change                 | Useful focused evidence                                               |
-| ---------------------- | --------------------------------------------------------------------- |
-| Shared fields or enums | Shared schema tests and affected SDK builders/adapters                |
-| XML or schema revision | Builder regressions, runtime validation, independent XSD conformance  |
-| Tax totals             | Calculator and business-validation regressions with discounts/taxes   |
-| Auth or HTTP           | Mocked token, deadline, cancellation, redirect, and retry tests       |
-| Sequences              | Temporary-directory concurrency, reset, overflow, and lock tests      |
-| CLI output             | Command errors, JSON/text output, and exit codes                      |
-| MCP tools              | In-memory tool/resource contracts, error cases, mocked side effects   |
-| Exports or bundling    | `pnpm test:packages` installed ESM, types, CLI, and MCP checks        |
-| Schema drift           | `pnpm spec:check` (network, read-only); apply with `pnpm spec:update` |
+| Change                 | Useful focused evidence                                              |
+| ---------------------- | -------------------------------------------------------------------- |
+| Shared fields or enums | Shared schema tests and affected SDK builders/adapters               |
+| XML or schema revision | Builder regressions, runtime validation, independent XSD conformance |
+| Tax totals             | Calculator and business-validation regressions with discounts/taxes  |
+| Auth or HTTP           | Mocked token, deadline, cancellation, redirect, and retry tests      |
+| Sequences              | Temporary-directory concurrency, reset, overflow, and lock tests     |
+| CLI output             | Command errors, JSON/text output, and exit codes                     |
+| MCP tools              | In-memory tool/resource contracts, error cases, mocked side effects  |
+| Exports or bundling    | `pnpm test:packages` installed ESM, types, CLI, and MCP checks       |
 
 For documentation-only edits, check formatting of the edited files, resolve local
 links, and compare commands and claims to source/manifests. No new runtime tests
@@ -64,18 +59,6 @@ Use mocked network calls, generated signing certificates, synthetic invoices, an
 temporary `configDir` values. Never use real `~/.hacienda-cr` state for routine
 verification. MCP creation allocates a sequence even though it returns a draft;
 the server tests mock that allocation.
-
-## Spec watching commands
-
-`pnpm spec:check` and `pnpm spec:update` compare `packages/sdk/schemas/` against
-what Hacienda publishes today; both need network, so neither runs inside
-`pnpm verify`. `spec:check` is read-only (exit `0` clean, `1` differences, `2`
-operational failure) and never writes the manifest or the vendored files.
-`spec:update` writes real differences and stops before any write on a canary
-failure or an unreachable surface; it never commits or stages. The offline
-counterpart is `node scripts/spec-verify.mjs`, which `pnpm verify` already runs.
-Routine development uses only mocked HTTP in `scripts/spec-watch/*.test.mjs`;
-run the live commands only when authorized to touch the official surfaces.
 
 `src/auth/auth.integration.spec.ts` in the SDK contacts the sandbox IDP when
 `HACIENDA_USERNAME` and `HACIENDA_PASSWORD` are available. Credential presence
