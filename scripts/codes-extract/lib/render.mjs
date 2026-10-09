@@ -70,15 +70,6 @@ export function mergeTables(fileResults) {
   return { tables, warnings };
 }
 
-/**
- * Serialize the final document. Tables arrive sorted by key with the
- * authority merge already applied: fused tables carry per-value
- * `sources[]` (XSD set order, then the auxiliary that contributed each
- * description), `aux-table` values omit them (design D5), and
- * `generatedFrom` lists XSD + auxiliary sources in fixed order. The
- * renderer only stringifies, so those fields pass through untouched and
- * two runs over the same vendored tree produce identical bytes.
- */
 export function renderCodesJson({ currentSet, generatedFrom, tables }) {
   const doc = {
     schemaVersion: 1,
