@@ -8,7 +8,7 @@
     "url": "https://github.com/DojoCodingLabs/hacienda-cr.git"
   },
   "homepage": "https://github.com/DojoCodingLabs/hacienda-cr#readme",
-  "packageManager": "pnpm@9.15.4",
+  "packageManager": "pnpm@12.10.1",
   "engines": {
     "node": ">=22"
   },
@@ -50,10 +50,5 @@
   },
   "lint-staged": {
     "*": "prettier --write --ignore-unknown"
-  },
-  "pnpm": {
-    "overrides": {
-      "esbuild": "^0.28.2"
-    }
   }
 }
