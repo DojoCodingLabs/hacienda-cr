@@ -25,7 +25,7 @@
     "comprobantes-electronicos"
   ],
   "scripts": {
-    "build": "tsup",
+    "build": "node ../../scripts/spec-verify.mjs && tsup",
     "prepublishOnly": "pnpm run build",
     "test": "vitest run",
     "lint": "eslint src/",

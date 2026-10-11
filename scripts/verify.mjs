@@ -8,6 +8,7 @@ for (const key of ["HACIENDA_USERNAME", "HACIENDA_PASSWORD", "HACIENDA_SANDBOX_E
 execFileSync("xmllint", ["--version"], { stdio: "ignore" });
 for (const args of [
   ["format"],
+  ["spec:verify"],
   ["exec", "turbo", "run", "lint", "typecheck", "build", "test"],
   ["test:scripts"],
   ["test:packages"],
