@@ -94,7 +94,11 @@ jobs:
           MAX_BYTES=61440
           REPORT_SIZE=$(wc -c < "$REPORT")
           if [ "$REPORT_SIZE" -gt "$MAX_BYTES" ]; then
-            head -c "$MAX_BYTES" "$REPORT" > "$BODY"
+            # iconv -c descarta una secuencia UTF-8 incompleta cuando el corte cae
+            # en medio de un carácter (un nombre de archivo acentuado basta). Ojo:
+            # iconv devuelve 1 al descartarla, y con `set -euo pipefail` eso tumbaría
+            # el job; la salida sí se escribe antes de fallar, así que `|| true` basta.
+            head -c "$MAX_BYTES" "$REPORT" | iconv -f UTF-8 -t UTF-8 -c > "$BODY" || true
             printf '\n[informe truncado — completo en los logs del job]\n%s\n' "$MARKER" >> "$BODY"
           else
             cp "$REPORT" "$BODY"
