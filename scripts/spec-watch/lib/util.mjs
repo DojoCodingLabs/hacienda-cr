@@ -20,6 +20,17 @@ export function basenameOf(url) {
   }
 }
 
+// Last path segment, but safe to use as a file name: a name scraped from a
+// surface is untrusted input, and `decodeURIComponent` can turn `%2F` or
+// `%2E%2E` into a traversal once it reaches `join()`.
+export function safeBasename(value, origin = String(value)) {
+  const basename = basenameOf(value);
+  if (!basename || basename === "." || basename.includes("..") || /[\\/]/.test(basename)) {
+    throw new Error(`nombre de archivo inseguro: ${basename} (${origin})`);
+  }
+  return basename;
+}
+
 export function extensionOf(name) {
   const dot = name.lastIndexOf(".");
   return dot > 0 ? name.slice(dot).toLowerCase() : "";

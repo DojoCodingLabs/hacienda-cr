@@ -1,4 +1,4 @@
-import { basenameOf, parseVersion } from "./util.mjs";
+import { parseVersion, safeBasename } from "./util.mjs";
 import { isWatchedBasename } from "./watched.mjs";
 
 const ANCHOR_RE = /<a\b([^>]*)>([\s\S]*?)<\/a>/gi;
@@ -39,7 +39,7 @@ export function extractAnchors(html) {
 }
 
 function makeLink(surface, resolved, version, text) {
-  const basename = basenameOf(resolved.href);
+  const basename = safeBasename(resolved.href, surface.id);
   return {
     surfaceId: surface.id,
     surfaceType: surface.type,

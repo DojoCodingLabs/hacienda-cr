@@ -1,5 +1,5 @@
 import { mkdirSync, writeFileSync } from "node:fs";
-import { dirname, join } from "node:path";
+import { dirname, resolve, sep } from "node:path";
 import { analyze } from "./analyze.mjs";
 import { evaluateCanary } from "./canary.mjs";
 import { MIN_LINKS } from "./constants.mjs";
@@ -27,6 +27,17 @@ export function applySetFlag(manifest, setId) {
 
 function count(bytes) {
   return Buffer.byteLength(bytes);
+}
+
+// Names come from remote surfaces, so the invariant that matters is the
+// resolved target: a write may never land outside `schemasDir`.
+function containedPath(schemasDir, relativePath) {
+  const root = resolve(schemasDir);
+  const target = resolve(root, relativePath);
+  if (target !== root && !target.startsWith(`${root}${sep}`)) {
+    throw new Error(`ruta fuera del árbol vendorizado: ${relativePath}`);
+  }
+  return target;
 }
 
 export async function runUpdate({
@@ -168,13 +179,26 @@ export async function runUpdate({
   }
   manifest.lastSyncedAt = isoDay(now);
 
+  let manifestTarget;
+  let targets;
   try {
-    for (const write of writes) {
-      const target = join(schemasDir, write.path);
+    manifestTarget = containedPath(schemasDir, "manifest.json");
+    targets = writes.map((write) => containedPath(schemasDir, write.path));
+  } catch (error) {
+    return {
+      code: 2,
+      stdout: "",
+      stderr: `spec:update: escritura rechazada: ${error.message}\n`,
+      writes: [],
+    };
+  }
+
+  try {
+    for (const [index, target] of targets.entries()) {
       fs.mkdirSync(dirname(target), { recursive: true });
-      fs.writeFileSync(target, write.body);
+      fs.writeFileSync(target, writes[index].body);
     }
-    fs.writeFileSync(join(schemasDir, "manifest.json"), `${JSON.stringify(manifest, null, 2)}\n`);
+    fs.writeFileSync(manifestTarget, `${JSON.stringify(manifest, null, 2)}\n`);
   } catch (error) {
     return {
       code: 2,

@@ -1,12 +1,10 @@
 import { watchedManifestFiles } from "./manifest.mjs";
-import { foldName } from "./util.mjs";
+import { foldName, safeBasename } from "./util.mjs";
 
 export function probeUrl(surface, basename) {
-  if (/[/?#\\]/.test(basename) || basename.includes("..")) {
-    throw new Error(`knownFiles con nombre inválido: ${surface.id}/${basename}`);
-  }
+  const safe = safeBasename(basename, `knownFiles de ${surface.id}`);
   const base = surface.baseUrl.endsWith("/") ? surface.baseUrl : `${surface.baseUrl}/`;
-  return new URL(basename, base).href;
+  return new URL(safe, base).href;
 }
 
 export function probeTargets(manifest, surface) {

@@ -15,6 +15,7 @@ import test from "node:test";
 import { runCheck } from "./lib/check-core.mjs";
 import { correctPolicyIdentifier } from "./lib/discover.mjs";
 import { runUpdate } from "./lib/update-core.mjs";
+import { safeBasename } from "./lib/util.mjs";
 
 const sha = (value) => createHash("sha256").update(value).digest("hex");
 const bytes = (value) => Buffer.byteLength(value);
@@ -212,6 +213,32 @@ test("policy identifier errata is corrected", () => {
     correctPolicyIdentifier("https://cdn.example/xmlschemas/Resolucion.pdf"),
     "https://cdn.example/xml-schemas/Resolucion.pdf",
   );
+});
+
+test("safeBasename acepta los nombres reales del set", () => {
+  for (const name of [
+    "FacturaElectronica_V4.4.xsd",
+    "ANEXOS Y ESTRUCTURAS_V4.4.pdf",
+    "Codigodemoneda_V4.4.pdf",
+    "Codificacionubicacion_V4.4.rar",
+    RESOLUCION,
+  ]) {
+    assert.equal(safeBasename(atvUrl(2024, "4.4", name), "atv"), name);
+  }
+});
+
+test("safeBasename rechaza nombres que se vuelven traversal al decodificar", () => {
+  const base = `${ATV.base}docs/esquemas/2024/v4.4/`;
+  for (const name of [
+    "..%2F..%2F..%2Fevil.xsd",
+    "%2E%2E%2Fevil.xsd",
+    "a%5C..%5Cb.xsd",
+    "%2Fetc%2Fpasswd",
+    "..",
+    ".",
+  ]) {
+    assert.throws(() => safeBasename(`${base}${name}`, "atv"), /inseguro/);
+  }
 });
 
 test("sin diferencias -> sin cambios y código 0", async () => {
@@ -451,6 +478,15 @@ test("canario: un knownFiles sin 200 hace fallar el sondeo", async () => {
   assert.equal(result.stdout, "");
 });
 
+test("spec:check falla ante un enlace con traversal en ATV", async () => {
+  const evil = `${ATV.base}docs/esquemas/2024/v4.4/..%2F..%2F..%2Fevil.xsd`;
+  const { result } = await check({ links: { atv: [evil] } });
+  assert.equal(result.code, 2);
+  assert.match(result.stderr, /superficie atv: inaccesible/);
+  assert.match(result.stderr, /nombre de archivo inseguro/);
+  assert.ok(!result.stdout.includes("sin cambios"));
+});
+
 test("spec:check no modifica el manifiesto real", async () => {
   const realManifest = resolve(
     import.meta.dirname,
@@ -686,4 +722,51 @@ test("--set desconocido falla sin escribir", async (t) => {
     /set desconocido/,
   );
   assert.equal(readFileSync(join(dir, "manifest.json"), "utf8"), manifestBefore);
+});
+
+test("spec:update rechaza un enlace con traversal sin escribir nada", async (t) => {
+  const files = baseFiles();
+  const evil = `${ATV.base}docs/esquemas/2024/v4.4/..%2F..%2F..%2Fevil.xsd`;
+  const world = scenario({ files, links: { atv: [evil] } });
+  const dir = tree(t, files);
+  writeFileSync(join(dir, "manifest.json"), `${JSON.stringify(world.manifest, null, 2)}\n`);
+  const manifestBefore = readFileSync(join(dir, "manifest.json"), "utf8");
+  const result = await runUpdate({
+    manifest: world.manifest,
+    schemasDir: dir,
+    fetchFn: world.fetchFn,
+    minLinks: MIN,
+    verifyFn: () => assert.fail("el gate no debe ejecutarse"),
+  });
+  assert.equal(result.code, 2);
+  assert.match(result.stderr, /nombre de archivo inseguro/);
+  assert.equal(readFileSync(join(dir, "manifest.json"), "utf8"), manifestBefore);
+  assert.ok(!existsSync(join(dirname(dir), "evil.xsd")));
+});
+
+test("la contención bloquea una escritura fuera del árbol vendorizado", async (t) => {
+  const files = baseFiles();
+  const evilUrl = atvUrl(2024, "4.4", "evil.xsd");
+  const world = scenario({ files, links: { atv: [evilUrl] }, extra: { [evilUrl]: "evil-bytes" } });
+  world.manifest.files.push({
+    path: "../../evil.xsd",
+    set: CURRENT,
+    sha256: sha("otros-bytes"),
+    bytes: bytes("otros-bytes"),
+    vendored: true,
+  });
+  const dir = tree(t, files);
+  writeFileSync(join(dir, "manifest.json"), `${JSON.stringify(world.manifest, null, 2)}\n`);
+  const manifestBefore = readFileSync(join(dir, "manifest.json"), "utf8");
+  const result = await runUpdate({
+    manifest: world.manifest,
+    schemasDir: dir,
+    fetchFn: world.fetchFn,
+    minLinks: MIN,
+    verifyFn: () => assert.fail("el gate no debe ejecutarse"),
+  });
+  assert.equal(result.code, 2);
+  assert.match(result.stderr, /escritura rechazada/);
+  assert.equal(readFileSync(join(dir, "manifest.json"), "utf8"), manifestBefore);
+  assert.ok(!existsSync(join(dirname(dir), "evil.xsd")));
 });
