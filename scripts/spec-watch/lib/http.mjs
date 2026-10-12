@@ -29,6 +29,9 @@ export function createHttp({
       if (hosts.size && !hosts.has(target.host)) {
         throw new Error(`host no declarado en el manifiesto: ${target.host}`);
       }
+      if (target.protocol !== "https:") {
+        throw new Error(`esquema sin TLS rechazado: ${target.protocol}//${target.host}`);
+      }
       const response = await fetchFn(current, init);
       if (response.status >= 300 && response.status < 400) {
         const location = response.headers?.get?.("location");
@@ -39,6 +42,35 @@ export function createHttp({
       return { response, url: current };
     }
     throw new Error(`demasiadas redirecciones: ${url}`);
+  }
+
+  // `Content-Length` is a hint from the server (cheap reject), the stream cap is
+  // the guarantee: a body must never be buffered past `maxBytes`.
+  async function readBodyCapped(response, finalUrl) {
+    const stream = response.body;
+    if (!stream || typeof stream.getReader !== "function") {
+      const buffer = Buffer.from(await response.arrayBuffer());
+      if (buffer.length > maxBytes)
+        throw new Error(`respuesta excede ${maxBytes} bytes: ${finalUrl}`);
+      return buffer;
+    }
+    const reader = stream.getReader();
+    const chunks = [];
+    let total = 0;
+    try {
+      for (;;) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        total += value.byteLength;
+        if (total > maxBytes) {
+          throw new Error(`respuesta excede ${maxBytes} bytes: ${finalUrl}`);
+        }
+        chunks.push(Buffer.from(value));
+      }
+    } finally {
+      await Promise.resolve(reader.cancel?.()).catch(() => {});
+    }
+    return Buffer.concat(chunks);
   }
 
   async function get(url, binary, withMeta) {
@@ -52,14 +84,18 @@ export function createHttp({
       throw new Error(`HTTP ${response.status}: ${finalUrl}`);
     }
     if (!response.ok) throw new Error(`HTTP ${response.status}: ${finalUrl}`);
-    const buffer = Buffer.from(await response.arrayBuffer());
-    if (buffer.length > maxBytes)
-      throw new Error(`respuesta excede ${maxBytes} bytes: ${finalUrl}`);
+    const declared = parseContentLength(response);
+    if (declared !== null && declared > maxBytes) {
+      throw new Error(
+        `respuesta excede ${maxBytes} bytes (Content-Length ${declared}): ${finalUrl}`,
+      );
+    }
+    const buffer = await readBodyCapped(response, finalUrl);
     if (withMeta) {
       return {
         body: buffer,
         lastModified: lastModifiedOf(response),
-        contentLength: parseContentLength(response),
+        contentLength: declared,
         url: finalUrl,
       };
     }

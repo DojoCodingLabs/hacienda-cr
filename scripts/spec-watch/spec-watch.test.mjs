@@ -14,6 +14,7 @@ import { dirname, join, resolve } from "node:path";
 import test from "node:test";
 import { runCheck } from "./lib/check-core.mjs";
 import { correctPolicyIdentifier } from "./lib/discover.mjs";
+import { createHttp } from "./lib/http.mjs";
 import { runUpdate } from "./lib/update-core.mjs";
 import { safeBasename } from "./lib/util.mjs";
 
@@ -769,4 +770,90 @@ test("la contención bloquea una escritura fuera del árbol vendorizado", async 
   assert.match(result.stderr, /escritura rechazada/);
   assert.equal(readFileSync(join(dir, "manifest.json"), "utf8"), manifestBefore);
   assert.ok(!existsSync(join(dirname(dir), "evil.xsd")));
+});
+
+function streamedResponse(chunks, headers = {}) {
+  return {
+    ok: true,
+    status: 200,
+    headers: { get: (name) => headers[name.toLowerCase()] ?? null },
+    body: {
+      getReader() {
+        let index = 0;
+        return {
+          async read() {
+            if (index >= chunks.length) return { done: true, value: undefined };
+            const value = Buffer.from(chunks[index]);
+            index += 1;
+            return { done: false, value };
+          },
+          async cancel() {
+            index = chunks.length;
+          },
+        };
+      },
+    },
+  };
+}
+
+function redirectResponse(location) {
+  return {
+    ok: false,
+    status: 302,
+    headers: { get: (name) => (name === "location" ? location : null) },
+    arrayBuffer: async () => Buffer.alloc(0),
+  };
+}
+
+test("una redirección https a http se rechaza", async () => {
+  const http = createHttp({
+    fetchFn: async (url) => redirectResponse(url.replace("https://", "http://")),
+    allowedHosts: ["a.example"],
+  });
+  await assert.rejects(http.getBytes("https://a.example/x.xsd"), /esquema sin TLS/);
+});
+
+test("una redirección hacia otro host se rechaza", async () => {
+  const http = createHttp({
+    fetchFn: async () => redirectResponse("https://evil.example/x.xsd"),
+    allowedHosts: ["a.example"],
+  });
+  await assert.rejects(http.getBytes("https://a.example/x.xsd"), /host no declarado/);
+});
+
+test("un Content-Length excesivo se rechaza sin leer el cuerpo", async () => {
+  let read = false;
+  const http = createHttp({
+    fetchFn: async () => ({
+      ok: true,
+      status: 200,
+      headers: { get: (name) => (name === "content-length" ? "9999" : null) },
+      arrayBuffer: async () => {
+        read = true;
+        return Buffer.alloc(0);
+      },
+    }),
+    maxBytes: 16,
+    allowedHosts: ["a.example"],
+  });
+  await assert.rejects(http.getBytes("https://a.example/x.xsd"), /Content-Length/);
+  assert.equal(read, false);
+});
+
+test("un cuerpo sin Content-Length se corta en el máximo", async () => {
+  const http = createHttp({
+    fetchFn: async () => streamedResponse([Buffer.alloc(12), Buffer.alloc(12)]),
+    maxBytes: 16,
+    allowedHosts: ["a.example"],
+  });
+  await assert.rejects(http.getBytes("https://a.example/x.xsd"), /excede 16 bytes/);
+});
+
+test("un cuerpo dentro del límite se lee completo", async () => {
+  const http = createHttp({
+    fetchFn: async () => streamedResponse([Buffer.from("hola "), Buffer.from("mundo")]),
+    maxBytes: 16,
+    allowedHosts: ["a.example"],
+  });
+  assert.equal(await http.getText("https://a.example/x.xsd"), "hola mundo");
 });
