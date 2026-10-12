@@ -116,6 +116,13 @@ Two root commands compare this folder against what Hacienda publishes today
   nothing. `currentSet` changes only via an explicit
   `pnpm spec:update --set <id>`.
 
+The gate runs **after** the writes: a failing `spec:verify` exits `2` and leaves
+the diff on disk (there is no automatic rollback). Either review and commit it,
+or discard it with `git checkout -- packages/sdk/schemas/`. Surface names are
+treated as untrusted input: a name that turns into a path traversal after
+decoding is rejected, every write stays inside `packages/sdk/schemas/`,
+redirects that leave `https:` are refused, and each download is capped in size.
+
 ## Unverified assumptions
 
 Two assumptions are **not verified** and are recorded here on purpose:

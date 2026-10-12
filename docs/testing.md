@@ -72,7 +72,13 @@ what Hacienda publishes today; both need network, so neither runs inside
 `pnpm verify`. `spec:check` is read-only (exit `0` clean, `1` differences, `2`
 operational failure) and never writes the manifest or the vendored files.
 `spec:update` writes real differences and stops before any write on a canary
-failure or an unreachable surface; it never commits or stages. The offline
+failure or an unreachable surface; it never commits or stages. Its `spec:verify`
+gate runs **after** those writes: if the gate fails, `spec:update` exits `2` and
+leaves the diff on disk (no automatic rollback) — either review and commit it, or
+discard it with `git checkout -- packages/sdk/schemas/`. Names scraped from a
+surface are untrusted, so the watchers reject any name that becomes a traversal
+after decoding, keep every write inside `packages/sdk/schemas/`, refuse
+redirects that leave `https:`, and cap every download. The offline
 counterpart is `node scripts/spec-verify.mjs`, which `pnpm verify` already runs.
 Routine development uses only mocked HTTP in `scripts/spec-watch/*.test.mjs`;
 run the live commands only when authorized to touch the official surfaces.
