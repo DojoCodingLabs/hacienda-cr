@@ -2,14 +2,8 @@
  * Tests for the shared catalog schemas in common.ts.
  */
 
-import {
-  TaxCode,
-  IvaRateCode,
-  ExonerationType,
-  PaymentMethod,
-  SaleCondition,
-  REP_SALE_CONDITIONS,
-} from "../constants/index.js";
+import { ExonerationType, REP_SALE_CONDITIONS } from "../constants/index.js";
+import { IvaRateCode, PaymentMethod, SaleCondition, TaxCode } from "../generated/index.js";
 import {
   TaxCodeSchema,
   IvaRateCodeSchema,
