@@ -33,11 +33,13 @@ export const listCommand = defineCommand({
     limit: {
       type: "string",
       description: "Number of results per page",
+      // eslint-disable-next-line no-restricted-syntax -- valor de paginación, no un código de catálogo
       default: "20",
     },
     offset: {
       type: "string",
       description: "Pagination offset",
+      // eslint-disable-next-line no-restricted-syntax -- valor de paginación, no un código de catálogo
       default: "0",
     },
     profile: {

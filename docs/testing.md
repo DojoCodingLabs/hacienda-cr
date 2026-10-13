@@ -35,6 +35,21 @@ pnpm test:packages
 `scripts/spec-watch/spec-watch.test.mjs`), always with mocked HTTP and no
 credentials.
 
+`pnpm spec:generate` renders the code catalogs in `shared/src/generated/`
+from `packages/sdk/schemas/codes.json` (full mode runs `pnpm codes:extract`
+first; `pnpm spec:generate -- --no-extract` renders from the committed file
+and is what the `pnpm verify` lock runs). Never edit generated files by hand
+(they start with `NO EDITAR`): the parity-freeze test
+`shared/src/generated-parity.spec.ts` pins the published values, and the
+verify lock fails if `git diff` or untracked files show drift under
+`shared/src/generated/` — a generation failure is reported separately and
+the diff is skipped. Regenerating currently adds about a second to
+`pnpm verify`. The generator suite (`scripts/codes-generate/`) covers
+idempotency, parity failures in both directions, `names.json` handling, and
+write atomicity; `scripts/codes-lint-lock/` pins the ESLint rule that
+rejects hand-written 1-2 digit catalog literals outside documented
+exclusions.
+
 The `env -u` examples use a POSIX shell. On other platforms, unset those variables
 in the test process or use the full offline verification wrapper.
 `pnpm test` runs through Turbo and builds before tests, but does not clear live
@@ -42,17 +57,18 @@ test variables. `test:watch` and `test:coverage` are available per package; the 
 `pnpm test:coverage` runs coverage across packages. Clear live switches for those
 commands too unless live access was explicitly authorized.
 
-| Change                 | Useful focused evidence                                               |
-| ---------------------- | --------------------------------------------------------------------- |
-| Shared fields or enums | Shared schema tests and affected SDK builders/adapters                |
-| XML or schema revision | Builder regressions, runtime validation, independent XSD conformance  |
-| Tax totals             | Calculator and business-validation regressions with discounts/taxes   |
-| Auth or HTTP           | Mocked token, deadline, cancellation, redirect, and retry tests       |
-| Sequences              | Temporary-directory concurrency, reset, overflow, and lock tests      |
-| CLI output             | Command errors, JSON/text output, and exit codes                      |
-| MCP tools              | In-memory tool/resource contracts, error cases, mocked side effects   |
-| Exports or bundling    | `pnpm test:packages` installed ESM, types, CLI, and MCP checks        |
-| Schema drift           | `pnpm spec:check` (network, read-only); apply with `pnpm spec:update` |
+| Change                 | Useful focused evidence                                                  |
+| ---------------------- | ------------------------------------------------------------------------ |
+| Shared fields or enums | Shared schema tests and affected SDK builders/adapters                   |
+| XML or schema revision | Builder regressions, runtime validation, independent XSD conformance     |
+| Tax totals             | Calculator and business-validation regressions with discounts/taxes      |
+| Auth or HTTP           | Mocked token, deadline, cancellation, redirect, and retry tests          |
+| Sequences              | Temporary-directory concurrency, reset, overflow, and lock tests         |
+| CLI output             | Command errors, JSON/text output, and exit codes                         |
+| MCP tools              | In-memory tool/resource contracts, error cases, mocked side effects      |
+| Exports or bundling    | `pnpm test:packages` installed ESM, types, CLI, and MCP checks           |
+| Schema drift           | `pnpm spec:check` (network, read-only); apply with `pnpm spec:update`    |
+| Catalog codes          | `pnpm spec:generate -- --no-extract`, the parity spec, and the lint lock |
 
 For documentation-only edits, check formatting of the edited files, resolve local
 links, and compare commands and claims to source/manifests. No new runtime tests
