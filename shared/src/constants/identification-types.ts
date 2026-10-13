@@ -1,27 +1,11 @@
 /**
- * Identification type codes for Costa Rica taxpayers.
+ * Identification type helpers for Costa Rica taxpayers.
  *
- * Used in the emisor (issuer) and receptor (receiver) sections
- * of electronic documents. Types 05 and 06 are new in v4.4.
+ * El catálogo `IdentificationType` es generado desde `codes.json`
+ * (`shared/src/generated/identification-type.ts`); el mapa de nombres
+ * legibles y las longitudes esperadas son curaduría manual.
  */
-
-/** Taxpayer identification type codes (Tipo de Identificacion). */
-export const IdentificationType = {
-  /** Cedula Fisica (physical person ID) — 9 digits */
-  CEDULA_FISICA: "01",
-  /** Cedula Juridica (legal entity ID) — 10 digits */
-  CEDULA_JURIDICA: "02",
-  /** DIMEX (foreign resident ID) — 11-12 digits */
-  DIMEX: "03",
-  /** NITE (tax ID for foreigners without DIMEX) — 10 digits */
-  NITE: "04",
-  /** Extranjero No Domiciliado (non-domiciled foreigner) — free-form, max 20 chars */
-  EXTRANJERO_NO_DOMICILIADO: "05",
-  /** No Contribuyente (non-taxpayer) — free-form, max 20 chars */
-  NO_CONTRIBUYENTE: "06",
-} as const;
-
-export type IdentificationType = (typeof IdentificationType)[keyof typeof IdentificationType];
+import { IdentificationType } from "../generated/identification-type.js";
 
 /** Human-readable names for identification types. */
 export const IDENTIFICATION_TYPE_NAMES: Record<IdentificationType, string> = {
