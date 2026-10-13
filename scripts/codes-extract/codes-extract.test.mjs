@@ -13,6 +13,7 @@ import {
 } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
+import { format, resolveConfig } from "prettier";
 import { scanXsd } from "./lib/scan.mjs";
 import { mergeTables, renderCodesJson } from "./lib/render.mjs";
 
@@ -400,6 +401,48 @@ test("integration: real set produces structural codes.json idempotently", () => 
         assert.ok(value.code.length > 0);
       }
     }
+  } finally {
+    rmSync(work, { recursive: true, force: true });
+  }
+});
+
+// `copySchemasFixture` filtra los `.xsd` a propósito: los tests de negativo
+// necesitan ausencia de auxiliares. La verificación de frescura, en cambio,
+// regenera a partir del árbol commiteado tal cual, así que copia el set completo.
+function copyRealSet(schemasDir) {
+  mkdirSync(join(schemasDir, "2024", "v4.4"), { recursive: true });
+  copyFileSync(join(realSchemasDir, "manifest.json"), join(schemasDir, "manifest.json"));
+  for (const name of readdirSync(realSetDir)) {
+    copyFileSync(join(realSetDir, name), join(schemasDir, "2024", "v4.4", name));
+  }
+}
+
+// `codes.json` es derivado, no vendorizado: no tiene entrada en el manifiesto y
+// `spec:verify` lo tiene en su allowlist, así que esta regeneración es lo único
+// que impide que el artefacto commiteado quede obsoleto en silencio.
+//
+// El artefacto commiteado no es texto crudo del extractor: el hook de commit lo
+// pasa por prettier, que inlinea los arrays cortos. Se normaliza con `.prettierrc`
+// a ambos lados y se compara después byte a byte; la deriva de formato pura la
+// cubre `prettier --check`, que `verify` ya ejecuta.
+test("freshness: committed codes.json matches a fresh regeneration", async () => {
+  const committedPath = join(realSchemasDir, "codes.json");
+  const prettierConfig = (await resolveConfig(committedPath)) ?? {};
+  const normalize = (source) => format(source, { ...prettierConfig, parser: "json" });
+  const committed = await normalize(readFileSync(committedPath, "utf8"));
+  const work = mkdtempSync(join(tmpdir(), "codes-extract-freshness-"));
+  try {
+    const schemas = join(work, "schemas");
+    copyRealSet(schemas);
+    const run = spawnExtract(schemas);
+    assert.equal(run.status, 0, run.stderr);
+    const fresh = await normalize(readFileSync(join(schemas, "codes.json"), "utf8"));
+    assert.equal(
+      fresh,
+      committed,
+      "codes.json del repo ya no coincide con una regeneración fresca de las " +
+        "fuentes del árbol actual: ejecuta `pnpm codes:extract` y commitea el resultado",
+    );
   } finally {
     rmSync(work, { recursive: true, force: true });
   }
