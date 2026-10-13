@@ -3,7 +3,8 @@
  */
 
 import { z } from "zod";
-import { DocumentTypeCode, SituationCode } from "../constants/index.js";
+import { DocumentTypeCode } from "../constants/index.js";
+import { SituationCode } from "../generated/index.js";
 
 /** Schema for individual clave numerica components. */
 export const ClaveComponentsSchema = z.object({

@@ -9,8 +9,15 @@ import { z } from "zod";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 
 import { lookupTaxpayer, sanitizeLogString } from "@dojocoding/hacienda-sdk";
-import { IDENTIFICATION_TYPE_NAMES } from "@dojocoding/hacienda-shared";
-import type { IdentificationType } from "@dojocoding/hacienda-shared";
+import {
+  IDENTIFICATION_TYPE_NAMES,
+  IdentificationType,
+  IvaRateCode,
+  PaymentMethod,
+  ProvinceCode,
+  SaleCondition,
+  TaxCode,
+} from "@dojocoding/hacienda-shared";
 
 // ---------------------------------------------------------------------------
 // lookup_taxpayer
@@ -85,7 +92,7 @@ export function registerDraftInvoiceTool(server: McpServer): void {
       emisorNombre: z.string().describe("Issuer (emisor) name"),
       emisorIdTipo: z
         .string()
-        .default("02")
+        .default(IdentificationType.CEDULA_JURIDICA)
         .describe(
           'Issuer ID type: "01"=Fisica, "02"=Juridica, "03"=DIMEX, "04"=NITE. Defaults to "02"',
         ),
@@ -127,8 +134,8 @@ export function registerDraftInvoiceTool(server: McpServer): void {
       };
 
       lineItem.impuesto = args.includeIva
-        ? [{ codigo: "01", codigoTarifaIVA: "08", tarifa: 13 }]
-        : [{ codigo: "01", codigoTarifaIVA: "01", tarifa: 0 }];
+        ? [{ codigo: TaxCode.IVA, codigoTarifaIVA: IvaRateCode.GENERAL_13, tarifa: 13 }]
+        : [{ codigo: TaxCode.IVA, codigoTarifaIVA: IvaRateCode.EXENTO, tarifa: 0 }];
 
       const draft: Record<string, unknown> = {
         emisor: {
@@ -138,8 +145,10 @@ export function registerDraftInvoiceTool(server: McpServer): void {
             numero: args.emisorIdNumero,
           },
           ubicacion: {
-            provincia: "1",
+            provincia: ProvinceCode.SAN_JOSE,
+            // eslint-disable-next-line no-restricted-syntax -- cantón/distrito no tienen constante: tablas gigantes sin pareja (fase futura)
             canton: "01",
+            // eslint-disable-next-line no-restricted-syntax -- ídem: plantilla, no un código con catálogo generado
             distrito: "01",
             otrasSenas: "<<COMPLETE_ISSUER_ADDRESS>>",
           },
@@ -159,8 +168,8 @@ export function registerDraftInvoiceTool(server: McpServer): void {
         },
         proveedorSistemas: "<<SYSTEM_PROVIDER_ID>>",
         codigoActividadEmisor: args.codigoActividadEmisor,
-        condicionVenta: "01",
-        medioPago: "01",
+        condicionVenta: SaleCondition.CONTADO,
+        medioPago: PaymentMethod.EFECTIVO,
         lineItems: [lineItem],
       };
 

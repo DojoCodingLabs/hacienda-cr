@@ -5,6 +5,12 @@
  * (TipoDocReferenciaType and CodigoReferenciaType), April 2026 revision
  * (mandatory 2026-11-01). See the ANEXOS Y ESTRUCTURAS v4.4 document
  * (Notas 9 and 10) for the authoritative meaning of each code.
+ *
+ * Sin pareja deliberada con `codes.json`: el XSD vendorizado aún no trae
+ * los códigos 19-20 (TipoDoc) ni 13-16 (Codigo) de la revisión abril 2026
+ * — ver table-map.mjs; el candado de generación los reporta hasta que se
+ * vendorice el XSD nuevo. `DISCOUNT_CODES`, `OTHER_CHARGE_TYPES` y
+ * `EXONERATION_INSTITUTIONS` sí migraron a `shared/src/generated/`.
  */
 
 /** Referenced document type codes (TipoDocIR / TipoDocReferenciaType). */
@@ -71,55 +77,3 @@ export const REP_REFERENCE_CODES = [
 ] as const;
 
 export type RepReferenceCode = (typeof REP_REFERENCE_CODES)[number];
-
-/** Discount codes (CodigoDescuento / CodigoDescuentoType), Nota 13. */
-export const DISCOUNT_CODES = [
-  "01",
-  "02",
-  "03",
-  "04",
-  "05",
-  "06",
-  "07",
-  "08",
-  "09",
-  "99", // Otros (requiere CodigoDescuentoOTRO)
-] as const;
-
-export type DiscountCode = (typeof DISCOUNT_CODES)[number];
-
-/** Other-charge document types (TipoDocumentoOC / TipoDocOtrosCargosType). */
-export const OTHER_CHARGE_TYPES = [
-  "01", // Contribucion parafiscal
-  "02", // Timbre de la Cruz Roja
-  "03", // Timbre de Benemerito Cuerpo de Bomberos
-  "04", // Cobro de un tercero
-  "05", // Costos de exportacion
-  "06", // Impuesto de servicio 10%
-  "07", // Timbre de Colegios Profesionales
-  "08",
-  "09",
-  "10",
-  "99", // Otros (requiere TipoDocumentoOTROS)
-] as const;
-
-export type OtherChargeType = (typeof OTHER_CHARGE_TYPES)[number];
-
-/** Exoneration issuing-institution codes (NombreInstitucion), v4.4. */
-export const EXONERATION_INSTITUTIONS = [
-  "01",
-  "02",
-  "03",
-  "04",
-  "05",
-  "06",
-  "07",
-  "08",
-  "09",
-  "10",
-  "11",
-  "12",
-  "99", // Otros (requiere NombreInstitucionOtros)
-] as const;
-
-export type ExonerationInstitution = (typeof EXONERATION_INSTITUTIONS)[number];

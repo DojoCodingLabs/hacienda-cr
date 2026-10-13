@@ -63,8 +63,13 @@ vendored artifact.
   spec `openspec/specs/codes-extraction/spec.md`; this README only
   references it (it is synced from the change delta when the change is
   archived — never edited by hand in advance).
-- The SDK does **not** consume this file yet (phase 2 of the codes work).
-  Regenerate after any legitimate schema refresh that changes enumerations.
+- The SDK test suite and `shared` (via `pnpm spec:generate`) consume this
+  file: it is the single source of truth for the code catalogs rendered into
+  `shared/src/generated/`. Regenerate after any legitimate schema refresh
+  that changes enumerations, then re-run `pnpm spec:generate` and commit the
+  result (the `pnpm verify` lock fails on drift). A future `names.json`
+  (same directory) will supply human-readable names per export; until it
+  exists, `spec:generate` reports the pending exports with exit 0.
 
 ## `manifest.json`
 

@@ -15,7 +15,7 @@ import type {
   Exoneracion,
   TotalDesgloseImpuesto,
 } from "@dojocoding/hacienda-shared";
-import { TaxCode } from "@dojocoding/hacienda-shared";
+import { IvaRateCode, TaxCode } from "@dojocoding/hacienda-shared";
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -220,7 +220,7 @@ export function calculateLineItemTotals(item: LineItemInput): CalculatedLineItem
   const taxInputs: LineItemTaxInput[] =
     item.impuesto && item.impuesto.length > 0
       ? item.impuesto
-      : [{ codigo: TaxCode.IVA, codigoTarifaIVA: "01", tarifa: 0 }];
+      : [{ codigo: TaxCode.IVA, codigoTarifaIVA: IvaRateCode.EXENTO, tarifa: 0 }];
 
   for (const tax of taxInputs) {
     // Full tax amount = subTotal * tarifa / 100
