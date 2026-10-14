@@ -82,6 +82,21 @@ surface are untrusted, so the watchers reject any name that becomes a traversal
 after decoding, keep every write inside `packages/sdk/schemas/`, refuse
 redirects that leave `https:`, and cap every download. The offline
 counterpart is `node scripts/spec-verify.mjs`, which `pnpm verify` already runs.
+It checks the vendored tree against `manifest.json` — per-file SHA-256 and
+size, undeclared files, symlinks — and, since this change, the signing-policy
+block: the SHA-256 in Base64 of the vendored policy PDF is recomputed and
+compared (exact string match, standard Base64 with `=` padding, no
+normalization) against `policy.digestValue`; the PDF is located by folding the
+basename of `policy.identifier` (`foldName`/`basenameOf` shared with
+`spec:check`, exactly one vendored candidate); `digestMethod` must be exactly
+the Anexo 2 URI; `sdkStatus` must be present and within
+`pending-sdk-migration`/`aligned`. Those failures name the field and add a
+policy-specific remedy, because `spec:update` never recomputes `policy.*`. The
+contrast is self-consistent — manifest vs. vendored bytes, not vs. what ATV
+publishes today; the online comparison belongs to `spec:check`, which does not
+verify digests yet. Synthetic fixtures live in `scripts/spec-verify.test.mjs`
+(driven through `SPEC_VERIFY_SCHEMAS_DIR`); routine development never touches
+the real tree.
 Routine development uses only mocked HTTP in `scripts/spec-watch/*.test.mjs`;
 run the live commands only when authorized to touch the official surfaces.
 

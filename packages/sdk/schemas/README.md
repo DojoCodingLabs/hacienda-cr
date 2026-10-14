@@ -101,6 +101,21 @@ checks actual SignedProperties, all reference digests and RSA signature bytes,
 not just these constants. This does not establish certificate-chain trust or
 Hacienda acceptance. See [scope, source drift and migration](../../../docs/specs/a2-policy-catalog-readiness.md).
 
+`pnpm spec:verify` enforces this block on every run, offline: it recomputes the
+SHA-256 of the vendored policy PDF and compares it — exact string match,
+standard Base64 with `=` padding, no normalization — against
+`policy.digestValue`; locates the PDF by folding the basename of
+`policy.identifier` (exactly one vendored candidate); requires `digestMethod` to
+be exactly the Anexo 2 URI (the identifier is opaque, case-sensitive, fragment
+included) and `sdkStatus` to be present and within the allowed set. The contrast
+is self-consistent: it proves the manifest describes the vendored bytes, not
+that those bytes still match what Anexo 2 publishes today — that was checked
+once, at vendorization. For the same reason `spec:update` never recomputes
+`policy.*`: a policy failure means fixing the manifest against the vendored PDF
+(or restoring the PDF if it was replaced by accident). The gate reads the SDK
+state only through `sdkStatus`: it neither imports `XADES_POLICY_HASH` nor
+requires equality with it — that comparison belongs to phase 3.
+
 Field semantics:
 
 - `vendored` — always `true` for entries in this manifest: the bytes are
