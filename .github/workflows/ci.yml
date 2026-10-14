@@ -35,6 +35,9 @@ jobs:
       - name: Install xmllint (XSD conformance suite)
         run: sudo apt-get update -qq && sudo apt-get install -y -qq libxml2-utils
 
+      - name: Install poppler-utils (codes.json freshness check)
+        run: sudo apt-get install -y -qq poppler-utils
+
       - name: Verify source and installed consumers
         run: pnpm verify
 
@@ -54,6 +57,8 @@ jobs:
           node-version: ${{ matrix.node }}
           cache: pnpm
       - run: pnpm install --frozen-lockfile
+      - name: Install poppler-utils (codes.json freshness check)
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq poppler-utils
       - run: pnpm build
       - run: pnpm test:packages
       - run: pnpm test:scripts
