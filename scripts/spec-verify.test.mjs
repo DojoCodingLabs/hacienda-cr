@@ -115,17 +115,18 @@ test("3.2 un archivo no declarado en un subdirectorio falla y nombra la allowlis
   assert.equal(result.status, 1);
   assert.match(
     result.stderr,
-    /spec:verify: 2024\/v4\.4\/suelto\.txt: no declarado \(allowlist en la raíz: manifest\.json, README\.md\)/,
+    /spec:verify: 2024\/v4\.4\/suelto\.txt: no declarado \(allowlist en la raíz: manifest\.json, README\.md, codes\.json\)/,
   );
 });
 
-test("3.2 manifest.json y README.md en la raíz no declaran fallo", (t) => {
+test("3.2 manifest.json, README.md y codes.json en la raíz no declaran fallo", (t) => {
   const content = "<xsd:schema/>schema contents</xsd:schema>";
   const dir = fixture(t, {
     files: [entry("2024/v4.4/FacturaElectronica.xsd", content)],
     extra: {
       "2024/v4.4/FacturaElectronica.xsd": content,
       "README.md": "# schemas",
+      "codes.json": '{"schemaVersion":1}',
     },
   });
   const result = run(dir);

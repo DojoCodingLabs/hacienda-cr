@@ -30,7 +30,7 @@ const manifest = JSON.parse(
 const POLICY_PDF =
   "2024/v4.4/Resolucion_General_sobre_disposiciones_tecnicas_comprobantes_electronicos_para_efectos_tributarios.pdf";
 
-const ALLOWLIST = new Set(["manifest.json", "README.md"]);
+const ALLOWLIST = new Set(["manifest.json", "README.md", "codes.json"]);
 
 function listFiles(rel = ""): string[] {
   const out: string[] = [];
