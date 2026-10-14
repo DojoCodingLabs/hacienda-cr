@@ -108,7 +108,23 @@ value above is the one printed in the PDF itself. `sdkStatus` is
 `pending-sdk-migration`: the signer still uses the old SHA-1/v4.1 policy
 (`XADES_POLICY_HASH`, see `docs/specs/v4.4-compliance.md` §1.10 and §3.5), so
 the correction is a separate, versioned change (phase 3). Allowed values:
-`pending-sdk-migration`, `aligned` — a new value requires updating this README.
+`pending-sdk-migration`, `aligned` — a new value requires updating this README,
+the gate constant and the spec in the same commit.
+
+`pnpm spec:verify` enforces this block on every run, offline: it recomputes the
+SHA-256 of the vendored policy PDF and compares it — exact string match,
+standard Base64 with `=` padding, no normalization — against
+`policy.digestValue`; locates the PDF by folding the basename of
+`policy.identifier` (exactly one vendored candidate); requires `digestMethod` to
+be exactly the Anexo 2 URI (the identifier is opaque, case-sensitive, fragment
+included) and `sdkStatus` to be present and within the allowed set. The contrast
+is self-consistent: it proves the manifest describes the vendored bytes, not
+that those bytes still match what Anexo 2 publishes today — that was checked
+once, at vendorization. For the same reason `spec:update` never recomputes
+`policy.*`: a policy failure means fixing the manifest against the vendored PDF
+(or restoring the PDF if it was replaced by accident). The gate reads the SDK
+state only through `sdkStatus`: it neither imports `XADES_POLICY_HASH` nor
+requires equality with it — that comparison belongs to phase 3.
 
 Field semantics:
 
