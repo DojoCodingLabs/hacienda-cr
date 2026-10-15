@@ -54,7 +54,7 @@ export function policyManifestViolations(
   constants: PolicyConstants,
   policy: PolicyManifestBlock,
 ): PolicyViolation[] {
-  const fields: Array<[keyof PolicyConstants, string, string]> = [
+  const fields: [keyof PolicyConstants, string, string][] = [
     ["identifier", constants.identifier, policy.identifier],
     ["digestMethod", constants.digestMethod, policy.digestMethod],
     ["digestValue", constants.digestValue, policy.digestValue],
