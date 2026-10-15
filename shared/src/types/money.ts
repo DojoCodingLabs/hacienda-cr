@@ -81,6 +81,14 @@ export class Money {
   }
 
   /**
+   * JSON serialization - returns numeric value.
+   * Enables structuredClone() and JSON.stringify() to work correctly.
+   */
+  toJSON(): number {
+    return this.toNumber();
+  }
+
+  /**
    * Get the value with a fixed number of decimal places.
    */
   toFixed(dp: number): string {

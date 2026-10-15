@@ -21,6 +21,14 @@ import type {
   MedioPago,
   Identificacion,
 } from "@dojocoding/hacienda-shared";
+import { Money } from "@dojocoding/hacienda-shared";
+
+/**
+ * Convert a monetary value (number or Money) to a number for XML output.
+ */
+function toMonto(value: number | Money): number {
+  return value instanceof Money ? value.toNumber() : value;
+}
 
 // ---------------------------------------------------------------------------
 // Per-document structural variants (from the v4.4 XSDs)
@@ -273,7 +281,7 @@ export function buildImpuestoXml(impuesto: Impuesto): Record<string, unknown> {
     result.FactorCalculoIVA = impuesto.factorCalculoIVA;
   }
 
-  result.Monto = impuesto.monto;
+  result.Monto = toMonto(impuesto.monto);
 
   if (impuesto.exoneracion) {
     const exo = impuesto.exoneracion;
