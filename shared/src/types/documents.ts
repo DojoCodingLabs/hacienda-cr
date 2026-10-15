@@ -28,6 +28,7 @@ import type {
   TaxCode,
 } from "../generated/index.js";
 
+import type { Money } from "./money";
 // ---------------------------------------------------------------------------
 // Common Sub-structures
 // ---------------------------------------------------------------------------
@@ -174,7 +175,7 @@ export interface Impuesto {
   factorCalculoIVA?: number;
 
   /** Tax amount for this line (Monto). */
-  monto: number;
+  monto: Money;
 
   /** Exoneration information. Optional. */
   exoneracion?: Exoneracion;

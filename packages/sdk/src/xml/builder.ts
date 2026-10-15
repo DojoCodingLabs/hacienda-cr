@@ -7,6 +7,7 @@
  */
 
 import { XMLBuilder } from "fast-xml-parser";
+import { Money } from "../types/money.ts";
 
 /**
  * Hacienda v4.4 XML namespace base URL.
@@ -119,6 +120,8 @@ function createBuilder(): XMLBuilder {
 export function buildXml(
   rootName: string,
   data: Record<string, unknown>,
+  lines?: Array<{ subTotal: number; impuestoNeto: number }>,
+
   options?: BuildXmlOptions,
 ): string {
   const schemaFragment = getSchemaFragment(rootName);
@@ -131,10 +134,26 @@ export function buildXml(
     "@_xmlns:xsi": XSI_NAMESPACE,
   };
 
-  if (includeSchemaLocation) {
-    rootAttributes["@_xsi:schemaLocation"] = `${namespace} ${rootName}_V4.4.xsd`;
+  // Derive montoTotalLinea and totalServGravados from lines if provided
+  let totalLineAmount: number = 0;
+  let totalGravadoAmount: number = 0;
+  if (lines && lines.length > 0) {
+    for (const line of lines) {
+      const lineTotal = round5(Money.fromNumber(line.subTotal).plus(Money.fromNumber(line.impuestoNeto)).toNumber());
+      totalLineAmount = totalLineAmount === 0 ? lineTotal : round5(totalLineAmount + lineTotal);
+      // A simple grava check: if line has a tax rate > 0, it's gravado
+      if (line.tarifa && line.tarifa > 0) {
+        totalGravadoAmount = round5(totalGravadoAmount + lineTotal);
+      }
+    }
   }
 
+  // Derive totals from lines if provided, otherwise use data
+  const effectiveData: Record<string, unknown> = {};
+  if (lines && lines.length > 0) {
+    effectiveData["montoTotalLinea"] = totalLineAmount;
+    effectiveData["totalServGravados"] = totalGravadoAmount;
+  }
   // Wrap data inside root element with attributes
   const xmlObject = {
     "?xml": {
@@ -143,6 +162,7 @@ export function buildXml(
     },
     [rootName]: {
       ...rootAttributes,
+      ...effectiveData,
       ...data,
     },
   };
