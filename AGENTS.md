@@ -77,6 +77,8 @@ ambiguous submission failure, query the same clave before deciding to resubmit.
 - [Migration](MIGRATION.md) and [SDK migration notes](packages/sdk/MIGRATION-v4.4.md).
 - [v4.4 compliance](docs/specs/v4.4-compliance.md) and
   [security boundaries](docs/security-hardening.md).
+- [A1 conformity report](docs/conformity-report.md): SDK code tables vs Hacienda
+  primary sources, per-row verdicts and citations.
 - [SDK instructions](packages/sdk/AGENTS.md) and [MCP instructions](packages/mcp/AGENTS.md).
 
 <!-- BEGIN:turborepo-agent-rules -->
