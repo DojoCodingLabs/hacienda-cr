@@ -3,6 +3,7 @@
  */
 
 import { z } from "zod";
+import { IdentificationType } from "@dojocoding/hacienda-shared";
 import { IdpUsernameSchema } from "../auth/types.js";
 
 /**
@@ -12,14 +13,15 @@ export const EnvironmentSchema = z.enum(["sandbox", "production"]);
 export type Environment = z.infer<typeof EnvironmentSchema>;
 
 /**
- * Valid cedula (taxpayer ID) types used by Hacienda.
- *
- * - "01" = Cedula Fisica (individual)
- * - "02" = Cedula Juridica (legal entity)
- * - "03" = DIMEX (foreign resident)
- * - "04" = NITE (temporary ID)
+ * Valid cedula (taxpayer ID) types used by Hacienda — the four domestic
+ * registry codes del catálogo IdentificationType (generado desde codes.json).
  */
-export const CedulaTypeSchema = z.enum(["01", "02", "03", "04"]);
+export const CedulaTypeSchema = z.enum([
+  IdentificationType.CEDULA_FISICA,
+  IdentificationType.CEDULA_JURIDICA,
+  IdentificationType.DIMEX,
+  IdentificationType.NITE,
+]);
 export type CedulaType = z.infer<typeof CedulaTypeSchema>;
 
 /**

@@ -3,13 +3,19 @@
  */
 
 import { z } from "zod";
-import { DISCOUNT_CODES, EXONERATION_INSTITUTIONS, UNITS_OF_MEASURE } from "../constants/index.js";
+import {
+  COMMERCIAL_CODE_TYPES,
+  DISCOUNT_CODES,
+  EXONERATION_INSTITUTIONS,
+  UNITS_OF_MEASURE,
+  TRANSACTION_TYPES,
+} from "../generated/index.js";
 import { TaxCodeSchema, IvaRateCodeSchema, ExonerationTypeSchema } from "./common.js";
 
 /** Schema for commercial code (CodigoComercial). */
 export const CodigoComercialSchema = z.object({
   /** Code type: 01=Seller, 02=Buyer, 03=Industry, 04=Internal, 99=Other. */
-  tipo: z.enum(["01", "02", "03", "04", "99"]),
+  tipo: z.enum(COMMERCIAL_CODE_TYPES),
 
   /** Product/service code value. Max 20 chars. */
   codigo: z.string().min(1).max(20),
@@ -116,9 +122,7 @@ export const LineaDetalleSchema = z.object({
   unidadMedida: z.enum(UNITS_OF_MEASURE),
 
   /** Transaction type code (TipoTransaccion, 01-13). Optional, v4.4. */
-  tipoTransaccion: z
-    .enum(["01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12", "13"])
-    .optional(),
+  tipoTransaccion: z.enum(TRANSACTION_TYPES).optional(),
 
   /** Commercial unit of measure. Optional, max 20 chars. */
   unidadMedidaComercial: z.string().max(20).optional(),

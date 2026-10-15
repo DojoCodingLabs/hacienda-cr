@@ -35,6 +35,21 @@ pnpm test:packages
 `scripts/spec-watch/spec-watch.test.mjs`), always with mocked HTTP and no
 credentials.
 
+`pnpm spec:generate` renders the code catalogs in `shared/src/generated/`
+from `packages/sdk/schemas/codes.json` (full mode runs `pnpm codes:extract`
+first; `pnpm spec:generate -- --no-extract` renders from the committed file
+and is what the `pnpm verify` lock runs). Never edit generated files by hand
+(they start with `NO EDITAR`): the parity-freeze test
+`shared/src/generated-parity.spec.ts` pins the published values, and the
+verify lock fails if `git diff` or untracked files show drift under
+`shared/src/generated/` — a generation failure is reported separately and
+the diff is skipped. Regenerating currently adds about a second to
+`pnpm verify`. The generator suite (`scripts/codes-generate/`) covers
+idempotency, parity failures in both directions, `names.json` handling, and
+write atomicity; `scripts/codes-lint-lock/` pins the ESLint rule that
+rejects hand-written 1-2 digit catalog literals outside documented
+exclusions.
+
 The `env -u` examples use a POSIX shell. On other platforms, unset those variables
 in the test process or use the full offline verification wrapper.
 `pnpm test` runs through Turbo and builds before tests, but does not clear live
@@ -42,17 +57,18 @@ test variables. `test:watch` and `test:coverage` are available per package; the 
 `pnpm test:coverage` runs coverage across packages. Clear live switches for those
 commands too unless live access was explicitly authorized.
 
-| Change                 | Useful focused evidence                                               |
-| ---------------------- | --------------------------------------------------------------------- |
-| Shared fields or enums | Shared schema tests and affected SDK builders/adapters                |
-| XML or schema revision | Builder regressions, runtime validation, independent XSD conformance  |
-| Tax totals             | Calculator and business-validation regressions with discounts/taxes   |
-| Auth or HTTP           | Mocked token, deadline, cancellation, redirect, and retry tests       |
-| Sequences              | Temporary-directory concurrency, reset, overflow, and lock tests      |
-| CLI output             | Command errors, JSON/text output, and exit codes                      |
-| MCP tools              | In-memory tool/resource contracts, error cases, mocked side effects   |
-| Exports or bundling    | `pnpm test:packages` installed ESM, types, CLI, and MCP checks        |
-| Schema drift           | `pnpm spec:check` (network, read-only); apply with `pnpm spec:update` |
+| Change                 | Useful focused evidence                                                  |
+| ---------------------- | ------------------------------------------------------------------------ |
+| Shared fields or enums | Shared schema tests and affected SDK builders/adapters                   |
+| XML or schema revision | Builder regressions, runtime validation, independent XSD conformance     |
+| Tax totals             | Calculator and business-validation regressions with discounts/taxes      |
+| Auth or HTTP           | Mocked token, deadline, cancellation, redirect, and retry tests          |
+| Sequences              | Temporary-directory concurrency, reset, overflow, and lock tests         |
+| CLI output             | Command errors, JSON/text output, and exit codes                         |
+| MCP tools              | In-memory tool/resource contracts, error cases, mocked side effects      |
+| Exports or bundling    | `pnpm test:packages` installed ESM, types, CLI, and MCP checks           |
+| Schema drift           | `pnpm spec:check` (network, read-only); apply with `pnpm spec:update`    |
+| Catalog codes          | `pnpm spec:generate -- --no-extract`, the parity spec, and the lint lock |
 
 For documentation-only edits, check formatting of the edited files, resolve local
 links, and compare commands and claims to source/manifests. No new runtime tests
@@ -80,6 +96,21 @@ surface are untrusted, so the watchers reject any name that becomes a traversal
 after decoding, keep every write inside `packages/sdk/schemas/`, refuse
 redirects that leave `https:`, and cap every download. The offline
 counterpart is `node scripts/spec-verify.mjs`, which `pnpm verify` already runs.
+It checks the vendored tree against `manifest.json` — per-file SHA-256 and
+size, undeclared files, symlinks — and, since this change, the signing-policy
+block: the SHA-256 in Base64 of the vendored policy PDF is recomputed and
+compared (exact string match, standard Base64 with `=` padding, no
+normalization) against `policy.digestValue`; the PDF is located by folding the
+basename of `policy.identifier` (`foldName`/`basenameOf` shared with
+`spec:check`, exactly one vendored candidate); `digestMethod` must be exactly
+the Anexo 2 URI; `sdkStatus` must be present and within
+`pending-sdk-migration`/`aligned`. Those failures name the field and add a
+policy-specific remedy, because `spec:update` never recomputes `policy.*`. The
+contrast is self-consistent — manifest vs. vendored bytes, not vs. what ATV
+publishes today; the online comparison belongs to `spec:check`, which does not
+verify digests yet. Synthetic fixtures live in `scripts/spec-verify.test.mjs`
+(driven through `SPEC_VERIFY_SCHEMAS_DIR`); routine development never touches
+the real tree.
 Routine development uses only mocked HTTP in `scripts/spec-watch/*.test.mjs`;
 run the live commands only when authorized to touch the official surfaces.
 
