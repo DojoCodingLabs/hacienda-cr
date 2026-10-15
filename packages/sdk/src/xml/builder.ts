@@ -7,7 +7,8 @@
  */
 
 import { XMLBuilder } from "fast-xml-parser";
-import { Money } from "../types/money.ts";
+import { Money } from "@dojocoding/hacienda-shared";
+import { round5 } from "../tax/index.js";
 
 /**
  * Hacienda v4.4 XML namespace base URL.
@@ -120,7 +121,7 @@ function createBuilder(): XMLBuilder {
 export function buildXml(
   rootName: string,
   data: Record<string, unknown>,
-  lines?: Array<{ subTotal: number; impuestoNeto: number }>,
+  lines?: { subTotal: number; impuestoNeto: number; tarifa?: number }[],
 
   options?: BuildXmlOptions,
 ): string {
@@ -132,14 +133,19 @@ export function buildXml(
   const rootAttributes: Record<string, string> = {
     "@_xmlns": namespace,
     "@_xmlns:xsi": XSI_NAMESPACE,
+    ...(includeSchemaLocation
+      ? { "@_xsi:schemaLocation": `${namespace} ${rootName}_V4.4.xsd` }
+      : {}),
   };
 
   // Derive montoTotalLinea and totalServGravados from lines if provided
-  let totalLineAmount: number = 0;
-  let totalGravadoAmount: number = 0;
+  let totalLineAmount = 0;
+  let totalGravadoAmount = 0;
   if (lines && lines.length > 0) {
     for (const line of lines) {
-      const lineTotal = round5(Money.fromNumber(line.subTotal).plus(Money.fromNumber(line.impuestoNeto)).toNumber());
+      const lineTotal = round5(
+        Money.fromNumber(line.subTotal).plus(Money.fromNumber(line.impuestoNeto)).toNumber(),
+      );
       totalLineAmount = totalLineAmount === 0 ? lineTotal : round5(totalLineAmount + lineTotal);
       // A simple grava check: if line has a tax rate > 0, it's gravado
       if (line.tarifa && line.tarifa > 0) {
