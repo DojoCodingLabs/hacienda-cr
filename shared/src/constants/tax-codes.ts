@@ -7,7 +7,7 @@
  * quedan los accessors curados y su tipo.
  */
 import { IvaRateCode } from "../generated/iva-rate-code.js";
-import { UNITS_OF_MEASURE } from "../generated/units-of-measure.js";
+import type { UNITS_OF_MEASURE } from "../generated/units-of-measure.js";
 
 /** IVA rate percentages mapped by rate code. */
 export const IVA_RATE_PERCENTAGES: Record<IvaRateCode, number> = {
