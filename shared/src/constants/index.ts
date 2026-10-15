@@ -20,15 +20,9 @@ export {
   COUNTRY_CODE,
 } from "./environments.js";
 
-export { DocumentTypeCode, DOCUMENT_TYPE_NAMES } from "./document-types.js";
+export { DOCUMENT_TYPE_NAMES } from "./document-types.js";
 
-export {
-  IVA_RATE_PERCENTAGES,
-  IVA_RATE_NAMES,
-  ExonerationType,
-  UnitOfMeasure,
-  UNITS_OF_MEASURE,
-} from "./tax-codes.js";
+export { IVA_RATE_PERCENTAGES, IVA_RATE_NAMES, UnitOfMeasure } from "./tax-codes.js";
 
 export {
   REFERENCE_DOC_TYPES,

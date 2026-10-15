@@ -1,12 +1,13 @@
 /**
  * Tax-related constants for Costa Rica electronic invoicing.
  *
- * Covers IVA rate lookups and the exoneration/unit catalogs sin pareja
- * exacta con `codes.json` (ver table-map.mjs). Los catálogos `TaxCode` e
- * `IvaRateCode` migraron a `shared/src/generated/`; `UNITS_OF_MEASURE`
- * queda a mano por la deriva de code point U+03A9/U+2126 (signo ohm).
+ * Covers IVA rate lookups and the curated unit accessors. Los catálogos
+ * `TaxCode`, `IvaRateCode` y `ExonerationType` migraron a
+ * `shared/src/generated/`; `UNITS_OF_MEASURE` también se genera y aquí solo
+ * quedan los accessors curados y su tipo.
  */
 import { IvaRateCode } from "../generated/iva-rate-code.js";
+import { UNITS_OF_MEASURE } from "../generated/units-of-measure.js";
 
 /** IVA rate percentages mapped by rate code. */
 export const IVA_RATE_PERCENTAGES: Record<IvaRateCode, number> = {
@@ -38,151 +39,11 @@ export const IVA_RATE_NAMES: Record<IvaRateCode, string> = {
   [IvaRateCode.CERO_SIN_CREDITO]: "Tarifa 0% sin derecho a crédito",
 } as const;
 
-/** Exoneration type codes (sin pareja con el XSD: el vendorizado no trae el 12). */
-export const ExonerationType = {
-  /** Compras autorizadas */
-  COMPRAS_AUTORIZADAS: "01",
-  /** Ventas exentas a diplomáticos */
-  VENTAS_EXENTAS_DIPLOMATICOS: "02",
-  /** Autorizado por ley especial */
-  AUTORIZADO_LEY_ESPECIAL: "03",
-  /** Exenciones de la Dirección General de Hacienda */
-  EXENCIONES_DGH: "04",
-  /** Transitorio V */
-  TRANSITORIO_V: "05",
-  /** Transitorio IX */
-  TRANSITORIO_IX: "06",
-  /** Transitorio XVII */
-  TRANSITORIO_XVII: "07",
-  /** Exoneracion Zona Franca (new in v4.4) */
-  ZONA_FRANCA: "08",
-  /** Exoneracion de servicios complementarios para la exportacion (new in v4.4) */
-  SERVICIOS_COMPLEMENTARIOS_EXPORTACION: "09",
-  /** Organo de las corporaciones municipales (new in v4.4) */
-  CORPORACIONES_MUNICIPALES: "10",
-  /** Exenciones DGH — autorizacion de impuesto local concreta (new in v4.4) */
-  DGH_IMPUESTO_LOCAL_CONCRETA: "11",
-  /** Codigo 12 — ver ANEXOS Y ESTRUCTURAS v4.4 para la descripcion oficial */
-  EXONERACION_12: "12",
-  /** Otros */
-  OTROS: "99",
-} as const;
-
-export type ExonerationType = (typeof ExonerationType)[keyof typeof ExonerationType];
-
 /**
- * Unit of measure codes (Unidad de Medida), vendored verbatim from the
- * v4.4 XSD enumeration (UnidadMedidaType, 101 values). Casing follows the
- * official schema exactly (e.g. "Kg", "L", "mL", "Min").
- *
- * Sin pareja deliberada: el XSD vendorizado usa «Ω» U+2126 (signo ohm) y
- * esta constante «Ω» U+03A9 (omega griega) — ver table-map.mjs; corregir
- * el valor exportado exige decisión semver propia.
+ * Unit of measure codes (Unidad de Medida), generated from the v4.4 XSD
+ * enumeration (`UnidadMedidaType`, 101 values) — incluido el homógrafo «Ω»
+ * `U+2126` (OHM SIGN) que exigen las fuentes (informe A1 §6.3).
  */
-export const UNITS_OF_MEASURE = [
-  "1",
-  "´",
-  "´´",
-  "°C",
-  "1/m",
-  "A",
-  "A/m",
-  "A/m²",
-  "Acv",
-  "Al",
-  "Alc",
-  "B",
-  "Bq",
-  "C",
-  "C/kg",
-  "C/m²",
-  "C/m³",
-  "Cc",
-  "Cd",
-  "cd/m²",
-  "Cm",
-  "cm",
-  "Cu",
-  "D",
-  "eV",
-  "F",
-  "F/m",
-  "Fa",
-  "G",
-  "Gal",
-  "Gy",
-  "Gy/s",
-  "h",
-  "H",
-  "H/m",
-  "Hz",
-  "I",
-  "J",
-  "J/(kg·K)",
-  "J/(mol·K)",
-  "J/K",
-  "J/kg",
-  "J/m³",
-  "J/mol",
-  "K",
-  "Kat",
-  "kat/m³",
-  "Kg",
-  "kg/m³",
-  "Km",
-  "Kw",
-  "kWh",
-  "L",
-  "Lm",
-  "Ln",
-  "Lx",
-  "M",
-  "m/s",
-  "m/s²",
-  "m²",
-  "m³",
-  "Min",
-  "mL",
-  "Mm",
-  "Mol",
-  "mol/m³",
-  "N",
-  "N/m",
-  "N·m",
-  "Np",
-  "º",
-  "Os",
-  "Otros",
-  "Oz",
-  "Pa",
-  "Pa·s",
-  "Qq",
-  "Rad",
-  "rad/s",
-  "rad/s²",
-  "S",
-  "s",
-  "Sp",
-  "Spe",
-  "Sr",
-  "St",
-  "Sv",
-  "t",
-  "T",
-  "U",
-  "Ua",
-  "Unid",
-  "V",
-  "V/m",
-  "W",
-  "W/(m·K)",
-  "W/(m²·sr)",
-  "W/m²",
-  "W/sr",
-  "Wb",
-  "Ω",
-] as const;
-
 export type UnitOfMeasure = (typeof UNITS_OF_MEASURE)[number];
 
 /** Named accessors for commonly used units (all values exist in UNITS_OF_MEASURE). */

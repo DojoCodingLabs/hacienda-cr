@@ -6,15 +6,120 @@
 // sentidos y falla nombrando tabla y código; `namesFrom` declarará la
 // fuente de nombres legibles cuando exista names.json (fase futura).
 //
+// Correcciones sancionadas (requisito «Correcciones sancionadas de paridad con
+// cita de fuente primaria» del spec codes-generation): la paridad por defecto
+// exige mismas claves y valores que la tabla escrita a mano reemplazada. Una
+// corrección es la única excepción admitida y se declara en la entrada con
+// `corrections`, cada una con:
+//   - `kind`: "remove-value" | "remove-key" | "rename-key" | "replace-value"
+//   - `code`: código afectado
+//   - `from` / `to`: valor o clave anterior y nuevo (rename-key/replace-value)
+//   - `report`: cita del informe de conformidad del repo (sección/fila)
+//   - `source`: cita de la fuente primaria (PDF/XSD con página o tipo)
+//   - `changeset`: Changeset publicado que declara el rompimiento
+// `pnpm spec:generate` aplica y reporta cada corrección por tabla, clave y
+// cita; una corrección incompleta, contradictoria o sin Changeset failiza el
+// comando sin escribir salida parcial. Un desvío no declarado sigue fallando
+// bajo el requisito de paridad.
+//
 // Sin pareja deliberada — se reporta en cada spec:generate, no se adivina:
-// - UnidadMedidaType / UNITS_OF_MEASURE — deriva de code point: la
-//   constante usa U+03A9 (omega griega) y el XSD U+2126 (signo ohm).
-// - TipoExoneracionType / ExonerationType — el XSD no contiene el 12.
-// - TipoDocReferenciaType / REFERENCE_DOC_TYPES — el XSD vendorizado no
-//   contiene los 19-20 (revisión abril 2026 pendiente de vendorizar).
+// - TipoDocReferenciaType / REFERENCE_DOC_TYPES — el XSD vendorizado del set
+//   vigente (2024/v4.4) no contiene los 19-20 (revisión abril 2026 pendiente
+//   de vendorizar).
 // - CodigoReferenciaType / REFERENCE_CODES — ídem, faltan 13-16.
-// - DocumentTypeCode — catálogo de la clave, no una enumeración del XSD.
+// - REP_REFERENCE_CODES — ídem, XSD del REP; 2026 aporta 13-17.
+//
+// Transición al set 2026 (informe A1 §6.4): las tres constantes ya coinciden
+// exactamente con la revisión `2026/v4.4`, **obligatoria desde 2026-11-01**,
+// y divergen del set vigente 2024 y del PDF de Anexos
+// (REFERENCE_DOC_TYPES 21 vs 19; REFERENCE_CODES 16 vs 12;
+// REP_REFERENCE_CODES 17 vs 12). Por eso quedan sin emparejar: emparejarlas
+// hoy forzaría una corrección contra un XSD que el repo aún no vendoriza.
+// Contradicción entre fuentes oficiales, declarada sin resolver: el código
+// `02` es «Corrige monto» en el PDF Anexos Nota 9 (p. 72) y «Corrige texto de
+// ocumento de referencia» [sic] en el XSD 2026; el SDK sigue el XSD. Erratas
+// oficiales 2026 citadas literalmente (02 «documento», 05 «contigencia»): el
+// SDK las escribe correctamente (diffs de descripción, no de significado).
+const A2_CHANGESET = ".changeset/a2-spec-as-data-corrections.md";
+
 export const TABLE_MAP = [
+  {
+    // Catálogo oficial de tipos de comprobante de la clave numerica (ANEXOS
+    // V4.4 p. 65 inciso c; `Nota3/TipoComprobanteDocumentoAsociado` ya en
+    // codes.json). El SDK tenía 9 claves desplazadas; las correcciones
+    // sancionadas declaran el desvío (informe A1 §6.1).
+    tableKeys: ["Nota3/TipoComprobanteDocumentoAsociado"],
+    exportName: "DocumentTypeCode",
+    shape: "object",
+    keys: {
+      "01": "FACTURA_ELECTRONICA",
+      "02": "NOTA_DEBITO_ELECTRONICA",
+      "03": "NOTA_CREDITO_ELECTRONICA",
+      "04": "TIQUETE_ELECTRONICO",
+      "05": "CONFIRMACION_ACEPTACION",
+      "06": "CONFIRMACION_ACEPTACION_PARCIAL",
+      "07": "CONFIRMACION_RECHAZO",
+      "08": "FACTURA_ELECTRONICA_COMPRA",
+      "09": "FACTURA_ELECTRONICA_EXPORTACION",
+      10: "RECIBO_ELECTRONICO_PAGO",
+    },
+    corrections: [
+      {
+        kind: "rename-key",
+        code: "05",
+        from: "FACTURA_ELECTRONICA_COMPRA",
+        to: "CONFIRMACION_ACEPTACION",
+        report: "docs/conformity-report.md §6.1 (fila 1)",
+        source: "ANEXOS V4.4 p. 65 inciso c",
+        changeset: A2_CHANGESET,
+      },
+      {
+        kind: "rename-key",
+        code: "06",
+        from: "FACTURA_ELECTRONICA_EXPORTACION",
+        to: "CONFIRMACION_ACEPTACION_PARCIAL",
+        report: "docs/conformity-report.md §6.1 (fila 1)",
+        source: "ANEXOS V4.4 p. 65 inciso c",
+        changeset: A2_CHANGESET,
+      },
+      {
+        kind: "rename-key",
+        code: "07",
+        from: "RECIBO_ELECTRONICO_PAGO",
+        to: "CONFIRMACION_RECHAZO",
+        report: "docs/conformity-report.md §6.1 (fila 1)",
+        source: "ANEXOS V4.4 p. 65 inciso c",
+        changeset: A2_CHANGESET,
+      },
+      {
+        kind: "remove-key",
+        code: "08",
+        from: "COMPRA_PAGO",
+        report: "docs/conformity-report.md §6.1 (fila 1)",
+        source: "ANEXOS V4.4 p. 65 inciso c (sin respaldo en ninguna fuente)",
+        changeset: A2_CHANGESET,
+      },
+      {
+        kind: "remove-key",
+        code: "09",
+        from: "GASTO_VIAJE",
+        report: "docs/conformity-report.md §6.1 (fila 1)",
+        source: "ANEXOS V4.4 p. 65 inciso c (sin respaldo en ninguna fuente)",
+        changeset: A2_CHANGESET,
+      },
+      {
+        kind: "replace-value",
+        code: "10",
+        key: "RECIBO_ELECTRONICO_PAGO",
+        from: "07",
+        to: "10",
+        report: "docs/conformity-report.md §6.1 (fila 1)",
+        source: "ANEXOS V4.4 p. 65 inciso c",
+        changeset: A2_CHANGESET,
+      },
+    ],
+    namesFrom: null,
+  },
   {
     // Medio de Pago: variante canónica de Factura; las 7 variantes por tipo de documento son idénticas en el set vigente (verificado al sembrar).
     tableKeys: ["FacturaElectronica/ResumenFactura/MedioPago/TipoMedioPago"],
@@ -122,6 +227,72 @@ export const TABLE_MAP = [
       2: "CONTINGENCIA",
       3: "SIN_INTERNET",
     },
+    namesFrom: null,
+  },
+  {
+    // Taxonomía oficial de exoneraciones (XSD TipoExoneracionType, 01–11 + 99).
+    // El SDK declaraba un «12» sin respaldo en ninguna fuente (informe A1 §6.2)
+    // y la etiqueta del 06 era «Transitorio IX» en vez del sentido oficial.
+    tableKeys: ["TipoExoneracionType"],
+    exportName: "ExonerationType",
+    shape: "object",
+    keys: {
+      "01": "COMPRAS_AUTORIZADAS",
+      "02": "VENTAS_EXENTAS_DIPLOMATICOS",
+      "03": "AUTORIZADO_LEY_ESPECIAL",
+      "04": "EXENCIONES_DGH",
+      "05": "TRANSITORIO_V",
+      "06": "SERVICIOS_TURISTICOS_ICT",
+      "07": "TRANSITORIO_XVII",
+      "08": "ZONA_FRANCA",
+      "09": "SERVICIOS_COMPLEMENTARIOS_EXPORTACION",
+      10: "CORPORACIONES_MUNICIPALES",
+      11: "DGH_IMPUESTO_LOCAL_CONCRETA",
+      99: "OTROS",
+    },
+    corrections: [
+      {
+        kind: "remove-value",
+        code: "12",
+        from: "EXONERACION_12",
+        report: "docs/conformity-report.md §6.2 (fila 10)",
+        source: "ANEXOS V4.4 Nota 10.1 p. 74; XSD TipoExoneracionType 01–11 + 99",
+        changeset: A2_CHANGESET,
+      },
+      {
+        kind: "rename-key",
+        code: "06",
+        from: "TRANSITORIO_IX",
+        to: "SERVICIOS_TURISTICOS_ICT",
+        report: "docs/conformity-report.md §6.2 (fila 10)",
+        source: "ANEXOS V4.4 Nota 10.1 p. 74; XSD TipoExoneracionType (06)",
+        changeset: A2_CHANGESET,
+      },
+    ],
+    namesFrom: null,
+  },
+  {
+    // Unidades de medida oficiales (XSD UnidadMedidaType, 101 valores). El SDK
+    // usaba «Ω» U+03A9 (omega griega); las fuentes usan U+2126 (signo ohm),
+    // homógrafo con bytes distintos (informe A1 §6.3).
+    tableKeys: ["UnidadMedidaType"],
+    exportName: "UNITS_OF_MEASURE",
+    shape: "array",
+    keyType: "UnitOfMeasure",
+    // El tipo `UnitOfMeasure` lo re-deriva constants/tax-codes.ts, donde la
+    // const curada de accessors comparte el nombre con el tipo.
+    emitType: false,
+    corrections: [
+      {
+        kind: "replace-value",
+        code: "\u2126",
+        from: "\u03a9",
+        to: "\u2126",
+        report: "docs/conformity-report.md §6.3 (fila 11)",
+        source: "PDF Anexos Nota 15 pp. 76–79; XSD UnidadMedidaType",
+        changeset: A2_CHANGESET,
+      },
+    ],
     namesFrom: null,
   },
   {

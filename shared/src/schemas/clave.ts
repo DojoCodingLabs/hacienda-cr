@@ -3,8 +3,7 @@
  */
 
 import { z } from "zod";
-import { DocumentTypeCode } from "../constants/index.js";
-import { SituationCode } from "../generated/index.js";
+import { DocumentTypeCode, SituationCode } from "../generated/index.js";
 
 /** Schema for individual clave numerica components. */
 export const ClaveComponentsSchema = z.object({
@@ -31,11 +30,12 @@ export const ClaveComponentsSchema = z.object({
     DocumentTypeCode.NOTA_DEBITO_ELECTRONICA,
     DocumentTypeCode.NOTA_CREDITO_ELECTRONICA,
     DocumentTypeCode.TIQUETE_ELECTRONICO,
+    DocumentTypeCode.CONFIRMACION_ACEPTACION,
+    DocumentTypeCode.CONFIRMACION_ACEPTACION_PARCIAL,
+    DocumentTypeCode.CONFIRMACION_RECHAZO,
     DocumentTypeCode.FACTURA_ELECTRONICA_COMPRA,
     DocumentTypeCode.FACTURA_ELECTRONICA_EXPORTACION,
     DocumentTypeCode.RECIBO_ELECTRONICO_PAGO,
-    DocumentTypeCode.COMPRA_PAGO,
-    DocumentTypeCode.GASTO_VIAJE,
   ]),
 
   /** Sequence number, zero-padded to 10 digits. */
@@ -66,11 +66,12 @@ export const ClaveInputSchema = z.object({
     DocumentTypeCode.NOTA_DEBITO_ELECTRONICA,
     DocumentTypeCode.NOTA_CREDITO_ELECTRONICA,
     DocumentTypeCode.TIQUETE_ELECTRONICO,
+    DocumentTypeCode.CONFIRMACION_ACEPTACION,
+    DocumentTypeCode.CONFIRMACION_ACEPTACION_PARCIAL,
+    DocumentTypeCode.CONFIRMACION_RECHAZO,
     DocumentTypeCode.FACTURA_ELECTRONICA_COMPRA,
     DocumentTypeCode.FACTURA_ELECTRONICA_EXPORTACION,
     DocumentTypeCode.RECIBO_ELECTRONICO_PAGO,
-    DocumentTypeCode.COMPRA_PAGO,
-    DocumentTypeCode.GASTO_VIAJE,
   ]),
 
   /** Sequential document number (1 to 9999999999). */

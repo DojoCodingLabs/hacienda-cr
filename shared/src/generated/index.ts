@@ -3,7 +3,9 @@
 export * from "./commercial-code-types.js";
 export * from "./currency-codes.js";
 export * from "./discount-codes.js";
+export * from "./document-type-code.js";
 export * from "./exoneration-institutions.js";
+export * from "./exoneration-type.js";
 export * from "./identification-type.js";
 export * from "./iva-rate-code.js";
 export * from "./mensaje-receptor-code.js";
@@ -14,3 +16,4 @@ export * from "./sale-condition.js";
 export * from "./situation-code.js";
 export * from "./tax-code.js";
 export * from "./transaction-types.js";
+export * from "./units-of-measure.js";

@@ -11,7 +11,22 @@
 // Hacienda rejection codes (from respuesta-xml)
 // ---------------------------------------------------------------------------
 
-/** Known Hacienda rejection reason codes from MensajeHacienda. */
+/**
+ * Hacienda rejection reason codes — documented assumption, no official
+ * catalog (A2 task 4.2).
+ *
+ * Checked and still unsourced: the Anexos PDF only uses «rechazo» in prose;
+ * `MensajeHacienda` carries rejection detail as free text (`EstadoMensaje`,
+ * `DetalleMensaje`) and its only enumerations are `TipoIdentificacion`; the
+ * v4.4 XSDs enumerate no rejection causes; and the official REST API manual
+ * (`.../docs/esquemas/2024/v4.4/comprobantes-electronicos-api.html`, linked
+ * from the ATV «Anexos y Estructuras» page) reports failures through the
+ * free-text `X-Error-Cause` header plus the HTTP status — its only `enum` is
+ * `ind-estado`. The 01–12 values therefore remain a documented assumption:
+ * they keep their current behavior unchanged and must not be treated as an
+ * official catalog. A future published catalog supersedes them through a
+ * sanctioned correction with its citation (A2 design decision 6).
+ */
 export const HaciendaRejectionCode = {
   /** XML schema validation failure. */
   SCHEMA_INVALID: "01",

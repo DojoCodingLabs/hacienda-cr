@@ -10,7 +10,6 @@
 
 import type {
   CurrencyCode,
-  ExonerationType,
   ReferenceCode,
   ReferenceDocType,
   UnitOfMeasure,
@@ -19,6 +18,7 @@ import type {
   CommercialCodeType,
   DiscountCode,
   ExonerationInstitution,
+  ExonerationType,
   IdentificationType,
   IvaRateCode,
   MensajeReceptorCode,

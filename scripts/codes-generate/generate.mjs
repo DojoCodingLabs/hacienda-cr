@@ -76,6 +76,85 @@ function owningTable(entry, code) {
   return entry.tableKeys.join(" / ");
 }
 
+const CORRECTION_KINDS = new Set(["remove-value", "remove-key", "rename-key", "replace-value"]);
+
+/**
+ * Valida y aplica las correcciones sancionadas de una entrada (requisito
+ * «Correcciones sancionadas de paridad con cita de fuente primaria»): cada
+ * corrección declara tipo, código, cita al informe de conformidad, fuente
+ * primaria y Changeset de referencia. Muta la unión para los tipos que afectan
+ * la salida y devuelve los registros aplicados. Lanza Error (sin escribir
+ * nada) ante una corrección incompleta, contradictoria o sin Changeset.
+ */
+function applyCorrections(entry, union) {
+  const applied = [];
+  const where = `${entry.exportName} / ${entry.tableKeys.join(" / ")}`;
+  for (const correction of entry.corrections ?? []) {
+    const kind = correction.kind;
+    const code = correction.code;
+    if (typeof code !== "string" || code === "")
+      throw new Error(`corrección sancionada sin código en ${where}`);
+    const subject = `corrección sancionada ${kind ?? "sin tipo"} en ${where} (código ${JSON.stringify(code)})`;
+    if (!CORRECTION_KINDS.has(kind))
+      throw new Error(`${subject}: tipo desconocido ${JSON.stringify(kind)}`);
+    for (const field of ["report", "source", "changeset"])
+      if (typeof correction[field] !== "string" || correction[field].trim() === "")
+        throw new Error(`${subject}: falta ${field}`);
+    if (!existsSync(join(root, correction.changeset)))
+      throw new Error(`${subject}: Changeset inexistente ${correction.changeset}`);
+    if (kind === "remove-key" || kind === "rename-key" || kind === "replace-value")
+      if (typeof correction.from !== "string" || correction.from === "")
+        throw new Error(`${subject}: falta from para ${kind}`);
+    if (kind === "rename-key" || kind === "replace-value")
+      if (typeof correction.to !== "string" || correction.to === "")
+        throw new Error(`${subject}: falta to para ${kind}`);
+    switch (kind) {
+      case "remove-value":
+        // La salida pierde el valor: se retira del catálogo y su clave.
+        union.delete(code);
+        delete entry.keys?.[code];
+        break;
+      case "remove-key":
+        if (entry.keys && Object.values(entry.keys).includes(correction.from))
+          throw new Error(
+            `${subject}: la clave ${JSON.stringify(correction.from)} sigue declarada en table-map`,
+          );
+        break;
+      case "rename-key": {
+        if (!entry.keys || entry.keys[code] !== correction.to)
+          throw new Error(`${subject}: la clave generada no es ${JSON.stringify(correction.to)}`);
+        if (correction.from === correction.to)
+          throw new Error(`${subject}: from y to idénticos, sin desvío que declarar`);
+        break;
+      }
+      case "replace-value":
+        if (typeof correction.key === "string" && correction.key !== "") {
+          // Sustitución de valor por clave pública: la clave vive en el código nuevo.
+          if (!entry.keys || entry.keys[correction.to] !== correction.key)
+            throw new Error(
+              `${subject}: la clave ${JSON.stringify(correction.key)} no está en el código ${JSON.stringify(correction.to)}`,
+            );
+        } else if (entry.shape === "object") {
+          if (!entry.keys || entry.keys[code] !== correction.to)
+            throw new Error(`${subject}: la clave generada no es ${JSON.stringify(correction.to)}`);
+        } else if (code !== correction.to) {
+          throw new Error(`${subject}: el valor generado no es ${JSON.stringify(correction.to)}`);
+        }
+        break;
+    }
+    applied.push({
+      table: entry.tableKeys.join(" / "),
+      export: entry.exportName,
+      kind,
+      code,
+      report: correction.report,
+      source: correction.source,
+      changeset: correction.changeset,
+    });
+  }
+  return applied;
+}
+
 function renderObject(entry, union) {
   const lines = [HEADER, "", `export const ${entry.exportName} = {`];
   for (const [code, description] of union) {
@@ -168,6 +247,7 @@ export async function generate({
   }
 
   const rendered = new Map();
+  const corrections = [];
   let unionCount = 0;
   for (const entry of tableMap) {
     if (entry.shape !== "object" && entry.shape !== "array")
@@ -175,25 +255,27 @@ export async function generate({
         `table-map: shape desconocido ${JSON.stringify(entry.shape)} (export ${entry.exportName})`,
       );
     const union = unionCodes(tables, entry);
+    const active = { ...entry, keys: entry.keys ? { ...entry.keys } : undefined };
+    corrections.push(...applyCorrections(active, union));
     let body;
-    if (entry.shape === "object") {
-      const missingKeys = [...union.keys()].filter((code) => !(code in entry.keys));
+    if (active.shape === "object") {
+      const missingKeys = [...union.keys()].filter((code) => !(code in active.keys));
       if (missingKeys.length)
         throw new Error(
           `paridad: ${entry.tableKeys.join(" / ")}: código(s) sin clave en table-map para ${entry.exportName}: ` +
             `${missingKeys.map((code) => JSON.stringify(code)).join(", ")} — revisar el nombre (nunca inventarlo)`,
         );
-      const strayKeys = Object.keys(entry.keys).filter((code) => !union.has(code));
+      const strayKeys = Object.keys(active.keys).filter((code) => !union.has(code));
       if (strayKeys.length)
         throw new Error(
           `paridad: table-map declara clave(s) sin código en codes.json para ${entry.exportName}: ` +
             `${strayKeys.map((code) => JSON.stringify(code)).join(", ")}`,
         );
-      body = renderObject(entry, union);
+      body = renderObject(active, union);
     } else {
-      body = renderArray(entry, union);
+      body = renderArray(active, union);
     }
-    if (entry.namesFrom && names) body += `\n${renderNames(entry, union, names)}`;
+    if (active.namesFrom && names) body += `\n${renderNames(active, union, names)}`;
     rendered.set(
       `${entry.exportName
         .replace(/([a-z0-9])([A-Z])/g, "$1-$2")
@@ -228,6 +310,7 @@ export async function generate({
   return {
     written: formatted.size,
     pairs: unionCount,
+    corrections,
     unpaired: codes.tables
       .filter((table) => !pairedTables.has(table.key))
       .map((table) => table.key),
@@ -245,6 +328,12 @@ function printReport(report) {
   if (report.unpaired.length)
     console.log(
       `spec:generate: informe — ${report.unpaired.length} tabla(s) de codes.json sin pareja (documentado en table-map.mjs):\n  ${report.unpaired.join("\n  ")}`,
+    );
+  for (const correction of report.corrections ?? [])
+    console.log(
+      `spec:generate: corrección sancionada aplicada — ${correction.export} [${correction.table}] ` +
+        `${correction.kind} código ${JSON.stringify(correction.code)} ` +
+        `(cita: ${correction.report}; fuente: ${correction.source}; changeset: ${correction.changeset})`,
     );
   if (report.pendingNames.length)
     console.log(

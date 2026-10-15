@@ -339,14 +339,16 @@ describe("ExoneracionSchema", () => {
     expect(result.success).toBe(true);
   });
 
-  it("should accept the new v4.4 exoneration document types (08-12)", () => {
-    for (const tipoDocumento of ["08", "09", "10", "11", "12"]) {
+  it("should accept the v4.4 exoneration document types (08-11) and reject the unsupported 12", () => {
+    for (const tipoDocumento of ["08", "09", "10", "11"]) {
       const result = ExoneracionSchema.safeParse({
         ...validExoneracion,
         tipoDocumento,
       });
       expect(result.success).toBe(true);
     }
+    const doce = ExoneracionSchema.safeParse({ ...validExoneracion, tipoDocumento: "12" });
+    expect(doce.success).toBe(false);
   });
 
   it("should accept tipoDocumento 99 with free-text tipoDocumentoOtros", () => {

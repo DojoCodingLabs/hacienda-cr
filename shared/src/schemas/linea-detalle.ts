@@ -3,11 +3,11 @@
  */
 
 import { z } from "zod";
-import { UNITS_OF_MEASURE } from "../constants/index.js";
 import {
   COMMERCIAL_CODE_TYPES,
   DISCOUNT_CODES,
   EXONERATION_INSTITUTIONS,
+  UNITS_OF_MEASURE,
   TRANSACTION_TYPES,
 } from "../generated/index.js";
 import { TaxCodeSchema, IvaRateCodeSchema, ExonerationTypeSchema } from "./common.js";
