@@ -11,6 +11,7 @@ import {
   TRANSACTION_TYPES,
 } from "../generated/index.js";
 import { TaxCodeSchema, IvaRateCodeSchema, ExonerationTypeSchema } from "./common.js";
+import type { Money } from "../types/money.js";
 
 /** Schema for commercial code (CodigoComercial). */
 export const CodigoComercialSchema = z.object({
@@ -75,8 +76,15 @@ export const ImpuestoSchema = z.object({
   /** Calculation factor for the used-goods IVA regime (code 08). */
   factorCalculoIVA: z.number().min(0).max(9.9999).optional(),
 
-  /** Tax amount (Monto). */
-  monto: z.number().min(0),
+  /** Tax amount (Monto). Accepts number or Money (for calculated outputs). */
+  monto: z
+    .custom<Money | number>(
+      (val): val is Money | number =>
+        typeof val === "number" || (typeof val === "object" && val !== null && "toNumber" in val),
+      "Invalid monto: expected number or Money",
+    )
+    .transform((val) => (typeof val === "number" ? val : val.toNumber()))
+    .refine((val) => val >= 0, "monto must be non-negative"),
 
   /** Exoneration information. Optional. */
   exoneracion: ExoneracionSchema.optional(),

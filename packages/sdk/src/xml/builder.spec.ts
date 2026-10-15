@@ -95,13 +95,9 @@ describe("buildXml", () => {
   });
 
   it("should omit xsi:schemaLocation when configured", () => {
-    const xml = buildXml(
-      "FacturaElectronica",
-      { Clave: "test" },
-      {
-        includeSchemaLocation: false,
-      },
-    );
+    const xml = buildXml("FacturaElectronica", { Clave: "test" }, undefined, {
+      includeSchemaLocation: false,
+    });
     expect(xml).not.toContain("xsi:schemaLocation");
   });
 
@@ -143,11 +139,9 @@ describe("buildXml", () => {
   });
 
   it("should allow custom namespace override", () => {
-    const xml = buildXml(
-      "FacturaElectronica",
-      { Clave: "test" },
-      { namespace: "https://custom.namespace.com/v1" },
-    );
+    const xml = buildXml("FacturaElectronica", { Clave: "test" }, undefined, {
+      namespace: "https://custom.namespace.com/v1",
+    });
     expect(xml).toContain('xmlns="https://custom.namespace.com/v1"');
   });
 

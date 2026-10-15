@@ -143,12 +143,10 @@ describe("calculateLineItemTotals", () => {
 
       const result = calculateLineItemTotals(item);
       expect(result.impuesto).toHaveLength(1);
-      expect(result.impuesto[0]).toEqual({
-        codigo: "01",
-        codigoTarifaIVA: "01",
-        tarifa: 0,
-        monto: 0,
-      });
+      expect(result.impuesto[0]?.codigo).toBe("01");
+      expect(result.impuesto[0]?.codigoTarifaIVA).toBe("01");
+      expect(result.impuesto[0]?.tarifa).toBe(0);
+      expect(result.impuesto[0]?.monto.toNumber()).toBe(0);
       expect(result.impuestoNeto).toBe(0);
       expect(result.baseImponible).toBe(10000);
       expect(result.montoTotalLinea).toBe(10000);
@@ -170,7 +168,7 @@ describe("calculateLineItemTotals", () => {
       expect(result.impuesto[0]?.codigo).toBe("01");
       expect(result.impuesto[0]?.codigoTarifaIVA).toBe("01");
       expect(result.impuesto[0]?.tarifa).toBe(0);
-      expect(result.impuesto[0]?.monto).toBe(0);
+      expect(result.impuesto[0]?.monto.toNumber()).toBe(0);
       expect(result.impuestoNeto).toBe(0);
     });
   });
@@ -189,7 +187,7 @@ describe("calculateLineItemTotals", () => {
 
       const result = calculateLineItemTotals(item);
       const tax = getFirstTax(result);
-      expect(tax.monto).toBe(13000);
+      expect(tax.monto.toNumber()).toBe(13000);
       expect(tax.codigoTarifaIVA).toBe("08");
       expect(result.impuestoNeto).toBe(13000);
       expect(result.montoTotalLinea).toBe(113000);
@@ -209,7 +207,7 @@ describe("calculateLineItemTotals", () => {
       const result = calculateLineItemTotals(item);
       expect(result.montoTotal).toBe(10000);
       const tax = getFirstTax(result);
-      expect(tax.monto).toBe(400);
+      expect(tax.monto.toNumber()).toBe(400);
       expect(result.impuestoNeto).toBe(400);
       expect(result.montoTotalLinea).toBe(10400);
     });
@@ -227,7 +225,7 @@ describe("calculateLineItemTotals", () => {
 
       const result = calculateLineItemTotals(item);
       const tax = getFirstTax(result);
-      expect(tax.monto).toBe(150);
+      expect(tax.monto.toNumber()).toBe(150);
       expect(result.impuestoNeto).toBe(150);
       expect(result.montoTotalLinea).toBe(15150);
     });
@@ -245,7 +243,7 @@ describe("calculateLineItemTotals", () => {
 
       const result = calculateLineItemTotals(item);
       const tax = getFirstTax(result);
-      expect(tax.monto).toBe(200);
+      expect(tax.monto.toNumber()).toBe(200);
     });
 
     it("should calculate 8% transitional IVA correctly", () => {
@@ -261,7 +259,7 @@ describe("calculateLineItemTotals", () => {
 
       const result = calculateLineItemTotals(item);
       const tax = getFirstTax(result);
-      expect(tax.monto).toBe(800);
+      expect(tax.monto.toNumber()).toBe(800);
     });
 
     it("should handle 0% exempt correctly", () => {
@@ -277,7 +275,7 @@ describe("calculateLineItemTotals", () => {
 
       const result = calculateLineItemTotals(item);
       const tax = getFirstTax(result);
-      expect(tax.monto).toBe(0);
+      expect(tax.monto.toNumber()).toBe(0);
       expect(result.impuestoNeto).toBe(0);
       expect(result.montoTotalLinea).toBe(10000);
     });
@@ -295,7 +293,7 @@ describe("calculateLineItemTotals", () => {
 
       const result = calculateLineItemTotals(item);
       const tax = getFirstTax(result);
-      expect(tax.monto).toBe(1000);
+      expect(tax.monto.toNumber()).toBe(1000);
       expect(tax).not.toHaveProperty("codigoTarifaIVA");
     });
   });
@@ -325,7 +323,7 @@ describe("calculateLineItemTotals", () => {
       expect(result.baseImponible).toBe(45000);
       // Tax on 45000: 45000 * 0.13 = 5850
       const tax = getFirstTax(result);
-      expect(tax.monto).toBe(5850);
+      expect(tax.monto.toNumber()).toBe(5850);
       expect(result.montoTotalLinea).toBe(50850);
     });
 
@@ -376,7 +374,7 @@ describe("calculateLineItemTotals", () => {
       const result = calculateLineItemTotals(item);
       const tax = getFirstTax(result);
       // Full tax: 200000 * 13 / 100 = 26000 (still recorded on the tax)
-      expect(tax.monto).toBe(26000);
+      expect(tax.monto.toNumber()).toBe(26000);
       // Exonerated amount: 200000 * 13 / 100 = 26000
       expect(tax.exoneracion).toBeDefined();
       expect(tax.exoneracion?.montoExoneracion).toBe(26000);
@@ -413,7 +411,7 @@ describe("calculateLineItemTotals", () => {
       const result = calculateLineItemTotals(item);
       const tax = getFirstTax(result);
       // Full tax: 100000 * 13 / 100 = 13000
-      expect(tax.monto).toBe(13000);
+      expect(tax.monto.toNumber()).toBe(13000);
       // Exonerated: 100000 * 6.5 / 100 = 6500
       expect(tax.exoneracion).toBeDefined();
       expect(tax.exoneracion?.montoExoneracion).toBe(6500);
@@ -450,7 +448,7 @@ describe("calculateLineItemTotals", () => {
       const result = calculateLineItemTotals(item);
       const tax = getFirstTax(result);
       // Full tax: 130000 * 13 / 100 = 16900
-      expect(tax.monto).toBe(16900);
+      expect(tax.monto.toNumber()).toBe(16900);
       // Exonerated: 130000 * 4 / 100 = 5200
       expect(tax.exoneracion?.montoExoneracion).toBe(5200);
       // Net tax: 16900 - 5200 = 11700
@@ -484,7 +482,7 @@ describe("calculateLineItemTotals", () => {
 
       const result = calculateLineItemTotals(item);
       const tax = getFirstTax(result);
-      expect(tax.monto).toBe(4000);
+      expect(tax.monto.toNumber()).toBe(4000);
       expect(tax.exoneracion?.montoExoneracion).toBe(13000);
       // Net tax: max(0, 4000 - 13000) = 0
       expect(result.impuestoNeto).toBe(0);
@@ -561,7 +559,7 @@ describe("calculateLineItemTotals", () => {
       expect(result.montoTotal).toBe(8333.325);
       const tax = getFirstTax(result);
       // Tax: 8333.325 * 0.13 = 1083.33225
-      expect(tax.monto).toBe(1083.33225);
+      expect(tax.monto.toNumber()).toBe(1083.33225);
     });
 
     it("should round the exonerated amount to 5 decimals", () => {
@@ -591,7 +589,7 @@ describe("calculateLineItemTotals", () => {
       const result = calculateLineItemTotals(item);
       const tax = getFirstTax(result);
       // Full tax: round5(3333.33333 * 13 / 100) = round5(433.3333329) = 433.33333
-      expect(tax.monto).toBe(433.33333);
+      expect(tax.monto.toNumber()).toBe(433.33333);
       // Exonerated: round5(3333.33333 * 6.5 / 100) = round5(216.66666645) = 216.66667
       expect(tax.exoneracion?.montoExoneracion).toBe(216.66667);
       // Net: round5(433.33333 - 216.66667) = 216.66666
@@ -1186,7 +1184,7 @@ describe("calculateLineItemTotals – edge cases", () => {
     expect(result.montoTotal).toBe(99999999);
     const tax = getFirstTax(result);
     // tax = 99999999 * 0.13 = 12999999.87
-    expect(tax.monto).toBe(12999999.87);
+    expect(tax.monto.toNumber()).toBe(12999999.87);
     expect(result.montoTotalLinea).toBe(112999998.87);
   });
 
@@ -1207,9 +1205,9 @@ describe("calculateLineItemTotals – edge cases", () => {
     expect(result.impuesto).toBeDefined();
     expect(result.impuesto).toHaveLength(2);
     // IVA: 10000 * 0.13 = 1300
-    expect(result.impuesto?.[0]?.monto).toBe(1300);
+    expect(result.impuesto?.[0]?.monto.toNumber()).toBe(1300);
     // Selectivo: 10000 * 0.10 = 1000
-    expect(result.impuesto?.[1]?.monto).toBe(1000);
+    expect(result.impuesto?.[1]?.monto.toNumber()).toBe(1000);
     // impuestoNeto only counts IVA (code "01"), not selectivo consumo ("02")
     expect(result.impuestoNeto).toBe(1300);
     // montoTotalLinea = subTotal + impuestoNeto (only IVA net)
@@ -1264,7 +1262,7 @@ describe("calculateLineItemTotals – edge cases", () => {
     const result = calculateLineItemTotals(item);
     const tax = getFirstTax(result);
     expect(result.subTotal).toBe(40000);
-    expect(tax.monto).toBe(5200); // full tax on discounted subtotal still recorded
+    expect(tax.monto.toNumber()).toBe(5200); // full tax on discounted subtotal still recorded
     expect(tax.exoneracion?.montoExoneracion).toBe(5200);
     expect(result.impuestoNeto).toBe(0);
     expect(result.montoTotalLinea).toBe(40000);
