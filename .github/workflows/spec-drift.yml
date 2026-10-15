@@ -2,7 +2,7 @@ name: Spec drift
 
 on:
   schedule:
-    - cron: "0 12 1 * *" # día 1, 12:00 UTC = 06:00 Costa Rica
+    - cron: "0 12 * * 1" # lunes, 12:00 UTC = 06:00 Costa Rica
   workflow_dispatch:
 
 # Evita que un dispatch solapado corra en paralelo al cron.

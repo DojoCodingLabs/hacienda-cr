@@ -133,7 +133,7 @@ Field semantics:
   byte-for-byte.
 - `lastSyncedAt` — date of the **last `spec:update` run** (the only command
   that writes the manifest; `spec:check` is read-only and never touches
-  `downloadedAt` or `lastSyncedAt`). The monthly drift job
+  `downloadedAt` or `lastSyncedAt`). The weekly drift job
   (`.github/workflows/spec-drift.yml`) runs `spec:check` and reports through
   GitHub issues, but phase 2 — running `spec:update` from the job — does not
   exist yet, so the semantics stay "last `spec:update` run" until then.
@@ -152,8 +152,13 @@ Field semantics:
 
 ## Watching the surfaces
 
-Two root commands compare this folder against what Hacienda publishes today
-(requires network; neither runs inside `pnpm verify`):
+Verification of this folder has two halves. `pnpm spec:verify` is the
+**offline** integrity gate that `pnpm verify` (and therefore CI) runs: it
+hashes the vendored files **on disk** against `manifest.json`, so editing a
+vendored file by hand — even a single enum value — fails CI there, naming the
+file and the expected/obtained SHA-256. The two root commands below compare
+this folder against what Hacienda publishes today (requires network; neither
+runs inside `pnpm verify`):
 
 - `pnpm spec:check` — read-only. Downloads/probes the declared surfaces,
   compares hashes and versions, prints a report ordered by severity (1 new
@@ -176,7 +181,7 @@ treated as untrusted input: a name that turns into a path traversal after
 decoding is rejected, every write stays inside `packages/sdk/schemas/`,
 redirects that leave `https:` are refused, and each download is capped in size.
 
-The monthly workflow `.github/workflows/spec-drift.yml` (1st of the month,
+The weekly workflow `.github/workflows/spec-drift.yml` (Mondays,
 06:00 Costa Rica, plus manual dispatch) runs `spec:check` and opens or
 comments on a GitHub issue labeled `spec-drift`, deduplicating by a
 SHA-256 fingerprint of the report. It never writes the manifest or the
