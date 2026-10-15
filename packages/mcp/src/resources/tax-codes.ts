@@ -76,7 +76,7 @@ const TAX_REFERENCE = {
       name: "Exenciones de la Direccion General de Hacienda",
     },
     { code: ExonerationType.TRANSITORIO_V, name: "Transitorio V" },
-    { code: ExonerationType.SERVICIOS_TURISTICOS_ICT, name: "Servicios turísticos ICT" },
+    { code: ExonerationType.TRANSITORIO_IX, name: "Transitorio IX" },
     { code: ExonerationType.TRANSITORIO_XVII, name: "Transitorio XVII" },
     { code: ExonerationType.OTROS, name: "Otros" },
   ],

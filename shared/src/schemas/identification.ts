@@ -3,8 +3,7 @@
  */
 
 import { z } from "zod";
-import { IDENTIFICATION_LENGTHS } from "../constants/index.js";
-import { IdentificationType } from "../generated/index.js";
+import { IdentificationType, IDENTIFICATION_LENGTHS } from "../constants/index.js";
 
 /** Schema for identification type code. */
 export const IdentificationTypeSchema = z.enum([

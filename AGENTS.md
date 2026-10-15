@@ -28,17 +28,8 @@ pnpm verify
 `pnpm verify` is the CI gate: formatting, lint, types, builds, offline tests,
 script regressions, and installed-package checks. It requires native `xmllint`
 and explicitly disables live credential tests. See [testing](docs/testing.md)
-for focused commands and prerequisites.
-
-The TypeScript code catalogs in `shared/src/generated/` are rendered from
-`packages/sdk/schemas/codes.json` by `pnpm spec:generate`; never edit them by
-hand (each file starts with `NO EDITAR`). When Hacienda publishes a new code,
-extend the pairing registry `scripts/codes-generate/table-map.mjs` with the
-reviewed key — never an invented one — and regenerate; `pnpm verify` fails on
-any drift between the committed generated files and `codes.json`.
-
-Workspace imports resolve built outputs; rebuild dependencies before running
-package tests directly.
+for focused commands and prerequisites. Workspace imports resolve built outputs;
+rebuild dependencies before running package tests directly.
 
 Inspect `git status` before editing. Preserve existing changes and untracked
 files; isolate work in a separate checkout when necessary. Do not reset, stash,

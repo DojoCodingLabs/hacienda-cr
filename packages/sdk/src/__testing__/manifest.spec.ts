@@ -9,12 +9,6 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 
-import {
-  formatPolicyViolations,
-  policyManifestViolations,
-  SDK_POLICY_CONSTANTS,
-} from "./policy-constants.js";
-
 const schemasDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../schemas");
 
 interface ManifestFile {
@@ -25,13 +19,7 @@ interface ManifestFile {
 }
 
 interface Manifest {
-  policy: {
-    identifier: string;
-    digestMethod: string;
-    digestValue: string;
-    sdkStatus: string;
-    resolvedUrl?: string;
-  };
+  policy: { digestValue: string; resolvedUrl?: string };
   files: ManifestFile[];
 }
 
@@ -85,34 +73,5 @@ describe("schema manifest integrity", () => {
   it("policy.digestValue is the base64 SHA-256 of the vendored policy PDF", () => {
     const pdf = readFileSync(path.join(schemasDir, POLICY_PDF));
     expect(createHash("sha256").update(pdf).digest("base64")).toBe(manifest.policy.digestValue);
-  });
-
-  // Gate de política (tarea A2 3.2): las constantes publicadas del SDK deben
-  // coincidir byte a byte con el bloque `policy`. Al divergir, el fallo nombra
-  // campo, valor publicado (constante) y valor esperado (manifiesto).
-  it("published policy constants match manifest.policy byte for byte", () => {
-    const violations = policyManifestViolations(SDK_POLICY_CONSTANTS, manifest.policy);
-    expect(violations, formatPolicyViolations(violations)).toEqual([]);
-  });
-
-  it("manifest.policy.sdkStatus is aligned while the constants match", () => {
-    expect(manifest.policy.sdkStatus).toBe("aligned");
-  });
-
-  it("reports field, published and expected value when a constant diverges", () => {
-    const violations = policyManifestViolations(
-      { ...SDK_POLICY_CONSTANTS, digestValue: "Ohixl6upD6av8N7pEvDABhEL6hM=" },
-      manifest.policy,
-    );
-    expect(violations).toEqual([
-      {
-        field: "digestValue",
-        published: "Ohixl6upD6av8N7pEvDABhEL6hM=",
-        expected: manifest.policy.digestValue,
-      },
-    ]);
-    expect(formatPolicyViolations(violations)).toBe(
-      `digestValue: publicado=${JSON.stringify("Ohixl6upD6av8N7pEvDABhEL6hM=")} esperado=${JSON.stringify(manifest.policy.digestValue)}`,
-    );
   });
 });

@@ -1,11 +1,48 @@
 /**
- * Sale condition helpers (Condicion de Venta) for electronic documents.
+ * Sale condition codes (Condicion de Venta) for electronic documents.
  *
- * El catálogo `SaleCondition` es generado desde `codes.json`
- * (`shared/src/generated/sale-condition.ts`); el subconjunto REP y el mapa
- * de nombres legibles son curaduría manual.
+ * v4.4 set per the official XSD enumeration: 01-08, 10, 12-15, 99
+ * (codes 09 and 11 do not exist in v4.4). Code 99 requires the
+ * free-text CondicionVentaOtros companion field.
  */
-import { SaleCondition } from "../generated/sale-condition.js";
+
+/** Sale condition codes. */
+export const SaleCondition = {
+  /** Contado (cash / immediate payment) */
+  CONTADO: "01",
+  /** Credito (credit) */
+  CREDITO: "02",
+  /** Consignacion */
+  CONSIGNACION: "03",
+  /** Apartado */
+  APARTADO: "04",
+  /** Arrendamiento con opcion de compra */
+  ARRENDAMIENTO_OPCION_COMPRA: "05",
+  /** Arrendamiento en funcion financiera */
+  ARRENDAMIENTO_FUNCION_FINANCIERA: "06",
+  /** Cobro a favor de un tercero */
+  COBRO_FAVOR_TERCERO: "07",
+  /** Servicios prestados al Estado */
+  SERVICIOS_ESTADO: "08",
+  /** Pago del servicio prestado al Estado — Recibo Electronico de Pago only */
+  PAGO_SERVICIO_ESTADO: "09",
+  /** Venta a credito en IVA hasta 90 dias (Articulo 27, LIVA) */
+  VENTA_CREDITO_IVA_90_DIAS: "10",
+  /** Pago de venta a credito en IVA hasta 90 dias — Recibo Electronico de Pago only */
+  PAGO_VENTA_CREDITO_IVA_90_DIAS: "11",
+  /** Venta de mercancia no nacionalizada */
+  VENTA_MERCANCIA_NO_NACIONALIZADA: "12",
+  /** Venta de bienes usados no contribuyente */
+  VENTA_BIENES_USADOS_NO_CONTRIBUYENTE: "13",
+  /** Arrendamiento operativo */
+  ARRENDAMIENTO_OPERATIVO: "14",
+  /** Arrendamiento en funcion financiera (leasing financiero) */
+  ARRENDAMIENTO_FINANCIERO: "15",
+  /** Otros (requiere CondicionVentaOtros) */
+  OTROS: "99",
+} as const;
+
+export type SaleCondition = (typeof SaleCondition)[keyof typeof SaleCondition];
 
 /**
  * Sale conditions accepted by the Recibo Electronico de Pago XSD — the REP

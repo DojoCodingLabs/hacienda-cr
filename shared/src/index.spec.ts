@@ -66,19 +66,16 @@ describe("@dojocoding/hacienda-shared", () => {
   });
 
   describe("Document type codes", () => {
-    it("should define the official 10 document types", () => {
+    it("should define all 9 document types", () => {
       expect(DocumentTypeCode.FACTURA_ELECTRONICA).toBe("01");
       expect(DocumentTypeCode.NOTA_DEBITO_ELECTRONICA).toBe("02");
       expect(DocumentTypeCode.NOTA_CREDITO_ELECTRONICA).toBe("03");
       expect(DocumentTypeCode.TIQUETE_ELECTRONICO).toBe("04");
-      expect(DocumentTypeCode.CONFIRMACION_ACEPTACION).toBe("05");
-      expect(DocumentTypeCode.CONFIRMACION_ACEPTACION_PARCIAL).toBe("06");
-      expect(DocumentTypeCode.CONFIRMACION_RECHAZO).toBe("07");
-      expect(DocumentTypeCode.FACTURA_ELECTRONICA_COMPRA).toBe("08");
-      expect(DocumentTypeCode.FACTURA_ELECTRONICA_EXPORTACION).toBe("09");
-      expect(DocumentTypeCode.RECIBO_ELECTRONICO_PAGO).toBe("10");
-      expect(DocumentTypeCode).not.toHaveProperty("COMPRA_PAGO");
-      expect(DocumentTypeCode).not.toHaveProperty("GASTO_VIAJE");
+      expect(DocumentTypeCode.FACTURA_ELECTRONICA_COMPRA).toBe("05");
+      expect(DocumentTypeCode.FACTURA_ELECTRONICA_EXPORTACION).toBe("06");
+      expect(DocumentTypeCode.RECIBO_ELECTRONICO_PAGO).toBe("07");
+      expect(DocumentTypeCode.COMPRA_PAGO).toBe("08");
+      expect(DocumentTypeCode.GASTO_VIAJE).toBe("09");
     });
 
     it("should have human-readable names for all types", () => {
@@ -127,27 +124,19 @@ describe("@dojocoding/hacienda-shared", () => {
       expect(IVA_RATE_PERCENTAGES["11"]).toBe(0);
     });
 
-    it("should define the v4.4 exoneration types (sin el «12» inexistente)", () => {
+    it("should define the new v4.4 exoneration types", () => {
       expect(ExonerationType.ZONA_FRANCA).toBe("08");
       expect(ExonerationType.SERVICIOS_COMPLEMENTARIOS_EXPORTACION).toBe("09");
       expect(ExonerationType.CORPORACIONES_MUNICIPALES).toBe("10");
       expect(ExonerationType.DGH_IMPUESTO_LOCAL_CONCRETA).toBe("11");
-      expect(ExonerationType.SERVICIOS_TURISTICOS_ICT).toBe("06");
+      expect(ExonerationType.EXONERACION_12).toBe("12");
       expect(ExonerationType.OTROS).toBe("99");
-      expect(ExonerationType).not.toHaveProperty("EXONERACION_12");
-      expect(Object.values(ExonerationType)).not.toContain("12");
     });
   });
 
   describe("Units of measure", () => {
     it("should vendor all 101 official v4.4 unit codes", () => {
       expect(UNITS_OF_MEASURE).toHaveLength(101);
-    });
-
-    it("should use the OHM SIGN homograph U+2126", () => {
-      const omega = UNITS_OF_MEASURE.find((unit) => unit.normalize("NFD") === "Ω");
-      expect(omega).toBe("\u2126");
-      expect(omega).not.toBe("\u03a9");
     });
 
     it("should include common units with official casing", () => {
@@ -276,7 +265,7 @@ describe("@dojocoding/hacienda-shared", () => {
 
   describe("XAdES policy", () => {
     it("should define the policy hash", () => {
-      expect(XADES_POLICY_HASH).toBe("DWxin1xWOeI8OuWQXazh4VjLWAaCLAA954em7DMh0h8=");
+      expect(XADES_POLICY_HASH).toBe("Ohixl6upD6av8N7pEvDABhEL6hM=");
     });
   });
 

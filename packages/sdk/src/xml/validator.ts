@@ -12,7 +12,7 @@
  */
 
 import type { FacturaElectronicaInput } from "@dojocoding/hacienda-shared";
-import { FacturaElectronicaSchema, SaleCondition, TaxCode } from "@dojocoding/hacienda-shared";
+import { FacturaElectronicaSchema, TaxCode } from "@dojocoding/hacienda-shared";
 import { round5 } from "../tax/calculator.js";
 
 // ---------------------------------------------------------------------------
@@ -292,7 +292,7 @@ function validateBusinessRules(input: FacturaElectronicaInput): FacturaValidatio
   }
 
   // Rule: plazoCredito required when condicionVenta is "02" (credit)
-  if (input.condicionVenta === SaleCondition.CREDITO && !input.plazoCredito) {
+  if (input.condicionVenta === "02" && !input.plazoCredito) {
     errors.push({
       path: "plazoCredito",
       message: 'plazoCredito is required when condicionVenta is "02" (credit)',

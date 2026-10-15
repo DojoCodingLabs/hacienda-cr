@@ -34,8 +34,7 @@
     "release:prepare": "node scripts/release.mjs prepare",
     "release:publish": "node scripts/release.mjs publish",
     "test:sandbox": "node scripts/sandbox-lifecycle.mjs",
-    "codes:extract": "node scripts/codes-extract/extract.mjs",
-    "spec:generate": "node scripts/codes-generate/generate.mjs"
+    "codes:extract": "node scripts/codes-extract/extract.mjs"
   },
   "devDependencies": {
     "@changesets/cli": "3.0.3",

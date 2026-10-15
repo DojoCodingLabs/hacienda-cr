@@ -1,11 +1,28 @@
 /**
- * Costa Rica province helpers.
+ * Costa Rica province codes.
  *
- * El catálogo `ProvinceCode` es generado desde `codes.json`
- * (`shared/src/generated/province-code.ts`); el mapa de nombres es
- * curaduría manual.
+ * Used in the Ubicacion (location) section of electronic documents.
  */
-import { ProvinceCode } from "../generated/province-code.js";
+
+/** Province codes (1-7). */
+export const ProvinceCode = {
+  /** San Jose */
+  SAN_JOSE: "1",
+  /** Alajuela */
+  ALAJUELA: "2",
+  /** Cartago */
+  CARTAGO: "3",
+  /** Heredia */
+  HEREDIA: "4",
+  /** Guanacaste */
+  GUANACASTE: "5",
+  /** Puntarenas */
+  PUNTARENAS: "6",
+  /** Limon */
+  LIMON: "7",
+} as const;
+
+export type ProvinceCode = (typeof ProvinceCode)[keyof typeof ProvinceCode];
 
 /** Province names mapped by code. */
 export const PROVINCE_NAMES: Record<ProvinceCode, string> = {

@@ -16,7 +16,7 @@ import {
   saveConfig,
   ensureConfigDir,
 } from "@dojocoding/hacienda-sdk";
-import type { CedulaType, Profile } from "@dojocoding/hacienda-sdk";
+import type { Profile } from "@dojocoding/hacienda-sdk";
 import { success, error, detail, outputJson } from "../../utils/format.js";
 
 export const loginCommand = defineCommand({
@@ -126,7 +126,7 @@ export const loginCommand = defineCommand({
       await ensureConfigDir();
       const profile: Profile = {
         environment: environment as "sandbox" | "production",
-        cedula_type: cedulaType as CedulaType,
+        cedula_type: cedulaType as "01" | "02" | "03" | "04",
         cedula,
         ...(username !== undefined ? { username } : {}),
         p12_path: "", // Will be set during signing setup

@@ -4,12 +4,12 @@
 
 import { z } from "zod";
 import {
-  ExonerationType,
+  TaxCode,
   IvaRateCode,
+  ExonerationType,
   PaymentMethod,
   SaleCondition,
-  TaxCode,
-} from "../generated/index.js";
+} from "../constants/index.js";
 
 /** Schema for tax type codes (Codigo de Impuesto), full v4.4 catalog. */
 export const TaxCodeSchema = z.enum(TaxCode);

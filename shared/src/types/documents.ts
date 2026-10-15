@@ -9,24 +9,21 @@
  */
 
 import type {
-  CurrencyCode,
-  ReferenceCode,
-  ReferenceDocType,
-  UnitOfMeasure,
-} from "../constants/index.js";
-import type {
-  CommercialCodeType,
-  DiscountCode,
-  ExonerationInstitution,
-  ExonerationType,
   IdentificationType,
-  IvaRateCode,
-  MensajeReceptorCode,
-  OtherChargeType,
-  PaymentMethod,
   SaleCondition,
+  PaymentMethod,
   TaxCode,
-} from "../generated/index.js";
+  IvaRateCode,
+  ExonerationType,
+  ExonerationInstitution,
+  DiscountCode,
+  OtherChargeType,
+  ReferenceDocType,
+  ReferenceCode,
+  UnitOfMeasure,
+  MensajeReceptorCode,
+  CurrencyCode,
+} from "../constants/index.js";
 
 // ---------------------------------------------------------------------------
 // Common Sub-structures
@@ -198,7 +195,7 @@ export interface Descuento {
 /** Commercial code for a product/service. */
 export interface CodigoComercial {
   /** Code type: 01=Seller, 02=Buyer, 03=Industry, 04=Internal, 99=Other. */
-  tipo: CommercialCodeType;
+  tipo: "01" | "02" | "03" | "04" | "99";
 
   /** Product/service code value. */
   codigo: string;

@@ -28,7 +28,7 @@ export interface P12Credentials {
 export interface XadesPolicyConfig {
   /** Policy identifier URI. */
   readonly policyUri: string;
-  /** Base64-encoded SHA-256 hash of the policy document. */
+  /** Base64-encoded SHA-1 hash of the policy document. */
   readonly policyHash: string;
   /** Hash algorithm URI for the policy hash. */
   readonly policyHashAlgorithm: string;
