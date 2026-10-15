@@ -16,6 +16,7 @@ import type {
   TotalDesgloseImpuesto,
 } from "@dojocoding/hacienda-shared";
 import { IvaRateCode, TaxCode } from "@dojocoding/hacienda-shared";
+import { Money } from "@dojocoding/hacienda-shared";
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -257,7 +258,7 @@ export function calculateLineItemTotals(item: LineItemInput): CalculatedLineItem
     const calculatedTax: Impuesto = {
       codigo: tax.codigo as Impuesto["codigo"],
       tarifa: tax.tarifa,
-      monto: fullTaxAmount,
+      monto: Money.fromNumber(fullTaxAmount),
       ...(tax.codigoTarifaIVA
         ? { codigoTarifaIVA: tax.codigoTarifaIVA as Impuesto["codigoTarifaIVA"] }
         : {}),
@@ -461,7 +462,9 @@ export function calculateInvoiceSummary(
   const desglose = new Map<string, TotalDesgloseImpuesto>();
   for (const item of items) {
     for (const tax of item.impuesto) {
-      const netAmount = round5(Math.max(0, tax.monto - (tax.exoneracion?.montoExoneracion ?? 0)));
+      const netAmount = round5(
+        Math.max(0, tax.monto.toNumber() - (tax.exoneracion?.montoExoneracion ?? 0)),
+      );
       const key = `${tax.codigo}|${tax.codigoTarifaIVA ?? ""}`;
       const existing = desglose.get(key);
       if (existing) {

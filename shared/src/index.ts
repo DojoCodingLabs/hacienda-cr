@@ -8,5 +8,5 @@
 export * from "./constants/index.js";
 export * from "./generated/index.js";
 export * from "./types/index.js";
-export { Money } from "./types/money.ts";
+export { Money } from "./types/money.js";
 export * from "./schemas/index.js";

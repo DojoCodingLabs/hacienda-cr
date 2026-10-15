@@ -18,6 +18,7 @@ import type {
   LineaDetalle,
   ResumenFactura,
 } from "@dojocoding/hacienda-shared";
+import { Money } from "@dojocoding/hacienda-shared";
 
 // ---------------------------------------------------------------------------
 // Shared emisor / receptor used across fixtures
@@ -70,7 +71,7 @@ const SIMPLE_LINE_ITEM: LineaDetalle = {
       codigo: "01",
       codigoTarifaIVA: "08",
       tarifa: 13,
-      monto: 13000,
+      monto: Money.fromNumber(13000),
     },
   ],
   impuestoNeto: 13000,
@@ -169,7 +170,7 @@ export const SIMPLE_NOTA_CREDITO: NotaCreditoElectronica = {
           codigo: "01",
           codigoTarifaIVA: "08",
           tarifa: 13,
-          monto: 6500,
+          monto: Money.fromNumber(6500),
         },
       ],
       impuestoNeto: 6500,
@@ -229,7 +230,7 @@ export const SIMPLE_NOTA_DEBITO: NotaDebitoElectronica = {
           codigo: "01",
           codigoTarifaIVA: "08",
           tarifa: 13,
-          monto: 3250,
+          monto: Money.fromNumber(3250),
         },
       ],
       impuestoNeto: 3250,
@@ -299,7 +300,7 @@ export const SIMPLE_FACTURA_COMPRA: FacturaElectronicaCompra = {
           codigo: "01",
           codigoTarifaIVA: "08",
           tarifa: 13,
-          monto: 6500,
+          monto: Money.fromNumber(6500),
         },
       ],
       impuestoNeto: 6500,
@@ -369,7 +370,7 @@ export const SIMPLE_FACTURA_EXPORTACION: FacturaElectronicaExportacion = {
           codigo: "01",
           codigoTarifaIVA: "01",
           tarifa: 0,
-          monto: 0,
+          monto: Money.fromNumber(0),
         },
       ],
       montoTotalLinea: 3000,
@@ -424,7 +425,7 @@ export const SIMPLE_RECIBO_PAGO: ReciboElectronicoPago = {
           codigo: "01",
           codigoTarifaIVA: "08",
           tarifa: 13,
-          monto: 13000,
+          monto: Money.fromNumber(13000),
         },
       ],
       impuestoNeto: 13000,

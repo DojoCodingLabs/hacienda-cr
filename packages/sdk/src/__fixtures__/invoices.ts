@@ -9,6 +9,7 @@
  */
 
 import type { FacturaElectronica } from "@dojocoding/hacienda-shared";
+import { Money } from "@dojocoding/hacienda-shared";
 
 // ---------------------------------------------------------------------------
 // Shared emisor / receptor used across fixtures
@@ -73,7 +74,7 @@ export const SIMPLE_INVOICE: FacturaElectronica = {
           codigo: "01",
           codigoTarifaIVA: "08",
           tarifa: 13,
-          monto: 13000,
+          monto: Money.fromNumber(13000),
         },
       ],
       impuestoNeto: 13000,
@@ -126,7 +127,7 @@ export const MULTI_ITEM_INVOICE: FacturaElectronica = {
           codigo: "01",
           codigoTarifaIVA: "08",
           tarifa: 13,
-          monto: 13000,
+          monto: Money.fromNumber(13000),
         },
       ],
       impuestoNeto: 13000,
@@ -149,7 +150,7 @@ export const MULTI_ITEM_INVOICE: FacturaElectronica = {
           codigo: "01",
           codigoTarifaIVA: "04",
           tarifa: 4,
-          monto: 400,
+          monto: Money.fromNumber(400),
         },
       ],
       impuestoNeto: 400,
@@ -171,7 +172,7 @@ export const MULTI_ITEM_INVOICE: FacturaElectronica = {
           codigo: "01",
           codigoTarifaIVA: "02",
           tarifa: 1,
-          monto: 150,
+          monto: Money.fromNumber(150),
         },
       ],
       impuestoNeto: 150,
@@ -230,7 +231,7 @@ export const DISCOUNT_INVOICE: FacturaElectronica = {
           codigo: "01",
           codigoTarifaIVA: "08",
           tarifa: 13,
-          monto: 5850,
+          monto: Money.fromNumber(5850),
         },
       ],
       impuestoNeto: 5850,
@@ -289,7 +290,7 @@ export const EXONERATED_INVOICE: FacturaElectronica = {
           codigo: "01",
           codigoTarifaIVA: "08",
           tarifa: 13,
-          monto: 26000,
+          monto: Money.fromNumber(26000),
           exoneracion: {
             tipoDocumento: "03",
             numeroDocumento: "AL-001-2025",
@@ -359,7 +360,7 @@ export const EXPORT_INVOICE: FacturaElectronica = {
           codigo: "01",
           codigoTarifaIVA: "01",
           tarifa: 0,
-          monto: 0,
+          monto: Money.fromNumber(0),
         },
       ],
       impuestoNeto: 0,
@@ -416,7 +417,7 @@ export const CREDIT_INVOICE: FacturaElectronica = {
           codigo: "01",
           codigoTarifaIVA: "08",
           tarifa: 13,
-          monto: 65000,
+          monto: Money.fromNumber(65000),
         },
       ],
       impuestoNeto: 65000,
@@ -468,7 +469,7 @@ export const REFERENCE_INVOICE: FacturaElectronica = {
           codigo: "01",
           codigoTarifaIVA: "08",
           tarifa: 13,
-          monto: 15600,
+          monto: Money.fromNumber(15600),
         },
       ],
       impuestoNeto: 15600,
