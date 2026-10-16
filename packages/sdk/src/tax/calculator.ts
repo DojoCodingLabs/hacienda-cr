@@ -4,8 +4,8 @@
  * Implements IVA tax computation, line item total calculation,
  * and invoice summary aggregation per the Hacienda specification.
  *
- * All monetary amounts are rounded to 5 decimal places as required
- * by the Hacienda specification.
+ * All monetary amounts are carried as `Money` and rounded to 5 decimal
+ * places using the Hacienda rounding rule (see `round5`).
  */
 
 import type {
@@ -14,8 +14,9 @@ import type {
   CodigoComercial,
   Exoneracion,
   TotalDesgloseImpuesto,
+  Money,
 } from "@dojocoding/hacienda-shared";
-import { IvaRateCode, TaxCode } from "@dojocoding/hacienda-shared";
+import { IvaRateCode, TaxCode, ZERO } from "@dojocoding/hacienda-shared";
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -29,19 +30,19 @@ const DECIMAL_PLACES = 5;
 // ---------------------------------------------------------------------------
 
 /**
- * Round a number to 5 decimal places (Hacienda requirement).
+ * Round a `Money` value to 5 decimal places (Hacienda requirement).
  *
- * Uses `Number.toFixed(5)` which implements "round half to even"
- * (banker's rounding) per the ECMAScript spec. This avoids
- * floating-point multiplication artifacts that can occur with
- * the `Math.round(value * factor) / factor` approach (e.g.,
- * 1.0000025 * 100000 = 100000.24999999999 in IEEE 754).
+ * Uses the Hacienda rounding method: look at the sixth decimal and increment
+ * when it is greater than or equal to 5 (round half away from zero). This is
+ * documented in `packages/sdk/schemas/2024/v4.4/ANEXOS Y ESTRUCTURAS_V4.4.pdf`
+ * ("II. Especificaciones técnicas y formato de los comprobantes electrónicos",
+ * p. 13–14), e.g. `20.203518 ≈ 20.20352`.
  *
- * @param value - The numeric value to round.
- * @returns The value rounded to 5 decimal places.
+ * @param value - The monetary value to round.
+ * @returns The value rounded to 5 decimal places, as `Money`.
  */
-export function round5(value: number): number {
-  return Number(value.toFixed(DECIMAL_PLACES));
+export function round5(value: Money): Money {
+  return value.round(DECIMAL_PLACES);
 }
 
 // ---------------------------------------------------------------------------
@@ -103,7 +104,7 @@ export interface LineItemInput {
   detalle: string;
 
   /** Unit price (before taxes and discounts). */
-  precioUnitario: number;
+  precioUnitario: Money;
 
   /**
    * Discounts applied to this line item. Optional.
@@ -148,28 +149,28 @@ export interface CalculatedLineItem {
   detalle: string;
 
   /** Unit price (before taxes and discounts). */
-  precioUnitario: number;
+  precioUnitario: Money;
 
   /** Total line amount (cantidad * precioUnitario). */
-  montoTotal: number;
+  montoTotal: Money;
 
   /** Discounts applied. Optional. */
   descuento?: Descuento[];
 
   /** Subtotal after discounts. */
-  subTotal: number;
+  subTotal: Money;
 
   /** Base taxable amount. */
-  baseImponible?: number;
+  baseImponible?: Money;
 
   /** Taxes applied to this line item (v4.4 requires at least one). */
   impuesto: Impuesto[];
 
   /** Net IVA tax amount. */
-  impuestoNeto?: number;
+  impuestoNeto?: Money;
 
   /** Total line amount including taxes. */
-  montoTotalLinea: number;
+  montoTotalLinea: Money;
 
   /**
    * Whether this item is a service (true) or merchandise (false).
@@ -201,15 +202,15 @@ const IVA_TAX_CODES: string[] = [
  */
 export function calculateLineItemTotals(item: LineItemInput): CalculatedLineItem {
   // MontoTotal = cantidad * precioUnitario
-  const montoTotal = round5(item.cantidad * item.precioUnitario);
+  const montoTotal = round5(item.precioUnitario.times(item.cantidad));
 
   // Sum of discounts
   const totalDescuento = item.descuento
-    ? round5(item.descuento.reduce((sum: number, d: Descuento) => sum + d.montoDescuento, 0))
-    : 0;
+    ? round5(item.descuento.reduce((sum: Money, d: Descuento) => sum.plus(d.montoDescuento), ZERO))
+    : ZERO;
 
   // SubTotal = montoTotal - discounts
-  const subTotal = round5(montoTotal - totalDescuento);
+  const subTotal = round5(montoTotal.minus(totalDescuento));
 
   // BaseImponible = subTotal (taxable base)
   const baseImponible = subTotal;
@@ -217,7 +218,7 @@ export function calculateLineItemTotals(item: LineItemInput): CalculatedLineItem
   // Calculate taxes. v4.4 requires at least one Impuesto per line, so an
   // untaxed line gets a synthetic exempt IVA entry (codigo 01, tarifa 0).
   const calculatedTaxes: Impuesto[] = [];
-  let impuestoNeto = 0;
+  let impuestoNeto = ZERO;
 
   const taxInputs: LineItemTaxInput[] =
     item.impuesto && item.impuesto.length > 0
@@ -226,7 +227,7 @@ export function calculateLineItemTotals(item: LineItemInput): CalculatedLineItem
 
   for (const tax of taxInputs) {
     // Full tax amount = subTotal * tarifa / 100
-    const fullTaxAmount = round5((subTotal * tax.tarifa) / 100);
+    const fullTaxAmount = round5(subTotal.times(tax.tarifa).dividedBy(100));
 
     let taxAmount = fullTaxAmount;
     let exoneracion: Exoneracion | undefined;
@@ -241,8 +242,11 @@ export function calculateLineItemTotals(item: LineItemInput): CalculatedLineItem
             "(exonerated tariff percentage points, 0..tarifa).",
         );
       }
-      const exonerationPortion = round5((subTotal * tax.exoneracion.tarifaExonerada) / 100);
-      taxAmount = round5(Math.max(0, fullTaxAmount - exonerationPortion));
+      const exonerationPortion = round5(
+        subTotal.times(tax.exoneracion.tarifaExonerada).dividedBy(100),
+      );
+      const netTax = fullTaxAmount.minus(exonerationPortion);
+      taxAmount = netTax.isNegative() ? ZERO : netTax;
 
       exoneracion = {
         tipoDocumento: tax.exoneracion.tipoDocumento as Exoneracion["tipoDocumento"],
@@ -268,14 +272,14 @@ export function calculateLineItemTotals(item: LineItemInput): CalculatedLineItem
 
     // ImpuestoNeto counts only the net IVA amount (after exoneration)
     if (IVA_TAX_CODES.includes(tax.codigo)) {
-      impuestoNeto = round5(impuestoNeto + taxAmount);
+      impuestoNeto = round5(impuestoNeto.plus(taxAmount));
     }
   }
 
   impuestoNeto = round5(impuestoNeto);
 
   // MontoTotalLinea = subTotal + impuestoNeto
-  const montoTotalLinea = round5(subTotal + impuestoNeto);
+  const montoTotalLinea = round5(subTotal.plus(impuestoNeto));
 
   const result: CalculatedLineItem = {
     numeroLinea: item.numeroLinea,
@@ -315,35 +319,35 @@ export function calculateLineItemTotals(item: LineItemInput): CalculatedLineItem
  */
 export interface InvoiceSummary {
   /** Total taxable services. */
-  totalServGravados: number;
+  totalServGravados: Money;
   /** Total exempt services. */
-  totalServExentos: number;
+  totalServExentos: Money;
   /** Total exonerated services. */
-  totalServExonerado: number;
+  totalServExonerado: Money;
   /** Total taxable merchandise. */
-  totalMercanciasGravadas: number;
+  totalMercanciasGravadas: Money;
   /** Total exempt merchandise. */
-  totalMercanciasExentas: number;
+  totalMercanciasExentas: Money;
   /** Total exonerated merchandise. */
-  totalMercExonerada: number;
+  totalMercExonerada: Money;
   /** Total taxable (services + merchandise). */
-  totalGravado: number;
+  totalGravado: Money;
   /** Total exempt (services + merchandise). */
-  totalExento: number;
+  totalExento: Money;
   /** Total exonerated (services + merchandise). */
-  totalExonerado: number;
+  totalExonerado: Money;
   /** Total sales (before discounts). */
-  totalVenta: number;
+  totalVenta: Money;
   /** Total discounts. */
-  totalDescuentos: number;
+  totalDescuentos: Money;
   /** Net sales (totalVenta - totalDescuentos). */
-  totalVentaNeta: number;
+  totalVentaNeta: Money;
   /** Per-tax-code totals breakdown (v4.4 TotalDesgloseImpuesto). */
   totalDesgloseImpuesto: TotalDesgloseImpuesto[];
   /** Total IVA tax. */
-  totalImpuesto: number;
+  totalImpuesto: Money;
   /** Grand total. */
-  totalComprobante: number;
+  totalComprobante: Money;
 }
 
 /**
@@ -358,21 +362,21 @@ export interface InvoiceSummary {
  * as gravado with the exonerated portion tracked separately.
  */
 function classifyLineItem(item: CalculatedLineItem): {
-  gravado: number;
-  exento: number;
-  exonerado: number;
+  gravado: Money;
+  exento: Money;
+  exonerado: Money;
 } {
   const grossAmount = item.montoTotal;
 
   if (!item.impuesto || item.impuesto.length === 0) {
     // No taxes at all => exempt
-    return { gravado: 0, exento: grossAmount, exonerado: 0 };
+    return { gravado: ZERO, exento: grossAmount, exonerado: ZERO };
   }
 
   // Check if all taxes have rate 0 => exempt
   const allZeroRate = item.impuesto.every((t: Impuesto) => t.tarifa === 0);
   if (allZeroRate) {
-    return { gravado: 0, exento: grossAmount, exonerado: 0 };
+    return { gravado: ZERO, exento: grossAmount, exonerado: ZERO };
   }
 
   // Check for exonerations
@@ -381,31 +385,33 @@ function classifyLineItem(item: CalculatedLineItem): {
   if (hasExoneration) {
     // The exonerated base portion is the ratio of exonerated tariff points
     // to the full tariff, applied to gross sales.
-    let totalExonerado = 0;
+    let totalExonerado = ZERO;
     for (const tax of item.impuesto) {
       if (tax.exoneracion && tax.tarifa !== undefined && tax.tarifa > 0) {
         totalExonerado = round5(
-          totalExonerado + (grossAmount * tax.exoneracion.tarifaExonerada) / tax.tarifa,
+          totalExonerado.plus(
+            grossAmount.times(tax.exoneracion.tarifaExonerada).dividedBy(tax.tarifa),
+          ),
         );
       }
     }
     totalExonerado = round5(totalExonerado);
 
     // If 100% exonerated, all goes to exonerado
-    if (totalExonerado >= grossAmount) {
-      return { gravado: 0, exento: 0, exonerado: grossAmount };
+    if (!totalExonerado.lessThan(grossAmount)) {
+      return { gravado: ZERO, exento: ZERO, exonerado: grossAmount };
     }
 
     // Partial exoneration: the non-exonerated portion is gravado
     return {
-      gravado: round5(grossAmount - totalExonerado),
-      exento: 0,
+      gravado: round5(grossAmount.minus(totalExonerado)),
+      exento: ZERO,
       exonerado: totalExonerado,
     };
   }
 
   // Standard taxed item
-  return { gravado: grossAmount, exento: 0, exonerado: 0 };
+  return { gravado: grossAmount, exento: ZERO, exonerado: ZERO };
 }
 
 /**
@@ -420,40 +426,40 @@ function classifyLineItem(item: CalculatedLineItem): {
  */
 export function calculateInvoiceSummary(
   items: CalculatedLineItem[],
-  otrosCargos?: number,
+  otrosCargos?: Money,
 ): InvoiceSummary {
-  let totalServGravados = 0;
-  let totalServExentos = 0;
-  let totalServExonerado = 0;
-  let totalMercanciasGravadas = 0;
-  let totalMercanciasExentas = 0;
-  let totalMercExonerada = 0;
-  let totalDescuentos = 0;
-  let totalImpuesto = 0;
+  let totalServGravados = ZERO;
+  let totalServExentos = ZERO;
+  let totalServExonerado = ZERO;
+  let totalMercanciasGravadas = ZERO;
+  let totalMercanciasExentas = ZERO;
+  let totalMercExonerada = ZERO;
+  let totalDescuentos = ZERO;
+  let totalImpuesto = ZERO;
 
   for (const item of items) {
     const classification = classifyLineItem(item);
 
     if (item.esServicio) {
-      totalServGravados = round5(totalServGravados + classification.gravado);
-      totalServExentos = round5(totalServExentos + classification.exento);
-      totalServExonerado = round5(totalServExonerado + classification.exonerado);
+      totalServGravados = round5(totalServGravados.plus(classification.gravado));
+      totalServExentos = round5(totalServExentos.plus(classification.exento));
+      totalServExonerado = round5(totalServExonerado.plus(classification.exonerado));
     } else {
-      totalMercanciasGravadas = round5(totalMercanciasGravadas + classification.gravado);
-      totalMercanciasExentas = round5(totalMercanciasExentas + classification.exento);
-      totalMercExonerada = round5(totalMercExonerada + classification.exonerado);
+      totalMercanciasGravadas = round5(totalMercanciasGravadas.plus(classification.gravado));
+      totalMercanciasExentas = round5(totalMercanciasExentas.plus(classification.exento));
+      totalMercExonerada = round5(totalMercExonerada.plus(classification.exonerado));
     }
 
     // Sum discounts
     if (item.descuento) {
       for (const d of item.descuento) {
-        totalDescuentos = round5(totalDescuentos + d.montoDescuento);
+        totalDescuentos = round5(totalDescuentos.plus(d.montoDescuento));
       }
     }
 
     // Sum taxes (impuestoNeto is the net IVA after exoneration)
     if (item.impuestoNeto !== undefined) {
-      totalImpuesto = round5(totalImpuesto + item.impuestoNeto);
+      totalImpuesto = round5(totalImpuesto.plus(item.impuestoNeto));
     }
   }
 
@@ -461,11 +467,13 @@ export function calculateInvoiceSummary(
   const desglose = new Map<string, TotalDesgloseImpuesto>();
   for (const item of items) {
     for (const tax of item.impuesto) {
-      const netAmount = round5(Math.max(0, tax.monto - (tax.exoneracion?.montoExoneracion ?? 0)));
+      const exonerado = tax.exoneracion?.montoExoneracion ?? ZERO;
+      const net = tax.monto.minus(exonerado);
+      const netAmount = round5(net.isNegative() ? ZERO : net);
       const key = `${tax.codigo}|${tax.codigoTarifaIVA ?? ""}`;
       const existing = desglose.get(key);
       if (existing) {
-        existing.totalMontoImpuesto = round5(existing.totalMontoImpuesto + netAmount);
+        existing.totalMontoImpuesto = round5(existing.totalMontoImpuesto.plus(netAmount));
       } else {
         desglose.set(key, {
           codigo: tax.codigo,
@@ -476,13 +484,13 @@ export function calculateInvoiceSummary(
     }
   }
 
-  const totalGravado = round5(totalServGravados + totalMercanciasGravadas);
-  const totalExento = round5(totalServExentos + totalMercanciasExentas);
-  const totalExonerado = round5(totalServExonerado + totalMercExonerada);
-  const totalVenta = round5(totalGravado + totalExento + totalExonerado);
-  const totalVentaNeta = round5(totalVenta - totalDescuentos);
-  const totalOtrosCargos = otrosCargos ? round5(otrosCargos) : 0;
-  const totalComprobante = round5(totalVentaNeta + totalImpuesto + totalOtrosCargos);
+  const totalGravado = round5(totalServGravados.plus(totalMercanciasGravadas));
+  const totalExento = round5(totalServExentos.plus(totalMercanciasExentas));
+  const totalExonerado = round5(totalServExonerado.plus(totalMercExonerada));
+  const totalVenta = round5(totalGravado.plus(totalExento).plus(totalExonerado));
+  const totalVentaNeta = round5(totalVenta.minus(totalDescuentos));
+  const totalOtrosCargos = otrosCargos ? round5(otrosCargos) : ZERO;
+  const totalComprobante = round5(totalVentaNeta.plus(totalImpuesto).plus(totalOtrosCargos));
 
   return {
     totalServGravados,

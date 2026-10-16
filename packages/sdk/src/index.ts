@@ -151,6 +151,13 @@ export {
 } from "./documents/index.js";
 
 // ---------------------------------------------------------------------------
+// Monetary type — re-exported from shared so SDK consumers can construct and
+// inspect the `Money` values carried by document types.
+// ---------------------------------------------------------------------------
+
+export { Money, ZERO } from "@dojocoding/hacienda-shared";
+
+// ---------------------------------------------------------------------------
 // Logging module — structured logging
 // ---------------------------------------------------------------------------
 

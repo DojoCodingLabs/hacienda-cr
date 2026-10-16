@@ -49,6 +49,7 @@ try {
 for (const args of [
   ["exec", "turbo", "run", "lint", "typecheck", "build", "test"],
   ["test:scripts"],
+  ["test:properties"],
   ["test:packages"],
 ])
   execFileSync("pnpm", args, { cwd: root, env, stdio: "inherit" });

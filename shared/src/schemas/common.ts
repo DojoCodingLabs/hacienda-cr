@@ -10,6 +10,36 @@ import {
   SaleCondition,
   TaxCode,
 } from "../generated/index.js";
+import type { Money } from "../types/money.js";
+
+/**
+ * Zod schema for a monetary input value.
+ *
+ * Accepts a plain `number` (the usual JSON / MCP / CLI input) or a `Money`
+ * instance (e.g. values produced by the SDK calculator) and normalizes both to
+ * a number. This keeps the input boundary tolerant while the public document
+ * types carry `Money`.
+ */
+export const MoneyInputSchema = z
+  .custom<Money | number>(
+    (val): val is Money | number =>
+      typeof val === "number" ||
+      (typeof val === "object" && val !== null && typeof (val as Money).toNumber === "function"),
+    "Invalid monetary value: expected a number or Money",
+  )
+  .transform((val) => (typeof val === "number" ? val : val.toNumber()));
+
+/** Monetary input that must be non-negative (most amounts). */
+export const MontoSchema = MoneyInputSchema.refine(
+  (val) => val >= 0,
+  "amount must be non-negative",
+);
+
+/** Monetary input that must be strictly positive (e.g. discounts). */
+export const MontoPositiveSchema = MoneyInputSchema.refine(
+  (val) => val > 0,
+  "amount must be positive",
+);
 
 /** Schema for tax type codes (Codigo de Impuesto), full v4.4 catalog. */
 export const TaxCodeSchema = z.enum(TaxCode);

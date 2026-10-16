@@ -29,6 +29,7 @@ import type { LineItemInput, CalculatedLineItem } from "@dojocoding/hacienda-sdk
 import {
   DISCOUNT_CODES,
   DocumentTypeCode,
+  Money,
   PaymentMethod,
   SaleCondition,
   UNITS_OF_MEASURE,
@@ -188,10 +189,16 @@ export function registerCreateInvoiceTool(server: McpServer): void {
           cantidad: item.cantidad,
           unidadMedida: item.unidadMedida,
           detalle: item.detalle,
-          precioUnitario: item.precioUnitario,
+          precioUnitario: Money.fromNumber(item.precioUnitario),
           esServicio: item.esServicio ?? false,
           impuesto: item.impuesto,
-          descuento: item.descuento as LineItemInput["descuento"],
+          descuento: item.descuento?.map((d) => ({
+            ...d,
+            montoDescuento: Money.fromNumber(d.montoDescuento),
+            codigoDescuento: d.codigoDescuento as NonNullable<
+              LineItemInput["descuento"]
+            >[number]["codigoDescuento"],
+          })),
         }));
 
         const calculatedItems: CalculatedLineItem[] = lineItemInputs.map(calculateLineItemTotals);
@@ -272,17 +279,19 @@ export function registerCreateInvoiceTool(server: McpServer): void {
           resumenFactura: {
             totalServGravados: summary.totalServGravados,
             totalServExentos: summary.totalServExentos,
-            ...(summary.totalServExonerado > 0
+            ...(summary.totalServExonerado.isPositive()
               ? { totalServExonerado: summary.totalServExonerado }
               : {}),
             totalMercanciasGravadas: summary.totalMercanciasGravadas,
             totalMercanciasExentas: summary.totalMercanciasExentas,
-            ...(summary.totalMercExonerada > 0
+            ...(summary.totalMercExonerada.isPositive()
               ? { totalMercExonerada: summary.totalMercExonerada }
               : {}),
             totalGravado: summary.totalGravado,
             totalExento: summary.totalExento,
-            ...(summary.totalExonerado > 0 ? { totalExonerado: summary.totalExonerado } : {}),
+            ...(summary.totalExonerado.isPositive()
+              ? { totalExonerado: summary.totalExonerado }
+              : {}),
             totalVenta: summary.totalVenta,
             totalDescuentos: summary.totalDescuentos,
             totalVentaNeta: summary.totalVentaNeta,
