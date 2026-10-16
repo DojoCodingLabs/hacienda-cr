@@ -14,7 +14,16 @@
  */
 
 import type { MensajeReceptor } from "@dojocoding/hacienda-shared";
+import { Money } from "@dojocoding/hacienda-shared";
 import { buildXml } from "../xml/builder.js";
+
+/**
+ * Serialize a monetary value to an XML `xs:decimal` string. Accepts a plain
+ * number for callers that pass Zod-normalized input.
+ */
+function toMonto(value: Money | number): string {
+  return (value instanceof Money ? value : Money.fromNumber(value)).toXMLString();
+}
 
 // ---------------------------------------------------------------------------
 // Public API
@@ -61,7 +70,7 @@ export function buildMensajeReceptorXml(input: MensajeReceptor): string {
   }
 
   if (input.montoTotalImpuesto !== undefined) {
-    data.MontoTotalImpuesto = input.montoTotalImpuesto;
+    data.MontoTotalImpuesto = toMonto(input.montoTotalImpuesto);
   }
 
   if (input.codigoActividad) {
@@ -73,14 +82,14 @@ export function buildMensajeReceptorXml(input: MensajeReceptor): string {
   }
 
   if (input.montoTotalImpuestoAcreditar !== undefined) {
-    data.MontoTotalImpuestoAcreditar = input.montoTotalImpuestoAcreditar;
+    data.MontoTotalImpuestoAcreditar = toMonto(input.montoTotalImpuestoAcreditar);
   }
 
   if (input.montoTotalDeGastoAplicable !== undefined) {
-    data.MontoTotalDeGastoAplicable = input.montoTotalDeGastoAplicable;
+    data.MontoTotalDeGastoAplicable = toMonto(input.montoTotalDeGastoAplicable);
   }
 
-  data.TotalFactura = input.totalFactura;
+  data.TotalFactura = toMonto(input.totalFactura);
   data.NumeroCedulaReceptor = input.numeroCedulaReceptor;
   data.NumeroConsecutivoReceptor = input.numeroConsecutivoReceptor;
 

@@ -387,7 +387,7 @@ describe("buildReceptorXml", () => {
 describe("buildImpuestoXml", () => {
   it("should map only Codigo and Monto for a bare tax", () => {
     const result = buildImpuestoXml({ codigo: "02", monto: 500 });
-    expect(result).toEqual({ Codigo: "02", Monto: 500 });
+    expect(result).toEqual({ Codigo: "02", Monto: "500" });
   });
 
   it("should emit elements in the v4.4 XSD order when all optionals are present", () => {
@@ -446,7 +446,7 @@ describe("buildImpuestoXml", () => {
       NombreInstitucion: "02",
       FechaEmisionEX: "2026-01-15T00:00:00-06:00",
       TarifaExonerada: 13,
-      MontoExoneracion: 130,
+      MontoExoneracion: "130",
     });
     expect(Object.keys(result.Exoneracion as Record<string, unknown>)).toEqual([
       "TipoDocumentoEX1",
@@ -512,7 +512,7 @@ describe("buildImpuestoXml", () => {
 describe("buildDescuentoXml", () => {
   it("should map MontoDescuento and CodigoDescuento for a bare discount", () => {
     const result = buildDescuentoXml({ montoDescuento: 100, codigoDescuento: "01" });
-    expect(result).toEqual({ MontoDescuento: 100, CodigoDescuento: "01" });
+    expect(result).toEqual({ MontoDescuento: "100", CodigoDescuento: "01" });
   });
 
   it("should emit elements in the v4.4 XSD order when all optionals are present", () => {
@@ -589,22 +589,22 @@ describe("buildLineaDetalleXml", () => {
 
   it("should default BaseImponible to subTotal when omitted", () => {
     const result = buildLineaDetalleXml(baseLinea({ subTotal: 850 }));
-    expect(result.BaseImponible).toBe(850);
+    expect(result.BaseImponible).toBe("850");
   });
 
   it("should use the explicit baseImponible when provided", () => {
     const result = buildLineaDetalleXml(baseLinea({ baseImponible: 750 }));
-    expect(result.BaseImponible).toBe(750);
+    expect(result.BaseImponible).toBe("750");
   });
 
   it("should default ImpuestoAsumidoEmisorFabrica to 0 when the variant requires it", () => {
     const result = buildLineaDetalleXml(baseLinea(), DOCUMENT_VARIANTS.FacturaElectronica);
-    expect(result.ImpuestoAsumidoEmisorFabrica).toBe(0);
+    expect(result.ImpuestoAsumidoEmisorFabrica).toBe("0");
   });
 
   it("should default ImpuestoNeto to 0 when the variant requires it", () => {
     const result = buildLineaDetalleXml(baseLinea(), DOCUMENT_VARIANTS.FacturaElectronica);
-    expect(result.ImpuestoNeto).toBe(0);
+    expect(result.ImpuestoNeto).toBe("0");
   });
 
   it("should map CodigoComercial entries and omit them when the array is empty", () => {
@@ -621,7 +621,7 @@ describe("buildLineaDetalleXml", () => {
     const withDiscount = buildLineaDetalleXml(
       baseLinea({ descuento: [{ montoDescuento: 100, codigoDescuento: "01" }] }),
     );
-    expect(withDiscount.Descuento).toEqual([{ MontoDescuento: 100, CodigoDescuento: "01" }]);
+    expect(withDiscount.Descuento).toEqual([{ MontoDescuento: "100", CodigoDescuento: "01" }]);
 
     const withoutDiscount = buildLineaDetalleXml(baseLinea({ descuento: [] }));
     expect(withoutDiscount).not.toHaveProperty("Descuento");
@@ -658,7 +658,7 @@ describe("buildLineaDetalleXml", () => {
       baseLinea({ impuestoAsumidoEmisorFabrica: 10 }),
       DOCUMENT_VARIANTS.NotaCreditoElectronica,
     );
-    expect(result.ImpuestoAsumidoEmisorFabrica).toBe(10);
+    expect(result.ImpuestoAsumidoEmisorFabrica).toBe("10");
   });
 
   it("should omit ImpuestoAsumidoEmisorFabrica for a Nota de Credito line when absent", () => {
@@ -706,14 +706,14 @@ describe("buildLineaDetalleXml", () => {
 describe("buildResumenFacturaXml", () => {
   it("should default CodigoTipoMoneda to CRC with exchange rate 1 when omitted", () => {
     const result = buildResumenFacturaXml(baseResumen());
-    expect(result.CodigoTipoMoneda).toEqual({ CodigoMoneda: "CRC", TipoCambio: 1 });
+    expect(result.CodigoTipoMoneda).toEqual({ CodigoMoneda: "CRC", TipoCambio: "1" });
   });
 
   it("should use the provided codigoTipoMoneda", () => {
     const result = buildResumenFacturaXml(
       baseResumen({ codigoTipoMoneda: { codigoMoneda: "USD", tipoCambio: 530.5 } }),
     );
-    expect(result.CodigoTipoMoneda).toEqual({ CodigoMoneda: "USD", TipoCambio: 530.5 });
+    expect(result.CodigoTipoMoneda).toEqual({ CodigoMoneda: "USD", TipoCambio: "530.5" });
   });
 
   it("should emit only CodigoTipoMoneda and the required totals for a bare resumen", () => {
@@ -724,27 +724,27 @@ describe("buildResumenFacturaXml", () => {
       "TotalVentaNeta",
       "TotalComprobante",
     ]);
-    expect(result.TotalVenta).toBe(1000);
-    expect(result.TotalVentaNeta).toBe(1000);
-    expect(result.TotalComprobante).toBe(1130);
+    expect(result.TotalVenta).toBe("1000");
+    expect(result.TotalVentaNeta).toBe("1000");
+    expect(result.TotalComprobante).toBe("1130");
   });
 
   it("should emit optional totals when defined, including zero values", () => {
     const result = buildResumenFacturaXml(
       baseResumen({ totalServGravados: 1000, totalServExentos: 0, totalIVADevuelto: 0 }),
     );
-    expect(result.TotalServGravados).toBe(1000);
-    expect(result.TotalServExentos).toBe(0);
-    expect(result.TotalIVADevuelto).toBe(0);
+    expect(result.TotalServGravados).toBe("1000");
+    expect(result.TotalServExentos).toBe("0");
+    expect(result.TotalIVADevuelto).toBe("0");
   });
 
   it("should emit the NoSujeto totals added in v4.4", () => {
     const result = buildResumenFacturaXml(
       baseResumen({ totalServNoSujeto: 100, totalMercNoSujeta: 200, totalNoSujeto: 300 }),
     );
-    expect(result.TotalServNoSujeto).toBe(100);
-    expect(result.TotalMercNoSujeta).toBe(200);
-    expect(result.TotalNoSujeto).toBe(300);
+    expect(result.TotalServNoSujeto).toBe("100");
+    expect(result.TotalMercNoSujeta).toBe("200");
+    expect(result.TotalNoSujeto).toBe("300");
   });
 
   it("should map TotalDesgloseImpuesto entries with Codigo, CodigoTarifaIVA and TotalMontoImpuesto", () => {
@@ -757,8 +757,8 @@ describe("buildResumenFacturaXml", () => {
       }),
     );
     expect(result.TotalDesgloseImpuesto).toEqual([
-      { Codigo: "01", CodigoTarifaIVA: "08", TotalMontoImpuesto: 130 },
-      { Codigo: "02", TotalMontoImpuesto: 50 },
+      { Codigo: "01", CodigoTarifaIVA: "08", TotalMontoImpuesto: "130" },
+      { Codigo: "02", TotalMontoImpuesto: "50" },
     ]);
   });
 
@@ -777,8 +777,8 @@ describe("buildResumenFacturaXml", () => {
       }),
     );
     expect(result.MedioPago).toEqual([
-      { TipoMedioPago: "01", TotalMedioPago: 500 },
-      { TipoMedioPago: "99", MedioPagoOtros: "Trueque", TotalMedioPago: 630 },
+      { TipoMedioPago: "01", TotalMedioPago: "500" },
+      { TipoMedioPago: "99", MedioPagoOtros: "Trueque", TotalMedioPago: "630" },
     ]);
   });
 
@@ -852,7 +852,7 @@ describe("buildOtrosCargosXml", () => {
     ]);
     expect(Array.isArray(result)).toBe(true);
     expect(result).toEqual([
-      { TipoDocumentoOC: "06", Detalle: "Impuesto de servicio", MontoCargo: 5000 },
+      { TipoDocumentoOC: "06", Detalle: "Impuesto de servicio", MontoCargo: "5000" },
     ]);
   });
 
@@ -1036,7 +1036,7 @@ describe("buildStandardDocumentBody", () => {
     );
     expect(result).not.toHaveProperty("MedioPago");
     const resumen = result.ResumenFactura as Record<string, unknown>;
-    expect(resumen.MedioPago).toEqual([{ TipoMedioPago: "01", TotalMedioPago: 1130 }]);
+    expect(resumen.MedioPago).toEqual([{ TipoMedioPago: "01", TotalMedioPago: "1130" }]);
   });
 
   it("should emit a fully-populated Factura root in the v4.4 XSD order", () => {
@@ -1112,7 +1112,7 @@ describe("buildStandardDocumentBody", () => {
       }),
     );
     expect(result.OtrosCargos).toEqual([
-      { TipoDocumentoOC: "06", Detalle: "Impuesto de servicio", MontoCargo: 100 },
+      { TipoDocumentoOC: "06", Detalle: "Impuesto de servicio", MontoCargo: "100" },
     ]);
   });
 

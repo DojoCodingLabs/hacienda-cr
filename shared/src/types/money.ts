@@ -96,6 +96,18 @@ export class Money {
   }
 
   /**
+   * Serialize to an XML `xs:decimal` string.
+   *
+   * Rounds to at most five decimal places using the Hacienda rounding rule and
+   * renders the value in plain (non-scientific) notation without forced
+   * trailing zeros — valid for the v4.4 `fractionDigits: 5` constraint (which
+   * bounds the fraction, it does not require five digits).
+   */
+  toXMLString(): string {
+    return this.value.toDecimalPlaces(5, Decimal.ROUND_HALF_UP).toFixed();
+  }
+
+  /**
    * Check if this Money value equals another.
    */
   equals(other: Money): boolean {
@@ -146,10 +158,14 @@ export class Money {
 
   /**
    * Round to a specific number of decimal places.
-   * Uses Decimal's toDecimalPlaces with ROUND_HALF_UP.
+   *
+   * Uses `ROUND_HALF_UP` (half away from zero), applied over the exact decimal
+   * value rather than over a binary `double`. This is stricter than
+   * `Number.toFixed(5)`, which rounds the IEEE-754 representation and can
+   * disagree at exact decimal ties (see `design.md`).
    */
   round(dp: number): Money {
-    return new Money(this.value.toDecimalPlaces(dp));
+    return new Money(this.value.toDecimalPlaces(dp, Decimal.ROUND_HALF_UP));
   }
 }
 

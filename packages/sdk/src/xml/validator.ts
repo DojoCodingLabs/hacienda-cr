@@ -12,8 +12,12 @@
  */
 
 import type { FacturaElectronicaInput } from "@dojocoding/hacienda-shared";
-import { FacturaElectronicaSchema, SaleCondition, TaxCode } from "@dojocoding/hacienda-shared";
-import { round5 } from "../tax/calculator.js";
+import {
+  FacturaElectronicaSchema,
+  Money,
+  SaleCondition,
+  TaxCode,
+} from "@dojocoding/hacienda-shared";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -47,6 +51,17 @@ export interface FacturaValidationResult {
  */
 function amountsEqual(a: number, b: number): boolean {
   return Math.abs(a - b) < 0.001;
+}
+
+/**
+ * Round a plain number to 5 decimal places with the Hacienda rule.
+ *
+ * The validator runs against the Zod-normalized input (plain numbers), not
+ * against `Money` instances, so it converts through `Money` to reuse the
+ * decimal rounding rule instead of binary `Number.toFixed`.
+ */
+function round5(value: number): number {
+  return Money.fromNumber(value).round(5).toNumber();
 }
 
 /** IVA-related tax codes. */

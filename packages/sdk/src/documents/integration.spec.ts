@@ -8,6 +8,11 @@ import { calculateLineItemTotals, calculateInvoiceSummary } from "../tax/calcula
 import { buildFacturaXml } from "./factura-builder.js";
 import { validateFacturaInput } from "../xml/validator.js";
 import type { FacturaElectronica } from "@dojocoding/hacienda-shared";
+import { Money } from "@dojocoding/hacienda-shared";
+
+const money = (n: number): Money => Money.fromNumber(n);
+const num = (v: Money | number | undefined): number | undefined =>
+  v instanceof Money ? v.toNumber() : v;
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -27,7 +32,7 @@ function buildFullInvoice(overrides?: Partial<FacturaElectronica>): FacturaElect
     cantidad: 2,
     unidadMedida: "Sp",
     detalle: "Horas de consultoria",
-    precioUnitario: 50000,
+    precioUnitario: money(50000),
     esServicio: true,
     impuesto: [{ codigo: "01", codigoTarifaIVA: "08", tarifa: 13 }],
   });
@@ -38,7 +43,7 @@ function buildFullInvoice(overrides?: Partial<FacturaElectronica>): FacturaElect
     cantidad: 5,
     unidadMedida: "Unid",
     detalle: "Producto estandar",
-    precioUnitario: 2000,
+    precioUnitario: money(2000),
     esServicio: false,
     impuesto: [{ codigo: "01", codigoTarifaIVA: "04", tarifa: 4 }],
   });
@@ -121,29 +126,29 @@ describe("Full pipeline: calculate -> validate -> build XML", () => {
     const l1 = line(invoice, 1);
 
     // Line 1: 2 * 50000 = 100000, tax 13000
-    expect(l0.montoTotal).toBe(100000);
-    expect(l0.impuestoNeto).toBe(13000);
-    expect(l0.montoTotalLinea).toBe(113000);
+    expect(num(l0.montoTotal)).toBe(100000);
+    expect(num(l0.impuestoNeto)).toBe(13000);
+    expect(num(l0.montoTotalLinea)).toBe(113000);
 
     // Line 2: 5 * 2000 = 10000, tax 400
-    expect(l1.montoTotal).toBe(10000);
-    expect(l1.impuestoNeto).toBe(400);
-    expect(l1.montoTotalLinea).toBe(10400);
+    expect(num(l1.montoTotal)).toBe(10000);
+    expect(num(l1.impuestoNeto)).toBe(400);
+    expect(num(l1.montoTotalLinea)).toBe(10400);
 
     // Summary
-    expect(invoice.resumenFactura.totalServGravados).toBe(100000);
-    expect(invoice.resumenFactura.totalMercanciasGravadas).toBe(10000);
-    expect(invoice.resumenFactura.totalGravado).toBe(110000);
-    expect(invoice.resumenFactura.totalImpuesto).toBe(13400);
-    expect(invoice.resumenFactura.totalComprobante).toBe(123400);
+    expect(num(invoice.resumenFactura.totalServGravados)).toBe(100000);
+    expect(num(invoice.resumenFactura.totalMercanciasGravadas)).toBe(10000);
+    expect(num(invoice.resumenFactura.totalGravado)).toBe(110000);
+    expect(num(invoice.resumenFactura.totalImpuesto)).toBe(13400);
+    expect(num(invoice.resumenFactura.totalComprobante)).toBe(123400);
   });
 
   it("should produce a per-rate tax breakdown (TotalDesgloseImpuesto)", () => {
     const invoice = buildFullInvoice();
 
     expect(invoice.resumenFactura.totalDesgloseImpuesto).toEqual([
-      { codigo: "01", codigoTarifaIVA: "08", totalMontoImpuesto: 13000 },
-      { codigo: "01", codigoTarifaIVA: "04", totalMontoImpuesto: 400 },
+      { codigo: "01", codigoTarifaIVA: "08", totalMontoImpuesto: money(13000) },
+      { codigo: "01", codigoTarifaIVA: "04", totalMontoImpuesto: money(400) },
     ]);
 
     const xml = buildFacturaXml(invoice);
@@ -159,10 +164,10 @@ describe("Full pipeline: calculate -> validate -> build XML", () => {
       cantidad: 10,
       unidadMedida: "Unid",
       detalle: "Producto con descuento",
-      precioUnitario: 5000,
+      precioUnitario: money(5000),
       descuento: [
         {
-          montoDescuento: 5000,
+          montoDescuento: money(5000),
           codigoDescuento: "01",
           naturalezaDescuento: "Descuento por volumen",
         },
@@ -217,7 +222,7 @@ describe("Full pipeline: calculate -> validate -> build XML", () => {
       cantidad: 1,
       unidadMedida: "Sp",
       detalle: "Servicio exonerado",
-      precioUnitario: 200000,
+      precioUnitario: money(200000),
       esServicio: true,
       impuesto: [
         {
@@ -235,14 +240,14 @@ describe("Full pipeline: calculate -> validate -> build XML", () => {
       ],
     });
 
-    expect(exoneratedLine.impuestoNeto).toBe(0);
-    expect(exoneratedLine.montoTotalLinea).toBe(200000);
+    expect(num(exoneratedLine.impuestoNeto)).toBe(0);
+    expect(num(exoneratedLine.montoTotalLinea)).toBe(200000);
 
     const summary = calculateInvoiceSummary([exoneratedLine]);
-    expect(summary.totalServExonerado).toBe(200000);
-    expect(summary.totalExonerado).toBe(200000);
-    expect(summary.totalImpuesto).toBe(0);
-    expect(summary.totalComprobante).toBe(200000);
+    expect(num(summary.totalServExonerado)).toBe(200000);
+    expect(num(summary.totalExonerado)).toBe(200000);
+    expect(num(summary.totalImpuesto)).toBe(0);
+    expect(num(summary.totalComprobante)).toBe(200000);
 
     const xml = buildFacturaXml(
       buildFullInvoice({

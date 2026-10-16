@@ -10,8 +10,13 @@ import {
   UNITS_OF_MEASURE,
   TRANSACTION_TYPES,
 } from "../generated/index.js";
-import { TaxCodeSchema, IvaRateCodeSchema, ExonerationTypeSchema } from "./common.js";
-import type { Money } from "../types/money.js";
+import {
+  TaxCodeSchema,
+  IvaRateCodeSchema,
+  ExonerationTypeSchema,
+  MontoSchema,
+  MontoPositiveSchema,
+} from "./common.js";
 
 /** Schema for commercial code (CodigoComercial). */
 export const CodigoComercialSchema = z.object({
@@ -54,7 +59,7 @@ export const ExoneracionSchema = z.object({
   tarifaExonerada: z.number().min(0).max(100),
 
   /** Exonerated tax amount. */
-  montoExoneracion: z.number().min(0),
+  montoExoneracion: MontoSchema,
 });
 
 export type ExoneracionInput = z.infer<typeof ExoneracionSchema>;
@@ -77,14 +82,7 @@ export const ImpuestoSchema = z.object({
   factorCalculoIVA: z.number().min(0).max(9.9999).optional(),
 
   /** Tax amount (Monto). Accepts number or Money (for calculated outputs). */
-  monto: z
-    .custom<Money | number>(
-      (val): val is Money | number =>
-        typeof val === "number" || (typeof val === "object" && val !== null && "toNumber" in val),
-      "Invalid monto: expected number or Money",
-    )
-    .transform((val) => (typeof val === "number" ? val : val.toNumber()))
-    .refine((val) => val >= 0, "monto must be non-negative"),
+  monto: MontoSchema,
 
   /** Exoneration information. Optional. */
   exoneracion: ExoneracionSchema.optional(),
@@ -95,7 +93,7 @@ export type ImpuestoInput = z.infer<typeof ImpuestoSchema>;
 /** Schema for discount (Descuento), per the v4.4 XSD. */
 export const DescuentoSchema = z.object({
   /** Discount amount. Must be positive. */
-  montoDescuento: z.number().positive(),
+  montoDescuento: MontoPositiveSchema,
 
   /** Discount code (CodigoDescuento). Required in v4.4. */
   codigoDescuento: z.enum(DISCOUNT_CODES),
@@ -142,31 +140,31 @@ export const LineaDetalleSchema = z.object({
   numeroVINoSerie: z.array(z.string().min(1).max(17)).optional(),
 
   /** Unit price (before taxes and discounts). */
-  precioUnitario: z.number().min(0),
+  precioUnitario: MontoSchema,
 
   /** Total line amount (cantidad * precioUnitario). */
-  montoTotal: z.number().min(0),
+  montoTotal: MontoSchema,
 
   /** Discounts applied. Optional, max 5. */
   descuento: z.array(DescuentoSchema).max(5).optional(),
 
   /** Subtotal after discounts. */
-  subTotal: z.number().min(0),
+  subTotal: MontoSchema,
 
   /** Base taxable amount. Defaults to subTotal at emission when omitted. */
-  baseImponible: z.number().min(0).optional(),
+  baseImponible: MontoSchema.optional(),
 
   /** Taxes applied to this line item. v4.4 requires at least one. */
   impuesto: z.array(ImpuestoSchema).min(1),
 
   /** Tax assumed by issuer/factory. Optional (emitted as 0 when required). */
-  impuestoAsumidoEmisorFabrica: z.number().min(0).optional(),
+  impuestoAsumidoEmisorFabrica: MontoSchema.optional(),
 
   /** Net tax amount. Optional (emitted as 0 when required). */
-  impuestoNeto: z.number().min(0).optional(),
+  impuestoNeto: MontoSchema.optional(),
 
   /** Total line amount including taxes. */
-  montoTotalLinea: z.number().min(0),
+  montoTotalLinea: MontoSchema,
 });
 
 export type LineaDetalleInput = z.infer<typeof LineaDetalleSchema>;
