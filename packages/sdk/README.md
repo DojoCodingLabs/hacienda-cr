@@ -90,6 +90,14 @@ Review the [v4.4 migration notes](MIGRATION-v4.4.md) before adapting existing in
 | `validateFacturaInput()`       | Function | Validates factura data against business rules                               |
 | `validateDocumentXml()`        | Function | Validates against bundled v4.4 XSD; optionally requires signature structure |
 
+### Hostile inputs (A6)
+
+All XML entry points (`validateDocumentXml`, `parseDocumentXml`, `signXml`) run
+`checkXmlInput` first: 8 MiB size cap, 128 nesting levels, 100 000 elements,
+and rejection of `<!DOCTYPE` / `<!ENTITY`. A static fuzz corpus lives under
+`src/xml/fuzzing.corpus.ts` and runs in `pnpm verify`. Mutation testing is
+configured in `packages/sdk/stryker.config.mjs` (`pnpm test:mutation`).
+
 ### Tax Calculation
 
 | Export                      | Type     | Description                                       |
