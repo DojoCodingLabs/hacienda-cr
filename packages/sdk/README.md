@@ -100,11 +100,13 @@ Review the [v4.4 migration notes](MIGRATION-v4.4.md) before adapting existing in
 
 ### Signing
 
-| Export            | Type     | Description                                           |
-| ----------------- | -------- | ----------------------------------------------------- |
-| `loadP12()`       | Function | Loads a .p12 certificate and extracts keys            |
-| `signXml()`       | Function | Signs XML with XAdES-EPES (returns signed XML string) |
-| `signAndEncode()` | Function | Signs XML and Base64-encodes for API submission       |
+| Export                  | Type     | Description                                                                                                |
+| ----------------------- | -------- | ---------------------------------------------------------------------------------------------------------- |
+| `loadP12()`             | Function | Loads a .p12 certificate and extracts keys                                                                 |
+| `signXml()`             | Function | Signs XML with XAdES-EPES (returns signed XML string)                                                      |
+| `signAndEncode()`       | Function | Signs XML and Base64-encodes for API submission                                                            |
+| `verifyXmlSignature()`  | Function | Independently verifies an XAdES-EPES v4.4 signature (digest, RSA, policy, cert) and returns a typed result |
+| `verifySigningPolicy()` | Function | Verifies only the v4.4 signing policy block (identifier, digest, canonicalization)                         |
 
 ### API Client
 
