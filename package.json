@@ -31,6 +31,7 @@
     "spec:update": "node scripts/spec-watch/update.mjs",
     "test:scripts": "node scripts/run-script-tests.mjs",
     "test:properties": "node scripts/run-properties-tests.mjs",
+    "test:mutation": "pnpm --filter @dojocoding/hacienda-sdk exec stryker run",
     "test:coverage": "turbo run test:coverage",
     "release:prepare": "node scripts/release.mjs prepare",
     "release:publish": "node scripts/release.mjs publish",
@@ -41,6 +42,9 @@
   "devDependencies": {
     "@changesets/cli": "3.0.3",
     "@eslint/js": "^9.39.5",
+    "@stryker-mutator/core": "^10.0.0",
+    "@stryker-mutator/typescript-checker": "^10.0.0",
+    "@stryker-mutator/vitest-runner": "^10.0.0",
     "@types/node": "^22.20.5",
     "@vitest/coverage-v8": "4.1.11",
     "eslint": "^9.39.5",

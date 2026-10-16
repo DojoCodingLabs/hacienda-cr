@@ -105,6 +105,14 @@ under `src/golden-corpus/`, plus fast-check properties in
 `pnpm test` with a modest budget and exhaustively via `pnpm test:properties`
 (`PROPERTY_RUNS`, plus `XSD_RUNS` for the more expensive XSD-conformance cases).
 
+### Hostile inputs (A6)
+
+All XML entry points (`validateDocumentXml`, `parseDocumentXml`, `signXml`) run
+`checkXmlInput` first: 8 MiB size cap, 128 nesting levels, 100 000 elements,
+and rejection of `<!DOCTYPE` / `<!ENTITY`. A static fuzz corpus lives under
+`src/xml/fuzzing.corpus.ts` and runs in `pnpm verify`. Mutation testing is
+configured in `packages/sdk/stryker.config.mjs` (`pnpm test:mutation`).
+
 ### Tax Calculation
 
 | Export                      | Type     | Description                                       |
