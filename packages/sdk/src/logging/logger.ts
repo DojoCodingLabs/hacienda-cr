@@ -1,3 +1,4 @@
+import { redactSecrets, sanitizeLogString } from "./redaction.js";
 /**
  * Structured logging module for the SDK.
  *
@@ -153,9 +154,9 @@ export class Logger {
     const entry: LogEntry = {
       timestamp: new Date().toISOString(),
       level: LEVEL_NAMES[level],
-      context: this.context,
-      message,
-      ...(data !== undefined ? { data: redact(data) as Record<string, unknown> } : {}),
+      context: sanitizeLogString(this.context),
+      message: sanitizeLogString(message),
+      ...(data !== undefined ? { data: redactSecrets(data) as Record<string, unknown> } : {}),
     };
 
     const output = this.format === "json" ? formatJson(entry) : formatText(entry);
@@ -195,26 +196,3 @@ function defaultWriter(output: string): void {
  * API requires a Logger instance.
  */
 export const noopLogger = new Logger({ level: LogLevel.SILENT });
-
-/** Redact structured secrets; callers must keep secrets out of free-form messages. */
-function redact(value: unknown, depth = 0, seen = new WeakSet<object>()): unknown {
-  if (!value || typeof value !== "object") return value;
-  if (depth > 8) return "[Truncated]";
-  if (seen.has(value)) return "[Circular]";
-  seen.add(value);
-  try {
-    if (Array.isArray(value)) return value.map((item) => redact(item, depth + 1, seen));
-    return Object.fromEntries(
-      Object.entries(value).map(([key, item]) => [
-        key,
-        /(?:password|pin|token|authorization|cookie|privatekey|secret|apikey)$/.test(
-          key.toLowerCase().replace(/[^a-z]/g, ""),
-        )
-          ? "[REDACTED]"
-          : redact(item, depth + 1, seen),
-      ]),
-    );
-  } finally {
-    seen.delete(value);
-  }
-}

@@ -1,3 +1,4 @@
+import { assertDocumentIdentity } from "../xml/document-identity.js";
 /**
  * Factura Electronica de Compra XML builder.
  *
@@ -5,7 +6,7 @@
  * compliant XML string. Purchase invoice (reverse charge) — issued by
  * the buyer when the supplier is not registered.
  *
- * Document type code: 05
+ * Document type code: 08
  * Root element: FacturaElectronicaCompra
  * Namespace: https://cdn.comprobanteselectronicos.go.cr/xml-schemas/v4.4/FacturaElectronicaCompra
  */
@@ -40,5 +41,6 @@ import { buildStandardDocumentBody, DOCUMENT_VARIANTS } from "./shared-xml-helpe
  */
 export function buildFacturaCompraXml(input: FacturaElectronicaCompra): string {
   const data = buildStandardDocumentBody(input, DOCUMENT_VARIANTS.FacturaElectronicaCompra);
+  assertDocumentIdentity(input, "08");
   return buildXml("FacturaElectronicaCompra", data);
 }

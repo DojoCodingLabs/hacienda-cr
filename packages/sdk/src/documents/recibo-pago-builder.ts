@@ -1,10 +1,11 @@
+import { assertDocumentIdentity } from "../xml/document-identity.js";
 /**
  * Recibo Electronico de Pago XML builder.
  *
  * Transforms a typed ReciboElectronicoPago input into a Hacienda v4.4
  * compliant XML string. Payment receipt — new in v4.4.
  *
- * Document type code: 07 (clave code: 10)
+ * Document type code: 10
  * Root element: ReciboElectronicoPago
  * Namespace: https://cdn.comprobanteselectronicos.go.cr/xml-schemas/v4.4/ReciboElectronicoPago
  */
@@ -40,5 +41,6 @@ import { buildStandardDocumentBody, DOCUMENT_VARIANTS } from "./shared-xml-helpe
  */
 export function buildReciboPagoXml(input: ReciboElectronicoPago): string {
   const data = buildStandardDocumentBody(input, DOCUMENT_VARIANTS.ReciboElectronicoPago);
+  assertDocumentIdentity(input, "10");
   return buildXml("ReciboElectronicoPago", data);
 }

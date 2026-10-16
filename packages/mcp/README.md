@@ -204,3 +204,11 @@ See the [MCP reference](https://github.com/DojoCodingLabs/hacienda-cr/blob/main/
 ## Migrating to 0.4.0
 
 Read the [migration guide](https://github.com/DojoCodingLabs/hacienda-cr/blob/main/packages/sdk/MIGRATION-v4.4.md) before upgrading.
+
+### Issuer numbering and credential rotation
+
+`create_invoice` accepts `environment` (defaults to `sandbox`) and stores local counters under `issuer-sequences/<environment>/<sha256 identity>/sequences.json` in the configuration directory. The digest covers environment, identification type and identification number. Branch, terminal and document type remain separate counters within that file. This is local-process/file coordination, not a distributed transactional counter.
+
+If an old global `sequences.json` contains positive counters, creating a new unseeded issuer series fails closed. Stop writers, back up the old file, establish the issuer/environment that owns each series, and seed each corresponding scoped file with the last reserved number before resuming. Do not copy a mixed-company global file blindly, delete counters, or restart a production series at one. There is no automatic migration because the old file does not identify its owner.
+
+Authenticated clients are invalidated when the resolved profile, environment, issuer configuration, certificate path, password or PIN changes. Replacing certificate bytes at the same path still requires restarting the process or clearing the cache. Configure one profile per identity/environment.

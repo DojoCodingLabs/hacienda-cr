@@ -8,7 +8,7 @@
 import { z } from "zod";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 
-import { lookupTaxpayer } from "@dojocoding/hacienda-sdk";
+import { lookupTaxpayer, sanitizeLogString } from "@dojocoding/hacienda-sdk";
 import { IDENTIFICATION_TYPE_NAMES } from "@dojocoding/hacienda-shared";
 import type { IdentificationType } from "@dojocoding/hacienda-shared";
 
@@ -56,7 +56,7 @@ export function registerLookupTaxpayerTool(server: McpServer): void {
           ],
         };
       } catch (error) {
-        const message = error instanceof Error ? error.message : String(error);
+        const message = sanitizeLogString(error instanceof Error ? error.message : String(error));
         return {
           content: [
             {

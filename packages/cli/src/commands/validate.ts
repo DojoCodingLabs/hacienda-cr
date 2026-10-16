@@ -46,7 +46,8 @@ export const validateCommand = defineCommand({
       try {
         fileContent = await readFile(filePath, "utf-8");
       } catch {
-        error(`Cannot read file: ${filePath}`);
+        if (args.json) outputJson({ valid: false, error: "Cannot read input file" });
+        else error(`Cannot read file: ${filePath}`);
         process.exitCode = 1;
         return;
       }
@@ -82,7 +83,8 @@ async function validateJson(
   try {
     invoiceData = JSON.parse(fileContent);
   } catch {
-    error("Invalid JSON in the input file.");
+    if (jsonOutput) outputJson({ valid: false, error: "Invalid JSON in the input file" });
+    else error("Invalid JSON in the input file.");
     process.exitCode = 1;
     return;
   }

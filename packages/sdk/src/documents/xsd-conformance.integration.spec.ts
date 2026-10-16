@@ -151,7 +151,14 @@ run("XSD conformance against official v4.4 schemas", () => {
   it("accepts an alphanumeric clave under the 2026 revision only", () => {
     const doc = {
       ...SIMPLE_FACTURA,
-      clave: "506010725000310123456A0010000101000000000119999999",
+      clave:
+        SIMPLE_FACTURA.clave.slice(0, 9) +
+        "310123456A".padStart(12, "0") +
+        SIMPLE_FACTURA.clave.slice(21),
+      emisor: {
+        ...SIMPLE_FACTURA.emisor,
+        identificacion: { ...SIMPLE_FACTURA.emisor.identificacion, numero: "310123456A" },
+      },
     };
     const xml = buildFacturaXml(doc);
     expect(

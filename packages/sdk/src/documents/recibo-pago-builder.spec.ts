@@ -139,7 +139,9 @@ describe("buildReciboPagoXml", () => {
       expect(xml).toContain("<InformacionReferencia>");
       expect(xml).toContain("<TipoDocIR>01</TipoDocIR>");
       expect(xml).not.toContain("<TipoDoc>");
-      expect(xml).toContain("<Numero>50601072500031012345670010000101000000000119999999</Numero>");
+      expect(xml).toContain(
+        `<Numero>${SIMPLE_RECIBO_PAGO.informacionReferencia[0]?.numero}</Numero>`,
+      );
       expect(xml).toContain("<FechaEmisionIR>2025-07-27T10:30:00-06:00</FechaEmisionIR>");
       expect(xml).toContain("<Codigo>04</Codigo>");
       expect(xml).toContain("<Razon>Pago de factura emitida a credito</Razon>");

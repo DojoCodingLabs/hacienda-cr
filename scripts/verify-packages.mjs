@@ -100,6 +100,18 @@ try {
     join(root, "packages/sdk/src/__fixtures__/invoices.ts"),
     "utf8",
   );
+  // Fixtures now generate coherent identities. Resolve their helper through the
+  // installed public SDK rather than depending on repository source paths.
+  const identitySource = (
+    await readFile(join(root, "packages/sdk/src/__fixtures__/identity.ts"), "utf8")
+  )
+    .replaceAll("../clave/build-clave.js", "@dojocoding/hacienda-sdk")
+    .replaceAll("../clave/types.js", "@dojocoding/hacienda-sdk");
+  await writeFile(
+    join(consumer, "identity.js"),
+    ts.transpileModule(identitySource, { compilerOptions: { module: ts.ModuleKind.ESNext } })
+      .outputText,
+  );
   await writeFile(
     join(consumer, "fixtures.mjs"),
     ts.transpileModule(fixtureSource, { compilerOptions: { module: ts.ModuleKind.ESNext } })

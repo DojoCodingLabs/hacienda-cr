@@ -1,3 +1,4 @@
+import { sanitizeLogString } from "../logging/redaction.js";
 /**
  * Typed HTTP client with automatic auth header injection.
  *
@@ -35,6 +36,8 @@ export interface HttpClientOptions {
   readonly fetchFn?: typeof fetch;
   /** Optional retry configuration. */
   readonly retryOptions?: RetryOptions;
+  /** Explicitly allow replaying mutation requests; reconcile ambiguous fiscal submissions by clave instead. */
+  readonly retryUnsafeRequests?: boolean;
   /** Per-request budget, including auth, retries, and response reads (default 30s). */
   readonly requestTimeoutMs?: number;
   /** Optional rate limiter configuration. Set to `false` to disable. */
@@ -96,6 +99,7 @@ export class HttpClient {
   private readonly fetchFn: typeof fetch;
   private readonly retryOptions: RetryOptions | undefined;
   private readonly requestTimeoutMs: number;
+  private readonly retryUnsafeRequests: boolean;
   private readonly rateLimiter: RateLimiter | undefined;
 
   constructor(options: HttpClientOptions) {
@@ -110,6 +114,7 @@ export class HttpClient {
     this.tokenManager = options.tokenManager;
     this.fetchFn = options.fetchFn ?? globalThis.fetch;
     this.retryOptions = options.retryOptions;
+    this.retryUnsafeRequests = options.retryUnsafeRequests ?? false;
 
     // Initialize rate limiter (enabled by default, disable with `false`)
     if (options.rateLimiterOptions !== false) {
@@ -218,9 +223,11 @@ export class HttpClient {
       } catch (error) {
         options.signal?.throwIfAborted();
         throw new ApiError(
-          `Network error calling ${options.method} ${options.path}: ${
-            error instanceof Error ? error.message : String(error)
-          }`,
+          `Network error calling ${options.method} ${options.path}: ${sanitizeLogString(
+            error instanceof Error ? error.message : String(error),
+          )
+            .split(headers["Authorization"]?.slice(7) || "\0")
+            .join("[REDACTED]")}`,
           undefined,
           undefined,
           error,
@@ -251,7 +258,7 @@ export class HttpClient {
     };
 
     // Wrap with retry unless explicitly skipped
-    if (options.skipRetry || !["GET", "PUT", "DELETE"].includes(options.method)) {
+    if (options.skipRetry || (options.method !== "GET" && !this.retryUnsafeRequests)) {
       return execute();
     }
 

@@ -191,12 +191,20 @@ export const FacturaElectronicaSchema = z.object({
   proveedorSistemas: z.string().min(1).max(20),
 
   /** Issuer economic activity code (6 digits). */
-  codigoActividadEmisor: z.string().regex(/^\d{6}$/, "Activity code must be 6 digits"),
+  codigoActividadEmisor: z
+    .string()
+    .regex(
+      /^(?:\d{6}|\d{4}\.\d)$/,
+      "Activity code must be six digits or the issued CIIU4 format ####.#",
+    ),
 
   /** Receiver economic activity code (6 digits). Optional. */
   codigoActividadReceptor: z
     .string()
-    .regex(/^\d{6}$/, "Activity code must be 6 digits")
+    .regex(
+      /^(?:\d{6}|\d{4}\.\d)$/,
+      "Activity code must be six digits or the issued CIIU4 format ####.#",
+    )
     .optional(),
 
   /** Sequential document number (20 chars). */

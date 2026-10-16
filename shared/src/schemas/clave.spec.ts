@@ -100,9 +100,15 @@ describe("ClaveComponentsSchema", () => {
   it("should reject invalid document type", () => {
     const result = ClaveComponentsSchema.safeParse({
       ...validComponents,
-      documentType: "10",
+      documentType: "11",
     });
     expect(result.success).toBe(false);
+  });
+
+  it("accepts official REP document type 10", () => {
+    expect(
+      ClaveComponentsSchema.safeParse({ ...validComponents, documentType: "10" }).success,
+    ).toBe(true);
   });
 
   it("should reject invalid situation code", () => {

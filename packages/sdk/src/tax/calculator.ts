@@ -31,11 +31,9 @@ const DECIMAL_PLACES = 5;
 /**
  * Round a number to 5 decimal places (Hacienda requirement).
  *
- * Uses `Number.toFixed(5)` which implements "round half to even"
- * (banker's rounding) per the ECMAScript spec. This avoids
- * floating-point multiplication artifacts that can occur with
- * the `Math.round(value * factor) / factor` approach (e.g.,
- * 1.0000025 * 100000 = 100000.24999999999 in IEEE 754).
+ * Uses JavaScript `Number.toFixed(5)` over binary floating-point values.
+ * This is not an exact decimal or banker's-rounding implementation;
+ * fiscal edge cases require separate decimal-oracle validation.
  *
  * @param value - The numeric value to round.
  * @returns The value rounded to 5 decimal places.

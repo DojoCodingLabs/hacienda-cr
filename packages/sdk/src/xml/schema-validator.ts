@@ -4,6 +4,7 @@ import { DOMParser } from "@xmldom/xmldom";
 import { XMLValidator } from "fast-xml-parser";
 import { validateXML } from "xmllint-wasm";
 import { DOCUMENT_SCHEMAS, xmldsig } from "./schemas/index.js";
+import { validateDocumentIdentity, STANDARD_DOCUMENT_CODES } from "./document-identity.js";
 
 let activeValidations = 0;
 const MAX_CONCURRENT_VALIDATIONS = 4;
@@ -67,11 +68,35 @@ export async function validateDocumentXml(
       maxMemoryPages: 1024,
       modifyArguments: (args) => [...args, "--nonet"],
     });
+    const identityIssues: string[] = [];
+    const expectedType = STANDARD_DOCUMENT_CODES[rootElement];
+    if (result.valid && expectedType) {
+      const text = (name: string) =>
+        root.getElementsByTagNameNS(root.namespaceURI, name).item(0)?.textContent ?? "";
+      const partyId = (party: string) =>
+        root
+          .getElementsByTagNameNS(root.namespaceURI, party)
+          .item(0)
+          ?.getElementsByTagNameNS(root.namespaceURI, "Numero")
+          .item(0)?.textContent ?? "";
+      identityIssues.push(
+        ...validateDocumentIdentity(
+          {
+            clave: text("Clave"),
+            numeroConsecutivo: text("NumeroConsecutivo"),
+            fechaEmision: text("FechaEmision"),
+            emisor: { identificacion: { numero: partyId("Emisor") } },
+            receptor: { identificacion: { numero: partyId("Receptor") } },
+          },
+          expectedType,
+        ).map((issue) => `${issue.path}: ${issue.message}`),
+      );
+    }
     return {
-      valid: result.valid,
+      valid: result.valid && identityIssues.length === 0,
       rootElement,
       hasSignature,
-      issues: result.errors.map((issue) => issue.message),
+      issues: [...result.errors.map((issue) => issue.message), ...identityIssues],
     };
   } catch (error) {
     return failure(error instanceof Error ? error.message : String(error));

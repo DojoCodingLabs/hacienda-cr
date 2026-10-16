@@ -1,3 +1,4 @@
+import { nextIssuerSequence } from "./issuer-sequence.js";
 /**
  * MCP tool: create_invoice
  *
@@ -21,7 +22,7 @@ import {
   Situation,
   calculateLineItemTotals,
   calculateInvoiceSummary,
-  getNextSequence,
+  sanitizeLogString,
   DEFAULT_BRANCH,
   DEFAULT_POS,
 } from "@dojocoding/hacienda-sdk";
@@ -121,6 +122,7 @@ const ReceptorInputSchema = z.object({
 });
 
 export const CreateInvoiceInputSchema = z.object({
+  environment: z.enum(["sandbox", "production"]).default("sandbox"),
   emisor: EmisorInputSchema.describe("Invoice issuer (emisor)"),
   receptor: ReceptorInputSchema.describe("Invoice receiver (receptor)"),
   proveedorSistemas: z
@@ -161,6 +163,7 @@ export function registerCreateInvoiceTool(server: McpServer): void {
       "taxes, totals, generates the clave numerica, and builds the XML. " +
       "Returns the unsigned XML string.",
     {
+      environment: CreateInvoiceInputSchema.shape.environment,
       emisor: EmisorInputSchema,
       receptor: ReceptorInputSchema,
       proveedorSistemas: CreateInvoiceInputSchema.shape.proveedorSistemas,
@@ -301,7 +304,14 @@ export function registerCreateInvoiceTool(server: McpServer): void {
         const xmlValidation = await validateDocumentXml(xml);
         if (!xmlValidation.valid) throw new Error(xmlValidation.issues.join("; "));
 
-        const allocatedSequence = await getNextSequence(docTypeCode, branch, pos);
+        const allocatedSequence = await nextIssuerSequence(
+          args.environment,
+          args.emisor.identificacion.tipo,
+          taxpayerId,
+          docTypeCode,
+          branch,
+          pos,
+        );
         clave = buildClave({
           date: now,
           taxpayerId,
@@ -333,7 +343,7 @@ export function registerCreateInvoiceTool(server: McpServer): void {
           ],
         };
       } catch (error) {
-        const message = error instanceof Error ? error.message : String(error);
+        const message = sanitizeLogString(error instanceof Error ? error.message : String(error));
         return {
           content: [
             {

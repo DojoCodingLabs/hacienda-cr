@@ -1,3 +1,4 @@
+import { assertDocumentIdentity } from "../xml/document-identity.js";
 /**
  * Nota de Credito Electronica XML builder.
  *
@@ -42,5 +43,6 @@ import { buildStandardDocumentBody, DOCUMENT_VARIANTS } from "./shared-xml-helpe
  */
 export function buildNotaCreditoXml(input: NotaCreditoElectronica): string {
   const data = buildStandardDocumentBody(input, DOCUMENT_VARIANTS.NotaCreditoElectronica);
+  assertDocumentIdentity(input, "03");
   return buildXml("NotaCreditoElectronica", data);
 }
