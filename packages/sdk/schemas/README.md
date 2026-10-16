@@ -63,8 +63,13 @@ vendored artifact.
   spec `openspec/specs/codes-extraction/spec.md`; this README only
   references it (it is synced from the change delta when the change is
   archived — never edited by hand in advance).
-- The SDK does **not** consume this file yet (phase 2 of the codes work).
-  Regenerate after any legitimate schema refresh that changes enumerations.
+- The SDK test suite and `shared` (via `pnpm spec:generate`) consume this
+  file: it is the single source of truth for the code catalogs rendered into
+  `shared/src/generated/`. Regenerate after any legitimate schema refresh
+  that changes enumerations, then re-run `pnpm spec:generate` and commit the
+  result (the `pnpm verify` lock fails on drift). A future `names.json`
+  (same directory) will supply human-readable names per export; until it
+  exists, `spec:generate` reports the pending exports with exit 0.
 
 ## `manifest.json`
 
@@ -99,11 +104,31 @@ The `policy` block quotes Anexo 2 of `ANEXOS Y ESTRUCTURAS_V4.4.pdf` verbatim:
 SHA-256 of the vendored policy PDF), `citation`, `sourceSurface`, `resolvedUrl`
 (working URL for the verbatim `identifier`, which 403s), `sdkStatus`.
 The INDENT quotes this digest incorrectly as `DWxin1xWOel8…` (43 chars); the
-value above is the one printed in the PDF itself. `sdkStatus` is
-`pending-sdk-migration`: the signer still uses the old SHA-1/v4.1 policy
-(`XADES_POLICY_HASH`, see `docs/specs/v4.4-compliance.md` §1.10 and §3.5), so
-the correction is a separate, versioned change (phase 3). Allowed values:
-`pending-sdk-migration`, `aligned` — a new value requires updating this README.
+value above is the one printed in the PDF itself. `sdkStatus` is `aligned`:
+the signer's published constants (`shared/src/constants/xades-policy.ts` —
+`XADES_POLICY_URI`, `XADES_POLICY_HASH_ALGORITHM`, `XADES_POLICY_HASH`) match
+this block byte for byte. Allowed values: `pending-sdk-migration` (the SDK
+still declares another policy; the README explains the discrepancy) and
+`aligned` (constants and block coincide) — a new value requires updating this
+README, the gate constant and the spec in the same commit.
+
+`pnpm spec:verify` enforces this block on every run, offline: it recomputes the
+SHA-256 of the vendored policy PDF and compares it — exact string match,
+standard Base64 with `=` padding, no normalization — against
+`policy.digestValue`; locates the PDF by folding the basename of
+`policy.identifier` (exactly one vendored candidate); requires `digestMethod` to
+be exactly the Anexo 2 URI (the identifier is opaque, case-sensitive, fragment
+included) and `sdkStatus` to be present and within the allowed set. The contrast
+is self-consistent: it proves the manifest describes the vendored bytes, not
+that those bytes still match what Anexo 2 publishes today — that was checked
+once, at vendorization. For the same reason `spec:update` never recomputes
+`policy.*`: a policy failure means fixing the manifest against the vendored PDF
+(or restoring the PDF if it was replaced by accident). `spec:verify` reads the
+SDK state only through `sdkStatus`: it neither imports `XADES_POLICY_HASH` nor
+compares the constants. The constants↔block equality is enforced by the
+colocated gate `packages/sdk/src/__testing__/manifest.spec.ts`, which `pnpm
+verify` runs (phase 3, task A2 3.2): it fails, naming field, published value and
+expected value, when `XADES_POLICY_*` diverge from this block.
 
 Field semantics:
 

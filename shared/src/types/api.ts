@@ -48,7 +48,21 @@ export interface SubmissionResponse {
 // Status polling (GET /recepcion/{clave})
 // ---------------------------------------------------------------------------
 
-/** Hacienda processing status values. */
+/**
+ * Hacienda processing status values.
+ *
+ * Provenance (A2 task 4.2): confirmed against the official REST API manual
+ * published on the ATV «Anexos y Estructuras» listing —
+ * `https://atv.hacienda.go.cr/ATV/ComprobanteElectronico/docs/esquemas/2024/v4.4/comprobantes-electronicos-api.html`
+ * — which declares, for the status polling response:
+ * `"ind-estado": { "type": "string", "enum": ["recibido", "procesando",
+ * "aceptado", "rechazado", "error"] }`.
+ *
+ * The enum is lowercase and matches these values exactly, so the contract
+ * needed no correction. The uppercase `"RECIBIDO"` of the Anexo 3 (p. 98)
+ * example is a JSON sample, not the schema; the manual's enum above is the
+ * authoritative contract, and the SDK's comparison stays unnormalized.
+ */
 export const HaciendaStatus = {
   /** Received, queued for processing. */
   RECIBIDO: "recibido",

@@ -1,31 +1,12 @@
 /**
- * Payment method codes (Medio de Pago) for electronic documents.
+ * Payment method names (Medio de Pago) for electronic documents.
  *
- * v4.4: MedioPago lives inside ResumenFactura (up to 4 entries, each with
- * an amount); codes 06 and 07 are new in v4.4.
+ * El catálogo `PaymentMethod` es generado desde `codes.json`
+ * (`shared/src/generated/payment-method.ts`); este mapa de nombres
+ * legibles es curaduría manual — el candidato a migrarlo es un futuro
+ * `names.json` (ver table-map.mjs).
  */
-
-/** Payment method codes. */
-export const PaymentMethod = {
-  /** Efectivo (cash) */
-  EFECTIVO: "01",
-  /** Tarjeta (card) */
-  TARJETA: "02",
-  /** Cheque */
-  CHEQUE: "03",
-  /** Transferencia - Deposito bancario */
-  TRANSFERENCIA: "04",
-  /** Recaudado por terceros */
-  RECAUDADO_TERCEROS: "05",
-  /** SINPE Movil */
-  SINPE_MOVIL: "06",
-  /** Plataforma Digital */
-  PLATAFORMA_DIGITAL: "07",
-  /** Otros (especificar en MedioPagoOtros) */
-  OTROS: "99",
-} as const;
-
-export type PaymentMethod = (typeof PaymentMethod)[keyof typeof PaymentMethod];
+import { PaymentMethod } from "../generated/payment-method.js";
 
 /** Human-readable names for payment methods. */
 export const PAYMENT_METHOD_NAMES: Record<PaymentMethod, string> = {
