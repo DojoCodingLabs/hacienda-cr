@@ -9,4 +9,6 @@
 
 export { loadP12 } from "./p12-loader.js";
 export { signXml, signAndEncode } from "./signer.js";
+export { verifyXmlSignature, verifySigningPolicy, C14N_REQUIRED } from "./verifier.js";
+export type { VerifySignatureOptions, VerifyChecks, VerifyResult } from "./verifier.js";
 export type { P12Credentials, SignXmlOptions, XadesPolicyConfig } from "./types.js";

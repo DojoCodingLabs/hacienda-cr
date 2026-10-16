@@ -118,6 +118,9 @@ export async function signXml(xml: string, p12Buffer: Buffer, p12Pin: string): P
             name: "SHA-256",
             value: Buffer.from(XADES_POLICY_HASH, "base64"),
           } as unknown as AlgorithmIdentifier,
+          // Force writing the raw Base64 digest of the policy PDF (A5 task 1.0).
+          // Without this, xadesjs hashes the Identifier instead (wrong digest).
+          digestValue: XADES_POLICY_HASH,
           identifier: {
             qualifier: "OIDAsURN",
             value: XADES_POLICY_URI,
