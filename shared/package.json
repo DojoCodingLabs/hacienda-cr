@@ -33,6 +33,7 @@
     "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
+    "decimal.js": "^10.6.0",
     "zod": "^4.6.5"
   },
   "license": "MIT",
@@ -48,5 +49,8 @@
   },
   "publishConfig": {
     "access": "public"
+  },
+  "devDependencies": {
+    "fast-check": "^4.10.2"
   }
 }

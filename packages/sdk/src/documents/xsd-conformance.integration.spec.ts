@@ -19,6 +19,7 @@ import { buildFacturaExportacionXml } from "./factura-exportacion-builder.js";
 import { buildReciboPagoXml } from "./recibo-pago-builder.js";
 import { buildMensajeReceptorXml } from "./mensaje-receptor-builder.js";
 import { validateAgainstXsd, xmllintAvailable, SCHEMA_GENERATIONS } from "../__testing__/xsd.js";
+import { Money } from "@dojocoding/hacienda-shared";
 import {
   SIMPLE_FACTURA,
   SIMPLE_TIQUETE,
@@ -164,6 +165,58 @@ run("XSD conformance against official v4.4 schemas", () => {
       validateAgainstXsd(xml, "FacturaElectronica_V4.4.xsd", {
         allowMissingSignature: true,
         generation: "2024",
+      }).valid,
+    ).toBe(false);
+  });
+
+  // DecimalDineroType constrains every monetary amount to `fractionDigits="5"`
+  // (totalDigits 18, max 9999999999999.99999). Verify the serialized documents
+  // sit exactly on that boundary: five fractional digits conform, six do not.
+  it("accepts amounts with five fractional digits and rejects six", () => {
+    const line = SIMPLE_FACTURA.detalleServicio[0];
+    if (!line) throw new Error("SIMPLE_FACTURA must have at least one line item");
+
+    const doc = {
+      ...SIMPLE_FACTURA,
+      detalleServicio: [
+        {
+          ...line,
+          precioUnitario: Money.fromString("1.00001"),
+          montoTotal: Money.fromString("1.00001"),
+          subTotal: Money.fromString("1.00001"),
+          montoTotalLinea: Money.fromString("0.00001"),
+        },
+      ],
+      resumenFactura: {
+        ...SIMPLE_FACTURA.resumenFactura,
+        totalVenta: Money.fromString("1.00001"),
+        totalVentaNeta: Money.fromString("1.00001"),
+        totalComprobante: Money.fromString("0.00001"),
+      },
+    };
+
+    const xml = buildFacturaXml(doc);
+    // Amounts are serialized with at most five fractional digits.
+    expect(xml).toContain("<PrecioUnitario>1.00001</PrecioUnitario>");
+    expect(xml).toContain("<TotalComprobante>0.00001</TotalComprobante>");
+    expect(xml).not.toMatch(/<PrecioUnitario>\d+\.\d{6}/);
+
+    const withinBoundary = validateAgainstXsd(xml, "FacturaElectronica_V4.4.xsd", {
+      allowMissingSignature: true,
+    });
+    expect(withinBoundary.errors).toBe("");
+    expect(withinBoundary.valid).toBe(true);
+
+    // Harness sanity check: an amount with six fractional digits exceeds
+    // fractionDigits="5" and must be rejected by the official schema.
+    const overflow = xml.replace(
+      "<TotalComprobante>0.00001</TotalComprobante>",
+      "<TotalComprobante>0.000001</TotalComprobante>",
+    );
+    expect(overflow).not.toBe(xml);
+    expect(
+      validateAgainstXsd(overflow, "FacturaElectronica_V4.4.xsd", {
+        allowMissingSignature: true,
       }).valid,
     ).toBe(false);
   });

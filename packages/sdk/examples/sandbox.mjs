@@ -15,6 +15,7 @@ import {
   getStatus,
   HttpClient,
   loadCredentials,
+  Money,
   signXml,
   Situation,
   submitAndWait,
@@ -172,6 +173,27 @@ function checkStatusIdentity(status, clave) {
   if (status.clave !== clave) throw new Error("Status response does not match the saved clave.");
 }
 
+/**
+ * JSON carries amounts as plain numbers, but the tax calculator requires
+ * `Money`. Convert at this boundary so every later arithmetic step stays
+ * decimal-exact.
+ */
+function toLineItemInput(item, index) {
+  return {
+    ...item,
+    numeroLinea: index + 1,
+    precioUnitario: Money.fromNumber(item.precioUnitario),
+    ...(item.descuento
+      ? {
+          descuento: item.descuento.map((discount) => ({
+            ...discount,
+            montoDescuento: Money.fromNumber(discount.montoDescuento),
+          })),
+        }
+      : {}),
+  };
+}
+
 async function main() {
   if (!input || extra.length || !["prepare", "submit", "status"].includes(command)) {
     throw new Error(usage);
@@ -182,9 +204,7 @@ async function main() {
     const order = JSON.parse(await readFile(resolve(input), "utf8"));
     // Reject unsupported fields before calculation can silently discard them.
     checkOrder(order);
-    const items = order.lineItems.map((item, index) =>
-      calculateLineItemTotals({ ...item, numeroLinea: index + 1 }),
-    );
+    const items = order.lineItems.map(toLineItemInput).map(calculateLineItemTotals);
     const date = new Date();
     const branch = "001";
     const pos = "00001";
