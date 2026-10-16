@@ -23,13 +23,19 @@ if (!Number.isInteger(runs) || runs < 1) {
   );
 }
 
+const xsdRuns = Number(process.env.XSD_RUNS ?? 200);
+if (!Number.isInteger(xsdRuns) || xsdRuns < 1) {
+  throw new Error(`XSD_RUNS must be a positive integer, received: ${process.env.XSD_RUNS}`);
+}
+
 /** Suites that share the `PROPERTY_RUNS` budget. */
 const targets = [
   { pkg: "@dojocoding/hacienda-shared", spec: "src/types/money.properties.spec.ts" },
   { pkg: "@dojocoding/hacienda-sdk", spec: "src/tax/calculator.properties.spec.ts" },
+  { pkg: "@dojocoding/hacienda-sdk", spec: "src/documents/document-generation.properties.spec.ts" },
 ];
 
-const env = { ...process.env, PROPERTY_RUNS: String(runs) };
+const env = { ...process.env, PROPERTY_RUNS: String(runs), XSD_RUNS: String(xsdRuns) };
 const started = Date.now();
 
 for (const target of targets) {

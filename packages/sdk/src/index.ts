@@ -148,6 +148,9 @@ export {
   buildFacturaExportacionXml,
   buildReciboPagoXml,
   buildMensajeReceptorXml,
+  parseDocumentXml,
+  type ParseDocumentResult,
+  type ParsedDocument,
 } from "./documents/index.js";
 
 // ---------------------------------------------------------------------------

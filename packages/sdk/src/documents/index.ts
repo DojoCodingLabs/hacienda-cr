@@ -2,6 +2,9 @@
  * Document builders — generate Hacienda v4.4 XML for each document type.
  */
 
+export { parseDocumentXml } from "./parser.js";
+export type { ParseDocumentResult, ParsedDocument } from "./parser.js";
+
 export { buildFacturaXml } from "./factura-builder.js";
 export { buildTiqueteXml } from "./tiquete-builder.js";
 export { buildNotaCreditoXml } from "./nota-credito-builder.js";
