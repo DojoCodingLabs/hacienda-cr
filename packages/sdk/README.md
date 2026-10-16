@@ -76,19 +76,34 @@ Review the [v4.4 migration notes](MIGRATION-v4.4.md) before adapting existing in
 
 ### XML
 
-| Export                         | Type     | Description                                                                 |
-| ------------------------------ | -------- | --------------------------------------------------------------------------- |
-| `buildXml()`                   | Function | Low-level XML builder with namespace support                                |
-| `buildFacturaXml()`            | Function | Builds a Factura Electronica XML document                                   |
-| `buildTiqueteXml()`            | Function | Builds a Tiquete Electronico XML document                                   |
-| `buildNotaCreditoXml()`        | Function | Builds a Nota de Credito Electronica XML document                           |
-| `buildNotaDebitoXml()`         | Function | Builds a Nota de Debito Electronica XML document                            |
-| `buildFacturaCompraXml()`      | Function | Builds a Factura Electronica de Compra XML document                         |
-| `buildFacturaExportacionXml()` | Function | Builds a Factura Electronica de Exportacion XML document                    |
-| `buildReciboPagoXml()`         | Function | Builds a Recibo Electronico de Pago XML document                            |
-| `buildMensajeReceptorXml()`    | Function | Builds a Mensaje Receptor XML document                                      |
-| `validateFacturaInput()`       | Function | Validates factura data against business rules                               |
-| `validateDocumentXml()`        | Function | Validates against bundled v4.4 XSD; optionally requires signature structure |
+| Export                         | Type     | Description                                                                                      |
+| ------------------------------ | -------- | ------------------------------------------------------------------------------------------------ |
+| `buildXml()`                   | Function | Low-level XML builder with namespace support                                                     |
+| `buildFacturaXml()`            | Function | Builds a Factura Electronica XML document                                                        |
+| `buildTiqueteXml()`            | Function | Builds a Tiquete Electronico XML document                                                        |
+| `buildNotaCreditoXml()`        | Function | Builds a Nota de Credito Electronica XML document                                                |
+| `buildNotaDebitoXml()`         | Function | Builds a Nota de Debito Electronica XML document                                                 |
+| `buildFacturaCompraXml()`      | Function | Builds a Factura Electronica de Compra XML document                                              |
+| `buildFacturaExportacionXml()` | Function | Builds a Factura Electronica de Exportacion XML document                                         |
+| `buildReciboPagoXml()`         | Function | Builds a Recibo Electronico de Pago XML document                                                 |
+| `buildMensajeReceptorXml()`    | Function | Builds a Mensaje Receptor XML document                                                           |
+| `parseDocumentXml()`           | Function | Parses a v4.4 comprobante XML into a typed `{ rootElement, document }` (inverse of the builders) |
+| `validateFacturaInput()`       | Function | Validates factura data against business rules                                                    |
+| `validateDocumentXml()`        | Function | Validates against bundled v4.4 XSD; optionally requires signature structure                      |
+
+#### Parsing a comprobante back (`parseDocumentXml`)
+
+`parseDocumentXml(xml)` reverses the builders for all seven document types, returning
+`{ rootElement, document }`. It is the inverse used by the A4 properties:
+`build → parse → build` is byte-for-byte identical.
+
+#### Golden corpus and property tests
+
+The repo ships a golden corpus of one known-good (unsigned) XML document per type
+under `src/golden-corpus/`, plus fast-check properties in
+`src/documents/document-generation.properties.spec.ts`. The properties run in
+`pnpm test` with a modest budget and exhaustively via `pnpm test:properties`
+(`PROPERTY_RUNS`, plus `XSD_RUNS` for the more expensive XSD-conformance cases).
 
 ### Tax Calculation
 
