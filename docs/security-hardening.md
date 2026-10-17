@@ -72,6 +72,25 @@ call-path assessment, not proof that every Forge behavior is safe. Keep the
 advisory visible, re-audit changes, and upgrade when an upstream patch exists.
 No audit advisory is suppressed by configuration.
 
+## Release audit, 2026-10-17
+
+The exact 0.5.0 lockfile audit reports one high finding (the unchanged, unpatched
+node-forge advisory above, tracked in SDK issue 69) and one moderate finding:
+[uuid GHSA-w5hq-g745-h8pq](https://github.com/uuidjs/uuid/security/advisories/GHSA-w5hq-g745-h8pq).
+The additional path is root **development** dependency ExcelJS 4.4.0 → uuid 8.3.2;
+`pnpm --recursive why uuid` finds no uuid runtime dependency in any of the four
+published packages. The advisory affects v3/v5/v6 calls with caller-supplied
+output buffers/offsets. The installed ExcelJS source imports only v4 in
+`lib/xlsx/xform/sheet/cf-ext/cf-rule-ext-xform.js` and calls it without a buffer.
+This call-path assessment does not erase the dependency finding or establish
+universal safety. Track compatible development-tool remediation separately;
+do not force a major transitive override or suppress audit results in a version PR.
+
+The new response verifier uses Node X509 and native WebCrypto for verification;
+it does not add Forge RSA/chain verification to the affected runtime path. Pin
+provenance, revocation/distrust and production response acceptance remain separate
+from this dependency audit and the synthetic verification tests.
+
 ## Research and remaining boundaries
 
 - [Node cancellation APIs](https://nodejs.org/download/release/latest-jod/docs/api/globals.html)
