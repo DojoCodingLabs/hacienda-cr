@@ -1,63 +1,12 @@
 /**
- * Tax-related codes and constants for Costa Rica electronic invoicing.
+ * Tax-related constants for Costa Rica electronic invoicing.
  *
- * Covers IVA tax codes, tax rates, exoneration types, and related enumerations
- * as defined in the Hacienda v4.4 specification.
+ * Covers IVA rate lookups and the exoneration/unit catalogs sin pareja
+ * exacta con `codes.json` (ver table-map.mjs). Los catálogos `TaxCode` e
+ * `IvaRateCode` migraron a `shared/src/generated/`; `UNITS_OF_MEASURE`
+ * queda a mano por la deriva de code point U+03A9/U+2126 (signo ohm).
  */
-
-/** Tax type codes (Codigo de Impuesto). */
-export const TaxCode = {
-  /** Impuesto al Valor Agregado (IVA) */
-  IVA: "01",
-  /** Impuesto Selectivo de Consumo */
-  IMPUESTO_SELECTIVO_CONSUMO: "02",
-  /** Impuesto Unico a los Combustibles */
-  IMPUESTO_UNICO_COMBUSTIBLES: "03",
-  /** Impuesto Especifico de Bebidas Alcoholicas */
-  IMPUESTO_BEBIDAS_ALCOHOLICAS: "04",
-  /** Impuesto Especifico sobre Bebidas Envasadas sin Alcohol y Jabones de Tocador */
-  IMPUESTO_BEBIDAS_SIN_ALCOHOL: "05",
-  /** Impuesto al Tabaco */
-  IMPUESTO_TABACO: "06",
-  /** IVA (calculo especial) */
-  IVA_CALCULO_ESPECIAL: "07",
-  /** IVA Regimen de Bienes Usados (Factor) */
-  IVA_BIENES_USADOS: "08",
-  /** Impuesto Especifico al Cemento */
-  IMPUESTO_CEMENTO: "12",
-  /** Otros */
-  OTROS: "99",
-} as const;
-
-export type TaxCode = (typeof TaxCode)[keyof typeof TaxCode];
-
-/** IVA tax rate codes (Codigo de Tarifa del IVA). */
-export const IvaRateCode = {
-  /** Tarifa 0% (Exento) */
-  EXENTO: "01",
-  /** Tarifa reducida 1% */
-  REDUCIDA_1: "02",
-  /** Tarifa reducida 2% */
-  REDUCIDA_2: "03",
-  /** Tarifa reducida 4% */
-  REDUCIDA_4: "04",
-  /** Transitorio 0% */
-  TRANSITORIO_0: "05",
-  /** Transitorio 4% */
-  TRANSITORIO_4: "06",
-  /** Transitorio 8% */
-  TRANSITORIO_8: "07",
-  /** Tarifa general 13% */
-  GENERAL_13: "08",
-  /** Tarifa reducida 0.5% (new in v4.4) */
-  REDUCIDA_0_5: "09",
-  /** Tarifa exenta (new in v4.4) */
-  TARIFA_EXENTA: "10",
-  /** Tarifa 0% sin derecho a credito (new in v4.4) */
-  CERO_SIN_CREDITO: "11",
-} as const;
-
-export type IvaRateCode = (typeof IvaRateCode)[keyof typeof IvaRateCode];
+import { IvaRateCode } from "../generated/iva-rate-code.js";
 
 /** IVA rate percentages mapped by rate code. */
 export const IVA_RATE_PERCENTAGES: Record<IvaRateCode, number> = {
@@ -89,7 +38,7 @@ export const IVA_RATE_NAMES: Record<IvaRateCode, string> = {
   [IvaRateCode.CERO_SIN_CREDITO]: "Tarifa 0% sin derecho a crédito",
 } as const;
 
-/** Exoneration type codes. */
+/** Exoneration type codes (sin pareja con el XSD: el vendorizado no trae el 12). */
 export const ExonerationType = {
   /** Compras autorizadas */
   COMPRAS_AUTORIZADAS: "01",
@@ -125,6 +74,10 @@ export type ExonerationType = (typeof ExonerationType)[keyof typeof ExonerationT
  * Unit of measure codes (Unidad de Medida), vendored verbatim from the
  * v4.4 XSD enumeration (UnidadMedidaType, 101 values). Casing follows the
  * official schema exactly (e.g. "Kg", "L", "mL", "Min").
+ *
+ * Sin pareja deliberada: el XSD vendorizado usa «Ω» U+2126 (signo ohm) y
+ * esta constante «Ω» U+03A9 (omega griega) — ver table-map.mjs; corregir
+ * el valor exportado exige decisión semver propia.
  */
 export const UNITS_OF_MEASURE = [
   "1",
