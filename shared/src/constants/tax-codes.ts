@@ -101,7 +101,9 @@ export const ExonerationType = {
   EXENCIONES_DGH: "04",
   /** Transitorio V */
   TRANSITORIO_V: "05",
-  /** Transitorio IX */
+  /** Servicios turísticos ICT. */
+  SERVICIOS_TURISTICOS_ICT: "06",
+  /** @deprecated Misnamed historical alias; use SERVICIOS_TURISTICOS_ICT. */
   TRANSITORIO_IX: "06",
   /** Transitorio XVII */
   TRANSITORIO_XVII: "07",
@@ -113,8 +115,6 @@ export const ExonerationType = {
   CORPORACIONES_MUNICIPALES: "10",
   /** Exenciones DGH — autorizacion de impuesto local concreta (new in v4.4) */
   DGH_IMPUESTO_LOCAL_CONCRETA: "11",
-  /** Codigo 12 — ver ANEXOS Y ESTRUCTURAS v4.4 para la descripcion oficial */
-  EXONERACION_12: "12",
   /** Otros */
   OTROS: "99",
 } as const;
@@ -227,7 +227,7 @@ export const UNITS_OF_MEASURE = [
   "W/m²",
   "W/sr",
   "Wb",
-  "Ω",
+  "Ω",
 ] as const;
 
 export type UnitOfMeasure = (typeof UNITS_OF_MEASURE)[number];

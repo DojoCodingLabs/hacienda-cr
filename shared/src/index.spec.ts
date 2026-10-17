@@ -129,7 +129,8 @@ describe("@dojocoding/hacienda-shared", () => {
       expect(ExonerationType.SERVICIOS_COMPLEMENTARIOS_EXPORTACION).toBe("09");
       expect(ExonerationType.CORPORACIONES_MUNICIPALES).toBe("10");
       expect(ExonerationType.DGH_IMPUESTO_LOCAL_CONCRETA).toBe("11");
-      expect(ExonerationType.EXONERACION_12).toBe("12");
+      expect(Object.values(ExonerationType)).not.toContain("12");
+      expect(ExonerationType.SERVICIOS_TURISTICOS_ICT).toBe("06");
       expect(ExonerationType.OTROS).toBe("99");
     });
   });
@@ -265,7 +266,7 @@ describe("@dojocoding/hacienda-shared", () => {
 
   describe("XAdES policy", () => {
     it("should define the policy hash", () => {
-      expect(XADES_POLICY_HASH).toBe("Ohixl6upD6av8N7pEvDABhEL6hM=");
+      expect(XADES_POLICY_HASH).toBe("DWxin1xWOeI8OuWQXazh4VjLWAaCLAA954em7DMh0h8=");
     });
   });
 
