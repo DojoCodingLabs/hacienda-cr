@@ -53,8 +53,8 @@ jobs:
           test "$(git rev-parse "refs/tags/$RELEASE_TAG^{commit}")" = "$(git rev-parse HEAD)"
           git merge-base --is-ancestor HEAD origin/main
       - run: pnpm install --frozen-lockfile
-      - name: Install native XSD conformance tool
-        run: sudo apt-get update -qq && sudo apt-get install -y -qq libxml2-utils
+      - name: Install native XSD and catalog verification tools
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq libxml2-utils poppler-utils
       - name: Require saved artifacts for recovery
         env:
           PREPARED_RUN_ID: ${{ inputs.prepared_run_id }}
