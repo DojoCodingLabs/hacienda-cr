@@ -29,7 +29,7 @@ describe("Catalog schemas", () => {
 
   it("should accept exactly the full ExonerationType catalog", () => {
     expect([...ExonerationTypeSchema.options].sort()).toEqual(
-      Object.values(ExonerationType).sort(),
+      [...new Set(Object.values(ExonerationType))].sort(),
     );
   });
 

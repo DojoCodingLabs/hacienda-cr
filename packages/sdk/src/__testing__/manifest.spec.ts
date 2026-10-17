@@ -8,6 +8,11 @@ import { readdirSync, readFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
+import {
+  XADES_POLICY_URI,
+  XADES_POLICY_HASH,
+  XADES_POLICY_HASH_ALGORITHM,
+} from "@dojocoding/hacienda-shared";
 
 const schemasDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../schemas");
 
@@ -19,7 +24,13 @@ interface ManifestFile {
 }
 
 interface Manifest {
-  policy: { digestValue: string; resolvedUrl?: string };
+  policy: {
+    identifier: string;
+    digestMethod: string;
+    digestValue: string;
+    resolvedUrl?: string;
+    sdkStatus: string;
+  };
   files: ManifestFile[];
 }
 
@@ -68,6 +79,15 @@ describe("schema manifest integrity", () => {
       .filter((relPath) => !ALLOWLIST.has(relPath))
       .sort();
     expect(onDisk).toEqual(manifest.files.map((file) => file.path));
+  });
+
+  it("emitted policy matches the reviewed manifest and canonical official URL", () => {
+    expect(XADES_POLICY_URI).toBe(manifest.policy.identifier);
+    expect(XADES_POLICY_HASH).toBe(manifest.policy.digestValue);
+    expect(XADES_POLICY_HASH_ALGORITHM).toBe(manifest.policy.digestMethod);
+    expect(manifest.policy.identifier).toBe(manifest.policy.resolvedUrl);
+    expect(new URL(manifest.policy.identifier).pathname).toMatch(/^\/xml-schemas\//);
+    expect(manifest.policy.sdkStatus).toBe("aligned");
   });
 
   it("policy.digestValue is the base64 SHA-256 of the vendored policy PDF", () => {

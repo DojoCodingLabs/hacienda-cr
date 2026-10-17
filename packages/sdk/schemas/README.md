@@ -88,22 +88,18 @@ from the ATV surface, `https://atv.hacienda.go.cr/ATV/ComprobanteElectronico/`,
   surface today, so the archive is vendored byte-for-byte as published.
 - `Resolucion_General_sobre_disposiciones_tecnicas_comprobantes_electronicos_para_efectos_tributarios.pdf`
   — the v4.4 signing policy cited by Anexo 2, served from
-  `https://cdn.comprobanteselectronicos.go.cr/xml-schemas/` (the literal
-  `xades:Identifier` in Anexo 2 points at `/xmlschemas/…` without the hyphen and
-  returns 403; the file lives at `/xml-schemas/…` — `policy.resolvedUrl` records
-  the working one).
+  `https://cdn.comprobanteselectronicos.go.cr/xml-schemas/`. The identifier is
+  the exact reviewed official URL including the hyphen; PDF line wrapping must
+  not turn `xml-schemas` into `xmlschemas`.
 
-The `policy` block quotes Anexo 2 of `ANEXOS Y ESTRUCTURAS_V4.4.pdf` verbatim:
-`identifier`, `digestMethod` (`http://www.w3.org/2001/04/xmlenc#sha256`),
-`digestValue` (`DWxin1xWOeI8OuWQXazh4VjLWAaCLAA954em7DMh0h8=`, Base64 of the
-SHA-256 of the vendored policy PDF), `citation`, `sourceSurface`, `resolvedUrl`
-(working URL for the verbatim `identifier`, which 403s), `sdkStatus`.
-The INDENT quotes this digest incorrectly as `DWxin1xWOel8…` (43 chars); the
-value above is the one printed in the PDF itself. `sdkStatus` is
-`pending-sdk-migration`: the signer still uses the old SHA-1/v4.1 policy
-(`XADES_POLICY_HASH`, see `docs/specs/v4.4-compliance.md` §1.10 and §3.5), so
-the correction is a separate, versioned change (phase 3). Allowed values:
-`pending-sdk-migration`, `aligned` — a new value requires updating this README.
+The `policy` block records the reviewed identifier, SHA-256 method and digest
+of the unchanged vendored resolution PDF. Identifier and resolvedUrl now match;
+`sdkStatus: aligned` means constants and emitted policy agree with that reviewed
+contract. The signer uses xadesjs' typed `digestValue` option; a value placed in
+`hash.value` is ignored by that library. The independent libxml2/OpenSSL oracle
+checks actual SignedProperties, all reference digests and RSA signature bytes,
+not just these constants. This does not establish certificate-chain trust or
+Hacienda acceptance. See [scope, source drift and migration](../../../docs/specs/a2-policy-catalog-readiness.md).
 
 Field semantics:
 
