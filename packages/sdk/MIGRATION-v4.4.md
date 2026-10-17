@@ -1,5 +1,39 @@
 # Audit-fix migration notes
 
+## 0.4.2 → 0.5.0
+
+All four linked `@dojocoding/hacienda-{shared,sdk,cli,mcp}` packages advance to
+0.5.0. This pre-1.0 minor changes signing policy wire bytes and rejects two
+incorrect catalog inputs; review these changes before upgrading.
+
+- Generated XAdES uses the official `/xml-schemas/` policy identifier and SHA-256
+  digest of the reviewed PDF. The signer now passes the precomputed digest via
+  xadesjs' supported `digestValue`; the previous nested `hash.value` was ignored.
+  Independently validate signatures rather than comparing the old policy bytes.
+- Exoneration 12 is unsupported by the unchanged official XSD and is rejected.
+  Code 06 uses `SERVICIOS_TURISTICOS_ICT`; the old `TRANSITORIO_IX` accessor remains
+  deprecated. Ohm uses the exact official U+2126 `Ω`, not Greek U+03A9 `Ω`.
+- Corrected 0.4.2 document codes remain FEC 08, FEE 09, REP 10. Historical aliases
+  retain those values. Claves remain 50 numeric digits; identity/date/consecutive/rate
+  validation introduced in 0.4.2 is preserved.
+- `verifyHaciendaResponseXml` now authenticates a bounded MensajeHacienda root,
+  expected frozen clave/issuer/receiver/decimal total and explicit reviewed
+  current leaf-certificate pins before returning accepted/rejected. Embedded
+  KeyInfo and API JSON status do not establish trust. Import
+  `ResponseVerificationError` to handle safe reason codes; retain original
+  response bytes/hash and keep unverified evidence unknown.
+- Applications must separately approve institutional pin provenance/rotation,
+  distrust/revocation policy and real response acceptance. The API does not
+  automatically acquire a production trust store or validate a CA chain.
+- Public monetary Number DTOs are unchanged. Full exact-decimal DTO/calculation
+  migration remains separate; never coerce unsupported values to Number merely
+  to pass validation. SDK issue 69 still tracks the unpatched node-forge advisory.
+
+For the complete verifier contract and source provenance, see
+[response verification](https://github.com/DojoCodingLabs/hacienda-cr/blob/main/docs/specs/hacienda-response-verification.md)
+and [A2 readiness](https://github.com/DojoCodingLabs/hacienda-cr/blob/main/docs/specs/a2-policy-catalog-readiness.md).
+Offline verification does not establish live Hacienda acceptance.
+
 [SDK reference](https://github.com/DojoCodingLabs/hacienda-cr/blob/main/docs/reference.md) · [Sandbox walkthrough](https://github.com/DojoCodingLabs/hacienda-cr/blob/main/docs/sandbox-guide.md) · [Production integration](https://github.com/DojoCodingLabs/hacienda-cr/blob/main/docs/production-integration.md)
 
 Continue using the v4.4 fields introduced in the root `MIGRATION.md`.
