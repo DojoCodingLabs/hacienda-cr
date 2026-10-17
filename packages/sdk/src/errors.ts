@@ -30,6 +30,8 @@ export enum HaciendaErrorCode {
   AUTHENTICATION_FAILED = "AUTHENTICATION_FAILED",
   /** XAdES-EPES signing operation failed. */
   SIGNING_FAILED = "SIGNING_FAILED",
+  /** Response XML authentication or expected-context failure. */
+  RESPONSE_VERIFICATION_FAILED = "RESPONSE_VERIFICATION_FAILED",
   /** A catch-all for unexpected internal errors. */
   INTERNAL_ERROR = "INTERNAL_ERROR",
 }
@@ -128,5 +130,25 @@ export class SigningError extends HaciendaError {
   constructor(message: string, cause?: unknown) {
     super(HaciendaErrorCode.SIGNING_FAILED, message, cause);
     this.name = "SigningError";
+  }
+}
+
+/** Safe reason codes: never contain response XML, certificates or parser diagnostics. */
+export type ResponseVerificationReason =
+  | "invalid-input"
+  | "invalid-xml"
+  | "unsupported-signature"
+  | "untrusted-signer"
+  | "certificate-time"
+  | "context-mismatch"
+  | "invalid-signature";
+
+export class ResponseVerificationError extends HaciendaError {
+  constructor(readonly reason: ResponseVerificationReason) {
+    super(
+      HaciendaErrorCode.RESPONSE_VERIFICATION_FAILED,
+      `Response verification failed: ${reason}.`,
+    );
+    this.name = "ResponseVerificationError";
   }
 }
