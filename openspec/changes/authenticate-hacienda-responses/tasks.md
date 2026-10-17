@@ -5,7 +5,7 @@
 - [x] Preserve unchanged official schema bytes and verify recorded OVI digest.
 - [x] Test native independent signed fixture, tampering, wrapping and trust failures.
 - [x] Add actual installed-tarball consumer verification.
-- [ ] Complete full verification and independent source review.
+- [x] Complete full verification and independent source review (merged SDK PR71).
 
 ## Operational acceptance
 
