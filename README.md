@@ -238,3 +238,8 @@ Gracias a [CRLibre/API_Hacienda](https://github.com/CRLibre/API_Hacienda) y [CRL
 </p>
 
 Guías para contribuidores: [desarrollo y pruebas](CONTRIBUTING.md) y [versionado y publicación](docs/releasing.md).
+
+The additive [exact decimal ordinary FE API](docs/specs/exact-ordinary-fe.md)
+preserves supported financial strings through BigInt calculation, JSON and XML;
+legacy numeric APIs are unchanged. Its explicit IVA13/full-payment scope does
+not imply all domestic fiscal cases or external acceptance.
