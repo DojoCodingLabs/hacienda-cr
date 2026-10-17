@@ -1,3 +1,9 @@
 packages:
   - "packages/*"
   - "shared"
+
+overrides:
+  esbuild: "^0.28.2"
+
+allowBuilds:
+  "esbuild@0.28.2": true
