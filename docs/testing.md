@@ -4,7 +4,9 @@
 
 Use Node.js 22+ and pnpm as pinned in `package.json`. Install native `xmllint`
 (`libxml2-utils` on Ubuntu; libxml2 on macOS with its bin directory on PATH).
-The SDK runtime uses bundled WASM and does not require native xmllint.
+Install `pdftotext` (`poppler-utils` on Ubuntu; `poppler` on macOS) for the
+vendored PDF catalog freshness checks. The SDK runtime uses bundled WASM and does
+not require these native verification tools.
 
 ```sh
 pnpm install --frozen-lockfile
