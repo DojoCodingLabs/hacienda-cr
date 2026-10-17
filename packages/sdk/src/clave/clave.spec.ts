@@ -10,7 +10,7 @@ import { COUNTRY_CODE, DocumentType, Situation, type ClaveInput } from "./types.
 /** Base valid input for convenience. */
 function validInput(overrides?: Partial<ClaveInput>): ClaveInput {
   return {
-    date: new Date(2025, 6, 27), // July 27, 2025
+    date: new Date("2025-07-27T12:00:00-06:00"), // July 27, 2025
     taxpayerId: "3101234567",
     documentType: DocumentType.FACTURA_ELECTRONICA,
     sequence: 1,
@@ -38,7 +38,7 @@ describe("buildClave", () => {
 
   it("should encode the date in DDMMYY format", () => {
     const clave = buildClave(
-      validInput({ date: new Date(2025, 6, 27) }), // July 27, 2025
+      validInput({ date: new Date("2025-07-27T12:00:00-06:00") }), // July 27, 2025
     );
     // date portion is positions 3-9
     expect(clave.slice(3, 9)).toBe("270725");
@@ -134,9 +134,9 @@ describe("buildClave", () => {
     ["NOTA_DEBITO_ELECTRONICA", DocumentType.NOTA_DEBITO_ELECTRONICA, "02"],
     ["NOTA_CREDITO_ELECTRONICA", DocumentType.NOTA_CREDITO_ELECTRONICA, "03"],
     ["TIQUETE_ELECTRONICO", DocumentType.TIQUETE_ELECTRONICO, "04"],
-    ["FACTURA_ELECTRONICA_COMPRA", DocumentType.FACTURA_ELECTRONICA_COMPRA, "05"],
-    ["FACTURA_ELECTRONICA_EXPORTACION", DocumentType.FACTURA_ELECTRONICA_EXPORTACION, "06"],
-    ["RECIBO_ELECTRONICO_PAGO", DocumentType.RECIBO_ELECTRONICO_PAGO, "07"],
+    ["FACTURA_ELECTRONICA_COMPRA", DocumentType.FACTURA_ELECTRONICA_COMPRA, "08"],
+    ["FACTURA_ELECTRONICA_EXPORTACION", DocumentType.FACTURA_ELECTRONICA_EXPORTACION, "09"],
+    ["RECIBO_ELECTRONICO_PAGO", DocumentType.RECIBO_ELECTRONICO_PAGO, "10"],
     ["COMPRA_PAGO", DocumentType.COMPRA_PAGO, "08"],
     ["GASTO_VIAJE", DocumentType.GASTO_VIAJE, "09"],
   ])("should encode document type %s as %s", (_name, docType, expected) => {
@@ -158,22 +158,22 @@ describe("buildClave", () => {
   // ---- Date edge cases ----
 
   it("should handle January 1 correctly", () => {
-    const clave = buildClave(validInput({ date: new Date(2025, 0, 1) }));
+    const clave = buildClave(validInput({ date: new Date("2025-01-01T12:00:00-06:00") }));
     expect(clave.slice(3, 9)).toBe("010125");
   });
 
   it("should handle December 31 correctly", () => {
-    const clave = buildClave(validInput({ date: new Date(2025, 11, 31) }));
+    const clave = buildClave(validInput({ date: new Date("2025-12-31T12:00:00-06:00") }));
     expect(clave.slice(3, 9)).toBe("311225");
   });
 
   it("should handle year 2000", () => {
-    const clave = buildClave(validInput({ date: new Date(2000, 0, 15) }));
+    const clave = buildClave(validInput({ date: new Date("2000-01-15T12:00:00-06:00") }));
     expect(clave.slice(3, 9)).toBe("150100");
   });
 
   it("should handle leap day Feb 29", () => {
-    const clave = buildClave(validInput({ date: new Date(2024, 1, 29) }));
+    const clave = buildClave(validInput({ date: new Date("2024-02-29T12:00:00-06:00") }));
     expect(clave.slice(3, 9)).toBe("290224");
   });
 
@@ -422,7 +422,7 @@ describe("build + parse round-trip", () => {
 
   it("should round-trip with all fields specified", () => {
     const input = validInput({
-      date: new Date(2030, 11, 25), // Dec 25, 2030
+      date: new Date("2030-12-25T12:00:00-06:00"), // Dec 25, 2030
       taxpayerId: "112233445566",
       branch: "123",
       pos: "54321",
@@ -440,7 +440,7 @@ describe("build + parse round-trip", () => {
     expect(parsed.taxpayerId).toBe("112233445566");
     expect(parsed.branch).toBe("123");
     expect(parsed.pos).toBe("54321");
-    expect(parsed.documentType).toBe("06");
+    expect(parsed.documentType).toBe("09");
     expect(parsed.sequence).toBe(5_000_000_000);
     expect(parsed.situation).toBe("2");
     expect(parsed.securityCode).toBe("00000001");
@@ -498,8 +498,8 @@ describe("constants", () => {
     expect(COUNTRY_CODE).toBe("506");
   });
 
-  it("DocumentType should have 9 values", () => {
-    expect(Object.values(DocumentType)).toHaveLength(9);
+  it("DocumentType includes ten official clave codes", () => {
+    expect(new Set(Object.values(DocumentType))).toHaveLength(10);
   });
 
   it("Situation should have 3 values", () => {

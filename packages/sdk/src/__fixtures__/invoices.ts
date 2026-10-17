@@ -10,6 +10,8 @@
 
 import type { FacturaElectronica } from "@dojocoding/hacienda-shared";
 
+import { fixtureClave } from "./identity.js";
+
 // ---------------------------------------------------------------------------
 // Shared emisor / receptor used across fixtures
 // ---------------------------------------------------------------------------
@@ -49,7 +51,7 @@ const RECEPTOR_DEFAULT = {
 // ---------------------------------------------------------------------------
 
 export const SIMPLE_INVOICE: FacturaElectronica = {
-  clave: "50601072500031012345670010000101000000000119999999",
+  clave: fixtureClave("2025-07-27T10:30:00-06:00", "01", 1),
   proveedorSistemas: "3101234567",
   codigoActividadEmisor: "620100",
   numeroConsecutivo: "00100001010000000001",
@@ -101,7 +103,7 @@ export const SIMPLE_INVOICE: FacturaElectronica = {
 // ---------------------------------------------------------------------------
 
 export const MULTI_ITEM_INVOICE: FacturaElectronica = {
-  clave: "50601072500031012345670010000101000000000219999999",
+  clave: fixtureClave("2025-07-27T14:00:00-06:00", "01", 2),
   proveedorSistemas: "3101234567",
   codigoActividadEmisor: "620100",
   numeroConsecutivo: "00100001010000000002",
@@ -199,7 +201,7 @@ export const MULTI_ITEM_INVOICE: FacturaElectronica = {
 // ---------------------------------------------------------------------------
 
 export const DISCOUNT_INVOICE: FacturaElectronica = {
-  clave: "50601072500031012345670010000101000000000319999999",
+  clave: fixtureClave("2025-07-28T09:00:00-06:00", "01", 3),
   proveedorSistemas: "3101234567",
   codigoActividadEmisor: "620100",
   numeroConsecutivo: "00100001010000000003",
@@ -258,7 +260,7 @@ export const DISCOUNT_INVOICE: FacturaElectronica = {
 // ---------------------------------------------------------------------------
 
 export const EXONERATED_INVOICE: FacturaElectronica = {
-  clave: "50601072500031012345670010000101000000000419999999",
+  clave: fixtureClave("2025-07-28T11:00:00-06:00", "01", 4),
   proveedorSistemas: "3101234567",
   codigoActividadEmisor: "620100",
   numeroConsecutivo: "00100001010000000004",
@@ -328,7 +330,7 @@ export const EXONERATED_INVOICE: FacturaElectronica = {
 // ---------------------------------------------------------------------------
 
 export const EXPORT_INVOICE: FacturaElectronica = {
-  clave: "50601072500031012345670010000101000000000519999999",
+  clave: fixtureClave("2025-07-29T08:00:00-06:00", "01", 5),
   proveedorSistemas: "3101234567",
   codigoActividadEmisor: "620100",
   numeroConsecutivo: "00100001010000000005",
@@ -391,7 +393,7 @@ export const EXPORT_INVOICE: FacturaElectronica = {
 // ---------------------------------------------------------------------------
 
 export const CREDIT_INVOICE: FacturaElectronica = {
-  clave: "50601072500031012345670010000101000000000619999999",
+  clave: fixtureClave("2025-07-30T16:00:00-06:00", "01", 6),
   proveedorSistemas: "3101234567",
   codigoActividadEmisor: "620100",
   numeroConsecutivo: "00100001010000000006",
@@ -444,7 +446,7 @@ export const CREDIT_INVOICE: FacturaElectronica = {
 // ---------------------------------------------------------------------------
 
 export const REFERENCE_INVOICE: FacturaElectronica = {
-  clave: "50601072500031012345670010000101000000000719999999",
+  clave: fixtureClave("2025-08-01T10:00:00-06:00", "01", 7),
   proveedorSistemas: "3101234567",
   codigoActividadEmisor: "620100",
   numeroConsecutivo: "00100001010000000007",
@@ -492,7 +494,7 @@ export const REFERENCE_INVOICE: FacturaElectronica = {
   informacionReferencia: [
     {
       tipoDoc: "01",
-      numero: "50601072500031012345670010000101000000000119999999",
+      numero: fixtureClave("2025-07-27T10:30:00-06:00", "01", 1),
       fechaEmision: "2025-07-27T10:30:00-06:00",
       codigo: "01",
       razon: "Correccion del monto por error de digitacion",

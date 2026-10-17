@@ -16,14 +16,17 @@ export const DocumentTypeCode = {
   /** Tiquete Electronico */
   TIQUETE_ELECTRONICO: "04",
   /** Factura Electronica de Compra */
-  FACTURA_ELECTRONICA_COMPRA: "05",
+  FACTURA_ELECTRONICA_COMPRA: "08",
   /** Factura Electronica de Exportacion */
-  FACTURA_ELECTRONICA_EXPORTACION: "06",
+  FACTURA_ELECTRONICA_EXPORTACION: "09",
   /** Recibo Electronico de Pago (new in v4.4) */
-  RECIBO_ELECTRONICO_PAGO: "07",
-  /** Compra de Pago */
+  RECIBO_ELECTRONICO_PAGO: "10",
+  CONFIRMACION_ACEPTACION: "05",
+  CONFIRMACION_ACEPTACION_PARCIAL: "06",
+  CONFIRMACION_RECHAZO: "07",
+  /** @deprecated Misnamed legacy alias; use FACTURA_ELECTRONICA_COMPRA. */
   COMPRA_PAGO: "08",
-  /** Gasto de Viaje */
+  /** @deprecated Misnamed legacy alias; use FACTURA_ELECTRONICA_EXPORTACION. */
   GASTO_VIAJE: "09",
 } as const;
 
@@ -38,8 +41,9 @@ export const DOCUMENT_TYPE_NAMES: Record<DocumentTypeCode, string> = {
   [DocumentTypeCode.FACTURA_ELECTRONICA_COMPRA]: "Factura Electrónica de Compra",
   [DocumentTypeCode.FACTURA_ELECTRONICA_EXPORTACION]: "Factura Electrónica de Exportación",
   [DocumentTypeCode.RECIBO_ELECTRONICO_PAGO]: "Recibo Electrónico de Pago",
-  [DocumentTypeCode.COMPRA_PAGO]: "Compra de Pago",
-  [DocumentTypeCode.GASTO_VIAJE]: "Gasto de Viaje",
+  [DocumentTypeCode.CONFIRMACION_ACEPTACION]: "Confirmación de Aceptación",
+  [DocumentTypeCode.CONFIRMACION_ACEPTACION_PARCIAL]: "Confirmación de Aceptación Parcial",
+  [DocumentTypeCode.CONFIRMACION_RECHAZO]: "Confirmación de Rechazo",
 } as const;
 
 /** Mensaje Receptor (receiver acknowledgment) message codes. */

@@ -154,7 +154,7 @@ export {
 // Logging module — structured logging
 // ---------------------------------------------------------------------------
 
-export { Logger, LogLevel, noopLogger } from "./logging/index.js";
+export { Logger, LogLevel, noopLogger, sanitizeLogString, redactSecrets } from "./logging/index.js";
 export type { LoggerOptions, LogFormat, LogWriter, LogEntry } from "./logging/index.js";
 
 // ---------------------------------------------------------------------------

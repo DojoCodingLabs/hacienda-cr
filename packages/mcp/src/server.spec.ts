@@ -1,3 +1,6 @@
+import { mkdtemp, rm } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 /**
  * Tests for the MCP server setup and tool/resource registration.
  *
@@ -14,12 +17,14 @@ import { createLinkedTransports } from "./testing/in-memory-transport.js";
 
 // Use vi.hoisted so mocks are available when vi.mock factories run
 const {
+  mockGetConfigDir,
   mockGetStatus,
   mockListComprobantes,
   mockGetComprobante,
   mockLookupTaxpayer,
   mockCreateMcpApiClient,
 } = vi.hoisted(() => ({
+  mockGetConfigDir: vi.fn(),
   mockGetStatus: vi.fn(),
   mockListComprobantes: vi.fn(),
   mockGetComprobante: vi.fn(),
@@ -31,6 +36,7 @@ vi.mock("@dojocoding/hacienda-sdk", async (importOriginal) => {
   const actual = (await importOriginal()) as Record<string, unknown>;
   return {
     ...actual,
+    getConfigDir: mockGetConfigDir,
     lookupTaxpayer: mockLookupTaxpayer,
     getNextSequence: vi.fn().mockResolvedValue(1),
     getStatus: mockGetStatus,
@@ -856,4 +862,13 @@ describe("MCP Server", () => {
       expect(fisica?.lengths).toContain(9);
     });
   });
+});
+
+let sequenceTestDirectory: string;
+beforeAll(async () => {
+  sequenceTestDirectory = await mkdtemp(join(tmpdir(), "hacienda-mcp-scope-"));
+  mockGetConfigDir.mockImplementation((dir?: string) => dir ?? sequenceTestDirectory);
+});
+afterAll(async () => {
+  await rm(sequenceTestDirectory, { recursive: true, force: true });
 });

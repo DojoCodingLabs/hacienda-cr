@@ -12,8 +12,13 @@
  */
 
 import type { FacturaElectronicaInput } from "@dojocoding/hacienda-shared";
-import { FacturaElectronicaSchema, TaxCode } from "@dojocoding/hacienda-shared";
+import {
+  FacturaElectronicaSchema,
+  TaxCode,
+  IVA_RATE_PERCENTAGES,
+} from "@dojocoding/hacienda-shared";
 import { round5 } from "../tax/calculator.js";
+import { validateDocumentIdentity } from "./document-identity.js";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -66,7 +71,19 @@ const IVA_TAX_CODES: string[] = [
  * @returns Array of validation errors. Empty if all rules pass.
  */
 function validateBusinessRules(input: FacturaElectronicaInput): FacturaValidationError[] {
-  const errors: FacturaValidationError[] = [];
+  const errors: FacturaValidationError[] = validateDocumentIdentity(input, "01");
+  if (!input.receptor.identificacion)
+    errors.push({
+      path: "receptor.identificacion",
+      message: "Factura Receptor requires identificacion when the Receptor node is present",
+    });
+  for (const [index, reference] of (input.informacionReferencia ?? []).entries()) {
+    if ((reference.codigo as string | undefined) === "17")
+      errors.push({
+        path: `informacionReferencia.${index}.codigo`,
+        message: "Reference reason 17 is valid only for ReciboElectronicoPago",
+      });
+  }
 
   // Rule: Sequential line numbers starting from 1
   let lineIndex = 0;
@@ -139,6 +156,20 @@ function validateBusinessRules(input: FacturaElectronicaInput): FacturaValidatio
         }
 
         // Calculate net IVA for this tax
+        if (tax.codigo === TaxCode.IVA && tax.codigoTarifaIVA) {
+          const expectedRate = IVA_RATE_PERCENTAGES[tax.codigoTarifaIVA];
+          if (expectedRate !== tax.tarifa)
+            errors.push({
+              path: `${prefix}.impuesto.${taxIndex}.tarifa`,
+              message: `IVA tarifa must match codigoTarifaIVA ${tax.codigoTarifaIVA} (${expectedRate}%)`,
+            });
+          if (["05", "06", "07"].includes(tax.codigoTarifaIVA))
+            errors.push({
+              path: `${prefix}.impuesto.${taxIndex}.codigoTarifaIVA`,
+              message:
+                "Transitional IVA rate codes 05, 06 and 07 are not valid for a new FacturaElectronica",
+            });
+        }
         if (IVA_TAX_CODES.includes(tax.codigo)) {
           let netAmount = tax.monto;
           if (tax.exoneracion) {

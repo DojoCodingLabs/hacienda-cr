@@ -1,3 +1,4 @@
+import { assertDocumentIdentity } from "../xml/document-identity.js";
 /**
  * Factura Electronica XML builder.
  *
@@ -36,5 +37,6 @@ import { buildStandardDocumentBody, DOCUMENT_VARIANTS } from "./shared-xml-helpe
  */
 export function buildFacturaXml(input: FacturaElectronica): string {
   const data = buildStandardDocumentBody(input, DOCUMENT_VARIANTS.FacturaElectronica);
+  assertDocumentIdentity(input, "01");
   return buildXml("FacturaElectronica", data);
 }

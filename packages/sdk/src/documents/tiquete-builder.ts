@@ -1,3 +1,4 @@
+import { assertDocumentIdentity } from "../xml/document-identity.js";
 /**
  * Tiquete Electronico XML builder.
  *
@@ -40,5 +41,6 @@ import { buildStandardDocumentBody, DOCUMENT_VARIANTS } from "./shared-xml-helpe
  */
 export function buildTiqueteXml(input: TiqueteElectronico): string {
   const data = buildStandardDocumentBody(input, DOCUMENT_VARIANTS.TiqueteElectronico);
+  assertDocumentIdentity(input, "04");
   return buildXml("TiqueteElectronico", data);
 }

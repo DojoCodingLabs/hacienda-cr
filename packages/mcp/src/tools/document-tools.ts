@@ -1,3 +1,4 @@
+import { sanitizeLogString } from "@dojocoding/hacienda-sdk";
 /**
  * MCP tools: check_status, list_documents, get_document
  *
@@ -74,7 +75,7 @@ export function registerCheckStatusTool(server: McpServer): void {
           ],
         };
       } catch (error) {
-        const message = error instanceof Error ? error.message : String(error);
+        const message = sanitizeLogString(error instanceof Error ? error.message : String(error));
         return {
           content: [
             {
@@ -164,7 +165,7 @@ export function registerListDocumentsTool(server: McpServer): void {
           ],
         };
       } catch (error) {
-        const message = error instanceof Error ? error.message : String(error);
+        const message = sanitizeLogString(error instanceof Error ? error.message : String(error));
         return {
           content: [
             {
@@ -250,7 +251,7 @@ export function registerGetDocumentTool(server: McpServer): void {
           ],
         };
       } catch (error) {
-        const message = error instanceof Error ? error.message : String(error);
+        const message = sanitizeLogString(error instanceof Error ? error.message : String(error));
         return {
           content: [
             {

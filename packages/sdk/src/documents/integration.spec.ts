@@ -3,6 +3,7 @@
  * XML generation and validation (v4.4 structure).
  */
 
+import { fixtureClave } from "../__fixtures__/identity.js";
 import { describe, it, expect } from "vitest";
 import { calculateLineItemTotals, calculateInvoiceSummary } from "../tax/calculator.js";
 import { buildFacturaXml } from "./factura-builder.js";
@@ -47,7 +48,7 @@ function buildFullInvoice(overrides?: Partial<FacturaElectronica>): FacturaElect
   const summary = calculateInvoiceSummary(items);
 
   return {
-    clave: "50601072500031012345670010000101000000000119999999",
+    clave: fixtureClave("2025-07-27T10:30:00-06:00", "01", 1),
     proveedorSistemas: "3101234567",
     codigoActividadEmisor: "620100",
     numeroConsecutivo: "00100001010000000001",
@@ -172,7 +173,7 @@ describe("Full pipeline: calculate -> validate -> build XML", () => {
 
     const summary = calculateInvoiceSummary([discountedLine]);
     const invoice: FacturaElectronica = {
-      clave: "50601072500031012345670010000101000000000219999999",
+      clave: fixtureClave("2025-07-27T10:30:00-06:00", "01", 2),
       proveedorSistemas: "3101234567",
       codigoActividadEmisor: "620100",
       numeroConsecutivo: "00100001010000000002",

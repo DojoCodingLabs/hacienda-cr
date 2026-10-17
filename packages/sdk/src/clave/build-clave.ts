@@ -9,6 +9,7 @@
 
 import { z } from "zod";
 import { COUNTRY_CODE, DocumentType, Situation, type ClaveInput } from "./types.js";
+import { formatClaveDate } from "./date.js";
 
 /** Total length of a valid clave numerica */
 const CLAVE_LENGTH = 50;
@@ -71,10 +72,7 @@ export const ClaveInputSchema = z.object({
  * Formats a date as DDMMYY.
  */
 function formatDateDDMMYY(date: Date): string {
-  const day = String(date.getDate()).padStart(2, "0");
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  const year = String(date.getFullYear() % 100).padStart(2, "0");
-  return `${day}${month}${year}`;
+  return formatClaveDate(date);
 }
 
 /**

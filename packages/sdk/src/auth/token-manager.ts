@@ -39,6 +39,8 @@ export interface TokenManagerOptions {
    * Defaults to the global `fetch`.
    */
   readonly fetchFn?: typeof fetch;
+  /** Deadline including token response reads (default 30 seconds). */
+  readonly requestTimeoutMs?: number;
 }
 
 /**
@@ -57,6 +59,7 @@ export interface TokenManagerOptions {
 export class TokenManager {
   private readonly envConfig: EnvironmentConfig;
   private readonly fetchFn: typeof fetch;
+  private readonly requestTimeoutMs: number;
   private tokenState: TokenState | null = null;
   private credentials: AuthCredentials | null = null;
   private refreshPromise: Promise<void> | null = null;
@@ -64,6 +67,13 @@ export class TokenManager {
   constructor(options: TokenManagerOptions) {
     this.envConfig = options.envConfig;
     this.fetchFn = options.fetchFn ?? globalThis.fetch;
+    this.requestTimeoutMs = options.requestTimeoutMs ?? 30000;
+    if (
+      !Number.isFinite(this.requestTimeoutMs) ||
+      this.requestTimeoutMs <= 0 ||
+      this.requestTimeoutMs > 2147483647
+    )
+      throw new RangeError("Invalid token request timeout.");
   }
 
   // -------------------------------------------------------------------------
@@ -233,7 +243,7 @@ export class TokenManager {
     const controller = new AbortController();
     const timer = setTimeout(
       () => controller.abort(new DOMException("Token request timed out.", "TimeoutError")),
-      30000,
+      this.requestTimeoutMs,
     );
     try {
       let response: Response;

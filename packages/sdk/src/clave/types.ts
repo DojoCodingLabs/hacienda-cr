@@ -16,8 +16,8 @@ export const COUNTRY_CODE = "506" as const;
  * Document type codes as defined by the Hacienda v4.4 specification.
  *
  * Aliased from `@dojocoding/hacienda-shared` so the clave layer and the
- * document builders always agree on code meanings (05 = Factura de Compra,
- * 06 = Factura de Exportacion, 07 = Recibo Electronico de Pago, ...).
+ * document builders always agree on official code meanings (08 = Factura de Compra,
+ * 09 = Factura de Exportacion, 10 = Recibo Electronico de Pago).
  */
 export const DocumentType = DocumentTypeCode;
 export type DocumentType = DocumentTypeCode;
@@ -56,7 +56,7 @@ export interface ClaveInput {
    */
   pos?: string;
 
-  /** Document type code (01-09) */
+  /** Official document/confirmation type code (01-10) */
   documentType: DocumentType;
 
   /**

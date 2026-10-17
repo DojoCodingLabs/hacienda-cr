@@ -1,10 +1,11 @@
+import { assertDocumentIdentity } from "../xml/document-identity.js";
 /**
  * Factura Electronica de Exportacion XML builder.
  *
  * Transforms a typed FacturaElectronicaExportacion input into a Hacienda v4.4
  * compliant XML string. Export invoice — typically 0% IVA with a foreign buyer.
  *
- * Document type code: 06
+ * Document type code: 09
  * Root element: FacturaElectronicaExportacion
  * Namespace: https://cdn.comprobanteselectronicos.go.cr/xml-schemas/v4.4/FacturaElectronicaExportacion
  */
@@ -41,5 +42,6 @@ import { buildStandardDocumentBody, DOCUMENT_VARIANTS } from "./shared-xml-helpe
  */
 export function buildFacturaExportacionXml(input: FacturaElectronicaExportacion): string {
   const data = buildStandardDocumentBody(input, DOCUMENT_VARIANTS.FacturaElectronicaExportacion);
+  assertDocumentIdentity(input, "09");
   return buildXml("FacturaElectronicaExportacion", data);
 }

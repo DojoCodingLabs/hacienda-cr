@@ -18,6 +18,10 @@ import {
 } from "./format.js";
 import type { TableColumn } from "./format.js";
 
+// Keep color assertions independent of the invoking shell and restore its setting.
+beforeEach(() => vi.stubEnv("NO_COLOR", undefined));
+afterEach(() => vi.unstubAllEnvs());
+
 // ---------------------------------------------------------------------------
 // ANSI helpers
 // ---------------------------------------------------------------------------

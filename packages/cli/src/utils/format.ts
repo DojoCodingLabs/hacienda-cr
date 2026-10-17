@@ -1,3 +1,5 @@
+import { redactSecrets, sanitizeLogString } from "@dojocoding/hacienda-sdk";
+
 /**
  * CLI output formatting utilities.
  *
@@ -151,7 +153,17 @@ export function formatTable(columns: TableColumn[], rows: Record<string, unknown
  * @param data - Any JSON-serializable data.
  */
 export function outputJson(data: unknown): void {
-  console.log(JSON.stringify(data, null, 2));
+  // Fiscal artifacts must remain byte-exact even if their digits match a PIN.
+  const output =
+    data && typeof data === "object" && !Array.isArray(data)
+      ? Object.fromEntries(
+          Object.entries(data).map(([key, value]) => [
+            key,
+            ["error", "errors", "issues", "warnings"].includes(key) ? redactSecrets(value) : value,
+          ]),
+        )
+      : data;
+  console.log(JSON.stringify(output, null, 2));
 }
 
 // ---------------------------------------------------------------------------
@@ -165,7 +177,7 @@ export function success(message: string): void {
 
 /** Prints an error message. */
 export function error(message: string): void {
-  console.error(`${red("✗")} ${message}`);
+  console.error(`${red("✗")} ${sanitizeLogString(message)}`);
 }
 
 /** Prints a warning message. */

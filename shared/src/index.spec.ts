@@ -71,9 +71,9 @@ describe("@dojocoding/hacienda-shared", () => {
       expect(DocumentTypeCode.NOTA_DEBITO_ELECTRONICA).toBe("02");
       expect(DocumentTypeCode.NOTA_CREDITO_ELECTRONICA).toBe("03");
       expect(DocumentTypeCode.TIQUETE_ELECTRONICO).toBe("04");
-      expect(DocumentTypeCode.FACTURA_ELECTRONICA_COMPRA).toBe("05");
-      expect(DocumentTypeCode.FACTURA_ELECTRONICA_EXPORTACION).toBe("06");
-      expect(DocumentTypeCode.RECIBO_ELECTRONICO_PAGO).toBe("07");
+      expect(DocumentTypeCode.FACTURA_ELECTRONICA_COMPRA).toBe("08");
+      expect(DocumentTypeCode.FACTURA_ELECTRONICA_EXPORTACION).toBe("09");
+      expect(DocumentTypeCode.RECIBO_ELECTRONICO_PAGO).toBe("10");
       expect(DocumentTypeCode.COMPRA_PAGO).toBe("08");
       expect(DocumentTypeCode.GASTO_VIAJE).toBe("09");
     });

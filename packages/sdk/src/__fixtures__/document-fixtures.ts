@@ -19,6 +19,8 @@ import type {
   ResumenFactura,
 } from "@dojocoding/hacienda-shared";
 
+import { fixtureClave } from "./identity.js";
+
 // ---------------------------------------------------------------------------
 // Shared emisor / receptor used across fixtures
 // ---------------------------------------------------------------------------
@@ -99,7 +101,7 @@ const SIMPLE_RESUMEN: ResumenFactura = {
 
 /** Full invoice with receiver. */
 export const SIMPLE_FACTURA: FacturaElectronica = {
-  clave: "50601072500031012345670010000101000000000119999999",
+  clave: fixtureClave("2025-07-27T10:30:00-06:00", "01", 1),
   proveedorSistemas: PROVEEDOR_SISTEMAS_DEFAULT,
   codigoActividadEmisor: "620100",
   numeroConsecutivo: "00100001010000000001",
@@ -117,7 +119,7 @@ export const SIMPLE_FACTURA: FacturaElectronica = {
 
 /** Tiquete without receiver (most common case). */
 export const SIMPLE_TIQUETE: TiqueteElectronico = {
-  clave: "50601072500031012345670010000401000000000119999999",
+  clave: fixtureClave("2025-07-27T10:30:00-06:00", "04", 1),
   proveedorSistemas: PROVEEDOR_SISTEMAS_DEFAULT,
   codigoActividadEmisor: "620100",
   numeroConsecutivo: "00100001040000000001",
@@ -131,7 +133,7 @@ export const SIMPLE_TIQUETE: TiqueteElectronico = {
 /** Tiquete with optional receiver. */
 export const TIQUETE_WITH_RECEPTOR: TiqueteElectronico = {
   ...SIMPLE_TIQUETE,
-  clave: "50601072500031012345670010000401000000000219999999",
+  clave: fixtureClave("2025-07-27T10:30:00-06:00", "04", 2),
   numeroConsecutivo: "00100001040000000002",
   receptor: {
     nombre: "Juan Perez",
@@ -148,7 +150,7 @@ export const TIQUETE_WITH_RECEPTOR: TiqueteElectronico = {
 
 /** Credit note referencing an original invoice. */
 export const SIMPLE_NOTA_CREDITO: NotaCreditoElectronica = {
-  clave: "50601072500031012345670010000301000000000119999999",
+  clave: fixtureClave("2025-08-01T10:00:00-06:00", "03", 1),
   proveedorSistemas: PROVEEDOR_SISTEMAS_DEFAULT,
   codigoActividadEmisor: "620100",
   numeroConsecutivo: "00100001030000000001",
@@ -194,7 +196,7 @@ export const SIMPLE_NOTA_CREDITO: NotaCreditoElectronica = {
   informacionReferencia: [
     {
       tipoDoc: "01",
-      numero: "50601072500031012345670010000101000000000119999999",
+      numero: fixtureClave("2025-07-27T10:30:00-06:00", "01", 1),
       fechaEmision: "2025-07-27T10:30:00-06:00",
       codigo: "01",
       razon: "Devolucion parcial por servicio no completado",
@@ -208,7 +210,7 @@ export const SIMPLE_NOTA_CREDITO: NotaCreditoElectronica = {
 
 /** Debit note referencing an original invoice. */
 export const SIMPLE_NOTA_DEBITO: NotaDebitoElectronica = {
-  clave: "50601072500031012345670010000201000000000119999999",
+  clave: fixtureClave("2025-08-02T14:00:00-06:00", "02", 1),
   proveedorSistemas: PROVEEDOR_SISTEMAS_DEFAULT,
   codigoActividadEmisor: "620100",
   numeroConsecutivo: "00100001020000000001",
@@ -254,7 +256,7 @@ export const SIMPLE_NOTA_DEBITO: NotaDebitoElectronica = {
   informacionReferencia: [
     {
       tipoDoc: "01",
-      numero: "50601072500031012345670010000101000000000119999999",
+      numero: fixtureClave("2025-07-27T10:30:00-06:00", "01", 1),
       fechaEmision: "2025-07-27T10:30:00-06:00",
       codigo: "01",
       razon: "Ajuste por horas adicionales no contempladas en factura original",
@@ -268,20 +270,22 @@ export const SIMPLE_NOTA_DEBITO: NotaDebitoElectronica = {
 
 /** Purchase invoice (reverse charge). */
 export const SIMPLE_FACTURA_COMPRA: FacturaElectronicaCompra = {
-  clave: "50601072500031012345670010000501000000000119999999",
+  clave: fixtureClave("2025-08-03T09:00:00-06:00", "08", 1),
   proveedorSistemas: PROVEEDOR_SISTEMAS_DEFAULT,
   codigoActividadEmisor: "620100",
   codigoActividadReceptor: "620100",
-  numeroConsecutivo: "00100001050000000001",
+  numeroConsecutivo: "00100001080000000001",
   fechaEmision: "2025-08-03T09:00:00-06:00",
-  emisor: EMISOR_DEFAULT,
-  receptor: {
+  emisor: {
     nombre: "Proveedor No Registrado",
     identificacion: {
       tipo: "01",
       numero: "123456789",
     },
+    correoElectronico: "proveedor@example.com",
+    ubicacion: EMISOR_DEFAULT.ubicacion,
   },
+  receptor: EMISOR_DEFAULT,
   condicionVenta: "01",
   detalleServicio: [
     {
@@ -338,10 +342,10 @@ export const SIMPLE_FACTURA_COMPRA: FacturaElectronicaCompra = {
 
 /** Export invoice with foreign buyer. */
 export const SIMPLE_FACTURA_EXPORTACION: FacturaElectronicaExportacion = {
-  clave: "50601072500031012345670010000601000000000119999999",
+  clave: fixtureClave("2025-08-04T08:00:00-06:00", "09", 1),
   proveedorSistemas: PROVEEDOR_SISTEMAS_DEFAULT,
   codigoActividadEmisor: "620100",
-  numeroConsecutivo: "00100001060000000001",
+  numeroConsecutivo: "00100001090000000001",
   fechaEmision: "2025-08-04T08:00:00-06:00",
   emisor: EMISOR_DEFAULT,
   receptor: {
@@ -401,10 +405,10 @@ export const SIMPLE_FACTURA_EXPORTACION: FacturaElectronicaExportacion = {
 
 /** Payment receipt for a credit invoice. */
 export const SIMPLE_RECIBO_PAGO: ReciboElectronicoPago = {
-  clave: "50601072500031012345670010000701000000000119999999",
+  clave: fixtureClave("2025-08-05T11:00:00-06:00", "10", 1),
   proveedorSistemas: PROVEEDOR_SISTEMAS_DEFAULT,
   codigoActividadEmisor: "620100",
-  numeroConsecutivo: "00100001070000000001",
+  numeroConsecutivo: "00100001100000000001",
   fechaEmision: "2025-08-05T11:00:00-06:00",
   emisor: EMISOR_DEFAULT,
   receptor: RECEPTOR_DEFAULT,
@@ -442,7 +446,7 @@ export const SIMPLE_RECIBO_PAGO: ReciboElectronicoPago = {
   informacionReferencia: [
     {
       tipoDoc: "01",
-      numero: "50601072500031012345670010000101000000000119999999",
+      numero: fixtureClave("2025-07-27T10:30:00-06:00", "01", 1),
       fechaEmision: "2025-07-27T10:30:00-06:00",
       codigo: "04",
       razon: "Pago de factura emitida a credito",
@@ -456,7 +460,7 @@ export const SIMPLE_RECIBO_PAGO: ReciboElectronicoPago = {
 
 /** Full acceptance message. */
 export const MENSAJE_ACEPTACION_TOTAL: MensajeReceptor = {
-  clave: "50601072500031012345670010000101000000000119999999",
+  clave: fixtureClave("2025-07-27T10:30:00-06:00", "01", 1000000000),
   numeroCedulaEmisor: "3101234567",
   fechaEmisionDoc: "2025-07-27T10:30:00-06:00",
   mensaje: "1",
@@ -472,7 +476,7 @@ export const MENSAJE_ACEPTACION_TOTAL: MensajeReceptor = {
 
 /** Partial acceptance message. */
 export const MENSAJE_ACEPTACION_PARCIAL: MensajeReceptor = {
-  clave: "50601072500031012345670010000101000000000219999999",
+  clave: fixtureClave("2025-07-28T14:00:00-06:00", "01", 1000000000),
   numeroCedulaEmisor: "3101234567",
   fechaEmisionDoc: "2025-07-28T14:00:00-06:00",
   mensaje: "2",
@@ -485,7 +489,7 @@ export const MENSAJE_ACEPTACION_PARCIAL: MensajeReceptor = {
 
 /** Rejection message. */
 export const MENSAJE_RECHAZO: MensajeReceptor = {
-  clave: "50601072500031012345670010000101000000000319999999",
+  clave: fixtureClave("2025-07-29T09:00:00-06:00", "01", 1000000000),
   numeroCedulaEmisor: "3101234567",
   fechaEmisionDoc: "2025-07-29T09:00:00-06:00",
   mensaje: "3",
@@ -497,7 +501,7 @@ export const MENSAJE_RECHAZO: MensajeReceptor = {
 
 /** Minimal acceptance message (no optional fields). */
 export const MENSAJE_MINIMAL: MensajeReceptor = {
-  clave: "50601072500031012345670010000101000000000419999999",
+  clave: fixtureClave("2025-08-01T10:00:00-06:00", "01", 1000000000),
   numeroCedulaEmisor: "3101234567",
   fechaEmisionDoc: "2025-08-01T10:00:00-06:00",
   mensaje: "1",

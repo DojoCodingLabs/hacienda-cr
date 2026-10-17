@@ -117,3 +117,8 @@ Offline checks establish local behavior, schema conformance, and installed-packa
 compatibility. Report live suites as skipped when not run; do not claim they prove
 Hacienda acceptance or certificate-chain trust. Never retry an ambiguous live
 submission blindly: query the original clave first.
+
+## Sandbox correction evidence
+
+- [SDK fixes and validation iterations](testing/sdk-validation-iterations.md)
+- [Sandbox 403 investigation and sanitized escalation packet](testing/sandbox-403-debug.md)

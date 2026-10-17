@@ -82,7 +82,9 @@ describe("buildNotaCreditoXml", () => {
 
     it("should include the referenced document number", () => {
       const xml = buildNotaCreditoXml(SIMPLE_NOTA_CREDITO);
-      expect(xml).toContain("<Numero>50601072500031012345670010000101000000000119999999</Numero>");
+      expect(xml).toContain(
+        `<Numero>${SIMPLE_NOTA_CREDITO.informacionReferencia[0]?.numero}</Numero>`,
+      );
     });
   });
 
