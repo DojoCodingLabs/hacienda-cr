@@ -10,3 +10,10 @@
 export { loadP12 } from "./p12-loader.js";
 export { signXml, signAndEncode } from "./signer.js";
 export type { P12Credentials, SignXmlOptions, XadesPolicyConfig } from "./types.js";
+
+export { verifyHaciendaResponseXml } from "./response-verifier.js";
+export type {
+  ResponsePartyIdentity,
+  VerifyHaciendaResponseOptions,
+  VerifiedHaciendaResponse,
+} from "./response-verifier.js";

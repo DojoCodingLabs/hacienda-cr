@@ -32,6 +32,7 @@ export {
   ApiError,
   AuthenticationError,
   SigningError,
+  ResponseVerificationError,
 } from "./errors.js";
 
 // ---------------------------------------------------------------------------
@@ -161,7 +162,7 @@ export type { LoggerOptions, LogFormat, LogWriter, LogEntry } from "./logging/in
 // Signing module — XAdES-EPES digital signature
 // ---------------------------------------------------------------------------
 
-export { loadP12, signXml, signAndEncode } from "./signing/index.js";
+export { loadP12, signXml, signAndEncode, verifyHaciendaResponseXml } from "./signing/index.js";
 export type { P12Credentials, SignXmlOptions, XadesPolicyConfig } from "./signing/index.js";
 
 // ---------------------------------------------------------------------------
@@ -201,3 +202,10 @@ export {
   getHttpStatusDescription,
   isRetryableStatus,
 } from "./api/index.js";
+
+export type { ResponseVerificationReason } from "./errors.js";
+export type {
+  ResponsePartyIdentity,
+  VerifyHaciendaResponseOptions,
+  VerifiedHaciendaResponse,
+} from "./signing/index.js";
