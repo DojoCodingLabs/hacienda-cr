@@ -61,6 +61,20 @@ Please confirm the currently supported sandbox base URL, deployment/base-path ma
 
 Do not attach access/refresh tokens, credentials, P12, PIN, issuer details or signed XML to the initial report. Private full response headers and original receipt key remain available locally if required through an appropriate private channel.
 
+## Repeat validation: 2026-10-16 Costa Rica
+
+Retested at 2026-10-17T04:39:43+00:00 with fresh sandbox authentication, direct Node/curl requests, and the actual PR SDK build:
+
+- IDP authentication succeeds (HTTP 200); JWT signature and time checks pass.
+- The PR SDK's `getStatus` for the original key returns HTTP 403 without a new POST.
+- Direct Node and curl still reproduce `IncompleteSignatureException`; the Authorization digest still matches the header sent. Listing also fails, independently of the original invoice key.
+- The supplied real P12/PIN loads; a deliberately wrong PIN is rejected. The certificate is within its validity dates and matches the one embedded in the original signed submission.
+- The original and fresh signatures verify locally using XAdES/WebCrypto; an altered document fails verification. Current signed-XML XSD/identity validation passes. Revocation status and independent certificate-chain trust are still unverified.
+- No TRIBU/Hacienda tab is currently open in the connected browser, so authenticated portal setup could not be rechecked. No credentials or keys were regenerated or revoked.
+- No additional fiscal document was submitted and no production request was made. Private evidence remains outside the repository.
+
+Fresh valid-token receipt GET AWS request ID: `5afd1303-eda0-4da7-bdb4-92c8d843ec8d`; list GET request ID: `85871330-27e7-4b33-acea-fe13e78184d2`.
+
 ## Next validation step
 
 Obtain a working documented sandbox route or operator confirmation. Then GET the original key first; preserve its original signed bytes and attempt marker. Resume submission only under an explicit recovery decision once its status is resolved. No switch to production or invented alternate credential endpoint is needed for this investigation.
