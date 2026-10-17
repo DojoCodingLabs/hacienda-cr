@@ -146,7 +146,9 @@ describe("buildXml", () => {
     const xml = buildXml(
       "FacturaElectronica",
       { Clave: "test" },
-      { namespace: "https://custom.namespace.com/v1" },
+      {
+        namespace: "https://custom.namespace.com/v1",
+      },
     );
     expect(xml).toContain('xmlns="https://custom.namespace.com/v1"');
   });

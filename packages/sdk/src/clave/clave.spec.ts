@@ -134,11 +134,12 @@ describe("buildClave", () => {
     ["NOTA_DEBITO_ELECTRONICA", DocumentType.NOTA_DEBITO_ELECTRONICA, "02"],
     ["NOTA_CREDITO_ELECTRONICA", DocumentType.NOTA_CREDITO_ELECTRONICA, "03"],
     ["TIQUETE_ELECTRONICO", DocumentType.TIQUETE_ELECTRONICO, "04"],
-    ["FACTURA_ELECTRONICA_COMPRA", DocumentType.FACTURA_ELECTRONICA_COMPRA, "05"],
-    ["FACTURA_ELECTRONICA_EXPORTACION", DocumentType.FACTURA_ELECTRONICA_EXPORTACION, "06"],
-    ["RECIBO_ELECTRONICO_PAGO", DocumentType.RECIBO_ELECTRONICO_PAGO, "07"],
-    ["COMPRA_PAGO", DocumentType.COMPRA_PAGO, "08"],
-    ["GASTO_VIAJE", DocumentType.GASTO_VIAJE, "09"],
+    ["CONFIRMACION_ACEPTACION", DocumentType.CONFIRMACION_ACEPTACION, "05"],
+    ["CONFIRMACION_ACEPTACION_PARCIAL", DocumentType.CONFIRMACION_ACEPTACION_PARCIAL, "06"],
+    ["CONFIRMACION_RECHAZO", DocumentType.CONFIRMACION_RECHAZO, "07"],
+    ["FACTURA_ELECTRONICA_COMPRA", DocumentType.FACTURA_ELECTRONICA_COMPRA, "08"],
+    ["FACTURA_ELECTRONICA_EXPORTACION", DocumentType.FACTURA_ELECTRONICA_EXPORTACION, "09"],
+    ["RECIBO_ELECTRONICO_PAGO", DocumentType.RECIBO_ELECTRONICO_PAGO, "10"],
   ])("should encode document type %s as %s", (_name, docType, expected) => {
     const clave = buildClave(validInput({ documentType: docType }));
     expect(clave.slice(29, 31)).toBe(expected);
@@ -440,7 +441,7 @@ describe("build + parse round-trip", () => {
     expect(parsed.taxpayerId).toBe("112233445566");
     expect(parsed.branch).toBe("123");
     expect(parsed.pos).toBe("54321");
-    expect(parsed.documentType).toBe("06");
+    expect(parsed.documentType).toBe("09");
     expect(parsed.sequence).toBe(5_000_000_000);
     expect(parsed.situation).toBe("2");
     expect(parsed.securityCode).toBe("00000001");
@@ -498,8 +499,8 @@ describe("constants", () => {
     expect(COUNTRY_CODE).toBe("506");
   });
 
-  it("DocumentType should have 9 values", () => {
-    expect(Object.values(DocumentType)).toHaveLength(9);
+  it("DocumentType should have the official 10 values", () => {
+    expect(Object.values(DocumentType)).toHaveLength(10);
   });
 
   it("Situation should have 3 values", () => {

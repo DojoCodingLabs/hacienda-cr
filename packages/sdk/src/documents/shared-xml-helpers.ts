@@ -21,6 +21,15 @@ import type {
   MedioPago,
   Identificacion,
 } from "@dojocoding/hacienda-shared";
+import { Money, ZERO } from "@dojocoding/hacienda-shared";
+
+/**
+ * Serialize a monetary value to an XML `xs:decimal` string with exactly five
+ * fractional digits (Hacienda v4.4 `fractionDigits: 5`).
+ */
+function toMonto(value: Money | number): string {
+  return (value instanceof Money ? value : Money.fromNumber(value)).toXMLString();
+}
 
 // ---------------------------------------------------------------------------
 // Per-document structural variants (from the v4.4 XSDs)
@@ -273,7 +282,7 @@ export function buildImpuestoXml(impuesto: Impuesto): Record<string, unknown> {
     result.FactorCalculoIVA = impuesto.factorCalculoIVA;
   }
 
-  result.Monto = impuesto.monto;
+  result.Monto = toMonto(impuesto.monto);
 
   if (impuesto.exoneracion) {
     const exo = impuesto.exoneracion;
@@ -287,7 +296,7 @@ export function buildImpuestoXml(impuesto: Impuesto): Record<string, unknown> {
       ...(exo.nombreInstitucionOtros ? { NombreInstitucionOtros: exo.nombreInstitucionOtros } : {}),
       FechaEmisionEX: exo.fechaEmision,
       TarifaExonerada: exo.tarifaExonerada,
-      MontoExoneracion: exo.montoExoneracion,
+      MontoExoneracion: toMonto(exo.montoExoneracion),
     };
   }
 
@@ -300,7 +309,7 @@ export function buildImpuestoXml(impuesto: Impuesto): Record<string, unknown> {
  */
 export function buildDescuentoXml(descuento: Descuento): Record<string, unknown> {
   return {
-    MontoDescuento: descuento.montoDescuento,
+    MontoDescuento: toMonto(descuento.montoDescuento),
     CodigoDescuento: descuento.codigoDescuento,
     ...(descuento.codigoDescuentoOtros
       ? { CodigoDescuentoOTRO: descuento.codigoDescuentoOtros }
@@ -357,19 +366,19 @@ export function buildLineaDetalleXml(
       result.NumeroVINoSerie = linea.numeroVINoSerie;
     }
 
-    result.PrecioUnitario = linea.precioUnitario;
+    result.PrecioUnitario = toMonto(linea.precioUnitario);
   }
 
-  result.MontoTotal = linea.montoTotal;
+  result.MontoTotal = toMonto(linea.montoTotal);
 
   if (variant.lineaCompleta && linea.descuento && linea.descuento.length > 0) {
     result.Descuento = linea.descuento.map((d: Descuento) => buildDescuentoXml(d));
   }
 
-  result.SubTotal = linea.subTotal;
+  result.SubTotal = toMonto(linea.subTotal);
 
   if (variant.lineaConBaseImponible) {
-    result.BaseImponible = linea.baseImponible ?? linea.subTotal;
+    result.BaseImponible = toMonto(linea.baseImponible ?? linea.subTotal);
   }
 
   if (linea.impuesto && linea.impuesto.length > 0) {
@@ -377,19 +386,19 @@ export function buildLineaDetalleXml(
   }
 
   if (variant.lineaConImpuestoAsumido === "required") {
-    result.ImpuestoAsumidoEmisorFabrica = linea.impuestoAsumidoEmisorFabrica ?? 0;
+    result.ImpuestoAsumidoEmisorFabrica = toMonto(linea.impuestoAsumidoEmisorFabrica ?? ZERO);
   } else if (
     variant.lineaConImpuestoAsumido === "optional" &&
     linea.impuestoAsumidoEmisorFabrica !== undefined
   ) {
-    result.ImpuestoAsumidoEmisorFabrica = linea.impuestoAsumidoEmisorFabrica;
+    result.ImpuestoAsumidoEmisorFabrica = toMonto(linea.impuestoAsumidoEmisorFabrica);
   }
 
   if (variant.lineaConImpuestoNeto) {
-    result.ImpuestoNeto = linea.impuestoNeto ?? 0;
+    result.ImpuestoNeto = toMonto(linea.impuestoNeto ?? ZERO);
   }
 
-  result.MontoTotalLinea = linea.montoTotalLinea;
+  result.MontoTotalLinea = toMonto(linea.montoTotalLinea);
 
   return result;
 }
@@ -404,13 +413,15 @@ export function buildResumenFacturaXml(resumen: ResumenFactura): Record<string, 
   const result: Record<string, unknown> = {
     CodigoTipoMoneda: {
       CodigoMoneda: resumen.codigoTipoMoneda?.codigoMoneda ?? "CRC",
-      TipoCambio: resumen.codigoTipoMoneda?.tipoCambio ?? 1,
+      // TipoCambio is typed as DecimalDineroType in the XSD (fractionDigits 5),
+      // so it is serialized with the same 5-decimal rounding as amounts.
+      TipoCambio: toMonto(resumen.codigoTipoMoneda?.tipoCambio ?? 1),
     },
   };
 
-  const optionalTotal = (key: string, value: number | undefined): void => {
+  const optionalTotal = (key: string, value: Money | number | undefined): void => {
     if (value !== undefined) {
-      result[key] = value;
+      result[key] = toMonto(value);
     }
   };
 
@@ -427,15 +438,15 @@ export function buildResumenFacturaXml(resumen: ResumenFactura): Record<string, 
   optionalTotal("TotalExonerado", resumen.totalExonerado);
   optionalTotal("TotalNoSujeto", resumen.totalNoSujeto);
 
-  result.TotalVenta = resumen.totalVenta;
+  result.TotalVenta = toMonto(resumen.totalVenta);
   optionalTotal("TotalDescuentos", resumen.totalDescuentos);
-  result.TotalVentaNeta = resumen.totalVentaNeta;
+  result.TotalVentaNeta = toMonto(resumen.totalVentaNeta);
 
   if (resumen.totalDesgloseImpuesto && resumen.totalDesgloseImpuesto.length > 0) {
     result.TotalDesgloseImpuesto = resumen.totalDesgloseImpuesto.map((d) => ({
       Codigo: d.codigo,
       ...(d.codigoTarifaIVA ? { CodigoTarifaIVA: d.codigoTarifaIVA } : {}),
-      TotalMontoImpuesto: d.totalMontoImpuesto,
+      TotalMontoImpuesto: toMonto(d.totalMontoImpuesto),
     }));
   }
 
@@ -448,11 +459,11 @@ export function buildResumenFacturaXml(resumen: ResumenFactura): Record<string, 
     result.MedioPago = resumen.medioPago.map((m: MedioPago) => ({
       TipoMedioPago: m.tipoMedioPago,
       ...(m.medioPagoOtros ? { MedioPagoOtros: m.medioPagoOtros } : {}),
-      TotalMedioPago: m.totalMedioPago,
+      TotalMedioPago: toMonto(m.totalMedioPago),
     }));
   }
 
-  result.TotalComprobante = resumen.totalComprobante;
+  result.TotalComprobante = toMonto(resumen.totalComprobante);
 
   return result;
 }
@@ -472,7 +483,7 @@ export function buildOtrosCargosXml(otrosCargos: OtroCargo[]): Record<string, un
     ...(c.nombreTercero ? { NombreTercero: c.nombreTercero } : {}),
     Detalle: c.detalle,
     ...(c.porcentaje !== undefined ? { PorcentajeOC: c.porcentaje } : {}),
-    MontoCargo: c.montoCargo,
+    MontoCargo: toMonto(c.montoCargo),
   }));
 }
 

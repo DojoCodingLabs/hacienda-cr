@@ -709,8 +709,12 @@ describe("validateFacturaInput — edge cases", () => {
   });
 });
 describe("summary reconciliation regressions", () => {
+  function cloneInvoice<T>(invoice: T): T {
+    return JSON.parse(JSON.stringify(invoice));
+  }
+
   it("rejects an internally consistent summary unrelated to its lines", () => {
-    const invoice = structuredClone(SIMPLE_INVOICE);
+    const invoice = cloneInvoice(SIMPLE_INVOICE);
     Object.assign(invoice.resumenFactura, {
       totalServGravados: 900000,
       totalGravado: 900000,
@@ -726,7 +730,7 @@ describe("summary reconciliation regressions", () => {
   });
 
   it("rejects discounts unrelated to detail discounts", () => {
-    const invoice = structuredClone(DISCOUNT_INVOICE);
+    const invoice = cloneInvoice(DISCOUNT_INVOICE);
     Object.assign(invoice.resumenFactura, {
       totalDescuentos: 10000,
       totalVentaNeta: 40000,
@@ -740,7 +744,7 @@ describe("summary reconciliation regressions", () => {
   });
 
   it("rejects charges absent from detail", () => {
-    const invoice = structuredClone(SIMPLE_INVOICE);
+    const invoice = cloneInvoice(SIMPLE_INVOICE);
     Object.assign(invoice.resumenFactura, { totalOtrosCargos: 500, totalComprobante: 113500 });
     expect(
       validateFacturaInput(invoice).errors.some(

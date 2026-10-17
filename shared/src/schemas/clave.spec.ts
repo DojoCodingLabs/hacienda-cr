@@ -100,7 +100,7 @@ describe("ClaveComponentsSchema", () => {
   it("should reject invalid document type", () => {
     const result = ClaveComponentsSchema.safeParse({
       ...validComponents,
-      documentType: "10",
+      documentType: "99",
     });
     expect(result.success).toBe(false);
   });

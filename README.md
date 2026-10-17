@@ -122,6 +122,37 @@ console.log(clave); // Clave numérica de 50 dígitos.
 
 Continuá con [creación de documentos](docs/reference.md#creación-de-documentos), [firma digital](docs/reference.md#firma-digital-xades-epes) y [envío y consulta](docs/reference.md#envío-y-consulta-de-estado). `HaciendaClient` gestiona autenticación y claves; las operaciones de XML, firma y envío se usan como funciones del SDK.
 
+### Montos: la clase `Money`
+
+Todos los campos monetarios de los tipos de documento (`FacturaElectronica`,
+`LineaDetalle`, `ResumenFactura`, `MensajeReceptor`, …) son instancias de
+`Money`, nunca `number`. `Money` guarda el decimal **exacto** y elimina el error
+binario clásico (`0.1 + 0.2 !== 0.3`).
+
+```ts
+import { Money } from "@dojocoding/hacienda-sdk";
+
+const precio = Money.fromNumber(50000); // Usá Money.fromString("50000") si conocés el literal decimal.
+const montoTotal = precio.times(2); // Money — 100000
+const impuesto = montoTotal.times(13).dividedBy(100).round(5); // Money — 13000
+
+montoTotal.toNumber(); // 100000 — solo para salida, no para cálculos intermedios.
+montoTotal.toXMLString(); // "100000" — xs:decimal con hasta 5 decimales, sin ceros forzados.
+```
+
+La regla de redondeo es única y explícita: **5 decimales, `ROUND_HALF_UP`**,
+tomada del Anexo de Hacienda
+(`packages/sdk/schemas/2024/v4.4/ANEXOS Y ESTRUCTURAS_V4.4.pdf`,
+"II. Especificaciones técnicas y formato de los comprobantes electrónicos",
+p. 13–14: se incrementa cuando el sexto decimal es ≥ 5, `20.203518 ≈ 20.20352`).
+`Money.round(5)` aplica esa regla sobre el valor decimal exacto, y la
+serialización XML emite como máximo 5 decimales (`fractionDigits: 5`).
+
+En la frontera de entrada (esquemas Zod, CLI y MCP) seguís pudiendo pasar
+`number`: la validación acepta `number | Money` y normaliza a `number`, así que
+las entradas existentes no cambian. Calculá siempre con `plus`/`minus`/`times`
+para no reintroducir aritmética binaria.
+
 ### CLI: desde tu terminal
 
 ```bash

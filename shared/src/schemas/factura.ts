@@ -4,13 +4,10 @@
  */
 
 import { z } from "zod";
+import { REFERENCE_CODES, REFERENCE_DOC_TYPES } from "../constants/index.js";
+import { CURRENCY_CODES, OTHER_CHARGE_TYPES } from "../generated/index.js";
 import {
-  REFERENCE_DOC_TYPES,
-  REFERENCE_CODES,
-  OTHER_CHARGE_TYPES,
-  CURRENCY_CODES,
-} from "../constants/index.js";
-import {
+  MontoSchema,
   TaxCodeSchema,
   IvaRateCodeSchema,
   PaymentMethodSchema,
@@ -75,7 +72,7 @@ export const OtroCargoSchema = z.object({
   porcentaje: z.number().min(0).max(100).optional(),
 
   /** Charge amount (MontoCargo). */
-  montoCargo: z.number().min(0),
+  montoCargo: MontoSchema,
 });
 
 /** Schema for a payment-method entry inside ResumenFactura (v4.4). */
@@ -87,7 +84,7 @@ export const MedioPagoSchema = z.object({
   medioPagoOtros: z.string().min(3).max(100).optional(),
 
   /** Amount paid with this method (TotalMedioPago). */
-  totalMedioPago: z.number().min(0),
+  totalMedioPago: MontoSchema,
 });
 
 /** Schema for a per-tax-code total breakdown entry (v4.4). */
@@ -99,7 +96,7 @@ export const TotalDesgloseImpuestoSchema = z.object({
   codigoTarifaIVA: IvaRateCodeSchema.optional(),
 
   /** Total tax amount for this (code, rate) pair. */
-  totalMontoImpuesto: z.number().min(0),
+  totalMontoImpuesto: MontoSchema,
 });
 
 /** Schema for invoice summary (ResumenFactura), v4.4. */
@@ -108,70 +105,70 @@ export const ResumenFacturaSchema = z.object({
   codigoTipoMoneda: CodigoTipoMonedaSchema.optional(),
 
   /** Total taxable services. */
-  totalServGravados: z.number().min(0).optional(),
+  totalServGravados: MontoSchema.optional(),
 
   /** Total exempt services. */
-  totalServExentos: z.number().min(0).optional(),
+  totalServExentos: MontoSchema.optional(),
 
   /** Total exonerated services. */
-  totalServExonerado: z.number().min(0).optional(),
+  totalServExonerado: MontoSchema.optional(),
 
   /** Total non-subject services (v4.4). */
-  totalServNoSujeto: z.number().min(0).optional(),
+  totalServNoSujeto: MontoSchema.optional(),
 
   /** Total taxable merchandise. */
-  totalMercanciasGravadas: z.number().min(0).optional(),
+  totalMercanciasGravadas: MontoSchema.optional(),
 
   /** Total exempt merchandise. */
-  totalMercanciasExentas: z.number().min(0).optional(),
+  totalMercanciasExentas: MontoSchema.optional(),
 
   /** Total exonerated merchandise. */
-  totalMercExonerada: z.number().min(0).optional(),
+  totalMercExonerada: MontoSchema.optional(),
 
   /** Total non-subject merchandise (v4.4). */
-  totalMercNoSujeta: z.number().min(0).optional(),
+  totalMercNoSujeta: MontoSchema.optional(),
 
   /** Total taxable. */
-  totalGravado: z.number().min(0).optional(),
+  totalGravado: MontoSchema.optional(),
 
   /** Total exempt. */
-  totalExento: z.number().min(0).optional(),
+  totalExento: MontoSchema.optional(),
 
   /** Total exonerated. */
-  totalExonerado: z.number().min(0).optional(),
+  totalExonerado: MontoSchema.optional(),
 
   /** Total non-subject (v4.4). */
-  totalNoSujeto: z.number().min(0).optional(),
+  totalNoSujeto: MontoSchema.optional(),
 
   /** Total sales (before tax). */
-  totalVenta: z.number().min(0),
+  totalVenta: MontoSchema,
 
   /** Total discounts. */
-  totalDescuentos: z.number().min(0).optional(),
+  totalDescuentos: MontoSchema.optional(),
 
   /** Net sales (totalVenta - totalDescuentos). */
-  totalVentaNeta: z.number().min(0),
+  totalVentaNeta: MontoSchema,
 
   /** Per-tax-code totals breakdown (v4.4). Optional. */
   totalDesgloseImpuesto: z.array(TotalDesgloseImpuestoSchema).optional(),
 
   /** Total tax. */
-  totalImpuesto: z.number().min(0).optional(),
+  totalImpuesto: MontoSchema.optional(),
 
   /** Total tax assumed by issuer/factory (v4.4). */
-  totalImpAsumEmisorFabrica: z.number().min(0).optional(),
+  totalImpAsumEmisorFabrica: MontoSchema.optional(),
 
   /** Total IVA returned. Optional. */
-  totalIVADevuelto: z.number().min(0).optional(),
+  totalIVADevuelto: MontoSchema.optional(),
 
   /** Total other charges. Optional. */
-  totalOtrosCargos: z.number().min(0).optional(),
+  totalOtrosCargos: MontoSchema.optional(),
 
   /** Payment methods with amounts (v4.4). Up to 4 entries. */
   medioPago: z.array(MedioPagoSchema).min(1).max(4).optional(),
 
   /** Grand total. */
-  totalComprobante: z.number().min(0),
+  totalComprobante: MontoSchema,
 });
 
 /** Schema for additional content (Otros). */

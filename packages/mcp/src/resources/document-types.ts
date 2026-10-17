@@ -68,6 +68,12 @@ function getDocTypeDescription(code: string): string {
       return "Electronic credit note. References an existing invoice to apply credits/returns.";
     case DocumentTypeCode.TIQUETE_ELECTRONICO:
       return "Simplified electronic receipt. Receptor is optional. For consumers (B2C).";
+    case DocumentTypeCode.CONFIRMACION_ACEPTACION:
+      return "Confirmation of full acceptance of a received electronic document.";
+    case DocumentTypeCode.CONFIRMACION_ACEPTACION_PARCIAL:
+      return "Confirmation of partial acceptance of a received electronic document.";
+    case DocumentTypeCode.CONFIRMACION_RECHAZO:
+      return "Confirmation of rejection of a received electronic document.";
     case DocumentTypeCode.FACTURA_ELECTRONICA_COMPRA:
       return "Purchase invoice. Issued when buying from unregistered suppliers.";
     case DocumentTypeCode.FACTURA_ELECTRONICA_EXPORTACION:

@@ -9,22 +9,26 @@
  */
 
 import type {
-  IdentificationType,
-  SaleCondition,
-  PaymentMethod,
-  TaxCode,
-  IvaRateCode,
-  ExonerationType,
-  ExonerationInstitution,
-  DiscountCode,
-  OtherChargeType,
-  ReferenceDocType,
-  ReferenceCode,
-  UnitOfMeasure,
-  MensajeReceptorCode,
   CurrencyCode,
+  ReferenceCode,
+  ReferenceDocType,
+  UnitOfMeasure,
 } from "../constants/index.js";
+import type {
+  CommercialCodeType,
+  DiscountCode,
+  ExonerationInstitution,
+  ExonerationType,
+  IdentificationType,
+  IvaRateCode,
+  MensajeReceptorCode,
+  OtherChargeType,
+  PaymentMethod,
+  SaleCondition,
+  TaxCode,
+} from "../generated/index.js";
 
+import type { Money } from "./money";
 // ---------------------------------------------------------------------------
 // Common Sub-structures
 // ---------------------------------------------------------------------------
@@ -150,7 +154,7 @@ export interface Exoneracion {
   tarifaExonerada: number;
 
   /** Exonerated tax amount. */
-  montoExoneracion: number;
+  montoExoneracion: Money;
 }
 
 /** Tax applied to a line item (Impuesto). */
@@ -171,7 +175,7 @@ export interface Impuesto {
   factorCalculoIVA?: number;
 
   /** Tax amount for this line (Monto). */
-  monto: number;
+  monto: Money;
 
   /** Exoneration information. Optional. */
   exoneracion?: Exoneracion;
@@ -180,7 +184,7 @@ export interface Impuesto {
 /** Discount applied to a line item (v4.4 structure). */
 export interface Descuento {
   /** Discount amount. */
-  montoDescuento: number;
+  montoDescuento: Money;
 
   /** Discount code (CodigoDescuento). Required in v4.4. */
   codigoDescuento: DiscountCode;
@@ -195,7 +199,7 @@ export interface Descuento {
 /** Commercial code for a product/service. */
 export interface CodigoComercial {
   /** Code type: 01=Seller, 02=Buyer, 03=Industry, 04=Internal, 99=Other. */
-  tipo: "01" | "02" | "03" | "04" | "99";
+  tipo: CommercialCodeType;
 
   /** Product/service code value. */
   codigo: string;
@@ -234,22 +238,22 @@ export interface LineaDetalle {
   numeroVINoSerie?: string[];
 
   /** Unit price (before taxes and discounts). */
-  precioUnitario: number;
+  precioUnitario: Money;
 
   /** Total line amount (cantidad * precioUnitario). */
-  montoTotal: number;
+  montoTotal: Money;
 
   /** Discounts applied. Optional (max 5). */
   descuento?: Descuento[];
 
   /** Subtotal after discounts. */
-  subTotal: number;
+  subTotal: Money;
 
   /**
    * Base taxable amount. Required by the v4.4 XSD for most document types;
    * builders default it to subTotal when omitted.
    */
-  baseImponible?: number;
+  baseImponible?: Money;
 
   /** Taxes applied to this line item. v4.4 requires at least one. */
   impuesto: Impuesto[];
@@ -259,13 +263,13 @@ export interface LineaDetalle {
    * (ImpuestoAsumidoEmisorFabrica). Builders default to 0 where the
    * XSD requires the element.
    */
-  impuestoAsumidoEmisorFabrica?: number;
+  impuestoAsumidoEmisorFabrica?: Money;
 
   /** Net tax amount for this line (sum of taxes minus exonerations). */
-  impuestoNeto?: number;
+  impuestoNeto?: Money;
 
   /** Total line amount including taxes. */
-  montoTotalLinea: number;
+  montoTotalLinea: Money;
 }
 
 /** Reference to another document (for credit/debit notes and more). */
@@ -313,7 +317,7 @@ export interface OtroCargo {
   porcentaje?: number;
 
   /** Charge amount — emitted as MontoCargo. */
-  montoCargo: number;
+  montoCargo: Money;
 }
 
 /** Per-payment-method entry inside ResumenFactura (v4.4). */
@@ -325,7 +329,7 @@ export interface MedioPago {
   medioPagoOtros?: string;
 
   /** Amount paid with this method (TotalMedioPago). */
-  totalMedioPago: number;
+  totalMedioPago: Money;
 }
 
 /** Per-tax-code total breakdown inside ResumenFactura (v4.4). */
@@ -337,7 +341,7 @@ export interface TotalDesgloseImpuesto {
   codigoTarifaIVA?: IvaRateCode;
 
   /** Total tax amount for this (code, rate) pair. */
-  totalMontoImpuesto: number;
+  totalMontoImpuesto: Money;
 }
 
 /** Currency information (CodigoTipoMoneda). Required in v4.4. */
@@ -358,64 +362,64 @@ export interface ResumenFactura {
   codigoTipoMoneda?: CodigoTipoMoneda;
 
   /** Total taxable services. */
-  totalServGravados?: number;
+  totalServGravados?: Money;
 
   /** Total exempt services. */
-  totalServExentos?: number;
+  totalServExentos?: Money;
 
   /** Total exonerated services. */
-  totalServExonerado?: number;
+  totalServExonerado?: Money;
 
   /** Total non-subject services (v4.4). */
-  totalServNoSujeto?: number;
+  totalServNoSujeto?: Money;
 
   /** Total taxable merchandise. */
-  totalMercanciasGravadas?: number;
+  totalMercanciasGravadas?: Money;
 
   /** Total exempt merchandise. */
-  totalMercanciasExentas?: number;
+  totalMercanciasExentas?: Money;
 
   /** Total exonerated merchandise. */
-  totalMercExonerada?: number;
+  totalMercExonerada?: Money;
 
   /** Total non-subject merchandise (v4.4). */
-  totalMercNoSujeta?: number;
+  totalMercNoSujeta?: Money;
 
   /** Total taxable. */
-  totalGravado?: number;
+  totalGravado?: Money;
 
   /** Total exempt. */
-  totalExento?: number;
+  totalExento?: Money;
 
   /** Total exonerated. */
-  totalExonerado?: number;
+  totalExonerado?: Money;
 
   /** Total non-subject (v4.4). */
-  totalNoSujeto?: number;
+  totalNoSujeto?: Money;
 
   /** Total sales (before tax). Required. */
-  totalVenta: number;
+  totalVenta: Money;
 
   /** Total discounts. */
-  totalDescuentos?: number;
+  totalDescuentos?: Money;
 
   /** Net sales (totalVenta - totalDescuentos). Required. */
-  totalVentaNeta: number;
+  totalVentaNeta: Money;
 
   /** Per-tax-code totals breakdown (v4.4). */
   totalDesgloseImpuesto?: TotalDesgloseImpuesto[];
 
   /** Total tax. */
-  totalImpuesto?: number;
+  totalImpuesto?: Money;
 
   /** Total tax assumed by issuer/factory (v4.4). */
-  totalImpAsumEmisorFabrica?: number;
+  totalImpAsumEmisorFabrica?: Money;
 
   /** Total IVA returned (for special cases). */
-  totalIVADevuelto?: number;
+  totalIVADevuelto?: Money;
 
   /** Total other charges. */
-  totalOtrosCargos?: number;
+  totalOtrosCargos?: Money;
 
   /**
    * Payment methods with amounts (v4.4 — moved into ResumenFactura).
@@ -424,7 +428,7 @@ export interface ResumenFactura {
   medioPago?: MedioPago[];
 
   /** Grand total. Required. */
-  totalComprobante: number;
+  totalComprobante: Money;
 }
 
 // ---------------------------------------------------------------------------
@@ -577,7 +581,7 @@ export interface MensajeReceptor {
   detalleMensaje?: string;
 
   /** Total tax amount of the referenced document. */
-  montoTotalImpuesto?: number;
+  montoTotalImpuesto?: Money;
 
   /** Economic activity code. Optional. */
   codigoActividad?: string;
@@ -586,13 +590,13 @@ export interface MensajeReceptor {
   condicionImpuesto?: string;
 
   /** Creditable tax amount. Optional (v4.4). */
-  montoTotalImpuestoAcreditar?: number;
+  montoTotalImpuestoAcreditar?: Money;
 
   /** Applicable expense amount. Optional (v4.4). */
-  montoTotalDeGastoAplicable?: number;
+  montoTotalDeGastoAplicable?: Money;
 
   /** Total invoice amount of the referenced document. */
-  totalFactura: number;
+  totalFactura: Money;
 
   /** Receiver identification number. */
   numeroCedulaReceptor: string;

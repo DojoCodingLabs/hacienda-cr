@@ -129,11 +129,10 @@ export function buildXml(
   const rootAttributes: Record<string, string> = {
     "@_xmlns": namespace,
     "@_xmlns:xsi": XSI_NAMESPACE,
+    ...(includeSchemaLocation
+      ? { "@_xsi:schemaLocation": `${namespace} ${rootName}_V4.4.xsd` }
+      : {}),
   };
-
-  if (includeSchemaLocation) {
-    rootAttributes["@_xsi:schemaLocation"] = `${namespace} ${rootName}_V4.4.xsd`;
-  }
 
   // Wrap data inside root element with attributes
   const xmlObject = {
