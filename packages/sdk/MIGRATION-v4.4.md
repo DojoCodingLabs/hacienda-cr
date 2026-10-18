@@ -1,5 +1,32 @@
 # Audit-fix migration notes
 
+## Next additive exact total NC API (unreleased)
+
+Existing numeric and exact FE inputs remain unchanged. New shared
+`ExactNcTotalInputSchema` and SDK `calculateExactNcTotal` /
+`buildExactNotaCreditoTotalXml` support only full cancellation of one ordinary
+IVA13 FE in CRC/USD. Supply the unchanged strict exact original, independent
+NC 03 identity/emission and one explicit matching FE 01 reference with code 01 and
+a nonblank 3–180-Unicode-character reason. All monetary/quantity/payment/FX values remain strings;
+caller-supplied NC totals or separate credit lines are rejected. Credit values
+are positive full-original magnitudes, not a refund or signed ledger amount.
+
+Applications must independently prove accepted immutable source authority,
+unused credit amount, permissions and durable idempotency. No SDK boolean
+establishes acceptance. Partial credits, ND and rejected-FE replacement remain
+separate cases. The minor Changeset is not a published release; adopt only after
+reviewed linked release artifacts exist. See the repository
+`docs/specs/exact-total-nc.md` for primary XSD/reference evidence and limits.
+
+NC source chronology preserves every accepted fractional-second digit and
+timezone equivalence. NC-inapplicable sale conditions 09/11/12/13 and party
+identification 05/06 are rejected; credit conditions 02/10 require positive
+explicit days. These NC-only checks do not rewrite the original or change FE 0.6.
+The caller must enforce the current annex's ten-year reference limit against
+trusted actual issuance/submission time. The deterministic SDK has no hidden
+clock, reference-age proof or invented 29 February anniversary policy; unresolved
+calendar boundaries must block app activation.
+
 ## 0.4.2 → 0.5.0
 
 All four linked `@dojocoding/hacienda-{shared,sdk,cli,mcp}` packages advance to

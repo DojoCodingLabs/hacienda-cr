@@ -15,6 +15,8 @@ import { signXml } from "./signer.js";
 import { createTestP12 } from "../__fixtures__/signing.js";
 import { SIMPLE_INVOICE } from "../__fixtures__/invoices.js";
 import { buildFacturaXml } from "../documents/factura-builder.js";
+import { buildExactNotaCreditoTotalXml } from "../documents/exact-nc-builder.js";
+import { exactNcFixture } from "../__fixtures__/exact-nc.js";
 const ds = "http://www.w3.org/2000/09/xmldsig#";
 const xades = "http://uri.etsi.org/01903/v1.3.2#";
 const canonicalMethod = "http://www.w3.org/TR/2001/REC-xml-c14n-20010315";
@@ -120,6 +122,14 @@ function oracle(xml: string): boolean {
   }
 }
 describe("reviewed policy independent oracle", () => {
+  it("independently verifies the legitimate exact total NC document/properties digests and RSA signature", async () => {
+    const signed = await signXml(
+      buildExactNotaCreditoTotalXml(exactNcFixture()),
+      createTestP12("synthetic"),
+      "synthetic",
+    );
+    expect(oracle(signed)).toBe(true);
+  });
   it("emits the primary policy digest and independently verifies all references and RSA", async () => {
     const signed = await signXml(
       buildFacturaXml(SIMPLE_INVOICE),
