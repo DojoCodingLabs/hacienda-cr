@@ -3,7 +3,7 @@
 ## Prepare a version PR
 
 1. Merge product/DX changes with their changesets. Run `pnpm changeset status` and
-   review the intended versions. The prepared 0.8.0 release corrects read-only history metadata and adapters with an explicit minor migration; it changes no fiscal rules or mapping. Application adoption must separately preserve immutable historical FE/NC SDK 0.7 proofs/cases and keep activation independent. See [history migration](history-contract.md). The historical 0.7.0 release adds exact total NC for one ordinary domestic IVA13 FE in CRC/USD, with its own identity, a matching immutable original reference and the current annex's explicit 3–180-character reason. It preserves legacy numeric and exact FE APIs. The caller must independently establish original acceptance, unused total-credit authority and the ten-year reference limit from its trusted issuance/submission clock; no partial credit, rejected-document replacement, refund or fiscal acceptance is inferred.
+   review the intended versions. The prepared 0.9.0 release tightens current exact FE credit terms and document-family sale conditions, adding explicitly read-only historical schema/calculation helpers. Consumers must independently bind immutable producer/bytes, preserve historical omission/identity and version current proof rules; see [credit-term migration](exact-fe-credit-terms.md). The historical 0.8.0 release corrects read-only history metadata and adapters with an explicit minor migration; it changes no fiscal rules or mapping. Application adoption must separately preserve immutable historical FE/NC SDK 0.7 proofs/cases and keep activation independent. See [history migration](history-contract.md). The historical 0.7.0 release adds exact total NC for one ordinary domestic IVA13 FE in CRC/USD, with its own identity, a matching immutable original reference and the current annex's explicit 3–180-character reason. It preserves legacy numeric and exact FE APIs. The caller must independently establish original acceptance, unused total-credit authority and the ten-year reference limit from its trusted issuance/submission clock; no partial credit, rejected-document replacement, refund or fiscal acceptance is inferred.
 2. Run `pnpm version-packages`, then `pnpm install --lockfile-only`. Review package
    manifests, internal dependencies, changelogs and consumed changesets together.
 3. Run `pnpm verify` and `pnpm test:coverage`. Review the packaged migration guide.
@@ -18,16 +18,16 @@ checkout. The release script checks all four versions against the same stable ta
 and requires all pending changesets to have been consumed.
 
 ```sh
-pnpm release:prepare --tag v0.8.0
+pnpm release:prepare --tag v0.9.0
 ```
 
 This checks registry availability, runs full verification and packs exact tarballs
-into ignored `.release/v0.8.0/packed`. It tests those actual tarballs and records
+into ignored `.release/v0.9.0/packed`. It tests those actual tarballs and records
 the commit and SHA-512 integrity. Preparation does not publish or create a tag.
 CI uses npm 11.21.0 on Node 22; local publishing requires a provenance-capable CI
 identity and is intended to run in the GitHub workflow.
 
-When the version PR is approved and merged, create and push an annotated `v0.8.0`
+When the version PR is approved and merged, create and push an annotated `v0.9.0`
 tag pointing at that exact main commit. This triggers publish.yml. The workflow
 verifies the tag/main relationship, installs native xmllint, repeats preparation,
 then publishes the verified tarballs in shared -> SDK -> CLI -> MCP order.
@@ -51,11 +51,11 @@ build change causes different bytes, recover from the saved verified artifacts
 using the same checkout and release.json, rather than bypassing integrity checks:
 
 ```sh
-pnpm release:publish --tag v0.8.0 --resume
+pnpm release:publish --tag v0.9.0 --resume
 ```
 
 Run this in a correctly authenticated provenance-capable CI environment after
-restoring `.release/v0.8.0` and the exact release commit. The script verifies every
+restoring `.release/v0.9.0` and the exact release commit. The script verifies every
 file/commit before writing to npm and verifies each registry artifact afterwards.
 After a successful publish, verification waits up to 37 lookups with five-second
 intervals for npm indexing, always checking the exact integrity once visible.
