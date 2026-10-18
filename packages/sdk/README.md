@@ -179,3 +179,12 @@ See the [SDK reference](https://github.com/DojoCodingLabs/hacienda-cr/blob/main/
 ## Migrating to 0.4.0
 
 See [migration guidance](MIGRATION-v4.4.md) for required provider IDs, strict XSD validation, request deadlines, cancellation, and submission retry behavior.
+
+## Exact decimal ordinary FE (additive)
+
+`calculateExactFe` and `buildExactFacturaXml` accept strict `ExactFeInput`
+decimal-string facts for the explicitly named `FE-domestic-ordinary-iva13-v1`
+case. They use scaled BigInt and exact decimal XML without Number conversion.
+Legacy numeric APIs remain unchanged. This is ordinary IVA13 with completely
+allocated payments, not every fiscal regime. See [contract, precision, limits
+and independent checks](../../docs/specs/exact-ordinary-fe.md).

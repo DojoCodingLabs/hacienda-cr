@@ -89,3 +89,12 @@ Read `docs/README.md` inside that installed package first, then read the relevan
 
 This block is written and re-added by `turbo` before repository-scoped commands when an AI agent is detected. In the Turborepo source repository, its template is defined in `crates/turborepo-cli/src/cli/agent_guidance.rs`. Removing the managed block while updates are enabled means a later qualifying invocation will add it again. Set `"agentGuidance": false` in the root `turbo.json` or `turbo.jsonc` to opt out; this does not remove an existing block. Keep the block committed with your work to avoid an uncommitted change on the next agent invocation.
 <!-- END:turborepo-agent-rules -->
+
+## Exact ordinary FE boundary
+
+Preserve legacy Number APIs. The additive exact FE API supports only its named
+ordinary IVA13/full-payment case; financial strings must remain exact through
+strict schema, BigInt calculation, JSON and XML. Do not normalize to Number,
+silently drop unsupported regimes or relax official XSD bounds. Preserve
+independent Python Decimal, native xmllint and fresh packed-consumer checks;
+none establishes real Hacienda acceptance or authorizes activation/publication.

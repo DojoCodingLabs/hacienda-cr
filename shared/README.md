@@ -43,3 +43,11 @@ npm install @dojocoding/hacienda-shared
 ```
 
 Applications can import its public types, enums and validation schemas directly. Internal workspace dependencies are resolved to release versions when packed.
+
+## Additive exact ordinary FE schemas
+
+`ExactFeInputSchema`, `ExactFeCalculatedSchema`, `ExactMoneySchema` and
+`ExactQuantitySchema` preserve decimal strings and reject implicit Number
+coercion. They belong to the explicit ordinary IVA13/full-payment case, not a
+replacement for existing numeric document schemas. See the
+[exact FE contract](../docs/specs/exact-ordinary-fe.md).

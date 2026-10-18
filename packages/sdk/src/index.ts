@@ -209,3 +209,7 @@ export type {
   VerifyHaciendaResponseOptions,
   VerifiedHaciendaResponse,
 } from "./signing/index.js";
+
+export { calculateExactFe } from "./tax/exact-fe.js";
+export { buildExactFacturaXml } from "./documents/exact-fe-builder.js";
+export type { ExactFeInput, ExactFeCalculated } from "@dojocoding/hacienda-shared";

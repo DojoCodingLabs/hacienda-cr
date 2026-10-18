@@ -66,3 +66,18 @@ export {
   type CredentialConfigInput,
   type AppConfigInput,
 } from "./environment.js";
+
+export {
+  ExactMoneySchema,
+  ExactQuantitySchema,
+  ExactDiscountInputSchema,
+  ExactDiscountSchema,
+  ExactFeLineInputSchema,
+  ExactFePaymentSchema,
+  ExactFeInputSchema,
+  ExactFeCalculatedLineSchema,
+  ExactFeSummarySchema,
+  ExactFeCalculatedSchema,
+  type ExactFeInput,
+  type ExactFeCalculated,
+} from "./exact-fe.js";
