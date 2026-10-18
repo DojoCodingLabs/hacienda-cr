@@ -3,7 +3,7 @@
 - [x] Audit current exact total-NC/FE and legacy reference seams on actual main 91ac.
 - [x] Bind current annex/native/regulation identities and distinguish institutional/receiver rejection.
 - [x] Propose first partial-NC and rejected-FE source shapes with explicit caller authority.
-- [ ] Independently review partial-total restriction, cumulative-source boundary and old rejected identity/date eligibility before code.
+- [x] Obtain root review: no unrelated original-total cap; atomic cumulative authority stays external; replacement same issuer/old FE type/fresh sequence.
 
 ## Source implementation after review
 

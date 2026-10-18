@@ -51,15 +51,16 @@ Named case `NC-domestic-ordinary-fe-partial-iva13-v1` contains:
   no refund/cash effects. Existing BigInt kernel may calculate only the selected
   credit magnitudes, with no new FE identity or invented sale.
 
-Proposed deliberately bounded initial policy: credit total is strictly positive
-and less than the one original's calculated total. Equal total uses existing
-full-NC API. This is a first-case API restriction, NOT the statutory cumulative
-ceiling when ND/prior NC exist. App must separately verify current remaining
-credit; it cannot use this SDK comparison as a concurrent balance assertion.
-Credit exceeding the original but supported by related ND needs its own reviewed
-capture/source contract, not a guessed cap or a permissive caller number. Root
-must review this restriction before implementation; it is not approved by this
-checkpoint. No invented per-line legal ceiling is proposed.
+Root-reviewed policy: do not impose an unrelated original-total ceiling on
+source arithmetic. Calculate explicit positive correlated adjustment magnitudes;
+they are not an assertion of remaining credit or full cancellation. Legal
+cumulative authority is original plus verified related ND minus prior verified
+NC, enforced atomically by the app against independently captured immutable
+source/evidence. Neither an SDK-provided acceptance boolean nor a caller-supplied
+arbitrary ceiling establishes that authority. Even a source-valid adjustment
+larger than the original remains blocked for actual issuance without sufficient
+verified ND/remaining authority. Existing full-cancellation01 remains distinct
+from amount-correction02; equal money alone does not change the reference reason.
 
 ## Proposed rejected-FE replacement (requires root review)
 
@@ -77,10 +78,10 @@ Named case `FE-domestic-ordinary-rejected-replacement-iva13-v1` contains:
   ExactFeInput to permit correction. No SDK status boolean proves rejection.
 - One mandatory type 10 reference/code 16, exact retained key/date and reason 3–180.
   New own identity must differ, and the new consecutive must not reuse the old
-  embedded consecutive even with a different security code. First case may be
-  limited to same issuer/old FE-type identity; do not silently support changing
-  issuer/family or invent a corrected reference timestamp. Root reviews the exact
-  old-key shape/issuer/date restriction before implementation.
+  embedded consecutive even with a different security code. Root-reviewed first case is
+  limited to the same issuer/old FE-type identity; do not silently support changing
+  issuer/family or invent a corrected reference timestamp. Retained reference dates must be valid declared ISO facts; malformed old-key/date
+  replacement remains outside this first named case, not silently repaired.
 
 Replacement parties/lines can contain actual reviewed corrections, since copying
 invalid prior facts would defeat replacement. The app separately proves the
@@ -94,7 +95,7 @@ status, accepted source or recipient rejection under this named contract.
 
 Partial vectors: full-precision source/reference chronology, own03/type 01/code 02,
 negative/zero/Number injection, independent Decimal/maximum arithmetic, exact
-partial vs total bounds, duplicate/foreign line metadata, split-positive/mismatch
+positive adjustments without an unrelated original cap, duplicate/foreign line metadata, split-positive/mismatch
 allocations, wrong condition/family/name edges, immutable original and retained
 published compatibility. Prove caller ledger is explicitly separate.
 
