@@ -1,6 +1,6 @@
 # Explicit foreign-service ordinary IVA13 FEC source
 
-The unreleased additive exports are `ExactFecForeignServiceIva13InputSchema`,
+The additive exports published in [0.10.0](release-0100-published.md) are `ExactFecForeignServiceIva13InputSchema`,
 `ExactFecForeignServiceIva13ReferenceSchema`, `ExactFecForeignServiceIva13Input`,
 `calculateExactFecForeignServiceIva13` and
 `buildExactFacturaCompraForeignServiceIva13Xml`. Their named case is

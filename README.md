@@ -18,7 +18,7 @@ Toolkit open-source en TypeScript para trabajar con comprobantes electrónicos v
 
 [Casos de uso](#qué-podés-construir) · [Empezar](#empezá-acá) · [Documentación](#documentación) · [Contribuir](#desarrollo-y-contribuciones) · [Reportar un problema](https://github.com/DojoCodingLabs/hacienda-cr/issues/new)
 
-La versión **0.9.0** está publicada. La [preparación 0.10.0](docs/release-0100-readiness.md) reúne nuevas APIs exactas revisadas y conserva sus límites: REP exacto, transporte y correlación de mensajes del receptor, adopción en aplicaciones y aceptación fiscal siguen siendo trabajos separados. Esta preparación no publica paquetes ni activa operaciones fiscales. El [registro histórico 0.7.0](docs/release-070-published.md) conserva su verificación y recuperación de publicación.
+La versión **0.10.0** está publicada en los cuatro paquetes. El [registro de publicación](docs/release-0100-published.md) conserva los bytes verificados, procedencia y recuperación tras una demora de indexación de npm. La [preparación revisada](docs/release-0100-readiness.md) detalla sus APIs exactas y límites: REP exacto, transporte y correlación de mensajes del receptor, adopción en aplicaciones y aceptación fiscal siguen siendo trabajos separados. El [registro histórico 0.7.0](docs/release-070-published.md) conserva su verificación y recuperación de publicación.
 
 ## La visión: facturación dentro de tu producto
 
@@ -182,6 +182,7 @@ Herramientas: `draft_invoice`, `create_invoice`, `lookup_taxpayer`, `check_statu
 - [Tu primera factura en sandbox](docs/sandbox-guide.md): ejemplo ejecutable desde los datos de una venta hasta la respuesta de Hacienda, con recuperación de estado.
 - [Integrar facturación en tu producto](docs/production-integration.md): pedidos, workers, persistencia, empresas, consecutivos y reintentos en producción.
 - [Migración de entradas a v4.4](packages/sdk/MIGRATION-v4.4.md): campos requeridos, pagos, descuentos y validación XSD.
+- [Investigación del REP exacto](docs/rep-monetary-oracle-research.md): fuentes oficiales, límites del oráculo monetario y contrato propuesto; no implica un productor exacto disponible.
 - [Referencia completa del SDK](docs/reference.md#sdk--documentación-completa): autenticación, XML, impuestos, claves, firma, API, configuración, logging y errores.
 - [Referencia de comandos](docs/reference.md#cli--referencia-de-comandos): opciones y ejemplos de la CLI.
 - [Integración MCP](docs/reference.md#mcp-server--integración-con-ia): configuración del cliente y recursos.

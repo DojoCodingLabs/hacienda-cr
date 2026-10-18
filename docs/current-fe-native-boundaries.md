@@ -1,6 +1,6 @@
 # Current exact FE native names and positive allocations
 
-This unreleased current-input correction preserves valid financial math/XML and
+This current-input correction, published in [0.10.0](release-0100-published.md), preserves valid financial math/XML and
 legacy Number APIs while closing two distinct gaps in released 0.9 exact FE.
 
 ## Current source contract
@@ -19,7 +19,7 @@ It cannot establish actual taxpayer identity or acceptance.
 
 Every supplied `ExactFePaymentSchema` allocation is now strictly positive.
 The current ordinary exact TE API uses that same public schema and inherits
-this correction. The other unreleased ordinary source APIs already enforce
+this correction. The other ordinary source APIs released alongside it already enforce
 positive allocations. Missing, negative, Number, exponent and out-of-range facts
 remain invalid; all positive splits must still reconcile exactly with calculated
 totals. A zero split with an otherwise complete positive remainder is refused.

@@ -13,7 +13,7 @@ Proportionality 05 omits activity; rejection in this named case omits IVA decisi
 Credit cannot exceed original tax and expense cannot exceed original total.
 The legacy Number builder remains available with unchanged serialization.
 
-This is source-only, unreleased work. Required V1 integration still includes
+The source API is published in [0.10.0](release-0100-published.md); recipient transport remains unimplemented. Required V1 integration still includes
 original institutional acceptance, authentic buyer signer, durable current
 permissions/sequence/custody, legal timing, other original families, transport,
 recipient-specific recovery and institutional outcome correlation.
@@ -53,3 +53,5 @@ runtime `21e42d09130e5ea6770e5aebe0c038ba891dbb98` passed full verification:
 118 script tests and all four fresh packed consumers. Independent exact-head
 source review approved the contract and reran all 33 recipient tests successfully.
 No npm publication, app adoption or recipient acceptance follows from this result.
+
+See the [recipient transport and correlation audit](mr-transport-correlation-research.md) for the primary protocol evidence and required next verification.

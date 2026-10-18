@@ -90,3 +90,7 @@ passed. The source-main CI run
 succeeded; that is evidence for the source base, not this later version PR or
 publication. Exact release preparation and independent artifact review remain
 separate steps below the version/source review boundary.
+
+## Subsequent publication checkpoint
+
+All four packages were subsequently published at exact source `db3a97daec5b7d12dbd814d59bcdd2a9a561c0cf`. See [verified publication](release-0100-published.md) for registry integrities, original indexing failure, exact saved-artifact recovery and provenance. This dated preparation record does not establish application adoption or resolve REP/recipient transport.

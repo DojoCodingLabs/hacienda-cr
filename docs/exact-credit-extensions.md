@@ -1,6 +1,6 @@
 # Exact partial NC and rejected-FE replacement
 
-These additive, unreleased source APIs preserve existing FE, total NC, TE, ND,
+These additive APIs, published in [0.10.0](release-0100-published.md), preserve existing FE, total NC, TE, ND,
 FEC, Number and read-only retained contracts. They do not authorize issuance,
 allocate sequences, attest acceptance or change account balances.
 
