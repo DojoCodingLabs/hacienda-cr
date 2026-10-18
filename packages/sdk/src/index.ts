@@ -234,3 +234,14 @@ export type { ExactNdInput, ExactNdCalculated } from "@dojocoding/hacienda-share
 export { calculateExactFec } from "./tax/exact-fec.js";
 export { buildExactFacturaCompraXml } from "./documents/exact-fec-builder.js";
 export type { ExactFecInput, ExactFecCalculated } from "@dojocoding/hacienda-shared";
+
+export { calculateExactNcPartial } from "./tax/exact-nc-partial.js";
+export { buildExactNotaCreditoPartialXml } from "./documents/exact-nc-partial-builder.js";
+export { calculateExactFeReplacement } from "./tax/exact-fe-replacement.js";
+export { buildExactFacturaReplacementXml } from "./documents/exact-fe-replacement-builder.js";
+export type {
+  ExactNcPartialInput,
+  ExactNcPartialCalculated,
+  ExactFeReplacementInput,
+  ExactFeReplacementCalculated,
+} from "@dojocoding/hacienda-shared";

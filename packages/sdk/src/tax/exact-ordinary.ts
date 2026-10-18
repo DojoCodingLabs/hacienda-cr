@@ -18,7 +18,7 @@ function scaled(text: string, scale: number): bigint {
 function round(numerator: bigint, denominator: bigint): bigint {
   return (numerator + denominator / 2n) / denominator;
 }
-function money(n: bigint, family: "FE" | "TE" | "ND" | "FEC"): string {
+function money(n: bigint, family: "FE" | "TE" | "ND" | "FEC" | "NC"): string {
   if (n < 0n || n > MAX) throw new RangeError(`Exact ${family} monetary bound exceeded`);
   return `${n / SCALE}.${(n % SCALE).toString().padStart(5, "0")}`;
 }
@@ -27,7 +27,7 @@ function sum(items: readonly bigint[]) {
 }
 export function calculateExactOrdinaryMoney(
   input: ExactOrdinaryMonetarySource,
-  family: "FE" | "TE" | "ND" | "FEC" = "FE",
+  family: "FE" | "TE" | "ND" | "FEC" | "NC" = "FE",
 ): ExactFeCalculated {
   const moneyForCase = (value: bigint) => money(value, family);
   let services = 0n,

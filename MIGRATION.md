@@ -103,3 +103,14 @@ case is domestic 01–04 with conditions 01/02; foreign 05, used-goods 06/condit
 and special tax cases remain separately required. Existing family/legacy APIs
 are unchanged. See [exact FEC boundary](docs/exact-fec.md)
 for independent eligibility/age/response-oracle and release gates.
+
+### Unreleased exact partial NC and rejected-FE replacement
+
+These are additive named source APIs; existing producer and retained behavior is
+unchanged. Use `ExactNcPartialInputSchema` with positive correlated credit facts
+and a separately enforced atomic remaining-credit ledger. Use
+`ExactFeReplacementInputSchema` with an independently valid new FE, a fresh
+consecutive and exact retained institutionally rejected FE reference. Neither
+source contract establishes acceptance, cash effects or age eligibility. The
+replacement reference requires native 2026 reason 16. See the [full contract and
+caller prerequisites](docs/exact-credit-extensions.md) before adopting it.
