@@ -73,7 +73,8 @@ try {
     example +
       '\nconst issuedUsernameClient = new HaciendaClient({ environment: Environment.Sandbox, credentials: { username: \"cpf-01-1234-5678@stag.comprobanteselectronicos.go.cr\", password: \"synthetic\" } });\nexport { issuedUsernameClient };\n' +
       '\nimport { createServer } from "@dojocoding/hacienda-mcp";\nimport { FacturaElectronicaSchema } from "@dojocoding/hacienda-shared";\nexport const extra = {createServer, FacturaElectronicaSchema};\n' +
-      '\nimport { calculateExactFe, buildExactFacturaXml, type ExactFeInput } from "@dojocoding/hacienda-sdk";\nimport { ExactFeInputSchema, ExactFeCalculatedSchema } from "@dojocoding/hacienda-shared";\nexport const exactFeContract = (input: ExactFeInput) => ({ calculated: ExactFeCalculatedSchema.parse(calculateExactFe(ExactFeInputSchema.parse(input))), xml: buildExactFacturaXml(input) });\n' +
+      '\nimport { calculateExactFe, calculateRetainedExactFe, buildExactFacturaXml, type ExactFeInput, type RetainedExactFeInput } from "@dojocoding/hacienda-sdk";\nimport { ExactFeInputSchema, RetainedExactFeInputSchema, ExactFeCalculatedSchema } from "@dojocoding/hacienda-shared";\nexport const exactFeContract = (input: ExactFeInput) => ({ calculated: ExactFeCalculatedSchema.parse(calculateExactFe(ExactFeInputSchema.parse(input))), xml: buildExactFacturaXml(input) });\n' +
+      "\nexport const retainedFeReadContract = (input: RetainedExactFeInput) => calculateRetainedExactFe(RetainedExactFeInputSchema.parse(input));\n" +
       '\nimport { calculateExactNcTotal, buildExactNotaCreditoTotalXml, type ExactNcTotalInput } from "@dojocoding/hacienda-sdk";\nimport { ExactNcTotalInputSchema } from "@dojocoding/hacienda-shared";\nexport const exactNcContract = (input: ExactNcTotalInput) => ({ calculated: calculateExactNcTotal(ExactNcTotalInputSchema.parse(input)), xml: buildExactNotaCreditoTotalXml(input) });\n',
   );
   await writeFile(
@@ -138,8 +139,8 @@ import assert from "node:assert/strict";
 import {writeFile, readFile} from "node:fs/promises";
 import {execFileSync,spawnSync} from "node:child_process";
 import {SIMPLE_INVOICE} from "./fixtures.mjs";
-import {HttpClient,listComprobantes,getComprobante,calculateExactNcTotal,buildExactNotaCreditoTotalXml,buildFacturaXml,calculateExactFe,buildExactFacturaXml,validateDocumentXml,HaciendaClient,Environment,loadCredentials,signXml,verifyHaciendaResponseXml,ResponseVerificationError} from "@dojocoding/hacienda-sdk";
-import {XADES_POLICY_URI,XADES_POLICY_HASH,XADES_POLICY_HASH_ALGORITHM,ExonerationTypeSchema,UNITS_OF_MEASURE} from "@dojocoding/hacienda-shared";
+import {HttpClient,listComprobantes,getComprobante,calculateExactNcTotal,buildExactNotaCreditoTotalXml,buildFacturaXml,calculateExactFe,calculateRetainedExactFe,buildExactFacturaXml,validateDocumentXml,HaciendaClient,Environment,loadCredentials,signXml,verifyHaciendaResponseXml,ResponseVerificationError} from "@dojocoding/hacienda-sdk";
+import {ExactFeInputSchema,RetainedExactFeInputSchema,XADES_POLICY_URI,XADES_POLICY_HASH,XADES_POLICY_HASH_ALGORITHM,ExonerationTypeSchema,UNITS_OF_MEASURE} from "@dojocoding/hacienda-shared";
 import {createServer} from "@dojocoding/hacienda-mcp";
 import {Client} from "@modelcontextprotocol/sdk/client/index.js";
 import {StdioClientTransport} from "@modelcontextprotocol/sdk/client/stdio.js";
@@ -170,6 +171,11 @@ assert.ok(exactXml.includes("<TotalComprobante>9999999999999.99999</TotalComprob
 assert.ok((await validateDocumentXml(exactXml)).valid);
 assert.equal(buildExactFacturaXml(JSON.parse(JSON.stringify(exact))),exactXml);
 assert.throws(()=>buildExactFacturaXml({...exact,resumenFactura:{totalComprobante:"0"}}));
+for(const condition of ["02","10"]){
+ for(const days of [undefined,"0","00000","100000"]){const credit={...exact,condicionVenta:condition,...(days===undefined?{}:{plazoCredito:days})};assert.equal(ExactFeInputSchema.safeParse(credit).success,false);assert.throws(()=>buildExactFacturaXml(credit));}
+ for(const days of ["1","00030","99999"]){const credit={...exact,condicionVenta:condition,plazoCredito:days};assert.equal(ExactFeInputSchema.parse(credit).plazoCredito,days);assert.ok(buildExactFacturaXml(credit).includes("<PlazoCredito>"+days+"</PlazoCredito>"));}
+}
+for(const historical of [{...exact,condicionVenta:"02",plazoCredito:"00000"},{...exact,condicionVenta:"10"}]){const retained=RetainedExactFeInputSchema.parse(historical);assert.equal(calculateRetainedExactFe(retained).resumenFactura.totalComprobante,"9999999999999.99999");assert.throws(()=>buildExactFacturaXml(retained));}
 const ncClave=exact.clave.slice(0,29)+"03"+exact.clave.slice(31);
 const exactNc={caseCode:"NC-domestic-ordinary-fe-total-iva13-v1",original:exact,clave:ncClave,numeroConsecutivo:ncClave.slice(21,41),fechaEmision:exact.fechaEmision,informacionReferencia:[{tipoDoc:"01",numero:exact.clave,fechaEmision:exact.fechaEmision,codigo:"01",razon:"Packed synthetic full credit"}]};
 const ncXml=buildExactNotaCreditoTotalXml(JSON.parse(JSON.stringify(exactNc)));

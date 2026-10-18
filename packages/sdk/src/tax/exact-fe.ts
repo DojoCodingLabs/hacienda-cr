@@ -3,6 +3,8 @@
  * discount and per-line tax boundaries; aggregate already-quantized integers. */
 import {
   ExactFeInputSchema,
+  RetainedExactFeInputSchema,
+  type RetainedExactFeInput,
   ExactFeCalculatedSchema,
   type ExactFeInput,
   type ExactFeCalculated,
@@ -24,7 +26,15 @@ function sum(items: readonly bigint[]) {
   return items.reduce((a, b) => a + b, 0n);
 }
 export function calculateExactFe(source: ExactFeInput): ExactFeCalculated {
-  const input = ExactFeInputSchema.parse(source);
+  return calculateCheckedExactFe(ExactFeInputSchema.parse(source));
+}
+/** Read-only historical arithmetic for independently bound retained 0.6–0.8 FE.
+ * Not issuance validation, source authenticity or a signing/transport grant.
+ * Deliberately has no corresponding retained XML builder. */
+export function calculateRetainedExactFe(source: RetainedExactFeInput): ExactFeCalculated {
+  return calculateCheckedExactFe(RetainedExactFeInputSchema.parse(source));
+}
+function calculateCheckedExactFe(input: ExactFeInput): ExactFeCalculated {
   let services = 0n,
     goods = 0n,
     discounts = 0n,

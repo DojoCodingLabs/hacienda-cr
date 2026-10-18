@@ -75,10 +75,12 @@ export {
   ExactFeLineInputSchema,
   ExactFePaymentSchema,
   ExactFeInputSchema,
+  RetainedExactFeInputSchema,
   ExactFeCalculatedLineSchema,
   ExactFeSummarySchema,
   ExactFeCalculatedSchema,
   type ExactFeInput,
+  type RetainedExactFeInput,
   type ExactFeCalculated,
 } from "./exact-fe.js";
 

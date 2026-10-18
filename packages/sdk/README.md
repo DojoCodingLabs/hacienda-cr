@@ -190,3 +190,9 @@ allocated payments, not every fiscal regime. See [contract, precision, limits
 and independent checks](../../docs/specs/exact-ordinary-fe.md).
 
 History wrappers now follow the documented metadata contract and expose raw observed range headers. See [the explicit migration and limits](../../docs/history-contract.md) before changing a backfill consumer.
+
+Current exact FE credit terms require positive 1–5 digit `plazoCredito` for 02/10,
+without changing valid original lexemes. Historical read-only compatibility uses
+the explicitly separate `calculateRetainedExactFe`/`RetainedExactFeInputSchema`
+contract, never a retained XML/signing builder. See [credit-term rules and
+consumer migration](../../docs/exact-fe-credit-terms.md).
