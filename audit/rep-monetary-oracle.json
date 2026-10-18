@@ -1,0 +1,123 @@
+{
+  "source": "43feefa835e93d5139379e291305956ef0034566",
+  "diagnosticReferenceCode": "04",
+  "referenceGeneration": [
+    {
+      "generation": "2024",
+      "referenceCode": "17",
+      "valid": false
+    },
+    {
+      "generation": "2026",
+      "referenceCode": "17",
+      "valid": true
+    }
+  ],
+  "scope": "Synthetic XML-only audit; placeholder signature is structural only; no SDK identity/original/payment authority is tested",
+  "results": [
+    {
+      "hypothesis": {
+        "name": "legacy net sale, gross receipt",
+        "line": "100.00000",
+        "subtotal": "100.00000",
+        "tax": "13.00000",
+        "lineTotal": "113.00000",
+        "sale": "100.00000",
+        "net": "100.00000",
+        "total": "113.00000"
+      },
+      "xmlSha256": "a9b443f7c2f4790d7fbb145dee9fadd15376c4114106affa66c1d01a9aa76319",
+      "native": [
+        {
+          "generation": "2024",
+          "valid": true,
+          "schemaSha256": "81d7be9cd9fc3792c2bb3822079784b8d62a3e643e708df0c99bc67d1edcbdfa"
+        },
+        {
+          "generation": "2026",
+          "valid": true,
+          "schemaSha256": "86e3aa5f0615b757a3b2e9c300973d573ac321f76adba7b4b05e59d854da82b7"
+        }
+      ],
+      "productionOracleApproved": false
+    },
+    {
+      "hypothesis": {
+        "name": "gross sale summary only",
+        "line": "100.00000",
+        "subtotal": "100.00000",
+        "tax": "13.00000",
+        "lineTotal": "113.00000",
+        "sale": "113.00000",
+        "net": "113.00000",
+        "total": "113.00000"
+      },
+      "xmlSha256": "f1236fb463fc1f26b1f6ec0ef1035215c07bb66f29c251fdf87b3913308e81cd",
+      "native": [
+        {
+          "generation": "2024",
+          "valid": true,
+          "schemaSha256": "81d7be9cd9fc3792c2bb3822079784b8d62a3e643e708df0c99bc67d1edcbdfa"
+        },
+        {
+          "generation": "2026",
+          "valid": true,
+          "schemaSha256": "86e3aa5f0615b757a3b2e9c300973d573ac321f76adba7b4b05e59d854da82b7"
+        }
+      ],
+      "productionOracleApproved": false
+    },
+    {
+      "hypothesis": {
+        "name": "gross line and summary",
+        "line": "113.00000",
+        "subtotal": "100.00000",
+        "tax": "13.00000",
+        "lineTotal": "113.00000",
+        "sale": "113.00000",
+        "net": "113.00000",
+        "total": "113.00000"
+      },
+      "xmlSha256": "e71976e1c45a41a5e5e966a0cad8898577abcd9f9aeca263237fe19672c38961",
+      "native": [
+        {
+          "generation": "2024",
+          "valid": true,
+          "schemaSha256": "81d7be9cd9fc3792c2bb3822079784b8d62a3e643e708df0c99bc67d1edcbdfa"
+        },
+        {
+          "generation": "2026",
+          "valid": true,
+          "schemaSha256": "86e3aa5f0615b757a3b2e9c300973d573ac321f76adba7b4b05e59d854da82b7"
+        }
+      ],
+      "productionOracleApproved": false
+    },
+    {
+      "hypothesis": {
+        "name": "literal net total exception",
+        "line": "100.00000",
+        "subtotal": "100.00000",
+        "tax": "13.00000",
+        "lineTotal": "113.00000",
+        "sale": "100.00000",
+        "net": "100.00000",
+        "total": "100.00000"
+      },
+      "xmlSha256": "41ef87b1fec51de03f01f7a6f1014e12b5edbd1255f4c3886dd3803749a96760",
+      "native": [
+        {
+          "generation": "2024",
+          "valid": true,
+          "schemaSha256": "81d7be9cd9fc3792c2bb3822079784b8d62a3e643e708df0c99bc67d1edcbdfa"
+        },
+        {
+          "generation": "2026",
+          "valid": true,
+          "schemaSha256": "86e3aa5f0615b757a3b2e9c300973d573ac321f76adba7b4b05e59d854da82b7"
+        }
+      ],
+      "productionOracleApproved": false
+    }
+  ]
+}
