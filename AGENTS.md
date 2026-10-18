@@ -73,6 +73,7 @@ ambiguous submission failure, query the same clave before deciding to resubmit.
 
 - [Forge reachability and nested-DER regression](docs/forge-reachability-audit.md): historical source trace and current native response-verifier boundary; advisory remains open.
 
+- [Pause and continuation checkpoint](docs/pause-context-2026-10-18.md): all eight issue dispositions, published versus source-only identity and explicit resume criteria.
 - [Published 0.10.0](docs/release-0100-published.md): exact registry bytes, provenance, single indexing recovery and remaining fiscal/application gates.
 - [0.10.0 preparation](docs/release-0100-readiness.md): completed exact-source APIs, remaining REP/recipient transport boundaries and reviewed release gates.
 - [Recipient transport correlation](docs/mr-transport-correlation-research.md): exact primary evidence and required receiver-specific outcome oracle.

@@ -20,6 +20,8 @@ Toolkit open-source en TypeScript para trabajar con comprobantes electrónicos v
 
 La versión **0.10.0** está publicada en los cuatro paquetes. El [registro de publicación](docs/release-0100-published.md) conserva los bytes verificados, procedencia y recuperación tras una demora de indexación de npm. La [preparación revisada](docs/release-0100-readiness.md) detalla sus APIs exactas y límites: REP exacto, transporte y correlación de mensajes del receptor, adopción en aplicaciones y aceptación fiscal siguen siendo trabajos separados. El [registro histórico 0.7.0](docs/release-070-published.md) conserva su verificación y recuperación de publicación.
 
+El desarrollo nuevo está en pausa por solicitud del usuario al 18 de octubre de 2026. El [contexto de continuación](docs/pause-context-2026-10-18.md) reúne el estado de los ocho issues, los límites pendientes y los criterios para retomar; la publicación 0.10.0 conserva su identidad y evidencia originales.
+
 ## La visión: facturación dentro de tu producto
 
 **Que cada venta pueda convertirse en un comprobante electrónico desde el mismo lugar donde ocurre.** Un checkout, una caja, un sistema de gestión o una conversación con un asistente pueden ser el punto de partida.
