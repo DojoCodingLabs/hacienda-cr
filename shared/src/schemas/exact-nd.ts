@@ -1,5 +1,6 @@
 /** Named ordinary positive amount correction of one FE, not a legal-age oracle. */
 import { z } from "zod";
+import { exactPartyName } from "./exact-party-name.js";
 import {
   ExactFeInputSchema,
   ExactFeLineInputSchema,
@@ -8,6 +9,18 @@ import {
 } from "./exact-fe.js";
 import { ExactNcTotalReferenceSchema } from "./exact-nc.js";
 import { compareNcInstants as compareReferenceInstants } from "./exact-nc-instant.js";
+// Preserve all current FE source refinements while enforcing the copied ND
+// party fields against ND's own Unicode bounds. Never mutate legacy FE schemas.
+const ExactNdOriginalSchema = ExactFeInputSchema.safeExtend({
+  emisor: ExactFeInputSchema.shape.emisor.safeExtend({
+    nombre: exactPartyName(5, 100),
+    nombreComercial: exactPartyName(3, 80).optional(),
+  }),
+  receptor: ExactFeInputSchema.shape.receptor.safeExtend({
+    nombre: exactPartyName(3, 100),
+    nombreComercial: exactPartyName(3, 80).optional(),
+  }),
+});
 /** Current annex Nota 9: 02 corrects amounts. The older XSD annotation says text,
  * but its actual code restriction admits 02. Never alter the official XSD bytes. */
 export const ExactNdReferenceSchema = ExactNcTotalReferenceSchema.omit({ codigo: true })
@@ -16,7 +29,7 @@ export const ExactNdReferenceSchema = ExactNcTotalReferenceSchema.omit({ codigo:
 export const ExactNdInputSchema = z
   .object({
     caseCode: z.literal("ND-domestic-ordinary-fe-increment-iva13-v1"),
-    original: ExactFeInputSchema,
+    original: ExactNdOriginalSchema,
     clave: ExactFeInputSchema.shape.clave,
     numeroConsecutivo: ExactFeInputSchema.shape.numeroConsecutivo,
     fechaEmision: z.iso.datetime({ offset: true }),

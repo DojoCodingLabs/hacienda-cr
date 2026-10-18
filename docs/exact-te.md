@@ -50,3 +50,14 @@ are not counted as passing evidence. No package version, lockfile, vendor schema
 provider credentials or production activation changed.
 
 Independent root review of `6381143748663cadab6d48145ba3b2771c9c6e1a` found no merge blocker in the TE schema, genuine TE04 builder/identity, monetary-only extraction or preserved FE/NC contracts. A separate focused run passed 25 tests covering native TE XML/signing, response binding and published 0.9 FE/NC byte/math compatibility (`/private/tmp/root-sdk-te-review-tests.log`). This review authorizes source integration only; release and app activation remain separate.
+
+## Unreleased native issuer-name correction
+
+The subsequent exact ND source review reproduced a four-character TE issuer
+accepted by this schema but rejected by the unchanged native TE XSD (lines
+938–946, minimum five). Before any release of exact TE, PR87 raises only its
+issuer-name minimum to five Unicode characters, preserving maximum 100, actual
+receiver minimum three and commercial 3–80. Independent boundary/native tests
+cover this follow-up. The earlier verification/review above remains historical
+evidence for the earlier TE candidate, not verification of this correction.
+Existing FE/current/retained and Number APIs remain unchanged.

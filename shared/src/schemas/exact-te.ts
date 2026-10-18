@@ -1,5 +1,6 @@
 /** Additive ordinary domestic TE; no fictitious receiver or FE producer input. */
 import { z } from "zod";
+import { exactPartyName } from "./exact-party-name.js";
 import { FacturaElectronicaSchema } from "./factura.js";
 import { EmisorSchema } from "./emisor.js";
 import { ReceptorSchema } from "./receptor.js";
@@ -14,15 +15,6 @@ import {
 const domesticIdentity = IdentificacionSchema.safeExtend({
   tipo: z.enum(["01", "02", "03", "04"]),
 }).strict();
-// TE XSD names count Unicode characters, never silently trim/normalize.
-const name = (max: number) =>
-  z
-    .string()
-    .max(max * 2)
-    .refine((value) => {
-      const length = [...value].length;
-      return length >= 3 && length <= max && value.trim().length > 0;
-    }, "An actual name of 3 to the permitted maximum Unicode characters is required");
 export const ExactTeInputSchema = FacturaElectronicaSchema.pick({
   clave: true,
   proveedorSistemas: true,
@@ -35,16 +27,16 @@ export const ExactTeInputSchema = FacturaElectronicaSchema.pick({
     caseCode: z.literal("TE-domestic-ordinary-iva13-v1"),
     fechaEmision: z.iso.datetime({ offset: true }),
     emisor: EmisorSchema.extend({
-      nombre: name(100),
-      nombreComercial: name(80).optional(),
+      nombre: exactPartyName(5, 100),
+      nombreComercial: exactPartyName(3, 80).optional(),
       identificacion: domesticIdentity,
       ubicacion: UbicacionSchema.strict(),
       telefono: TelefonoSchema.strict().optional(),
     }).strict(),
     receptor: ReceptorSchema.omit({ otrasSenasExtranjero: true })
       .extend({
-        nombre: name(100),
-        nombreComercial: name(80).optional(),
+        nombre: exactPartyName(3, 100),
+        nombreComercial: exactPartyName(3, 80).optional(),
         identificacion: domesticIdentity.optional(),
         ubicacion: UbicacionSchema.strict().optional(),
         telefono: TelefonoSchema.strict().optional(),

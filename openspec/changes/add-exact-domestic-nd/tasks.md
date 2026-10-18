@@ -3,7 +3,7 @@
 - [x] Add strict source/reference/line-correlation schemas and public types.
 - [x] Add independent exact positive ND increment calculation and genuine ND02 XML.
 - [x] Verify current primary rules, Decimal/native/synthetic signing/response and existing API compatibility.
-- [x] Run full verification and fresh packed consumers.
+- [x] Rerun full verification and fresh packed consumers after the native copied-name review correction.
 - [ ] Obtain independent source review before merge.
 
 ## Separate gates
