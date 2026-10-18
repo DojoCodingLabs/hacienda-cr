@@ -196,3 +196,11 @@ without changing valid original lexemes. Historical read-only compatibility uses
 the explicitly separate `calculateRetainedExactFe`/`RetainedExactFeInputSchema`
 contract, never a retained XML/signing builder. See [credit-term rules and
 consumer migration](../../docs/exact-fe-credit-terms.md).
+
+### Exact ordinary TE source candidate
+
+The additive `calculateExactTe` / `buildExactTiqueteXml` and shared
+`ExactTeInputSchema` preserve decimal text and actual optional receiver data.
+They do not fabricate an FE receiver or enable live TE issuance. See the
+[contract, scope and verification limits](../../docs/exact-te.md). This source
+slice is not a new published version or exact CLI/MCP activation.

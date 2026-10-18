@@ -222,3 +222,7 @@ export type {
 export { calculateExactNcTotal } from "./tax/exact-nc.js";
 export { buildExactNotaCreditoTotalXml } from "./documents/exact-nc-builder.js";
 export type { ExactNcTotalInput, ExactNcTotalCalculated } from "@dojocoding/hacienda-shared";
+
+export { calculateExactTe } from "./tax/exact-te.js";
+export { buildExactTiqueteXml } from "./documents/exact-te-builder.js";
+export type { ExactTeInput, ExactTeCalculated } from "@dojocoding/hacienda-shared";
