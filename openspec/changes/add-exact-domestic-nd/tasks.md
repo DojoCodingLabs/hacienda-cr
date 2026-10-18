@@ -4,7 +4,7 @@
 - [x] Add independent exact positive ND increment calculation and genuine ND02 XML.
 - [x] Verify current primary rules, Decimal/native/synthetic signing/response and existing API compatibility.
 - [x] Rerun full verification and fresh packed consumers after the native copied-name review correction.
-- [ ] Obtain independent source review before merge.
+- [x] Obtain independent source review before merge. Root reviewed corrected `d6c0f857e28cbf10a37c2d93e239803cbf18c915` and independently passed 14 focused ND/native-name/response/FE-NC compatibility tests; `/private/tmp/root-sdk-nd-review-tests.log`.
 
 ## Separate gates
 

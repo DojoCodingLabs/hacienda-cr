@@ -61,3 +61,7 @@ log: `/private/tmp/sdk-nd-name-verify-final.log`; native finding reproduction:
 incorrectly assumed UTF-16 counting; actual dependency inspection disproved that
 assumption and the corrected regression preserves existing Unicode behavior. No live provider, package publication or app
 activation is implied; official schemas, versions and lockfile remain unchanged.
+
+## Independent source review
+
+Root reviewed corrected `d6c0f857e28cbf10a37c2d93e239803cbf18c915`: original correspondence, positive independent increment, exact chronology/reference binding, genuine ND02 XML, native name bounds, public exports and preserved FE/TE/NC contracts. Its independent four-file run passed 14 tests, including native name boundaries, signed ND response context and published FE/NC byte/math compatibility (`/private/tmp/root-sdk-nd-review-tests.log`). The first reviewed candidate allowed a four-character issuer that native TE/ND schemas rejected; the corrected candidate now rejects it at input without changing existing FE validators. This is source integration evidence only; no npm publication or app activation is established.
