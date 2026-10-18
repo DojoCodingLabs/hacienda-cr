@@ -101,3 +101,19 @@ mistook a fixture's existing commercial name for absence and expected native
 rejection of 0.9's omitted empty commercial input; the corrected tests inspect
 actual emitted bytes instead. No source authority or native schema was loosened
 to resolve those failures. No publication or app/shared/cloud mutation occurred.
+
+## Independent root review and registry reproduction
+
+Root reviewed exact runtime `3e40b2f540aba14bf4c87901e840f3b998ffd25d`,
+including the strict-current versus broad-retained/output schema split, native
+party bounds, payment companions, unchanged math/builders and public exports.
+No source blocker was found. Root independently passed **43 SDK tests across
+six focused files** and **nine shared schema tests** (52 total).
+
+In a separate clean clone, root reran `node scripts/capture-fe-native-090.mjs`
+against the actual registry 0.9 artifacts. The seven regenerated source/math/XML
+cases are byte-identical to the committed fixture; exact SDK/shared SRI checks
+passed and the owned temporary consumer was removed. No current producer was
+used to recreate historical bytes. Root inspected the author's complete final
+verification separately. This documentation-only follow-up changes no runtime,
+version, lock, original, target or application authority.
