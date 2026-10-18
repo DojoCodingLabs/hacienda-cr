@@ -213,3 +213,7 @@ export type {
 export { calculateExactFe } from "./tax/exact-fe.js";
 export { buildExactFacturaXml } from "./documents/exact-fe-builder.js";
 export type { ExactFeInput, ExactFeCalculated } from "@dojocoding/hacienda-shared";
+
+export { calculateExactNcTotal } from "./tax/exact-nc.js";
+export { buildExactNotaCreditoTotalXml } from "./documents/exact-nc-builder.js";
+export type { ExactNcTotalInput, ExactNcTotalCalculated } from "@dojocoding/hacienda-shared";

@@ -81,3 +81,10 @@ export {
   type ExactFeInput,
   type ExactFeCalculated,
 } from "./exact-fe.js";
+
+export {
+  ExactNcTotalInputSchema,
+  ExactNcTotalReferenceSchema,
+  type ExactNcTotalInput,
+  type ExactNcTotalCalculated,
+} from "./exact-nc.js";

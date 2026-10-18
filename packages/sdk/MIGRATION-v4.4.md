@@ -1,5 +1,23 @@
 # Audit-fix migration notes
 
+## Next additive exact total NC API (unreleased)
+
+Existing numeric and exact FE inputs remain unchanged. New shared
+`ExactNcTotalInputSchema` and SDK `calculateExactNcTotal` /
+`buildExactNotaCreditoTotalXml` support only full cancellation of one ordinary
+IVA13 FE in CRC/USD. Supply the unchanged strict exact original, independent
+NC03 identity/emission and one explicit matching FE01 reference with code01 and
+a nonblank reason. All monetary/quantity/payment/FX values remain strings;
+caller-supplied NC totals or separate credit lines are rejected. Credit values
+are positive full-original magnitudes, not a refund or signed ledger amount.
+
+Applications must independently prove accepted immutable source authority,
+unused credit amount, permissions and durable idempotency. No SDK boolean
+establishes acceptance. Partial credits, ND and rejected-FE replacement remain
+separate cases. The minor Changeset is not a published release; adopt only after
+reviewed linked release artifacts exist. See the repository
+`docs/specs/exact-total-nc.md` for primary XSD/reference evidence and limits.
+
 ## 0.4.2 → 0.5.0
 
 All four linked `@dojocoding/hacienda-{shared,sdk,cli,mcp}` packages advance to

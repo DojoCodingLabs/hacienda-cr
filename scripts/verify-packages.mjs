@@ -73,7 +73,8 @@ try {
     example +
       '\nconst issuedUsernameClient = new HaciendaClient({ environment: Environment.Sandbox, credentials: { username: \"cpf-01-1234-5678@stag.comprobanteselectronicos.go.cr\", password: \"synthetic\" } });\nexport { issuedUsernameClient };\n' +
       '\nimport { createServer } from "@dojocoding/hacienda-mcp";\nimport { FacturaElectronicaSchema } from "@dojocoding/hacienda-shared";\nexport const extra = {createServer, FacturaElectronicaSchema};\n' +
-      '\nimport { calculateExactFe, buildExactFacturaXml, type ExactFeInput } from "@dojocoding/hacienda-sdk";\nimport { ExactFeInputSchema, ExactFeCalculatedSchema } from "@dojocoding/hacienda-shared";\nexport const exactFeContract = (input: ExactFeInput) => ({ calculated: ExactFeCalculatedSchema.parse(calculateExactFe(ExactFeInputSchema.parse(input))), xml: buildExactFacturaXml(input) });\n',
+      '\nimport { calculateExactFe, buildExactFacturaXml, type ExactFeInput } from "@dojocoding/hacienda-sdk";\nimport { ExactFeInputSchema, ExactFeCalculatedSchema } from "@dojocoding/hacienda-shared";\nexport const exactFeContract = (input: ExactFeInput) => ({ calculated: ExactFeCalculatedSchema.parse(calculateExactFe(ExactFeInputSchema.parse(input))), xml: buildExactFacturaXml(input) });\n' +
+      '\nimport { calculateExactNcTotal, buildExactNotaCreditoTotalXml, type ExactNcTotalInput } from "@dojocoding/hacienda-sdk";\nimport { ExactNcTotalInputSchema } from "@dojocoding/hacienda-shared";\nexport const exactNcContract = (input: ExactNcTotalInput) => ({ calculated: calculateExactNcTotal(ExactNcTotalInputSchema.parse(input)), xml: buildExactNotaCreditoTotalXml(input) });\n',
   );
   for (const resolution of ["NodeNext", "Bundler"]) {
     await writeFile(
@@ -125,7 +126,7 @@ import assert from "node:assert/strict";
 import {writeFile, readFile} from "node:fs/promises";
 import {execFileSync} from "node:child_process";
 import {SIMPLE_INVOICE} from "./fixtures.mjs";
-import {buildFacturaXml,calculateExactFe,buildExactFacturaXml,validateDocumentXml,HaciendaClient,Environment,loadCredentials,signXml,verifyHaciendaResponseXml,ResponseVerificationError} from "@dojocoding/hacienda-sdk";
+import {calculateExactNcTotal,buildExactNotaCreditoTotalXml,buildFacturaXml,calculateExactFe,buildExactFacturaXml,validateDocumentXml,HaciendaClient,Environment,loadCredentials,signXml,verifyHaciendaResponseXml,ResponseVerificationError} from "@dojocoding/hacienda-sdk";
 import {XADES_POLICY_URI,XADES_POLICY_HASH,XADES_POLICY_HASH_ALGORITHM,ExonerationTypeSchema,UNITS_OF_MEASURE} from "@dojocoding/hacienda-shared";
 import {createServer} from "@dojocoding/hacienda-mcp";
 import {Client} from "@modelcontextprotocol/sdk/client/index.js";
@@ -149,6 +150,14 @@ assert.ok(exactXml.includes("<TotalComprobante>9999999999999.99999</TotalComprob
 assert.ok((await validateDocumentXml(exactXml)).valid);
 assert.equal(buildExactFacturaXml(JSON.parse(JSON.stringify(exact))),exactXml);
 assert.throws(()=>buildExactFacturaXml({...exact,resumenFactura:{totalComprobante:"0"}}));
+const ncClave=exact.clave.slice(0,29)+"03"+exact.clave.slice(31);
+const exactNc={caseCode:"NC-domestic-ordinary-fe-total-iva13-v1",original:exact,clave:ncClave,numeroConsecutivo:ncClave.slice(21,41),fechaEmision:exact.fechaEmision,informacionReferencia:[{tipoDoc:"01",numero:exact.clave,fechaEmision:exact.fechaEmision,codigo:"01",razon:"Packed synthetic full credit"}]};
+const ncXml=buildExactNotaCreditoTotalXml(JSON.parse(JSON.stringify(exactNc)));
+assert.equal(calculateExactNcTotal(exactNc).resumenFactura.totalComprobante,"9999999999999.99999");
+assert.ok(ncXml.includes("<TipoDocIR>01</TipoDocIR>"));assert.ok(ncXml.includes("<Numero>"+exact.clave+"</Numero>"));
+assert.ok((await validateDocumentXml(ncXml)).valid);
+assert.equal(buildExactNotaCreditoTotalXml(exactNc),ncXml);
+assert.throws(()=>buildExactNotaCreditoTotalXml({...exactNc,total:"1"}));
 assert.ok(XADES_POLICY_URI.includes("/xml-schemas/"));
 assert.equal(XADES_POLICY_HASH,"DWxin1xWOeI8OuWQXazh4VjLWAaCLAA954em7DMh0h8=");
 assert.equal(XADES_POLICY_HASH_ALGORITHM,"http://www.w3.org/2001/04/xmlenc#sha256");
@@ -157,6 +166,8 @@ assert.ok(UNITS_OF_MEASURE.includes("Ω"));
 execFileSync("openssl",["req","-x509","-newkey","rsa:2048","-nodes","-keyout","synthetic.key","-out","synthetic.crt","-days","1","-subj","/CN=Offline packed consumer","-addext","basicConstraints=critical,CA:FALSE"],{stdio:"pipe",timeout:15000});
 execFileSync("openssl",["pkcs12","-export","-legacy","-inkey","synthetic.key","-in","synthetic.crt","-out","synthetic.p12","-passout","pass:synthetic"],{stdio:"pipe",timeout:15000});
 const signed=await signXml(xml,await readFile("synthetic.p12"),"synthetic");
+const signedNc=await signXml(ncXml,await readFile("synthetic.p12"),"synthetic");
+const ncValidation=await validateDocumentXml(signedNc,{requireSignature:true});assert.ok(ncValidation.valid&&ncValidation.hasSignature);
 assert.ok(signed.includes(XADES_POLICY_URI));
 assert.ok(signed.includes(XADES_POLICY_HASH));
 assert.ok(signed.includes(XADES_POLICY_HASH_ALGORITHM));

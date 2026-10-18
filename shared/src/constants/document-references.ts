@@ -18,7 +18,7 @@ export const REFERENCE_DOC_TYPES = [
   "07", // Procedimiento
   "08", // Comprobante emitido en contingencia
   "09", // Devolucion de mercaderia
-  "10", // Sustituye factura rechazada por Hacienda
+  "10", // Comprobante electronico rechazado por el Ministerio de Hacienda
   "11", // Sustituye factura rechazada por el receptor
   "12", // Sustituye factura de exportacion
   "13", // Facturacion mes vencido

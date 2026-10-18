@@ -1,4 +1,8 @@
-import { ExactFeInputSchema, type ExactFeInput } from "@dojocoding/hacienda-shared";
+import {
+  ExactFeInputSchema,
+  type ExactFeInput,
+  type ExactFeCalculated,
+} from "@dojocoding/hacienda-shared";
 import { calculateExactFe } from "../tax/exact-fe.js";
 import { assertDocumentIdentity } from "../xml/document-identity.js";
 import { buildXml } from "../xml/builder.js";
@@ -10,9 +14,13 @@ import { buildEmisorXml, buildReceptorXml } from "./shared-xml-helpers.js";
 export function buildExactFacturaXml(source: ExactFeInput): string {
   const input = ExactFeInputSchema.parse(source);
   assertDocumentIdentity(input, "01");
-  const calculated = calculateExactFe(input),
-    summary = calculated.resumenFactura;
-  return buildXml("FacturaElectronica", {
+  return buildXml("FacturaElectronica", buildExactOrdinaryFields(input, calculateExactFe(input)));
+}
+
+/** Internal exact projection shared with full NC; not a public calculated-input API. */
+export function buildExactOrdinaryFields(input: ExactFeInput, calculated: ExactFeCalculated) {
+  const summary = calculated.resumenFactura;
+  return {
     Clave: input.clave,
     ProveedorSistemas: input.proveedorSistemas,
     CodigoActividadEmisor: input.codigoActividadEmisor,
@@ -94,5 +102,5 @@ export function buildExactFacturaXml(source: ExactFeInput): string {
       })),
       TotalComprobante: summary.totalComprobante,
     },
-  });
+  };
 }

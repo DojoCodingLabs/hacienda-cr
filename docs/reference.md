@@ -10,6 +10,12 @@ Los cambios de entradas y validación están en las [notas v4.4](../packages/sdk
 
 ## SDK — Documentación completa
 
+La API aditiva para NC total exacta está descrita en
+[su contrato y límites](specs/exact-total-nc.md): requiere una FE ordinaria
+original inmutable, identidad propia y referencia completa. No sustituye la
+evidencia de aceptación ni habilita emisión real. Su adopción requiere una nueva
+versión publicada; las API existentes de0.6 permanecen compatibles.
+
 ### HaciendaClient
 
 El punto de entrada para autenticación y generación de claves. Las operaciones de XML, firma y API se usan como funciones independientes.
