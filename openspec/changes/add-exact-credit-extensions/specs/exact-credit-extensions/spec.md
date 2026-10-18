@@ -3,13 +3,13 @@
 ### Requirement: Partial NC source is distinct from total cancellation
 
 The SDK SHALL provide a reviewed positive exact partial amount-correction source
-bound to immutable original FE facts and own NC03 identity. It SHALL NOT infer
+bound to immutable original FE facts and own NC 03 identity. It SHALL NOT infer
 fresh remaining credit, refunds or original acceptance from source arithmetic.
 
 #### Scenario: Partial credit preserves the original
 
 - **WHEN** a reviewed partial amount correction selects explicit correlated original line facts
-- **THEN** new NC03 XML SHALL calculate only the positive credit and reference the unchanged original FE with amount-correction02
+- **THEN** new NC 03 XML SHALL calculate only the positive credit and reference the unchanged original FE with amount-correction02
 
 ### Requirement: Hacienda-rejected FE replacement is a new document
 
@@ -21,7 +21,7 @@ valid current FE input.
 #### Scenario: Replacement receives a new identity
 
 - **WHEN** independently verified rejected source material authorizes a reviewed replacement
-- **THEN** a new current FE SHALL carry rejected-document type10/replacement16 and exact retained reference identity/date with a fresh consecutive
+- **THEN** a new current FE SHALL carry rejected-document type 10/replacement16 and exact retained reference identity/date with a fresh consecutive
 
 #### Scenario: Unknown or recipient rejection is not institutional rejection
 
