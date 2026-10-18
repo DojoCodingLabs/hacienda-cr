@@ -10,7 +10,7 @@
 - [x] Add independent exact source calculation and genuine native FEC projection.
 - [x] Prove Decimal/native/signing/response and unchanged family/legacy contracts.
 - [x] Run strict OpenSpec/full verify/fresh packed consumers.
-- [ ] Obtain independent exact-head review before source integration.
+- [x] Obtain independent exact-head review before source integration. Root reviewed `e7c4fdc70eabb2071d47195b445502f5fb2f2ae5` and independently passed 12 focused FEC/native-name/generic-response/FE-NC compatibility tests; `/private/tmp/root-sdk-fec-review-tests.log`.
 
 ## Separate required gates
 

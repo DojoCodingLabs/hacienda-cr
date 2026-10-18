@@ -100,3 +100,7 @@ cannot admit condition 99. An initial offline install lacked a cached package;
 the exact frozen lockfile was installed from the registry, with no dependency
 changes. Those diagnostic runs are not counted as passing verification. Independent
 exact-head source review, coherent release and app gates remain pending.
+
+## Independent source review
+
+Root reviewed exact `e7c4fdc70eabb2071d47195b445502f5fb2f2ae5`: primary reference/companion matrix, actual supplier/buyer and buyer-owned 08 identity, strict new source schema, independent monetary calculation, dedicated FEC field order without the FE-only assumed-tax node, optional supplier email type boundary, exports and caller responsibilities. A separate four-file run passed 12 tests covering native FEC/signing, exact amounts, party bounds, generic explicit response contexts and published FE/NC byte/math compatibility (`/private/tmp/root-sdk-fec-review-tests.log`). No source integration blocker remains for this named case. Supplier eligibility, special FEC cases, live response-party oracle and all release/app activation gates remain open.
