@@ -114,3 +114,10 @@ and real sandbox credentials. Live acceptance has not been executed during this
 hardening/release-preparation work. XSD checks establish
 structure, not signature authenticity; the crypto regression checks integrity
 with a self-signed test certificate, not institutional trust.
+
+### Scoped Forge reachability checkpoint
+
+The [SDK 0.6.0 call-path audit](forge-reachability-audit.md) records exact P12,
+native signing and pinned response-verification paths, 39 existing passing
+regressions and the unchanged runtime audit finding. Issue #69 remains open;
+the specific adversarial regression criterion is explicitly uncompleted.
