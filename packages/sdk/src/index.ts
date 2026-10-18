@@ -255,3 +255,10 @@ export type {
 
 export { buildExactMensajeReceptorXml } from "./documents/exact-recipient-message-builder.js";
 export type { ExactRecipientMessageInput } from "@dojocoding/hacienda-shared";
+
+export { calculateExactFecUsedPersonalGoodsNonSubject } from "./tax/exact-fec-used-personal.js";
+export { buildExactFacturaCompraUsedPersonalGoodsNonSubjectXml } from "./documents/exact-fec-used-personal-builder.js";
+export type {
+  ExactFecUsedPersonalGoodsNonSubjectInput,
+  ExactFecUsedPersonalGoodsNonSubjectCalculated,
+} from "@dojocoding/hacienda-shared";

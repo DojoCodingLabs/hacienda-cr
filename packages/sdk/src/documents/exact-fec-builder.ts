@@ -2,6 +2,7 @@ import {
   ExactFecInputSchema,
   type ExactFecInput,
   type ExactFecCalculated,
+  type ExactFecUsedPersonalGoodsNonSubjectCalculated,
 } from "@dojocoding/hacienda-shared";
 import { calculateExactFec } from "../tax/exact-fec.js";
 import { buildXml } from "../xml/builder.js";
@@ -42,47 +43,7 @@ export function buildExactFecMonetaryFields(calculated: ExactFecCalculated) {
   const summary = calculated.resumenFactura;
   return {
     DetalleServicio: {
-      LineaDetalle: calculated.detalleServicio.map((line) => ({
-        NumeroLinea: line.numeroLinea,
-        CodigoCABYS: line.codigoCabys,
-        ...(line.codigoComercial
-          ? {
-              CodigoComercial: line.codigoComercial.map((c) => ({
-                Tipo: c.tipo,
-                Codigo: c.codigo,
-              })),
-            }
-          : {}),
-        Cantidad: line.cantidad,
-        UnidadMedida: line.unidadMedida,
-        ...(line.tipoTransaccion ? { TipoTransaccion: line.tipoTransaccion } : {}),
-        ...(line.unidadMedidaComercial
-          ? { UnidadMedidaComercial: line.unidadMedidaComercial }
-          : {}),
-        Detalle: line.detalle,
-        PrecioUnitario: line.precioUnitario,
-        MontoTotal: line.montoTotal,
-        ...(line.descuento
-          ? {
-              Descuento: line.descuento.map((d) => ({
-                MontoDescuento: d.montoDescuento,
-                CodigoDescuento: d.codigoDescuento,
-                ...(d.codigoDescuentoOtros ? { CodigoDescuentoOTRO: d.codigoDescuentoOtros } : {}),
-                ...(d.naturalezaDescuento ? { NaturalezaDescuento: d.naturalezaDescuento } : {}),
-              })),
-            }
-          : {}),
-        SubTotal: line.subTotal,
-        BaseImponible: line.baseImponible,
-        Impuesto: line.impuesto.map((t) => ({
-          Codigo: t.codigo,
-          CodigoTarifaIVA: t.codigoTarifaIVA,
-          Tarifa: t.tarifa,
-          Monto: t.monto,
-        })),
-        ImpuestoNeto: line.impuestoNeto,
-        MontoTotalLinea: line.montoTotalLinea,
-      })),
+      LineaDetalle: buildExactFecLineFields(calculated.detalleServicio),
     },
     ResumenFactura: {
       CodigoTipoMoneda: {
@@ -109,4 +70,51 @@ export function buildExactFecMonetaryFields(calculated: ExactFecCalculated) {
       TotalComprobante: summary.totalComprobante,
     },
   };
+}
+
+/** Internal line projection; tax treatment is fixed by each strict calculated contract. */
+export function buildExactFecLineFields(
+  lines:
+    | ExactFecCalculated["detalleServicio"]
+    | ExactFecUsedPersonalGoodsNonSubjectCalculated["detalleServicio"],
+) {
+  return lines.map((line) => ({
+    NumeroLinea: line.numeroLinea,
+    CodigoCABYS: line.codigoCabys,
+    ...(line.codigoComercial
+      ? {
+          CodigoComercial: line.codigoComercial.map((c) => ({
+            Tipo: c.tipo,
+            Codigo: c.codigo,
+          })),
+        }
+      : {}),
+    Cantidad: line.cantidad,
+    UnidadMedida: line.unidadMedida,
+    ...(line.tipoTransaccion ? { TipoTransaccion: line.tipoTransaccion } : {}),
+    ...(line.unidadMedidaComercial ? { UnidadMedidaComercial: line.unidadMedidaComercial } : {}),
+    Detalle: line.detalle,
+    PrecioUnitario: line.precioUnitario,
+    MontoTotal: line.montoTotal,
+    ...(line.descuento
+      ? {
+          Descuento: line.descuento.map((d) => ({
+            MontoDescuento: d.montoDescuento,
+            CodigoDescuento: d.codigoDescuento,
+            ...(d.codigoDescuentoOtros ? { CodigoDescuentoOTRO: d.codigoDescuentoOtros } : {}),
+            ...(d.naturalezaDescuento ? { NaturalezaDescuento: d.naturalezaDescuento } : {}),
+          })),
+        }
+      : {}),
+    SubTotal: line.subTotal,
+    BaseImponible: line.baseImponible,
+    Impuesto: line.impuesto.map((t) => ({
+      Codigo: t.codigo,
+      CodigoTarifaIVA: t.codigoTarifaIVA,
+      Tarifa: t.tarifa,
+      Monto: t.monto,
+    })),
+    ImpuestoNeto: line.impuestoNeto,
+    MontoTotalLinea: line.montoTotalLinea,
+  }));
 }

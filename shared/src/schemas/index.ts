@@ -140,3 +140,12 @@ export {
   ExactRecipientIvaDecisionSchema,
   type ExactRecipientMessageInput,
 } from "./exact-recipient-message.js";
+
+export {
+  ExactFecUsedPersonalGoodsNonSubjectInputSchema,
+  ExactFecUsedPersonalGoodsNonSubjectCalculatedSchema,
+  ExactFecUsedPersonalGoodsReferenceSchema,
+  ExactFecUsedPersonalGoodsLineSchema,
+  type ExactFecUsedPersonalGoodsNonSubjectInput,
+  type ExactFecUsedPersonalGoodsNonSubjectCalculated,
+} from "./exact-fec-used-personal.js";

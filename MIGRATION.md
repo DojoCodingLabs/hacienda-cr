@@ -136,3 +136,11 @@ reference 16/reason 11 are required. No local supplier header/address or tax def
 is invented. Existing domestic FEC and other APIs are unchanged. See the
 [full contract](docs/exact-foreign-service-fec.md); selecting the source case does
 not establish legal eligibility, liability, creditability or app activation.
+
+## Unreleased explicit personal-used-goods purchase
+
+The separately named `ExactFecUsedPersonalGoodsNonSubjectInputSchema` and SDK
+calculator/XML builder select only the independently qualified non-subject case.
+They do not replace ordinary/foreign FEC, infer zero tax from supplier 06, or
+produce later resale margin/factor effects. Existing current/retained/Number
+outputs remain unchanged. See [case limits](docs/exact-used-personal-goods-fec.md).
