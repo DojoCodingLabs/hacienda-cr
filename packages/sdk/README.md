@@ -223,3 +223,13 @@ case is domestic 01–04 with conditions 01/02; foreign 05, used-goods 06/condit
 and special tax cases remain separately required. Existing family/legacy APIs
 are unchanged. See [exact FEC boundary](../../docs/exact-fec.md)
 for independent eligibility/age/response-oracle and release gates.
+
+## Unreleased exact credit extensions
+
+`calculateExactNcPartial` / `buildExactNotaCreditoPartialXml` calculate explicit
+correlated credit lines with exact decimal strings. Cumulative remaining credit
+is external immutable concurrent ledger authority, not the original-total cap.
+`calculateExactFeReplacement` / `buildExactFacturaReplacementXml` build a new FE
+with a retained institutionally rejected reference, fresh identity and explicit
+reason 16. Existing APIs are unchanged. See [source contracts and independent
+authority/release limits](../../docs/exact-credit-extensions.md).

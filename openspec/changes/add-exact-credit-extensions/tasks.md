@@ -1,4 +1,4 @@
-## Primary contract checkpoint (no runtime edits)
+## Primary contract checkpoint
 
 - [x] Audit current exact total-NC/FE and legacy reference seams on actual main 91ac.
 - [x] Bind current annex/native/regulation identities and distinguish institutional/receiver rejection.
@@ -7,9 +7,10 @@
 
 ## Source implementation after review
 
-- [ ] Add reviewed strict partial-NC schema/calculation/native producer.
-- [ ] Add independently reviewed rejected-FE replacement schema/calculation/native producer.
-- [ ] Prove native/Decimal/signing/response/legacy/packed/full verification and exact-head source review.
+- [x] Implement strict partial-NC schema/calculation/native producer for independent review.
+- [x] Implement rejected-FE replacement schema/calculation/native producer for independent review.
+- [x] Pass native/Decimal/signing/response/legacy/fresh packed/full verification (1,507 unit and 118 script tests; four live tests skipped).
+- [ ] Obtain independent exact-head source review and merge approval.
 
 ## Separate required work
 

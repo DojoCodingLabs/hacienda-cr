@@ -9,23 +9,23 @@ Legacy broad Number builders can carry references; they are not exact source
 contracts or acceptance/remaining-balance authority.
 
 - [Current official annex](https://www.hacienda.go.cr/docs/ANEXOS_Y_ESTRUCTURAS_V4.4.pdf), 99 pages, SHA256 `6e093226b29b38c5c8de825f70c1b1cb8ed81e2f4a6eb0b3ff52708fc1eb2769`; local `/private/tmp/hacienda-current-annex-v44-20261018.pdf` and same-basename text.
-- [Official regulation 44739-H](https://www.hacienda.go.cr/docs/REGLAMENTO_DE_COMPROBANTES_ELECTRONICOS.pdf), SHA256`32da4200481b6c21522d4ace59e5255e15aae0624be077594dc65195189fe4fc`; local `/private/tmp/hacienda-current-comprobantes-regulation-20261018.pdf` and same-basename text. Articles 10/19 distinguish accepted-source correction from institutional rejection/new issuance. Receiver rejection is a different lifecycle.
-- Unchanged 2026 NC XSD `packages/sdk/schemas/2026/v4.4/NotaCreditoElectronica_V4.4.xsd`, SHA256`b7ed3347c5599e78e5683d9ae83842695ab9497e173df9cd3be8d77c0851f556`.
-- Unchanged 2026 FE XSD `packages/sdk/schemas/2026/v4.4/FacturaElectronica_V4.4.xsd`, SHA256`926ba81325bc21102755bd8e4e570a63caaca086e680a877c3a6d15d6ee8a62f`.
+- [Official regulation 44739-H](https://www.hacienda.go.cr/docs/REGLAMENTO_DE_COMPROBANTES_ELECTRONICOS.pdf), SHA256 `32da4200481b6c21522d4ace59e5255e15aae0624be077594dc65195189fe4fc`; local `/private/tmp/hacienda-current-comprobantes-regulation-20261018.pdf` and same-basename text. Articles 10/19 distinguish accepted-source correction from institutional rejection/new issuance. Receiver rejection is a different lifecycle.
+- Unchanged 2026 NC XSD `packages/sdk/schemas/2026/v4.4/NotaCreditoElectronica_V4.4.xsd`, SHA256 `b7ed3347c5599e78e5683d9ae83842695ab9497e173df9cd3be8d77c0851f556`.
+- Unchanged 2026 FE XSD `packages/sdk/schemas/2026/v4.4/FacturaElectronica_V4.4.xsd`, SHA256 `926ba81325bc21102755bd8e4e570a63caaca086e680a877c3a6d15d6ee8a62f`.
 
 ## Primary distinctions and caller authority
 
-| Boundary                      | Primary evidence                                                       | Consequence                                                                                                                                                                              |
-| ----------------------------- | ---------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Institutional rejected source | Regulation art. 10/19                                                  | No NC/ND to cancel an invalid document. New own identity and explicit rejected-document reference; no sequence reuse.                                                                    |
-| Receiver rejection            | Regulation/technical resolution confirmation provisions; annex type 11 | Do not treat a commercial/recipient rejection as Hacienda rejection or automatically use type 10/code 16.                                                                                |
-| Partial amount correction     | Annex pp. 57–58; Nota 9/p. 73 code 02                                  | Positive magnitude NC 03 using original FE 01 reference/code 02. Do not use total-cancellation01 or material-error14 without its separate policy.                                        |
-| Cumulative credit ceiling     | Annex p.58                                                             | Actual cumulative NC adjustments cannot exceed original plus related ND. SDK math has no fresh concurrent ledger; app must enforce it atomically from verified immutable authority.      |
-| Source informative facts      | Annex p.58                                                             | Original headers/currency/exchange/CABYS remain bound; no party or regime substitution in a partial credit.                                                                              |
-| Rejected-document reference   | Annex Nota 10/p. 74 type 10, Nota 9/p. 73 code 16                      | Type10 is the rejected-by-Hacienda category; reason16 is replacement. Do not conflate type 16 foreign supplier or accepted-FE type 01.                                                   |
-| Reference date/reason         | Annex p.58                                                             | Exact retained key/date and 3–180 Unicode reason, no normalized reference timestamp or invented reason. Actual ten-year trusted-calendar gate remains external.                          |
-| Revision evidence             | Native 2026 vs base 2024                                               | New replacement reason16 is2026-only. Native2024 rejection is expected, not grounds to edit vendor files or switch to an unreviewed substitute code. Partial code 02 is present in both. |
-| Money vs cash                 | Annex p.56, source/calculation scope                                   | Positive exact allocations reconcile credit/replacement totals; neither proves a refund, received cash or REP eligibility.                                                               |
+| Boundary                      | Primary evidence                                                       | Consequence                                                                                                                                                                                 |
+| ----------------------------- | ---------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Institutional rejected source | Regulation art. 10/19                                                  | No NC/ND to cancel an invalid document. New own identity and explicit rejected-document reference; no sequence reuse.                                                                       |
+| Receiver rejection            | Regulation/technical resolution confirmation provisions; annex type 11 | Do not treat a commercial/recipient rejection as Hacienda rejection or automatically use type 10/code 16.                                                                                   |
+| Partial amount correction     | Annex pp. 57–58; Nota 9/p. 73 code 02                                  | Positive magnitude NC 03 using original FE 01 reference/code 02. Do not use total cancellation 01 or material error 14 without its separate policy.                                         |
+| Cumulative credit ceiling     | Annex p.58                                                             | Actual cumulative NC adjustments cannot exceed original plus related ND. SDK math has no fresh concurrent ledger; app must enforce it atomically from verified immutable authority.         |
+| Source informative facts      | Annex p.58                                                             | Original headers/currency/exchange/CABYS remain bound; no party or regime substitution in a partial credit.                                                                                 |
+| Rejected-document reference   | Annex Nota 10/p. 74 type 10, Nota 9/p. 73 code 16                      | Type 10 is the rejected-by-Hacienda category; reason 16 is replacement. Do not conflate type 16 foreign supplier or accepted-FE type 01.                                                    |
+| Reference date/reason         | Annex p.58                                                             | Exact retained key/date and 3–180 Unicode reason, no normalized reference timestamp or invented reason. Actual ten-year trusted-calendar gate remains external.                             |
+| Revision evidence             | Native 2026 vs base 2024                                               | New replacement reason 16 is 2026-only. Native 2024 rejection is expected, not grounds to edit vendor files or switch to an unreviewed substitute code. Partial code 02 is present in both. |
+| Money vs cash                 | Annex p.56, source/calculation scope                                   | Positive exact allocations reconcile credit/replacement totals; neither proves a refund, received cash or REP eligibility.                                                                  |
 
 ## Proposed first partial-NC contract (requires root review)
 
@@ -46,7 +46,7 @@ Named case `NC-domestic-ordinary-fe-partial-iva13-v1` contains:
   full-original totals or arbitrary final totals supplied by the caller.
 - One exact original FE 01 reference, current amount-correction code 02 and actual
   reason. Preserve full-fraction chronology. This named amount-correction case
-  does not claim returned-goods06, material-error14 or exoneration support.
+  does not claim returned-goods06, material error 14 or exoneration support.
 - Independent positive payment allocations total exactly the calculated credit;
   no refund/cash effects. Existing BigInt kernel may calculate only the selected
   credit magnitudes, with no new FE identity or invented sale.
@@ -93,14 +93,14 @@ status, accepted source or recipient rejection under this named contract.
 
 ## Tests and scope boundaries before code
 
-Partial vectors: full-precision source/reference chronology, own03/type 01/code 02,
+Partial vectors: full-precision source/reference chronology, own 03/type 01/code 02,
 negative/zero/Number injection, independent Decimal/maximum arithmetic, exact
 positive adjustments without an unrelated original cap, duplicate/foreign line metadata, split-positive/mismatch
 allocations, wrong condition/family/name edges, immutable original and retained
 published compatibility. Prove caller ledger is explicitly separate.
 
-Replacement vectors: institutionally rejected reference category10/reason16,
-new01 key and different sequence, no code 16 under base 2024, exact unchanged old
+Replacement vectors: institutionally rejected reference category 10/reason 16,
+new 01 key and different sequence, no code 16 under base 2024, exact unchanged old
 key/date, malformed/foreign source policy, new corrected source totals and native
 XML, no accepted-source parser prerequisite for rejected material. Synthetic
 signing and explicit generic pinned response mismatch tests never establish live

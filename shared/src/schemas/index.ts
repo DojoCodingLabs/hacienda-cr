@@ -114,3 +114,16 @@ export {
   type ExactFecInput,
   type ExactFecCalculated,
 } from "./exact-fec.js";
+
+export {
+  ExactNcPartialInputSchema,
+  ExactNcPartialReferenceSchema,
+  type ExactNcPartialInput,
+  type ExactNcPartialCalculated,
+} from "./exact-nc-partial.js";
+export {
+  ExactFeReplacementInputSchema,
+  ExactFeReplacementReferenceSchema,
+  type ExactFeReplacementInput,
+  type ExactFeReplacementCalculated,
+} from "./exact-fe-replacement.js";
