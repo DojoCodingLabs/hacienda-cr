@@ -92,3 +92,14 @@ separate from the original total. Supplied ND allocations must be positive.
 Existing FE/TE/NC/current/retained and legacy APIs do not change. Caller source
 acceptance, trusted actual age eligibility and concurrency remain required;
 see [the ND contract](docs/exact-nd.md). No release or activation follows here.
+
+## Unreleased exact ordinary domestic FEC source
+
+Additive `ExactFecInputSchema` / `calculateExactFec` /
+`buildExactFacturaCompraXml` preserve actual supplier Emisor and buyer Receptor,
+require buyer-owned 08 identity/activity and explicit supporting evidence, and
+calculate ordinary IVA13 decimal strings without Number conversion. This first
+case is domestic 01–04 with conditions 01/02; foreign 05, used-goods 06/condition 13
+and special tax cases remain separately required. Existing family/legacy APIs
+are unchanged. See [exact FEC boundary](docs/exact-fec.md)
+for independent eligibility/age/response-oracle and release gates.

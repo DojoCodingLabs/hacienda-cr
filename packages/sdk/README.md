@@ -212,3 +212,14 @@ positive FE-reference increments with explicit original-line and reference
 binding. They preserve original facts and do not establish original acceptance,
 legal-age eligibility or account effects. See [scope and primary rules](../../docs/exact-nd.md).
 This additive SDK/shared source slice is not a version bump or live activation.
+
+## Unreleased exact ordinary domestic FEC source
+
+Additive `ExactFecInputSchema` / `calculateExactFec` /
+`buildExactFacturaCompraXml` preserve actual supplier Emisor and buyer Receptor,
+require buyer-owned 08 identity/activity and explicit supporting evidence, and
+calculate ordinary IVA13 decimal strings without Number conversion. This first
+case is domestic 01–04 with conditions 01/02; foreign 05, used-goods 06/condition 13
+and special tax cases remain separately required. Existing family/legacy APIs
+are unchanged. See [exact FEC boundary](../../docs/exact-fec.md)
+for independent eligibility/age/response-oracle and release gates.

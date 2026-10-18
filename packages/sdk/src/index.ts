@@ -230,3 +230,7 @@ export type { ExactTeInput, ExactTeCalculated } from "@dojocoding/hacienda-share
 export { calculateExactNd } from "./tax/exact-nd.js";
 export { buildExactNotaDebitoXml } from "./documents/exact-nd-builder.js";
 export type { ExactNdInput, ExactNdCalculated } from "@dojocoding/hacienda-shared";
+
+export { calculateExactFec } from "./tax/exact-fec.js";
+export { buildExactFacturaCompraXml } from "./documents/exact-fec-builder.js";
+export type { ExactFecInput, ExactFecCalculated } from "@dojocoding/hacienda-shared";

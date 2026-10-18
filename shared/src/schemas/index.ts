@@ -107,3 +107,10 @@ export {
   type ExactNdInput,
   type ExactNdCalculated,
 } from "./exact-nd.js";
+
+export {
+  ExactFecInputSchema,
+  ExactFecReferenceSchema,
+  type ExactFecInput,
+  type ExactFecCalculated,
+} from "./exact-fec.js";
