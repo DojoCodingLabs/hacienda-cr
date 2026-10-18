@@ -252,3 +252,6 @@ export type {
   ExactFecForeignServiceIva13Input,
   ExactFecForeignServiceIva13Calculated,
 } from "@dojocoding/hacienda-shared";
+
+export { buildExactMensajeReceptorXml } from "./documents/exact-recipient-message-builder.js";
+export type { ExactRecipientMessageInput } from "@dojocoding/hacienda-shared";

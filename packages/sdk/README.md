@@ -250,3 +250,5 @@ foreign address/reference 16/reason 11 and buyer-owned 08 identity for an explic
 selected ordinary IVA13 service case. Supplier identity never decides liability
 or creditability. Used-goods06/condition 13 and other regimes remain unfinished.
 See [source, primary rules and independent gates](../../docs/exact-foreign-service-fec.md).
+
+Exact recipient source contract and remaining transport/outcome gates: [recipient confirmation](../../docs/exact-recipient-message.md).
