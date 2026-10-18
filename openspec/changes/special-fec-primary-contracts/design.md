@@ -99,3 +99,14 @@ slice while the broader foreign/used-goods treatment matrix stays required/open.
 No live provider calls, new credentials, app code, version or publication here.
 FEC response party mapping also remains an independent live protocol oracle;
 synthetic buyer signing and generic pinned response fixtures cannot establish it.
+
+## Reviewed implementation boundary
+
+Root approved the explicit named foreign-service ordinary IVA13 source on
+`a1e0e1c64b6abc3a68ad324d512843a6d65dd82e`, after the research checkpoint.
+The API/discriminator encode that selection rather than deriving it from05.
+Actual supplier05/address/ref16/reason11, buyer08 and positive service allocations
+are required. Only the existing monetary kernel and unchanged FEC monetary XML
+projection are shared. A byte golden preserves the former domestic FEC output.
+Used-goods06/13 has no production producer or loose unused validator here.
+See [implemented contract](../../../docs/exact-foreign-service-fec.md).

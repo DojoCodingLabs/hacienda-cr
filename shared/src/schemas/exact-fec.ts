@@ -89,62 +89,75 @@ export const ExactFecInputSchema = FacturaElectronicaSchema.pick({
     informacionReferencia: z.array(ExactFecReferenceSchema).min(1).max(10),
   })
   .strict()
-  .superRefine((input, ctx) => {
-    if (input.condicionVenta === "02" && input.plazoCredito === undefined)
-      ctx.addIssue({
-        code: "custom",
-        path: ["plazoCredito"],
-        message: "Credit purchase requires explicit positive days",
-      });
-    if (input.plazoCredito !== undefined && !/[1-9]/.test(input.plazoCredito))
-      ctx.addIssue({
-        code: "custom",
-        path: ["plazoCredito"],
-        message: "Credit days must be positive",
-      });
-    if (
-      input.codigoTipoMoneda.codigoMoneda === "CRC" &&
-      !/^1(?:\.0{1,5})?$/.test(input.codigoTipoMoneda.tipoCambio)
-    )
-      ctx.addIssue({
-        code: "custom",
-        path: ["codigoTipoMoneda", "tipoCambio"],
-        message: "CRC exchange rate must equal 1",
-      });
-    input.detalleServicio.forEach((line, i) => {
-      if (line.numeroLinea !== i + 1)
-        ctx.addIssue({
-          code: "custom",
-          path: ["detalleServicio", i, "numeroLinea"],
-          message: "Line numbers must be sequential",
-        });
-    });
-    input.medioPago.forEach((payment, i) => {
-      if (!/[1-9]/.test(payment.totalMedioPago))
-        ctx.addIssue({
-          code: "custom",
-          path: ["medioPago", i, "totalMedioPago"],
-          message: "Supplied payment allocation must be positive",
-        });
-    });
-    const seen = new Set<string>();
-    input.informacionReferencia.forEach((r, i) => {
-      const order = compareNcInstants(r.fechaEmision, input.fechaEmision);
-      if (order === null || order > 0)
-        ctx.addIssue({
-          code: "custom",
-          path: ["informacionReferencia", i, "fechaEmision"],
-          message: "Evidence must not postdate the declared purchase",
-        });
-      const key = JSON.stringify([r.tipoDoc, r.numero, r.fechaEmision]);
-      if (seen.has(key))
-        ctx.addIssue({
-          code: "custom",
-          path: ["informacionReferencia", i],
-          message: "Supporting evidence tuple must be unique",
-        });
-      seen.add(key);
-    });
-  });
+  .superRefine(refineExactFecSource);
+
 export type ExactFecInput = z.infer<typeof ExactFecInputSchema>;
 export type ExactFecCalculated = ExactFeCalculated;
+
+/** Internal shared purchase-source checks, not a public eligibility oracle. */
+interface FecSourceFacts {
+  condicionVenta: string;
+  plazoCredito?: string;
+  fechaEmision: string;
+  codigoTipoMoneda: { codigoMoneda: string; tipoCambio: string };
+  detalleServicio: readonly { numeroLinea: number }[];
+  medioPago: readonly { totalMedioPago: string }[];
+  informacionReferencia: readonly { tipoDoc: string; numero: string; fechaEmision: string }[];
+}
+export function refineExactFecSource(input: FecSourceFacts, ctx: z.RefinementCtx): void {
+  if (input.condicionVenta === "02" && input.plazoCredito === undefined)
+    ctx.addIssue({
+      code: "custom",
+      path: ["plazoCredito"],
+      message: "Credit purchase requires explicit positive days",
+    });
+  if (input.plazoCredito !== undefined && !/[1-9]/.test(input.plazoCredito))
+    ctx.addIssue({
+      code: "custom",
+      path: ["plazoCredito"],
+      message: "Credit days must be positive",
+    });
+  if (
+    input.codigoTipoMoneda.codigoMoneda === "CRC" &&
+    !/^1(?:\.0{1,5})?$/.test(input.codigoTipoMoneda.tipoCambio)
+  )
+    ctx.addIssue({
+      code: "custom",
+      path: ["codigoTipoMoneda", "tipoCambio"],
+      message: "CRC exchange rate must equal 1",
+    });
+  input.detalleServicio.forEach((line, i) => {
+    if (line.numeroLinea !== i + 1)
+      ctx.addIssue({
+        code: "custom",
+        path: ["detalleServicio", i, "numeroLinea"],
+        message: "Line numbers must be sequential",
+      });
+  });
+  input.medioPago.forEach((payment, i) => {
+    if (!/[1-9]/.test(payment.totalMedioPago))
+      ctx.addIssue({
+        code: "custom",
+        path: ["medioPago", i, "totalMedioPago"],
+        message: "Supplied payment allocation must be positive",
+      });
+  });
+  const seen = new Set<string>();
+  input.informacionReferencia.forEach((r, i) => {
+    const order = compareNcInstants(r.fechaEmision, input.fechaEmision);
+    if (order === null || order > 0)
+      ctx.addIssue({
+        code: "custom",
+        path: ["informacionReferencia", i, "fechaEmision"],
+        message: "Evidence must not postdate the declared purchase",
+      });
+    const key = JSON.stringify([r.tipoDoc, r.numero, r.fechaEmision]);
+    if (seen.has(key))
+      ctx.addIssue({
+        code: "custom",
+        path: ["informacionReferencia", i],
+        message: "Supporting evidence tuple must be unique",
+      });
+    seen.add(key);
+  });
+}

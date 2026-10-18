@@ -2,7 +2,8 @@
 - [x] Capture dated official used-goods worked example and precise primary access limits.
 - [x] Reproduce eight native counterexamples without claiming a tax oracle or editing official schemas.
 - [x] Propose separate foreign/used-goods source shapes and independent tax-case gates.
-- [ ] Obtain independent primary/tax-case review before production source changes.
-- [ ] Implement only explicitly reviewed exact source/math/XML cases and meaningful Decimal/native/sign/packed evidence.
+- [x] Obtain root primary/tax-case review before production source changes: explicit ordinary IVA13 foreign services only.
+- [x] Implement the explicitly approved foreign-service ordinary IVA13 source/math/XML with independent Decimal/native/sign/packed evidence (full verify 1,520 unit/118 script; four live skips).
+- [ ] Obtain independent exact-head source review before merge.
 - [ ] Complete broader FEC special tax/response/eligibility matrix and app lifecycle; do not mark SDK #85 complete.
 - [ ] Review coherent linked release separately; no versions/publication/activation in this checkpoint.

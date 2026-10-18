@@ -241,3 +241,12 @@ positive supplied payment allocations; new exact TE shares the positive-payment
 contract. Historical 0.6–0.9 source/math and calculated-output decoding remain
 separately readable, without a retained builder or authority to issue. See
 [current rules, genuine registry evidence and version-bound migration](../../docs/current-fe-native-boundaries.md).
+
+## Unreleased explicit foreign-service IVA13 purchase source
+
+`calculateExactFecForeignServiceIva13` /
+`buildExactFacturaCompraForeignServiceIva13Xml` preserve actual supplier05,
+foreign address/reference16/reason11 and buyer-owned08 identity for an explicitly
+selected ordinary IVA13 service case. Supplier identity never decides liability
+or creditability. Used-goods06/condition13 and other regimes remain unfinished.
+See [source, primary rules and independent gates](../../docs/exact-foreign-service-fec.md).

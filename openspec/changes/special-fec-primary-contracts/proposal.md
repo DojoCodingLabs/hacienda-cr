@@ -6,6 +6,8 @@ unchanged. Separate proved identity/reference syntax from tax liability,
 creditability, exigibility and response mapping; never select IVA 13 or zero
 from supplier identity alone.
 
-This checkpoint is research and native counterexamples, not an implementation
-or support claim. Public production source APIs require a reviewed explicit tax
-case contract first; no unused private validator scaffolding is introduced.
+The research checkpoint was reviewed before implementation. Root approved only
+an explicitly selected ordinary IVA13 foreign-service source API on actual
+main a1e0e1, preserving domestic FEC and leaving used-goods treatment unresolved.
+No unused private validator, guessed tariff or broad special-FEC support claim
+is introduced. Source review/release/app gates remain separate.
