@@ -6,7 +6,7 @@ Use Node.js 22+ and pnpm as pinned in `package.json`. Install native `xmllint`
 (`libxml2-utils` on Ubuntu; libxml2 on macOS with its bin directory on PATH).
 Install `pdftotext` (`poppler-utils` on Ubuntu; `poppler` on macOS) for the
 vendored PDF catalog freshness checks. The SDK runtime uses bundled WASM and does
-not require these native verification tools.
+not require these native verification tools. Python3 is also required for the independent exact ordinary FE Decimal oracle; the runtime exact calculator itself uses native BigInt and adds no Python dependency.
 
 ```sh
 pnpm install --frozen-lockfile

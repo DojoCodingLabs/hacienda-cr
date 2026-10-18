@@ -91,6 +91,16 @@ it does not add Forge RSA/chain verification to the affected runtime path. Pin
 provenance, revocation/distrust and production response acceptance remain separate
 from this dependency audit and the synthetic verification tests.
 
+## 0.6.0 release audit recheck
+
+On17 October2026 the exact0.6.0 version-family lockfile was re-audited with
+`pnpm audit --json`: one high Forge finding and one moderate development-only
+ExcelJS→uuid finding remain, with no critical findings. Dependency versions and
+those assessed call paths are unchanged from the0.5.0 release audit above.
+The additive exact FE path uses native BigInt and adds no dependency or Forge
+RSA verification path. No advisory override, audit suppression, clean-audit
+claim or universal safety claim is introduced by the version bump.
+
 ## Research and remaining boundaries
 
 - [Node cancellation APIs](https://nodejs.org/download/release/latest-jod/docs/api/globals.html)
