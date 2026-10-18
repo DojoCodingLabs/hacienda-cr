@@ -16,7 +16,7 @@ import {
   listComprobantes,
   getComprobante,
 } from "@dojocoding/hacienda-sdk";
-import { DOCUMENT_TYPE_NAMES } from "@dojocoding/hacienda-shared";
+import { ComprobantesQuerySchema, DOCUMENT_TYPE_NAMES } from "@dojocoding/hacienda-shared";
 import type { DocumentTypeCode } from "@dojocoding/hacienda-shared";
 import { createMcpApiClient } from "./api-client.js";
 
@@ -63,7 +63,7 @@ export function registerCheckStatusTool(server: McpServer): void {
                 `Document Type: ${docTypeName}`,
                 `Taxpayer ID: ${parsed.taxpayerId}`,
                 `Date: ${parsed.dateRaw}`,
-                `Sequence: ${parsed.sequence}`,
+                `Sequence: ${args.clave.slice(31, 41)}`,
                 ``,
                 `Status: ${status.status}`,
                 status.date ? `Response Date: ${status.date}` : null,
@@ -95,85 +95,44 @@ export function registerCheckStatusTool(server: McpServer): void {
 // ---------------------------------------------------------------------------
 
 export function registerListDocumentsTool(server: McpServer): void {
-  server.tool(
+  server.registerTool(
     "list_documents",
-    "List recent electronic documents. " +
-      "Optionally filter by date range, emisor, or receptor. " +
-      "Returns a summary list with clave, date, type, and status. " +
-      "Requires a configured profile (run `hacienda auth login` first).",
     {
-      limit: z
-        .number()
-        .int()
-        .min(1)
-        .max(100)
-        .default(10)
-        .describe("Maximum number of documents to return (1-100, default 10)"),
-      offset: z.number().int().min(0).default(0).describe("Pagination offset (default 0)"),
-      emisorIdentificacion: z
-        .string()
-        .optional()
-        .describe("Filter by issuer identification number"),
-      receptorIdentificacion: z
-        .string()
-        .optional()
-        .describe("Filter by receiver identification number"),
-      fechaDesde: z.string().optional().describe("Filter by start date (ISO 8601)"),
-      fechaHasta: z.string().optional().describe("Filter by end date (ISO 8601)"),
-      profile: z.string().default("default").describe('Config profile name (default: "default")'),
+      description:
+        "Read one bounded page of observed Hacienda metadata, optionally filtered by combined domestic emisor/receptor. No date filters, status/XML, inferred totals or complete-history claim.",
+      inputSchema: ComprobantesQuerySchema.extend({
+        profile: z.string().default("default"),
+      }).strict(),
     },
-    async (args) => {
+    async ({ profile, ...query }, extra) => {
       try {
-        const httpClient = await createMcpApiClient(args.profile);
-
-        const result = await listComprobantes(httpClient, {
-          offset: args.offset,
-          limit: args.limit,
-          emisorIdentificacion: args.emisorIdentificacion,
-          receptorIdentificacion: args.receptorIdentificacion,
-          fechaEmisionDesde: args.fechaDesde,
-          fechaEmisionHasta: args.fechaHasta,
-        });
-
-        const lines = [
-          `Document List`,
-          ``,
-          `Total: ${result.totalRegistros} documents`,
-          `Showing: ${result.comprobantes.length} (offset ${result.offset})`,
-          ``,
-        ];
-
-        if (result.comprobantes.length === 0) {
-          lines.push("No documents found matching the criteria.");
-        } else {
-          for (const doc of result.comprobantes) {
-            lines.push(
-              `- ${doc.clave}`,
-              `  Date: ${doc.fechaEmision} | Status: ${doc.estado}`,
-              `  Emisor: ${doc.emisor.numeroIdentificacion}`,
-              ``,
-            );
-          }
-        }
-
+        // SDK schema validation is also applied before creating an auth client.
+        const params = ComprobantesQuerySchema.parse(query);
+        extra.signal.throwIfAborted();
+        const httpClient = await createMcpApiClient(profile);
+        const result = await listComprobantes(httpClient, params, { signal: extra.signal });
         return {
           content: [
             {
               type: "text" as const,
-              text: lines.join("\n"),
+              text: JSON.stringify({
+                kind: "observed-history-page",
+                ...result,
+                coverage: "not-established",
+                statusAndXml: "not-provided-by-history",
+              }),
             },
           ],
         };
       } catch (error) {
-        const message = sanitizeLogString(error instanceof Error ? error.message : String(error));
         return {
+          isError: true,
           content: [
             {
               type: "text" as const,
-              text: `Error listing documents: ${message}`,
+              text: `Error listing documents: ${sanitizeLogString(error instanceof Error ? error.message : String(error))}`,
             },
           ],
-          isError: true,
         };
       }
     },
@@ -187,18 +146,19 @@ export function registerListDocumentsTool(server: McpServer): void {
 export function registerGetDocumentTool(server: McpServer): void {
   server.tool(
     "get_document",
-    "Get full details of an electronic document by its 50-digit clave numerica. " +
-      "Returns the document metadata, status, and XML content. " +
+    "Get observed document metadata by its current 50-character clave. " +
+      "Returns observed metadata and credit/debit references only, without status or XML. Use check_status separately. " +
       "Requires a configured profile (run `hacienda auth login` first).",
     {
       clave: z
         .string()
         .length(50)
-        .describe("The 50-digit clave numerica of the document to retrieve"),
+        .describe("The current 50-character clave of the document metadata to retrieve"),
       profile: z.string().default("default").describe('Config profile name (default: "default")'),
     },
-    async (args) => {
+    async (args, extra) => {
       try {
+        extra.signal.throwIfAborted();
         // Validate the clave by parsing it
         const parsed = parseClave(args.clave);
         const docTypeName =
@@ -207,31 +167,22 @@ export function registerGetDocumentTool(server: McpServer): void {
 
         // Authenticate and fetch document
         const httpClient = await createMcpApiClient(args.profile);
-        const doc = await getComprobante(httpClient, args.clave);
-
-        // Decode the submitted XML if available
-        let xmlContent: string | undefined;
-        if (doc.comprobanteXml) {
-          try {
-            xmlContent = Buffer.from(doc.comprobanteXml, "base64").toString("utf-8");
-          } catch {
-            xmlContent = "(unable to decode XML)";
-          }
-        }
+        const doc = await getComprobante(httpClient, args.clave, { signal: extra.signal });
 
         return {
           content: [
             {
               type: "text" as const,
               text: [
-                `Document Details`,
+                `Document Metadata`,
                 ``,
                 `Clave: ${doc.clave}`,
                 `Document Type: ${docTypeName}`,
                 `Taxpayer ID: ${parsed.taxpayerId}`,
-                `Emission Date: ${doc.fechaEmision}`,
-                `Status: ${doc.estado}`,
-                doc.fechaRespuesta ? `Response Date: ${doc.fechaRespuesta}` : null,
+                `Document Date: ${doc.fecha}`,
+                "Metadata only; use check_status for a separate status/response observation.",
+                `Credit references: ${JSON.stringify(doc.notasCredito ?? [])}`,
+                `Debit references: ${JSON.stringify(doc.notasDebito ?? [])}`,
                 ``,
                 `Emisor: ${doc.emisor.tipoIdentificacion} ${doc.emisor.numeroIdentificacion}`,
                 doc.receptor
@@ -240,10 +191,9 @@ export function registerGetDocumentTool(server: McpServer): void {
                 ``,
                 `Branch: ${parsed.branch}`,
                 `POS: ${parsed.pos}`,
-                `Sequence: ${parsed.sequence}`,
+                `Sequence: ${args.clave.slice(31, 41)}`,
                 `Situation: ${parsed.situation}`,
                 `Security Code: ${parsed.securityCode}`,
-                xmlContent ? `\n--- XML ---\n${xmlContent}` : null,
               ]
                 .filter(Boolean)
                 .join("\n"),

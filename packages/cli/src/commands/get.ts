@@ -6,15 +6,16 @@
  * @module commands/get
  */
 
+import { ComprobanteClaveSchema } from "@dojocoding/hacienda-shared";
 import { defineCommand } from "citty";
 import { parseClave, getComprobante } from "@dojocoding/hacienda-sdk";
-import { error, detail, info, outputJson, colorStatus } from "../utils/format.js";
+import { error, detail, info, outputJson } from "../utils/format.js";
 import { createAuthenticatedClient } from "../utils/api-client.js";
 
 export const getCommand = defineCommand({
   meta: {
     name: "get",
-    description: "Get full details of a document by clave",
+    description: "Get observed document metadata by clave (not XML/status)",
   },
   args: {
     clave: {
@@ -38,8 +39,8 @@ export const getCommand = defineCommand({
       const clave = args.clave;
 
       // Validate clave format
-      if (!/^\d{50}$/.test(clave)) {
-        error("Invalid clave. Must be a 50-digit numeric string.");
+      if (!ComprobanteClaveSchema.safeParse(clave).success) {
+        error("Invalid clave. Use the current 50-character clave format.");
         process.exitCode = 1;
         return;
       }
@@ -54,25 +55,24 @@ export const getCommand = defineCommand({
       if (args.json) {
         outputJson({
           clave: doc.clave,
-          fechaEmision: doc.fechaEmision,
-          estado: doc.estado,
+          fecha: doc.fecha,
           emisor: doc.emisor,
           receptor: doc.receptor,
-          fechaRespuesta: doc.fechaRespuesta,
+          notasCredito: doc.notasCredito,
+          notasDebito: doc.notasDebito,
           parsed: {
             countryCode: parsed.countryCode,
             date: parsed.date.toISOString(),
             taxpayerId: parsed.taxpayerId,
             documentType: parsed.documentType,
-            sequence: parsed.sequence,
+            sequence: clave.slice(31, 41),
             situation: parsed.situation,
             securityCode: parsed.securityCode,
           },
         });
       } else {
         info(`Document: ${doc.clave}`);
-        console.log(`  Status: ${colorStatus(doc.estado)}`);
-        detail("Emission Date", doc.fechaEmision);
+        detail("Document Date", doc.fecha);
         detail("Emisor", `${doc.emisor.tipoIdentificacion}: ${doc.emisor.numeroIdentificacion}`);
         if (doc.receptor) {
           detail(
@@ -80,10 +80,12 @@ export const getCommand = defineCommand({
             `${doc.receptor.tipoIdentificacion}: ${doc.receptor.numeroIdentificacion}`,
           );
         }
-        if (doc.fechaRespuesta) detail("Response Date", doc.fechaRespuesta);
+        detail("Credit references", JSON.stringify(doc.notasCredito ?? []));
+        detail("Debit references", JSON.stringify(doc.notasDebito ?? []));
+        info("Metadata only. Use hacienda status for a separate status/response observation.");
         console.log("");
         detail("Document Type", parsed.documentType);
-        detail("Sequence", String(parsed.sequence));
+        detail("Sequence", clave.slice(31, 41));
         detail("Situation", parsed.situation);
       }
     } catch (err) {

@@ -135,21 +135,19 @@ Check the processing status of a document by its 50-digit clave numerica.
 
 ### `list_documents`
 
-List recent electronic documents with optional filters.
+Read one observed metadata page, with strict combined domestic party filters. No status/XML, inferred total, next page or completeness claim.
 
 **Parameters:**
 
-- `limit` -- Max results (1-100, default: 10)
+- `limit` -- Requested size (1–50 SDK cap, default: 50)
 - `offset` -- Pagination offset (default: 0)
-- `emisorIdentificacion` -- Filter by issuer ID (optional)
-- `receptorIdentificacion` -- Filter by receiver ID (optional)
-- `fechaDesde` -- Start date filter, ISO 8601 (optional)
-- `fechaHasta` -- End date filter, ISO 8601 (optional)
+- `emisor` -- Combined domestic issuer type + ID (optional)
+- `receptor` -- Combined domestic receiver type + ID (optional)
 - `profile` -- Saved profile name (default: `"default"`); requires server password environment
 
 ### `get_document`
 
-Get full details of an electronic document by its 50-digit clave numerica.
+Get observed metadata/references by the current 50-character clave. Use `check_status` separately; this tool does not fetch original XML or status.
 
 **Parameters:**
 
@@ -212,3 +210,5 @@ Read the [migration guide](https://github.com/DojoCodingLabs/hacienda-cr/blob/ma
 If an old global `sequences.json` contains positive counters, creating a new unseeded issuer series fails closed. Stop writers, back up the old file, establish the issuer/environment that owns each series, and seed each corresponding scoped file with the last reserved number before resuming. Do not copy a mixed-company global file blindly, delete counters, or restart a production series at one. There is no automatic migration because the old file does not identify its owner.
 
 Authenticated clients are invalidated when the resolved profile, environment, issuer configuration, certificate path, password or PIN changes. Replacing certificate bytes at the same path still requires restarting the process or clearing the cache. Configure one profile per identity/environment.
+
+See the [history contract migration](../../docs/history-contract.md); unsupported keys are rejected before authentication.

@@ -7,21 +7,17 @@
  */
 
 import { defineCommand } from "citty";
-import { listComprobantes } from "@dojocoding/hacienda-sdk";
-import { error, outputJson, formatTable, colorStatus } from "../utils/format.js";
+import { stripVTControlCharacters } from "node:util";
+import { listComprobantes, sanitizeLogString } from "@dojocoding/hacienda-sdk";
+import { ComprobantesQuerySchema } from "@dojocoding/hacienda-shared";
+import { error, outputJson, formatTable } from "../utils/format.js";
 import type { TableColumn } from "../utils/format.js";
 import { createAuthenticatedClient } from "../utils/api-client.js";
 
 /** Column definitions for the comprobantes table. */
 const COMPROBANTE_COLUMNS: TableColumn[] = [
   { header: "CLAVE", key: "clave", minWidth: 20 },
-  { header: "DATE", key: "fechaEmision", minWidth: 12 },
-  {
-    header: "STATUS",
-    key: "estado",
-    minWidth: 12,
-    format: (v) => colorStatus(String(v)),
-  },
+  { header: "DATE", key: "fecha", minWidth: 12 },
 ];
 
 export const listCommand = defineCommand({
@@ -40,6 +36,14 @@ export const listCommand = defineCommand({
       description: "Pagination offset",
       default: "0",
     },
+    emisor: {
+      type: "string",
+      description: "Combined domestic issuer type + ID (preserve leading zeros)",
+    },
+    receptor: {
+      type: "string",
+      description: "Combined domestic receiver type + ID (preserve leading zeros)",
+    },
     profile: {
       type: "string",
       description: "Config profile name",
@@ -53,31 +57,40 @@ export const listCommand = defineCommand({
   },
   async run({ args }) {
     try {
-      const limit = Number(args.limit);
-      const offset = Number(args.offset);
-
-      if (!Number.isInteger(limit) || limit < 1 || limit > 100) {
-        error("Invalid --limit. Must be an integer between 1 and 100.");
-        process.exitCode = 1;
-        return;
-      }
-      if (!Number.isInteger(offset) || offset < 0) {
-        error("Invalid --offset. Must be a non-negative integer.");
-        process.exitCode = 1;
-        return;
-      }
-
+      if (
+        Object.keys(args).some(
+          (key) => !["limit", "offset", "emisor", "receptor", "profile", "json", "_"].includes(key),
+        )
+      )
+        throw new Error(
+          "Unsupported history option; dates and legacy identification filters are not supported.",
+        );
+      if (!/^\d+$/.test(args.limit) || !/^\d+$/.test(args.offset))
+        throw new Error("Invalid pagination; use integer offset and limit.");
+      const parsed = ComprobantesQuerySchema.safeParse({
+        offset: Number(args.offset),
+        limit: Number(args.limit),
+        ...(args.emisor !== undefined ? { emisor: args.emisor } : {}),
+        ...(args.receptor !== undefined ? { receptor: args.receptor } : {}),
+      });
+      if (!parsed.success)
+        throw new Error(
+          "Invalid history filters; limit must be 1–50 and IDs must include a supported domestic type.",
+        );
       const { httpClient } = await createAuthenticatedClient(args.profile as string);
 
-      const result = await listComprobantes(httpClient, {
-        offset,
-        limit,
-      });
+      const result = await listComprobantes(httpClient, parsed.data);
+      const printableHeader = (value: string | null) =>
+        stripVTControlCharacters(sanitizeLogString(value ?? "not observed")).replace(
+          /[\p{Cc}\p{Cf}]/gu,
+          "",
+        );
 
       if (args.json) {
         outputJson({
           success: true,
-          totalRegistros: result.totalRegistros,
+          limit: result.limit,
+          pagination: result.pagination,
           offset: result.offset,
           comprobantes: result.comprobantes,
         });
@@ -86,7 +99,7 @@ export const listCommand = defineCommand({
           console.log("No comprobantes found.");
         } else {
           console.log(
-            `\nShowing ${result.comprobantes.length} of ${result.totalRegistros} comprobantes:\n`,
+            `\nObserved ${result.comprobantes.length} metadata records (requested offset ${result.offset}, limit ${result.limit}).\n`,
           );
           console.log(
             formatTable(
@@ -95,6 +108,10 @@ export const listCommand = defineCommand({
             ),
           );
         }
+        console.log(
+          `HTTP ${result.pagination.httpStatus}; Accept-Range: ${printableHeader(result.pagination.acceptRange)}; Content-Range: ${printableHeader(result.pagination.contentRange)}`,
+        );
+        console.log("Observed page only; no complete-history or fiscal-status claim.");
       }
     } catch (err) {
       const message = err instanceof Error ? err.message : "Unknown error occurred";

@@ -76,6 +76,18 @@ try {
       '\nimport { calculateExactFe, buildExactFacturaXml, type ExactFeInput } from "@dojocoding/hacienda-sdk";\nimport { ExactFeInputSchema, ExactFeCalculatedSchema } from "@dojocoding/hacienda-shared";\nexport const exactFeContract = (input: ExactFeInput) => ({ calculated: ExactFeCalculatedSchema.parse(calculateExactFe(ExactFeInputSchema.parse(input))), xml: buildExactFacturaXml(input) });\n' +
       '\nimport { calculateExactNcTotal, buildExactNotaCreditoTotalXml, type ExactNcTotalInput } from "@dojocoding/hacienda-sdk";\nimport { ExactNcTotalInputSchema } from "@dojocoding/hacienda-shared";\nexport const exactNcContract = (input: ExactNcTotalInput) => ({ calculated: calculateExactNcTotal(ExactNcTotalInputSchema.parse(input)), xml: buildExactNotaCreditoTotalXml(input) });\n',
   );
+  await writeFile(
+    join(consumer, "history-consumer.ts"),
+    `
+import {listComprobantes,getComprobante,type HistoryRequestOptions} from "@dojocoding/hacienda-sdk";
+import {ComprobantesQuerySchema,ComprobanteMetadataSchema,type ComprobantesListResponse,type ComprobanteDetail} from "@dojocoding/hacienda-shared";
+export const history={listComprobantes,getComprobante,ComprobantesQuerySchema,ComprobanteMetadataSchema};
+export type Contract={page:ComprobantesListResponse;detail:ComprobanteDetail;options:HistoryRequestOptions};
+// @ts-expect-error unsupported history dates must migrate before authentication
+const unsupported:Parameters<typeof listComprobantes>[1]={fechaEmisionDesde:"2026-01-01"};
+void unsupported;
+`,
+  );
   for (const resolution of ["NodeNext", "Bundler"]) {
     await writeFile(
       join(consumer, "tsconfig.json"),
@@ -89,7 +101,7 @@ try {
           noEmit: true,
           types: ["node"],
         },
-        include: ["consumer.ts"],
+        include: ["consumer.ts", "history-consumer.ts"],
       }),
     );
     run(
@@ -124,9 +136,9 @@ try {
     `
 import assert from "node:assert/strict";
 import {writeFile, readFile} from "node:fs/promises";
-import {execFileSync} from "node:child_process";
+import {execFileSync,spawnSync} from "node:child_process";
 import {SIMPLE_INVOICE} from "./fixtures.mjs";
-import {calculateExactNcTotal,buildExactNotaCreditoTotalXml,buildFacturaXml,calculateExactFe,buildExactFacturaXml,validateDocumentXml,HaciendaClient,Environment,loadCredentials,signXml,verifyHaciendaResponseXml,ResponseVerificationError} from "@dojocoding/hacienda-sdk";
+import {HttpClient,listComprobantes,getComprobante,calculateExactNcTotal,buildExactNotaCreditoTotalXml,buildFacturaXml,calculateExactFe,buildExactFacturaXml,validateDocumentXml,HaciendaClient,Environment,loadCredentials,signXml,verifyHaciendaResponseXml,ResponseVerificationError} from "@dojocoding/hacienda-sdk";
 import {XADES_POLICY_URI,XADES_POLICY_HASH,XADES_POLICY_HASH_ALGORITHM,ExonerationTypeSchema,UNITS_OF_MEASURE} from "@dojocoding/hacienda-shared";
 import {createServer} from "@dojocoding/hacienda-mcp";
 import {Client} from "@modelcontextprotocol/sdk/client/index.js";
@@ -141,6 +153,14 @@ const issuedClient=new HaciendaClient({environment:Environment.Sandbox,credentia
   return new Response(JSON.stringify({access_token:"synthetic-access",refresh_token:"synthetic-refresh",expires_in:300,refresh_expires_in:36000,token_type:"bearer"}),{status:200});
 }});
 await issuedClient.authenticate(); assert.equal(tokenRequests,1); assert.equal(issuedClient.isAuthenticated,true);
+const metadata={clave:SIMPLE_INVOICE.clave,fecha:SIMPLE_INVOICE.fechaEmision,emisor:{tipoIdentificacion:"02",numeroIdentificacion:"003101234567",nombre:"Packed synthetic issuer"},receptor:{tipoIdentificacion:"01",numeroIdentificacion:"001230456",nombre:"Packed synthetic receiver"},notasCredito:[]};
+let historyFetches=0,historyAuth=0;
+const historyClient=new HttpClient({envConfig:{name:"Synthetic",apiBaseUrl:"https://history.example.test/v1",idpTokenUrl:"https://history.example.test/token",clientId:"synthetic"},tokenManager:{getAccessToken:async()=>{historyAuth++;return "synthetic"}},fetchFn:async(url)=>{historyFetches++;return new Response(JSON.stringify(String(url).includes("?offset=")?[metadata]:metadata),{status:String(url).includes("?offset=")?206:200,headers:{"Content-Type":"application/json","Accept-Range":"resource 50","Content-Range":"0-10/100"}})},rateLimiterOptions:false,retryOptions:{maxRetries:0}});
+const historyPage=await listComprobantes(historyClient,{limit:10,emisor:"02003101234567",receptor:"01001230456"});
+assert.deepEqual(historyPage.comprobantes,[metadata]);assert.deepEqual(historyPage.pagination,{httpStatus:206,acceptRange:"resource 50",contentRange:"0-10/100"});
+assert.equal(historyPage.totalRegistros,undefined);assert.equal(historyPage.comprobantes[0].estado,undefined);assert.equal(historyPage.comprobantes[0].comprobanteXml,undefined);
+assert.deepEqual(await getComprobante(historyClient,SIMPLE_INVOICE.clave),metadata);
+const beforeInvalid=[historyAuth,historyFetches];await assert.rejects(listComprobantes(historyClient,{fechaEmisionDesde:"2026-01-01"}));await assert.rejects(getComprobante(historyClient,"../recepcion/anything"));await assert.rejects(listComprobantes(historyClient,{}, {signal:AbortSignal.abort()}));assert.deepEqual([historyAuth,historyFetches],beforeInvalid);
 const xml=buildFacturaXml(SIMPLE_INVOICE);
 const exact={caseCode:"FE-domestic-ordinary-iva13-v1",clave:SIMPLE_INVOICE.clave,proveedorSistemas:SIMPLE_INVOICE.proveedorSistemas,codigoActividadEmisor:SIMPLE_INVOICE.codigoActividadEmisor,numeroConsecutivo:SIMPLE_INVOICE.numeroConsecutivo,fechaEmision:SIMPLE_INVOICE.fechaEmision,emisor:SIMPLE_INVOICE.emisor,receptor:SIMPLE_INVOICE.receptor,condicionVenta:"01",detalleServicio:[{numeroLinea:1,codigoCabys:"8310100000000",cantidad:"1",unidadMedida:"Sp",detalle:"Packed exact decimal fixture",precioUnitario:"8849557522123.89380",esServicio:true,impuesto:[{codigo:"01",codigoTarifaIVA:"08",tarifa:"13"}]}],codigoTipoMoneda:{codigoMoneda:"USD",tipoCambio:"513.12345"},medioPago:[{tipoMedioPago:"01",totalMedioPago:"9999999999999.99999"}]};
 const exactRoundtrip=JSON.parse(JSON.stringify(exact));
@@ -203,6 +223,8 @@ for (const file of ["invoice.json","invoice.xml"]) {
   assert.equal(JSON.parse(output).valid,true);
 }
 execFileSync(process.execPath,[cli,"submit","invoice.json","--dry-run","--json"],{timeout:15000});
+const invalidHistory=spawnSync(process.execPath,[cli,"list","--fechaDesde","2026-01-01","--json"],{encoding:"utf8",timeout:15000});
+assert.equal(invalidHistory.status,1);assert.match(JSON.parse(invalidHistory.stdout).error,/Unsupported history option/);
 const transport=new StdioClientTransport({command:process.execPath,args:["./node_modules/@dojocoding/hacienda-mcp/dist/cli.js"],stderr:"pipe"});
 let stderr=""; transport.stderr.on("data",chunk=>{stderr+=chunk;});
 const client=new Client({name:"packed-package-test",version:"1.0.0"});
@@ -212,6 +234,9 @@ try {
   const mcpManifest=JSON.parse(await readFile("./node_modules/@dojocoding/hacienda-mcp/package.json","utf8"));
   assert.equal(client.getServerVersion().version,mcpManifest.version);
   const tools=await client.listTools(); assert.equal(tools.tools.length,6);
+  const historyTool=tools.tools.find(tool=>tool.name==="list_documents");assert.equal(historyTool.inputSchema.additionalProperties,false);assert.ok(historyTool.inputSchema.properties.emisor);assert.equal(historyTool.inputSchema.properties.fechaDesde,undefined);
+  const invalidHistoryTool=await client.callTool({name:"list_documents",arguments:{fechaDesde:"2026-01-01"}});assert.equal(invalidHistoryTool.isError,true);assert.match(JSON.stringify(invalidHistoryTool.content),/Unrecognized|unrecognized/);
+
   const resource=await client.readResource({uri:"hacienda://schemas/factura"});
   const schema=JSON.parse(resource.contents[0].text);
   assert.deepEqual(schema.required,tools.tools.find(tool=>tool.name==="create_invoice").inputSchema.required);

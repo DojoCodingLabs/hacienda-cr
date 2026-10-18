@@ -570,19 +570,18 @@ describe("MCP Server", () => {
       const fakeHttpClient = {};
       mockCreateMcpApiClient.mockResolvedValueOnce(fakeHttpClient);
       mockListComprobantes.mockResolvedValueOnce({
-        totalRegistros: 2,
+        limit: 10,
+        pagination: { httpStatus: 206, acceptRange: "resource 50", contentRange: "0-10/100" },
         offset: 0,
         comprobantes: [
           {
             clave: "50601012500310123456700100001010000000001100000001",
-            fechaEmision: "2025-01-12",
-            estado: "aceptado",
+            fecha: "2025-01-12",
             emisor: { tipoIdentificacion: "02", numeroIdentificacion: "3101234567" },
           },
           {
             clave: "50601012500310123456700100001010000000002100000002",
-            fechaEmision: "2025-01-13",
-            estado: "rechazado",
+            fecha: "2025-01-13",
             emisor: { tipoIdentificacion: "02", numeroIdentificacion: "3101234567" },
           },
         ],
@@ -595,18 +594,48 @@ describe("MCP Server", () => {
 
       expect(result.isError).toBeFalsy();
       const text = getTextContent(result.content as { type: string; text: string }[]);
-      expect(text).toContain("Document List");
-      expect(text).toContain("Total: 2 documents");
-      expect(text).toContain("aceptado");
-      expect(text).toContain("rechazado");
+      expect(JSON.parse(text).kind).toBe("observed-history-page");
+      expect(JSON.parse(text).pagination.contentRange).toBe("0-10/100");
+      expect(text).not.toMatch(/Total:|Status:|complete-history/);
       expect(text).toContain("3101234567");
+    });
+
+    it("rejects unknown/date/unsupported filters before auth and forwards both combined IDs and cancellation", async () => {
+      for (const invalid of [
+        { fechaDesde: "2025-01-01" },
+        { emisorIdentificacion: "3101234567" },
+        { emisor: "05foreign-id" },
+        { limit: 51 },
+      ]) {
+        const result = await client.callTool({ name: "list_documents", arguments: invalid });
+        expect(result.isError).toBe(true);
+      }
+      expect(mockCreateMcpApiClient).not.toHaveBeenCalled();
+      expect(mockListComprobantes).not.toHaveBeenCalled();
+      mockCreateMcpApiClient.mockResolvedValueOnce({});
+      mockListComprobantes.mockResolvedValueOnce({
+        comprobantes: [],
+        offset: 0,
+        limit: 10,
+        pagination: { httpStatus: 200, acceptRange: null, contentRange: null },
+      });
+      await client.callTool({
+        name: "list_documents",
+        arguments: { limit: 10, emisor: "02003101234567", receptor: "01123456789" },
+      });
+      expect(mockListComprobantes).toHaveBeenCalledWith(
+        {},
+        { offset: 0, limit: 10, emisor: "02003101234567", receptor: "01123456789" },
+        { signal: expect.any(AbortSignal) },
+      );
     });
 
     it("should show message when no documents match", async () => {
       const fakeHttpClient = {};
       mockCreateMcpApiClient.mockResolvedValueOnce(fakeHttpClient);
       mockListComprobantes.mockResolvedValueOnce({
-        totalRegistros: 0,
+        limit: 10,
+        pagination: { httpStatus: 200, acceptRange: null, contentRange: null },
         offset: 0,
         comprobantes: [],
       });
@@ -618,7 +647,8 @@ describe("MCP Server", () => {
 
       expect(result.isError).toBeFalsy();
       const text = getTextContent(result.content as { type: string; text: string }[]);
-      expect(text).toContain("No documents found");
+      expect(JSON.parse(text).comprobantes).toEqual([]);
+      expect(JSON.parse(text).coverage).toBe("not-established");
     });
   });
 
@@ -652,7 +682,7 @@ describe("MCP Server", () => {
 
       mockGetComprobante.mockResolvedValueOnce({
         clave: "50601012500310123456700100001010000000001100000001",
-        fechaEmision: "2025-01-12",
+        fecha: "2025-01-12",
         estado: "aceptado",
         emisor: { tipoIdentificacion: "02", numeroIdentificacion: "3101234567" },
         receptor: { tipoIdentificacion: "01", numeroIdentificacion: "101230456" },
@@ -667,12 +697,13 @@ describe("MCP Server", () => {
 
       expect(result.isError).toBeFalsy();
       const text = getTextContent(result.content as { type: string; text: string }[]);
-      expect(text).toContain("Document Details");
-      expect(text).toContain("Status: aceptado");
+      expect(text).toContain("Document Metadata");
+      expect(text).toContain("Metadata only");
+      expect(text).not.toContain("Status: aceptado");
       expect(text).toContain("Emisor: 02 3101234567");
       expect(text).toContain("Receptor: 01 101230456");
-      expect(text).toContain("FacturaElectronica");
-      expect(text).toContain("Response Date: 2025-01-12T10:05:00Z");
+      expect(text).not.toContain("FacturaElectronica");
+      expect(text).not.toContain("Response Date:");
     });
   });
 

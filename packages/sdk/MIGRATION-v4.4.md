@@ -128,3 +128,9 @@ facts, rejects supplied totals and emits exact decimal text. It does not prove
 CABYS catalog existence, tax applicability, legal signing or real Hacienda
 acceptance. Preserve immutable source/provenance and first signed bytes in the
 consumer. Broader fiscal cases require their own reviewed contract.
+
+## Pending minor release: observed history metadata
+
+The next reviewed pre-1.0 minor release corrects `listComprobantes` and `getComprobante` without changing fiscal FE/NC calculation, XML/signing or POST contracts. Lists return one bounded metadata page and raw observed range headers; detail returns metadata/references, not original XML, status or response bytes. Dates and old identification filter names are rejected before auth. Use combined domestic `emisor` / `receptor`, preserve exact string identifiers and current alphanumeric claves, and use `getStatus` separately.
+
+See the [complete migration and limits](https://github.com/DojoCodingLabs/hacienda-cr/blob/main/docs/history-contract.md). Applications must review adoption separately from historical immutable SDK 0.7 FE/NC proofs and cases; a new package version does not relabel stored evidence, enable fiscal transport or certify backfill coverage. Published 0.7.0 remains unchanged until release authorization.

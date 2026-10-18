@@ -68,3 +68,7 @@ Offline verification does not establish live Hacienda acceptance.
 2. Rename fields per the table above; add `proveedorSistemas` and `emisor.ubicacion`.
 3. Move payment methods into `resumenFactura.medioPago` with amounts.
 4. Re-run your test suite: the SDK now ships the official XSDs under `packages/sdk/schemas/` and an xmllint-based conformance helper (`validateAgainstXsd`) you can reuse to assert your documents validate.
+
+## Next reviewed release: history metadata contract
+
+The pending pre-1.0 minor Changeset corrects list/detail metadata, combined filters and observed headers across shared/SDK/CLI/MCP. Published 0.7.0 is unchanged until a separately reviewed release. Follow [the explicit migration](docs/history-contract.md); no real history/retention/original-recovery acceptance is implied.

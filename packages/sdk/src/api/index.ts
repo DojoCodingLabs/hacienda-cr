@@ -32,6 +32,7 @@ export type { RetryOptions } from "./retry.js";
 
 // Comprobantes — list and detail
 export { listComprobantes, getComprobante } from "./comprobantes.js";
+export type { HistoryRequestOptions } from "./comprobantes.js";
 
 // Taxpayer lookup
 export { lookupTaxpayer } from "./taxpayer.js";

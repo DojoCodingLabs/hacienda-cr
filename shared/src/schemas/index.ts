@@ -88,3 +88,11 @@ export {
   type ExactNcTotalInput,
   type ExactNcTotalCalculated,
 } from "./exact-nc.js";
+
+export {
+  ComprobantePartyFilterSchema,
+  ComprobantesQuerySchema,
+  ComprobanteClaveSchema,
+  ComprobanteMetadataSchema,
+  ComprobantesMetadataArraySchema,
+} from "./history.js";

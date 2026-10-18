@@ -94,20 +94,22 @@ hacienda status 50601012400310123456700100001010000000001199999999
 
 ### `hacienda list`
 
-List recent comprobantes from Hacienda.
+Read one bounded page of observed Hacienda metadata, without status/XML or complete-history claims.
 
 ```bash
-hacienda list --limit 50 --offset 0
+hacienda list --limit 20 --offset 0 --emisor 02003101234567
 ```
 
-| Argument   | Description       | Default |
-| ---------- | ----------------- | ------- |
-| `--limit`  | Results per page  | `20`    |
-| `--offset` | Pagination offset | `0`     |
+| Argument     | Description                          | Default |
+| ------------ | ------------------------------------ | ------- |
+| `--limit`    | Requested page size (1–50 SDK cap)   | `20`    |
+| `--offset`   | Requested pagination offset          | `0`     |
+| `--emisor`   | Combined domestic issuer type + ID   | —       |
+| `--receptor` | Combined domestic receiver type + ID | —       |
 
 ### `hacienda get <clave>`
 
-Get full details of a document by its 50-digit clave numerica.
+Read document metadata and credit/debit references by its current 50-character clave. Use `hacienda status` separately for status/response observations.
 
 ```bash
 hacienda get 50601012400310123456700100001010000000001199999999
@@ -180,3 +182,5 @@ See the [command reference](https://github.com/DojoCodingLabs/hacienda-cr/blob/m
 ## Migrating to 0.4.0
 
 Read the [migration guide](https://github.com/DojoCodingLabs/hacienda-cr/blob/main/packages/sdk/MIGRATION-v4.4.md) before upgrading.
+
+See the [history contract migration](../../docs/history-contract.md) for rejected date/legacy filters, exact identifiers and observed-only pagination.
