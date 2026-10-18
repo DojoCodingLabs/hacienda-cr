@@ -31,5 +31,18 @@ initial result is represented as a full successful run.
 No real credentials, network submissions, live Hacienda acceptance, legal age
 oracle, concurrent financial ledger authority or app activation were exercised.
 No adversarial cryptographic fixture was constructed. Independent exact-head
-review remains required; full V1, special FEC, REP, recipient and security gates
+review is recorded below; full V1, special FEC, REP, recipient and security gates
 remain open.
+
+## Independent root source review
+
+Root reviewed exact source `b9a193086c121ff81ec2cd4477c1c2afbe0b5524`:
+strict new schemas, own identities, unchanged source/reference lexemes,
+positive allocations, partial correlated-line math, rejected-source layout and
+fresh replacement identity, native builders, public/packed consumers and primary
+article19 separation. No source blocker was found. Root independently executed
+four focused files: **36 tests passed**, including both new APIs, exact FE and
+existing total-NC builder regressions. The author's complete verification above
+was inspected separately. This documentation-only follow-up changes no runtime,
+manifest, lock, vendor or release identity and establishes no application or
+live fiscal acceptance.
