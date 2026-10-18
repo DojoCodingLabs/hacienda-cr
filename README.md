@@ -18,7 +18,7 @@ Toolkit open-source en TypeScript para trabajar con comprobantes electrónicos v
 
 [Casos de uso](#qué-podés-construir) · [Empezar](#empezá-acá) · [Documentación](#documentación) · [Contribuir](#desarrollo-y-contribuciones) · [Reportar un problema](https://github.com/DojoCodingLabs/hacienda-cr/issues/new)
 
-La versión **0.7.0** está publicada y verificada en los cuatro paquetes. El [registro del release](docs/release-070-published.md) conserva versiones, integridades, procedencia y recuperación de la publicación, junto con los avisos de seguridad pendientes. Publicar el SDK no activa una integración fiscal ni adopta la versión en una aplicación.
+La versión **0.7.0** está publicada y verificada en los cuatro paquetes. El [registro del release](docs/release-070-published.md) conserva versiones, integridades, procedencia y recuperación de la publicación, junto con los avisos de seguridad pendientes. Publicar el SDK no activa una integración fiscal ni adopta la versión en una aplicación. La [preparación 0.8.0](docs/release-080-readiness.md) es un PR de versiones para corregir el contrato de historial; todavía no representa publicación ni adopción.
 
 ## La visión: facturación dentro de tu producto
 
