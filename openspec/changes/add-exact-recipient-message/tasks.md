@@ -4,7 +4,7 @@
 - [x] Implement strict source-bound exact recipient input and native producer.
 - [x] Add focused source identity, totals, Unicode, chronology and legacy tests.
 - [x] Verify installed public exports, all offline packages and full gate on base a1e0e1: 1,520 unit tests, four live skips, 118 script tests and all four freshly packed consumers.
-- [ ] Obtain independent source and fiscal-contract review before merge.
+- [x] Obtain independent exact-head source and fiscal-contract review (21e42d0; 33 recipient tests passed).
 
 ## Required integration
 
