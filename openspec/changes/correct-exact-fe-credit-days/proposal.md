@@ -22,4 +22,4 @@ packed ESM/type consumers. A minor Changeset plans the coordinated 0.9.0 family;
 release/version/artifact review and Facturador adoption remain separate. No live
 fiscal effect, source rewrite or publication is part of this change.
 
-The same current-only boundary rejects REP-only sale conditions 09/11 and FEC-only 13, per the official annex page 70 notes 20/22/24. Retained and legacy Number APIs preserve their prior source contract.
+The same current-only boundary rejects REP-only sale conditions 09/11 and FEC-only 13, per the official annex page 70, Nota 5 footnotes 20/22/24. Retained and legacy Number APIs preserve their prior source contract.
