@@ -245,3 +245,10 @@ export type {
   ExactFeReplacementInput,
   ExactFeReplacementCalculated,
 } from "@dojocoding/hacienda-shared";
+
+export { calculateExactFecForeignServiceIva13 } from "./tax/exact-fec-foreign-service.js";
+export { buildExactFacturaCompraForeignServiceIva13Xml } from "./documents/exact-fec-foreign-service-builder.js";
+export type {
+  ExactFecForeignServiceIva13Input,
+  ExactFecForeignServiceIva13Calculated,
+} from "@dojocoding/hacienda-shared";

@@ -126,3 +126,13 @@ Do not use the unchanged economic case string to relabel a historical 0.9
 producer. The future exact published tuple and a separate consumer adoption must
 distinguish current authority from retained original custody. See [migration and
 verification limits](docs/current-fe-native-boundaries.md).
+
+### Unreleased explicit foreign-service IVA13 FEC
+
+Use the separate `ExactFecForeignServiceIva13InputSchema` and matching calculator/
+builder only for explicitly selected ordinary taxable services. Actual foreign
+supplier 05 remains Emisor, actual buyer owns 08, and foreign address/document
+reference 16/reason 11 are required. No local supplier header/address or tax default
+is invented. Existing domestic FEC and other APIs are unchanged. See the
+[full contract](docs/exact-foreign-service-fec.md); selecting the source case does
+not establish legal eligibility, liability, creditability or app activation.

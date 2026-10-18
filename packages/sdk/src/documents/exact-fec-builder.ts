@@ -12,7 +12,6 @@ export function buildExactFacturaCompraXml(source: ExactFecInput): string {
   return buildXml("FacturaElectronicaCompra", fields(input, calculateExactFec(input)));
 }
 function fields(input: ExactFecInput, calculated: ExactFecCalculated) {
-  const summary = calculated.resumenFactura;
   return {
     Clave: input.clave,
     ProveedorSistemas: input.proveedorSistemas,
@@ -26,6 +25,22 @@ function fields(input: ExactFecInput, calculated: ExactFecCalculated) {
     ...(input.receptor ? { Receptor: buildReceptorXml(input.receptor) } : {}),
     CondicionVenta: input.condicionVenta,
     ...(input.plazoCredito ? { PlazoCredito: input.plazoCredito } : {}),
+    ...buildExactFecMonetaryFields(calculated),
+    InformacionReferencia: input.informacionReferencia.map((r) => ({
+      TipoDocIR: r.tipoDoc,
+      ...(r.tipoDocOtros ? { TipoDocRefOTRO: r.tipoDocOtros } : {}),
+      Numero: r.numero,
+      FechaEmisionIR: r.fechaEmision,
+      Codigo: r.codigo,
+      Razon: r.razon,
+    })),
+  };
+}
+
+/** Internal unchanged FEC monetary XML projection shared by explicit source cases. */
+export function buildExactFecMonetaryFields(calculated: ExactFecCalculated) {
+  const summary = calculated.resumenFactura;
+  return {
     DetalleServicio: {
       LineaDetalle: calculated.detalleServicio.map((line) => ({
         NumeroLinea: line.numeroLinea,
@@ -93,13 +108,5 @@ function fields(input: ExactFecInput, calculated: ExactFecCalculated) {
       })),
       TotalComprobante: summary.totalComprobante,
     },
-    InformacionReferencia: input.informacionReferencia.map((r) => ({
-      TipoDocIR: r.tipoDoc,
-      ...(r.tipoDocOtros ? { TipoDocRefOTRO: r.tipoDocOtros } : {}),
-      Numero: r.numero,
-      FechaEmisionIR: r.fechaEmision,
-      Codigo: r.codigo,
-      Razon: r.razon,
-    })),
   };
 }

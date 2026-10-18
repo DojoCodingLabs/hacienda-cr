@@ -127,3 +127,10 @@ export {
   type ExactFeReplacementInput,
   type ExactFeReplacementCalculated,
 } from "./exact-fe-replacement.js";
+
+export {
+  ExactFecForeignServiceIva13InputSchema,
+  ExactFecForeignServiceIva13ReferenceSchema,
+  type ExactFecForeignServiceIva13Input,
+  type ExactFecForeignServiceIva13Calculated,
+} from "./exact-fec-foreign-service.js";

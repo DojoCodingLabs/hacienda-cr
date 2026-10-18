@@ -45,9 +45,11 @@ This reference subset does not declare all other FEC references illegal; it
 limits this named evidence-documentation case. It does not implement cancellation,
 replacement, contingency, foreign-provider processing or FEC corrections.
 
-Supplier 05 is a separate foreign-service/intangible case requiring reference 16.
-Supplier 06 is limited to used goods from a non-contributor with sale condition 13.
-Both remain explicitly unsupported and required backlog work. Condition 13 does
+Supplier 05 is a separate foreign-service/intangible family requiring reference 16.
+The later [explicit ordinary IVA13 foreign-service source](exact-foreign-service-fec.md)
+covers only its named taxable-service selection; broader intangible/mixed/other-tax
+cases remain required backlog work. Supplier 06 is limited to used goods from a
+non-contributor with sale condition 13 and still has no exact producer. Condition 13 does
 not automatically establish zero/exempt/non-subject/13% tax treatment. Source
 syntax cannot establish supplier qualification, fiscal regime, VAT liability,
 exigibility/tax period, credit deductibility, legal age or Hacienda acceptance.
