@@ -103,3 +103,9 @@ independent Python Decimal, native xmllint and fresh packed-consumer checks;
 none establishes real Hacienda acceptance or authorizes activation/publication.
 
 History wrappers expose observed metadata and raw range headers, not XML/status/totals or complete-history authority. Preserve strict pre-auth filter validation, exact string identity/clave and cancellation. See [history contract and migration](docs/history-contract.md); release/adoption and live history evidence remain separate.
+
+Current exact FE requires positive 1–5 digit credit days for 02/10 (and any present
+term). Preserve the explicit read-only retained schema/calculator boundary; do
+not add a retained XML/signing/POST builder or a permissive current-API flag.
+Historical consumer selection requires independently reviewed immutable producer
+and byte bindings. See [credit-term contract](docs/exact-fe-credit-terms.md).

@@ -119,7 +119,7 @@ export const ExactFePaymentSchema = MedioPagoSchema.omit({ totalMedioPago: true 
         message: "Explicit other-payment text required",
       });
   });
-export const ExactFeInputSchema = FacturaElectronicaSchema.omit({
+const ExactFeStructureSchema = FacturaElectronicaSchema.omit({
   detalleServicio: true,
   resumenFactura: true,
   otrosCargos: true,
@@ -162,12 +162,6 @@ export const ExactFeInputSchema = FacturaElectronicaSchema.omit({
         path: ["condicionVentaOtros"],
         message: "Explicit other-sale text required",
       });
-    if (input.condicionVenta === "02" && !/^\d{1,5}$/.test(input.plazoCredito ?? ""))
-      ctx.addIssue({
-        code: "custom",
-        path: ["plazoCredito"],
-        message: "Explicit credit days required",
-      });
     if (
       input.emisor.identificacion.tipo === "05" ||
       input.receptor.identificacion?.tipo === "05" ||
@@ -192,6 +186,41 @@ export const ExactFeInputSchema = FacturaElectronicaSchema.omit({
         });
     });
   });
+/** Read-only historical decimal-source shape for immutable 0.6–0.8 FE custody.
+ * This preserves the former term acceptance, not current issuance readiness.
+ * Callers must independently bind the exact reviewed producer and retained bytes.
+ * No retained XML/signing/transport builder is provided. */
+export const RetainedExactFeInputSchema = ExactFeStructureSchema.superRefine((input, ctx) => {
+  if (input.condicionVenta === "02" && !/^\d{1,5}$/.test(input.plazoCredito ?? ""))
+    ctx.addIssue({
+      code: "custom",
+      path: ["plazoCredito"],
+      message: "Historical credit-day shape required",
+    });
+});
+/** Official current annex p25: 02/10 require positive 1–5 digit days. Any present
+ * term must also be positive. Preserve valid leading-zero lexemes verbatim. */
+export const ExactFeInputSchema = ExactFeStructureSchema.superRefine((input, ctx) => {
+  // Current official annex p70, Nota 5 footnotes 20/22/24: 09/11 are REP-only; 13 is FEC-only.
+  if (["09", "11", "13"].includes(input.condicionVenta))
+    ctx.addIssue({
+      code: "custom",
+      path: ["condicionVenta"],
+      message: "Sale condition belongs to another document family, not FE",
+    });
+  if (["02", "10"].includes(input.condicionVenta) && input.plazoCredito === undefined)
+    ctx.addIssue({
+      code: "custom",
+      path: ["plazoCredito"],
+      message: "Explicit positive credit days required for 02/10",
+    });
+  if (input.plazoCredito !== undefined && !/[1-9]/.test(input.plazoCredito))
+    ctx.addIssue({
+      code: "custom",
+      path: ["plazoCredito"],
+      message: "Credit days must be positive",
+    });
+});
 export const ExactFeCalculatedLineSchema = ExactFeLineBaseSchema.omit({
   descuento: true,
   impuesto: true,
@@ -247,5 +276,6 @@ export const ExactFeCalculatedSchema = z
     resumenFactura: ExactFeSummarySchema,
   })
   .strict();
+export type RetainedExactFeInput = z.infer<typeof RetainedExactFeInputSchema>;
 export type ExactFeInput = z.infer<typeof ExactFeInputSchema>;
 export type ExactFeCalculated = z.infer<typeof ExactFeCalculatedSchema>;

@@ -1,0 +1,137 @@
+{
+  "scope": "Synthetic unsigned bytes built with actual published0.8.0; no taxpayer or fiscal acceptance evidence",
+  "producer": {
+    "version": "0.8.0",
+    "integrity": "sha512-tZ9ircNjpV62ToEDODCJGxkUpoVi2KF0vgMnWwhhi3bXPcd0w87dg5Pb9vdycJSB71EFsU+Cnl7shoCutPy1ug==",
+    "sourceCommit": "96012fa9abc184f78d35a96f736399f1ff1d7606"
+  },
+  "rows": [
+    {
+      "source": {
+        "caseCode": "FE-domestic-ordinary-iva13-v1",
+        "clave": "50617102600999999999900100001010000000042112345678",
+        "proveedorSistemas": "9999999999",
+        "codigoActividadEmisor": "620100",
+        "numeroConsecutivo": "00100001010000000042",
+        "fechaEmision": "2026-10-17T12:00:00-06:00",
+        "emisor": {
+          "nombre": "Emisor ficticio local",
+          "identificacion": {
+            "tipo": "02",
+            "numero": "9999999999"
+          },
+          "ubicacion": {
+            "provincia": "1",
+            "canton": "01",
+            "distrito": "01",
+            "otrasSenas": "Dirección ficticia para pruebas locales"
+          },
+          "correoElectronico": "issuer@example.test"
+        },
+        "receptor": {
+          "nombre": "Receptor ficticio",
+          "identificacion": {
+            "tipo": "02",
+            "numero": "9999999998"
+          },
+          "correoElectronico": "recipient@example.test"
+        },
+        "condicionVenta": "02",
+        "detalleServicio": [
+          {
+            "numeroLinea": 1,
+            "codigoCabys": "8310100000000",
+            "cantidad": "1",
+            "unidadMedida": "Sp",
+            "detalle": "Servicio ficticio local",
+            "precioUnitario": "100",
+            "esServicio": true,
+            "impuesto": [
+              {
+                "codigo": "01",
+                "codigoTarifaIVA": "08",
+                "tarifa": "13"
+              }
+            ]
+          }
+        ],
+        "codigoTipoMoneda": {
+          "codigoMoneda": "CRC",
+          "tipoCambio": "1"
+        },
+        "medioPago": [
+          {
+            "tipoMedioPago": "01",
+            "totalMedioPago": "113"
+          }
+        ],
+        "plazoCredito": "00000"
+      },
+      "xml": "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n<FacturaElectronica xmlns=\"https://cdn.comprobanteselectronicos.go.cr/xml-schemas/v4.4/facturaElectronica\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:schemaLocation=\"https://cdn.comprobanteselectronicos.go.cr/xml-schemas/v4.4/facturaElectronica FacturaElectronica_V4.4.xsd\">\n  <Clave>50617102600999999999900100001010000000042112345678</Clave>\n  <ProveedorSistemas>9999999999</ProveedorSistemas>\n  <CodigoActividadEmisor>620100</CodigoActividadEmisor>\n  <NumeroConsecutivo>00100001010000000042</NumeroConsecutivo>\n  <FechaEmision>2026-10-17T12:00:00-06:00</FechaEmision>\n  <Emisor>\n    <Nombre>Emisor ficticio local</Nombre>\n    <Identificacion>\n      <Tipo>02</Tipo>\n      <Numero>9999999999</Numero>\n    </Identificacion>\n    <Ubicacion>\n      <Provincia>1</Provincia>\n      <Canton>01</Canton>\n      <Distrito>01</Distrito>\n      <OtrasSenas>Dirección ficticia para pruebas locales</OtrasSenas>\n    </Ubicacion>\n    <CorreoElectronico>issuer@example.test</CorreoElectronico>\n  </Emisor>\n  <Receptor>\n    <Nombre>Receptor ficticio</Nombre>\n    <Identificacion>\n      <Tipo>02</Tipo>\n      <Numero>9999999998</Numero>\n    </Identificacion>\n    <CorreoElectronico>recipient@example.test</CorreoElectronico>\n  </Receptor>\n  <CondicionVenta>02</CondicionVenta>\n  <PlazoCredito>00000</PlazoCredito>\n  <DetalleServicio>\n    <LineaDetalle>\n      <NumeroLinea>1</NumeroLinea>\n      <CodigoCABYS>8310100000000</CodigoCABYS>\n      <Cantidad>1</Cantidad>\n      <UnidadMedida>Sp</UnidadMedida>\n      <Detalle>Servicio ficticio local</Detalle>\n      <PrecioUnitario>100.00000</PrecioUnitario>\n      <MontoTotal>100.00000</MontoTotal>\n      <SubTotal>100.00000</SubTotal>\n      <BaseImponible>100.00000</BaseImponible>\n      <Impuesto>\n        <Codigo>01</Codigo>\n        <CodigoTarifaIVA>08</CodigoTarifaIVA>\n        <Tarifa>13</Tarifa>\n        <Monto>13.00000</Monto>\n      </Impuesto>\n      <ImpuestoAsumidoEmisorFabrica>0.00000</ImpuestoAsumidoEmisorFabrica>\n      <ImpuestoNeto>13.00000</ImpuestoNeto>\n      <MontoTotalLinea>113.00000</MontoTotalLinea>\n    </LineaDetalle>\n  </DetalleServicio>\n  <ResumenFactura>\n    <CodigoTipoMoneda>\n      <CodigoMoneda>CRC</CodigoMoneda>\n      <TipoCambio>1.00000</TipoCambio>\n    </CodigoTipoMoneda>\n    <TotalServGravados>100.00000</TotalServGravados>\n    <TotalMercanciasGravadas>0.00000</TotalMercanciasGravadas>\n    <TotalGravado>100.00000</TotalGravado>\n    <TotalVenta>100.00000</TotalVenta>\n    <TotalDescuentos>0.00000</TotalDescuentos>\n    <TotalVentaNeta>100.00000</TotalVentaNeta>\n    <TotalDesgloseImpuesto>\n      <Codigo>01</Codigo>\n      <CodigoTarifaIVA>08</CodigoTarifaIVA>\n      <TotalMontoImpuesto>13.00000</TotalMontoImpuesto>\n    </TotalDesgloseImpuesto>\n    <TotalImpuesto>13.00000</TotalImpuesto>\n    <MedioPago>\n      <TipoMedioPago>01</TipoMedioPago>\n      <TotalMedioPago>113.00000</TotalMedioPago>\n    </MedioPago>\n    <TotalComprobante>113.00000</TotalComprobante>\n  </ResumenFactura>\n</FacturaElectronica>\n",
+      "sha256": "fe361621acb026a43dd54af8dd6a3b7fb49eb2d97db259aa739461f8ca61ce24"
+    },
+    {
+      "source": {
+        "caseCode": "FE-domestic-ordinary-iva13-v1",
+        "clave": "50617102600999999999900100001010000000042112345678",
+        "proveedorSistemas": "9999999999",
+        "codigoActividadEmisor": "620100",
+        "numeroConsecutivo": "00100001010000000042",
+        "fechaEmision": "2026-10-17T12:00:00-06:00",
+        "emisor": {
+          "nombre": "Emisor ficticio local",
+          "identificacion": {
+            "tipo": "02",
+            "numero": "9999999999"
+          },
+          "ubicacion": {
+            "provincia": "1",
+            "canton": "01",
+            "distrito": "01",
+            "otrasSenas": "Dirección ficticia para pruebas locales"
+          },
+          "correoElectronico": "issuer@example.test"
+        },
+        "receptor": {
+          "nombre": "Receptor ficticio",
+          "identificacion": {
+            "tipo": "02",
+            "numero": "9999999998"
+          },
+          "correoElectronico": "recipient@example.test"
+        },
+        "condicionVenta": "10",
+        "detalleServicio": [
+          {
+            "numeroLinea": 1,
+            "codigoCabys": "8310100000000",
+            "cantidad": "1",
+            "unidadMedida": "Sp",
+            "detalle": "Servicio ficticio local",
+            "precioUnitario": "100",
+            "esServicio": true,
+            "impuesto": [
+              {
+                "codigo": "01",
+                "codigoTarifaIVA": "08",
+                "tarifa": "13"
+              }
+            ]
+          }
+        ],
+        "codigoTipoMoneda": {
+          "codigoMoneda": "CRC",
+          "tipoCambio": "1"
+        },
+        "medioPago": [
+          {
+            "tipoMedioPago": "01",
+            "totalMedioPago": "113"
+          }
+        ]
+      },
+      "xml": "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n<FacturaElectronica xmlns=\"https://cdn.comprobanteselectronicos.go.cr/xml-schemas/v4.4/facturaElectronica\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:schemaLocation=\"https://cdn.comprobanteselectronicos.go.cr/xml-schemas/v4.4/facturaElectronica FacturaElectronica_V4.4.xsd\">\n  <Clave>50617102600999999999900100001010000000042112345678</Clave>\n  <ProveedorSistemas>9999999999</ProveedorSistemas>\n  <CodigoActividadEmisor>620100</CodigoActividadEmisor>\n  <NumeroConsecutivo>00100001010000000042</NumeroConsecutivo>\n  <FechaEmision>2026-10-17T12:00:00-06:00</FechaEmision>\n  <Emisor>\n    <Nombre>Emisor ficticio local</Nombre>\n    <Identificacion>\n      <Tipo>02</Tipo>\n      <Numero>9999999999</Numero>\n    </Identificacion>\n    <Ubicacion>\n      <Provincia>1</Provincia>\n      <Canton>01</Canton>\n      <Distrito>01</Distrito>\n      <OtrasSenas>Dirección ficticia para pruebas locales</OtrasSenas>\n    </Ubicacion>\n    <CorreoElectronico>issuer@example.test</CorreoElectronico>\n  </Emisor>\n  <Receptor>\n    <Nombre>Receptor ficticio</Nombre>\n    <Identificacion>\n      <Tipo>02</Tipo>\n      <Numero>9999999998</Numero>\n    </Identificacion>\n    <CorreoElectronico>recipient@example.test</CorreoElectronico>\n  </Receptor>\n  <CondicionVenta>10</CondicionVenta>\n  <DetalleServicio>\n    <LineaDetalle>\n      <NumeroLinea>1</NumeroLinea>\n      <CodigoCABYS>8310100000000</CodigoCABYS>\n      <Cantidad>1</Cantidad>\n      <UnidadMedida>Sp</UnidadMedida>\n      <Detalle>Servicio ficticio local</Detalle>\n      <PrecioUnitario>100.00000</PrecioUnitario>\n      <MontoTotal>100.00000</MontoTotal>\n      <SubTotal>100.00000</SubTotal>\n      <BaseImponible>100.00000</BaseImponible>\n      <Impuesto>\n        <Codigo>01</Codigo>\n        <CodigoTarifaIVA>08</CodigoTarifaIVA>\n        <Tarifa>13</Tarifa>\n        <Monto>13.00000</Monto>\n      </Impuesto>\n      <ImpuestoAsumidoEmisorFabrica>0.00000</ImpuestoAsumidoEmisorFabrica>\n      <ImpuestoNeto>13.00000</ImpuestoNeto>\n      <MontoTotalLinea>113.00000</MontoTotalLinea>\n    </LineaDetalle>\n  </DetalleServicio>\n  <ResumenFactura>\n    <CodigoTipoMoneda>\n      <CodigoMoneda>CRC</CodigoMoneda>\n      <TipoCambio>1.00000</TipoCambio>\n    </CodigoTipoMoneda>\n    <TotalServGravados>100.00000</TotalServGravados>\n    <TotalMercanciasGravadas>0.00000</TotalMercanciasGravadas>\n    <TotalGravado>100.00000</TotalGravado>\n    <TotalVenta>100.00000</TotalVenta>\n    <TotalDescuentos>0.00000</TotalDescuentos>\n    <TotalVentaNeta>100.00000</TotalVentaNeta>\n    <TotalDesgloseImpuesto>\n      <Codigo>01</Codigo>\n      <CodigoTarifaIVA>08</CodigoTarifaIVA>\n      <TotalMontoImpuesto>13.00000</TotalMontoImpuesto>\n    </TotalDesgloseImpuesto>\n    <TotalImpuesto>13.00000</TotalImpuesto>\n    <MedioPago>\n      <TipoMedioPago>01</TipoMedioPago>\n      <TotalMedioPago>113.00000</TotalMedioPago>\n    </MedioPago>\n    <TotalComprobante>113.00000</TotalComprobante>\n  </ResumenFactura>\n</FacturaElectronica>\n",
+      "sha256": "6a36ffd8c9b81b58572f7272868e84d6c677801f3911d06117335b8c8cd23c27"
+    }
+  ]
+}

@@ -1,11 +1,19 @@
+import { createTestP12 } from "../__fixtures__/signing.js";
+import { signXml } from "../signing/signer.js";
+import { validateDocumentXml } from "../xml/schema-validator.js";
+import { createHash } from "node:crypto";
+import retainedCreditFixture from "../__fixtures__/retained-fe-credit-080.json" with { type: "json" };
 import { execFileSync } from "node:child_process";
 import {
+  FacturaElectronicaSchema,
   ExactFeInputSchema,
+  RetainedExactFeInputSchema,
   ExactFeCalculatedSchema,
   type ExactFeInput,
 } from "@dojocoding/hacienda-shared";
 import { SIMPLE_INVOICE } from "../__fixtures__/invoices.js";
-import { calculateExactFe } from "../tax/exact-fe.js";
+import { calculateExactFe, calculateRetainedExactFe } from "../tax/exact-fe.js";
+import { buildFacturaXml } from "./factura-builder.js";
 import { buildExactFacturaXml } from "./exact-fe-builder.js";
 import { validateAgainstXsd } from "../__testing__/xsd.js";
 interface UnsafeFe {
@@ -343,5 +351,143 @@ describe("additive exact ordinary FE strings → BigInt → XML", () => {
     const badPayment = input();
     required(badPayment.medioPago[0]).totalMedioPago = "113.00001";
     expect(() => calculateExactFe(badPayment)).toThrow();
+  });
+});
+
+describe("current exact FE credit-day contract and historical read-only custody", () => {
+  for (const condicionVenta of ["02", "10"] as const) {
+    it(`rejects missing/zero/overflow${condicionVenta} before exact arithmetic or XML`, () => {
+      for (const plazoCredito of [undefined, "0", "00000", "100000", "-1", "1.5", "+1"]) {
+        const source = { ...input(), condicionVenta, plazoCredito };
+        expect(() => calculateExactFe(source)).toThrow();
+        expect(() => buildExactFacturaXml(source)).toThrow();
+      }
+    });
+    it(`preserves${condicionVenta} positive term lexemes through JSON/XML and native XSD`, () => {
+      for (const plazoCredito of ["1", "00001", "00030", "99999"]) {
+        const source = { ...input(), condicionVenta, plazoCredito };
+        const restored = JSON.parse(JSON.stringify(source)) as ExactFeInput;
+        const expected = required(oracle([restored])[0]);
+        expect(calculateExactFe(restored).resumenFactura.totalComprobante).toBe(expected.total);
+        const xml = buildExactFacturaXml(restored);
+        expect(xml).toContain(`<PlazoCredito>${plazoCredito}</PlazoCredito>`);
+        expect(
+          validateAgainstXsd(xml, "FacturaElectronica_V4.4.xsd", { allowMissingSignature: true })
+            .valid,
+        ).toBe(true);
+        expect(restored.plazoCredito).toBe(plazoCredito);
+      }
+    });
+  }
+  it("preserves the legacy Number schema/builder behavior without claiming current exact readiness", () => {
+    for (const condicionVenta of ["02", "10"] as const) {
+      const legacy = {
+        ...structuredClone(SIMPLE_INVOICE),
+        condicionVenta,
+        ...(condicionVenta === "02" ? { plazoCredito: "00000" } : {}),
+      };
+      expect(FacturaElectronicaSchema.safeParse(legacy).success).toBe(true);
+      expect(buildFacturaXml(legacy)).toContain(
+        `<CondicionVenta>${condicionVenta}</CondicionVenta>`,
+      );
+    }
+  });
+  it("retains signed historical bytes under structural custody without making them current emission inputs", async () => {
+    const p12 = createTestP12("synthetic-history");
+    try {
+      for (const legacy of retainedCreditFixture.rows) {
+        const signed = await signXml(legacy.xml, p12, "synthetic-history");
+        const bytes = Buffer.from(signed),
+          digest = createHash("sha256").update(bytes).digest("hex");
+        expect((await validateDocumentXml(signed, { requireSignature: true })).valid).toBe(true);
+        const retained = RetainedExactFeInputSchema.parse(legacy.source);
+        expect(calculateRetainedExactFe(retained).resumenFactura.totalComprobante).toBe(
+          "113.00000",
+        );
+        expect(() => buildExactFacturaXml(retained)).toThrow();
+        expect(createHash("sha256").update(bytes).digest("hex")).toBe(digest);
+        expect(bytes.toString()).toBe(signed);
+      }
+    } finally {
+      p12.fill(0);
+    }
+  });
+  it("keeps independently bound old0.8 source/bytes intact without making them current builder inputs", () => {
+    expect(retainedCreditFixture.producer.version).toBe("0.8.0");
+    expect(retainedCreditFixture.producer.sourceCommit).toBe(
+      "96012fa9abc184f78d35a96f736399f1ff1d7606",
+    );
+    for (const legacy of retainedCreditFixture.rows) {
+      const retained = RetainedExactFeInputSchema.parse(legacy.source);
+      const before = JSON.stringify(retained);
+      expect(createHash("sha256").update(legacy.xml).digest("hex")).toBe(legacy.sha256);
+      expect(
+        validateAgainstXsd(legacy.xml, "FacturaElectronica_V4.4.xsd", {
+          allowMissingSignature: true,
+        }).valid,
+      ).toBe(true);
+      expect(calculateRetainedExactFe(retained).resumenFactura.totalComprobante).toBe(
+        required(oracle([retained])[0]).total,
+      );
+      expect(JSON.stringify(retained)).toBe(before);
+      expect(ExactFeInputSchema.safeParse(retained).success).toBe(false);
+      expect(() => buildExactFacturaXml(retained)).toThrow();
+    }
+  });
+});
+
+describe("current FE document-family sale conditions", () => {
+  it("refuses REP-only 09/11 and FEC-only 13 before calculation/XML, retaining read-only historical math", () => {
+    for (const condicionVenta of ["09", "11", "13"] as const) {
+      const source = { ...input(), condicionVenta };
+      const before = JSON.stringify(source);
+      expect(ExactFeInputSchema.safeParse(source).success).toBe(false);
+      expect(() => calculateExactFe(source)).toThrow();
+      expect(() => buildExactFacturaXml(source)).toThrow();
+      if (condicionVenta === "13") {
+        const retained = RetainedExactFeInputSchema.parse(source);
+        expect(calculateRetainedExactFe(retained).resumenFactura.totalComprobante).toBe(
+          required(oracle([retained])[0]).total,
+        );
+        const legacy = { ...SIMPLE_INVOICE, condicionVenta };
+        expect(FacturaElectronicaSchema.safeParse(legacy).success).toBe(true);
+        expect(buildFacturaXml(legacy)).toContain(
+          `<CondicionVenta>${condicionVenta}</CondicionVenta>`,
+        );
+      } else {
+        expect(RetainedExactFeInputSchema.safeParse(source).success).toBe(false);
+        expect(
+          FacturaElectronicaSchema.safeParse({ ...SIMPLE_INVOICE, condicionVenta }).success,
+        ).toBe(false);
+      }
+      expect(JSON.stringify(source)).toBe(before);
+    }
+  });
+  it("preserves all other valid FE sale-condition inputs", () => {
+    for (const condicionVenta of [
+      "01",
+      "02",
+      "03",
+      "04",
+      "05",
+      "06",
+      "07",
+      "08",
+      "10",
+      "12",
+      "14",
+      "15",
+      "99",
+    ] as const) {
+      const source = {
+        ...input(),
+        condicionVenta,
+        ...(["02", "10"].includes(condicionVenta) ? { plazoCredito: "00030" } : {}),
+        ...(condicionVenta === "99" ? { condicionVentaOtros: "Acuerdo explícito sintético" } : {}),
+      };
+      expect(buildExactFacturaXml(source)).toContain(
+        `<CondicionVenta>${condicionVenta}</CondicionVenta>`,
+      );
+    }
   });
 });

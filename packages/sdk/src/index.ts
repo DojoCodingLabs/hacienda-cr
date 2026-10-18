@@ -211,9 +211,13 @@ export type {
   VerifiedHaciendaResponse,
 } from "./signing/index.js";
 
-export { calculateExactFe } from "./tax/exact-fe.js";
+export { calculateExactFe, calculateRetainedExactFe } from "./tax/exact-fe.js";
 export { buildExactFacturaXml } from "./documents/exact-fe-builder.js";
-export type { ExactFeInput, ExactFeCalculated } from "@dojocoding/hacienda-shared";
+export type {
+  ExactFeInput,
+  RetainedExactFeInput,
+  ExactFeCalculated,
+} from "@dojocoding/hacienda-shared";
 
 export { calculateExactNcTotal } from "./tax/exact-nc.js";
 export { buildExactNotaCreditoTotalXml } from "./documents/exact-nc-builder.js";
