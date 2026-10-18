@@ -1,0 +1,36 @@
+{
+  "observedDate": "2026-10-18",
+  "scope": "Public documentation GET only; no authenticated API, provider submission, credentials or account access.",
+  "sources": [
+    {
+      "sha256": "d0bf02b8aa01fccc39a0f74d8efd4399d464bff888772e707eba2e2712bc1f87",
+      "bytes": 52352,
+      "url": "https://www.hacienda.go.cr/docs/ComprobantesElectronicosAPI.html"
+    },
+    {
+      "sha256": "b2606156042b7aa7b7f7f61945f0ff1323661b43b5a1489ad5eafad1c52fd25e",
+      "bytes": 7799,
+      "url": "https://www.hacienda.go.cr/docs/MensajeHacienda_V4.4.xsd"
+    },
+    {
+      "sha256": "6e093226b29b38c5c8de825f70c1b1cb8ed81e2f4a6eb0b3ff52708fc1eb2769",
+      "bytes": 1243035,
+      "url": "https://www.hacienda.go.cr/docs/ANEXOS_Y_ESTRUCTURAS_V4.4.pdf"
+    }
+  ],
+  "mensajeHaciendaFields": [
+    "Clave",
+    "NombreEmisor",
+    "TipoIdentificacionEmisor",
+    "NumeroCedulaEmisor",
+    "NombreReceptor",
+    "TipoIdentificacionReceptor",
+    "NumeroCedulaReceptor",
+    "Mensaje",
+    "EstadoMensaje",
+    "DetalleMensaje",
+    "MontoTotalImpuesto",
+    "TotalFactura",
+    "ds:Signature"
+  ]
+}

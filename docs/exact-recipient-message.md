@@ -53,3 +53,5 @@ runtime `21e42d09130e5ea6770e5aebe0c038ba891dbb98` passed full verification:
 118 script tests and all four fresh packed consumers. Independent exact-head
 source review approved the contract and reran all 33 recipient tests successfully.
 No npm publication, app adoption or recipient acceptance follows from this result.
+
+See the [recipient transport and correlation audit](mr-transport-correlation-research.md) for the primary protocol evidence and required next verification.

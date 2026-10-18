@@ -72,6 +72,7 @@ ambiguous submission failure, query the same clave before deciding to resubmit.
 ## Documentation map
 
 - [0.10.0 preparation](docs/release-0100-readiness.md): completed exact-source APIs, remaining REP/recipient transport boundaries and reviewed release gates.
+- [Recipient transport correlation](docs/mr-transport-correlation-research.md): exact primary evidence and required receiver-specific outcome oracle.
 - [REP monetary oracle](docs/rep-monetary-oracle-research.md): primary sources, reproducible native counterexamples and incomplete exact-producer gates.
 
 - [Published 0.7.0 release](docs/release-070-published.md): exact artifact/provenance verification, indexing recovery and advisory limits.
