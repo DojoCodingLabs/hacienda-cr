@@ -18,36 +18,36 @@ The SDK must not invent RUT status, qualification, tax liability or deductibilit
 
 ## Primary contract matrix
 
-| Concern                    | Evidence                                                            | Proposed bounded behavior                                                                                                                                                                                                                                                           |
-| -------------------------- | ------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Actual parties             | Annex pp. 19–23 and signature p. 60; native lines 60–70             | Real supplier in Emisor; real buyer in Receptor; no swapping to fit FE. Buyer owns clave taxpayer and signer.                                                                                                                                                                       |
-| Identity                   | Existing `validateDocumentIdentity(input,"08")`                     | Genuine own 08 consecutive/clave, buyer tax ID and CR emission date. Wrong supplier-owned clave rejects.                                                                                                                                                                            |
-| Activities                 | Annex p. 18; native lines 26–52                                     | Buyer activity required; supplier activity optional actual supplied fact. Never copy buyer activity into supplier.                                                                                                                                                                  |
-| Names                      | Native lines 627–731; annex pp. 19–23                               | Issuer 5–100, receiver 3–100, supplied commercial 3–80 Unicode characters; no normalization.                                                                                                                                                                                        |
-| Ordinary parties           | Annex pp. 19–21/69                                                  | First case requires domestic supplier/buyer 01–04 with actual domestic addresses. Identity 05/06 not accepted as an ordinary-party alias.                                                                                                                                           |
-| Supplier 05                | Annex pp. 19/69/74                                                  | Foreign service/intangible case, required reference 16 and distinct eligibility. Explicitly unsupported here; not an ordinary domestic default.                                                                                                                                     |
-| Supplier 06 / condition 13 | Annex pp. 19–20/69–70                                               | Used goods sold by non-contributor, identification06 requires condition13. Distinct mandatory later source case. Do not infer exempt/non-subject/13% classification from the condition alone.                                                                                       |
-| Conditions / terms         | Annex pp. 24–25/70                                                  | First case only 01 or02; explicit positive 1–5 digit days for02, preserve leading zeros. Do not infer condition10 tax-exigibility or90-day maturity.                                                                                                                                |
-| VAT / exigibility          | Annex detail and summary restrictions, native lines 313–325/410–441 | Caller explicitly selects this named ordinary IVA13 case; calculate declared ordinary13 only. No exemption, exoneration, non-subject, assumed/factory tax, gift/free or special transaction. Eligibility, VAT timing and credit rights remain independent caller gates.             |
-| Reference obligation       | Annex pp. 57–58/73–74; native lines 522–588                         | 1..10 explicit original supporting references; bounded first case uses contract06/procedure07/special-regime14/other99 with code04. Required real number, date and3–180 reason;99 additionally requires5–100 document-type description. No fabricated FE clave or supplier receipt. |
-| Age / chronology           | Annex p. 58                                                         | Validate exact declared chronology without Date.now or fraction truncation. Actual10-year submission-time eligibility remains caller trusted-calendar gate; no guessed leap-day rule.                                                                                               |
-| Allocation                 | Annex p. 56                                                         | 1..4 positive exact allocations reconcile to total; does not attest cash received.                                                                                                                                                                                                  |
-| Native FEC lines           | Native lines 313–325 versus FE                                      | Dedicated FEC projection omits FE-only ImpuestoAsumidoEmisorFabrica. Do not mutate FE serialization or use a fake FE source.                                                                                                                                                        |
+| Concern                    | Evidence                                                            | Proposed bounded behavior                                                                                                                                                                                                                                                            |
+| -------------------------- | ------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Actual parties             | Annex pp. 19–23 and signature p. 60; native lines 60–70             | Real supplier in Emisor; real buyer in Receptor; no swapping to fit FE. Buyer owns clave taxpayer and signer.                                                                                                                                                                        |
+| Identity                   | Existing `validateDocumentIdentity(input,"08")`                     | Genuine own 08 consecutive/clave, buyer tax ID and CR emission date. Wrong supplier-owned clave rejects.                                                                                                                                                                             |
+| Activities                 | Annex p. 18; native lines 26–52                                     | Buyer activity required; supplier activity optional actual supplied fact. Never copy buyer activity into supplier.                                                                                                                                                                   |
+| Names                      | Native lines 627–731; annex pp. 19–23                               | Issuer 5–100, receiver 3–100, supplied commercial 3–80 Unicode characters; no normalization.                                                                                                                                                                                         |
+| Ordinary parties           | Annex pp. 19–21/69                                                  | First case requires domestic supplier/buyer 01–04 with actual domestic addresses. Identity 05/06 not accepted as an ordinary-party alias.                                                                                                                                            |
+| Supplier 05                | Annex pp. 19/69/74                                                  | Foreign service/intangible case, required reference 16 and distinct eligibility. Explicitly unsupported here; not an ordinary domestic default.                                                                                                                                      |
+| Supplier 06 / condition 13 | Annex pp. 19–20/69–70                                               | Used goods sold by non-contributor, identification06 requires condition 13. Distinct mandatory later source case. Do not infer exempt/non-subject/13% classification from the condition alone.                                                                                       |
+| Conditions / terms         | Annex pp. 24–25/70                                                  | First case only 01 or02; explicit positive 1–5 digit days for02, preserve leading zeros. Do not infer condition10 tax-exigibility or90-day maturity.                                                                                                                                 |
+| VAT / exigibility          | Annex detail and summary restrictions, native lines 313–325/410–441 | Caller explicitly selects this named ordinary IVA13 case; calculate declared ordinary 13 only. No exemption, exoneration, non-subject, assumed/factory tax, gift/free or special transaction. Eligibility, VAT timing and credit rights remain independent caller gates.             |
+| Reference obligation       | Annex pp. 57–58/73–74; native lines 522–588                         | 1..10 explicit original supporting references; bounded first case uses contract06/procedure07/special-regime14/other99 with code 04. Required real number, date and3–180 reason;99 additionally requires5–100 document-type description. No fabricated FE clave or supplier receipt. |
+| Age / chronology           | Annex p. 58                                                         | Validate exact declared chronology without Date.now or fraction truncation. Actual 10-year submission-time eligibility remains caller trusted-calendar gate; no guessed leap-day rule.                                                                                               |
+| Allocation                 | Annex p. 56                                                         | 1..4 positive exact allocations reconcile to total; does not attest cash received.                                                                                                                                                                                                   |
+| Native FEC lines           | Native lines 313–325 versus FE                                      | Dedicated FEC projection omits FE-only ImpuestoAsumidoEmisorFabrica. Do not mutate FE serialization or use a fake FE source.                                                                                                                                                         |
 
 ## Why this reference/condition subset is explicit
 
-Annex Nota10/p.74 names reference06 Contract,07 Procedure,14 document supplied
+Annex Nota 10/p. 74 names reference06 Contract, 07 Procedure, 14 document supplied
 by a special-regime taxpayer and99 Other. This first API intentionally accepts
 only those non-electronic supporting-evidence types, not a new legal assertion
 that all other FEC references are invalid. Actual provider eligibility remains
-external. Nota9/p.73 names code04 “Reference to another document”; the API requires
+external. Nota 9/p. 73 names code 04 “Reference to another document”; the API requires
 that reason because this case is evidence documentation, not cancellation,
 correction, contingency, replacement or foreign-provider processing.
 
-Annex pp.57–58 requires FEC references, actual number (the special exception for
+Annex pp. 57–58 requires FEC references, actual number (the special exception for
 reference13 is outside this subset), emission date, code and reason. The named
-subset therefore requires number1–50, valid full-precision ISO date, literal04,
-reason3–180 nonblank Unicode characters. Type99 additionally requires
+subset therefore requires number 1–50, valid full-precision ISO date, literal04,
+reason 3–180 nonblank Unicode characters. Type 99 additionally requires
 `tipoDocOtros`5–100 nonblank characters. The same companion on06/07/14 is rejected
 rather than silently dropped. These types have no additional type-specific
 companion in the cited catalog. Do not manufacture a document number or force a
@@ -56,7 +56,7 @@ non-electronic evidence number into a50-digit clave. Supporting evidence tuple
 
 Condition01/02 is an intentionally narrow source API policy, not a statement
 that native FEC admits only those values: XSD includes additional conditions.
-01 is the ordinary cash term, without proving a receipt;02 requires explicit
+01 is the ordinary cash term, without proving a receipt ; 02 requires explicit
 positive credit days under annex p.25. Conditions08/10 have separate VAT timing
 or public-service eligibility,13 is used-goods/non-contributor,09/11 are REP and12
 is FE-only. Other specialty conditions are also outside this first case. Reject
@@ -95,7 +95,7 @@ SDK #69 remains an independent unresolved dependency security prerequisite.
 
 Independent schema rejects wrong/missing buyer, supplier-owned clave, wrong family,
 missing activity/reference, wrong reference kinds and date, amount overrides,
-unsupported condition13/identification06/foreign05/tax regime. Native 2024+2026
+unsupported condition 13/identification06/foreign 05/tax regime. Native 2024+2026
 unsigned/signed XSD checks prove FEC field order and absence of FE-only line nodes.
 Test party Unicode minima/maxima and unchanged actual facts.
 

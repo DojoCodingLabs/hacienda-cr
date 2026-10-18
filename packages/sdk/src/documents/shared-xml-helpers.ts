@@ -157,7 +157,11 @@ function buildIdentificacionXml(identificacion: Identificacion): Record<string, 
  *
  * The REP schema only admits Nombre, Identificacion, CorreoElectronico.
  */
-export function buildEmisorXml(emisor: Emisor, minimal = false): Record<string, unknown> {
+// Native FEC permits absent supplier email; family schemas keep their own rules.
+type XmlEmisor = Omit<Emisor, "correoElectronico"> & {
+  correoElectronico?: Emisor["correoElectronico"];
+};
+export function buildEmisorXml(emisor: XmlEmisor, minimal = false): Record<string, unknown> {
   const result: Record<string, unknown> = {
     Nombre: emisor.nombre,
     Identificacion: buildIdentificacionXml(emisor.identificacion),
