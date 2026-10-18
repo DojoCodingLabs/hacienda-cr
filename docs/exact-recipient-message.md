@@ -13,7 +13,7 @@ Proportionality 05 omits activity; rejection in this named case omits IVA decisi
 Credit cannot exceed original tax and expense cannot exceed original total.
 The legacy Number builder remains available with unchanged serialization.
 
-This is source-only, unreleased work. Required V1 integration still includes
+The source API is published in [0.10.0](release-0100-published.md); recipient transport remains unimplemented. Required V1 integration still includes
 original institutional acceptance, authentic buyer signer, durable current
 permissions/sequence/custody, legal timing, other original families, transport,
 recipient-specific recovery and institutional outcome correlation.

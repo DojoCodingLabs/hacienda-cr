@@ -93,7 +93,7 @@ are local source/artifact tests, not a published 0.9.0 release or app adoption.
 
 ## Later current-input name/payment correction
 
-The source-only [native-name and positive-allocation correction](current-fe-native-boundaries.md)
+The [native-name and positive-allocation correction](current-fe-native-boundaries.md)
 keeps the historical source/math shape above intact through reviewed 0.9 custody,
-including old zero allocations. Its future producer/release/adoption boundary is
-explicitly separate from the historical 0.9 release evidence recorded here.
+including old zero allocations. Its 0.10.0 producer/release boundary and separate application adoption are
+explicitly distinct from the historical 0.9 release evidence recorded here.

@@ -1,6 +1,6 @@
-# Exact ordinary FE-reference ND (unreleased source candidate)
+# Exact ordinary FE-reference ND (published in 0.10.0)
 
-Tracking: [SDK #85](https://github.com/DojoCodingLabs/hacienda-cr/issues/85). Additive shared exports: `ExactNdInputSchema`, `ExactNdReferenceSchema`, input/calculated types. SDK exports: `calculateExactNd` and `buildExactNotaDebitoXml`. This source slice contributes to one eventual cohesive linked release; no package version or app activation changes here.
+Tracking: [SDK #85](https://github.com/DojoCodingLabs/hacienda-cr/issues/85). Additive shared exports: `ExactNdInputSchema`, `ExactNdReferenceSchema`, input/calculated types. SDK exports: `calculateExactNd` and `buildExactNotaDebitoXml`. This API is published in [0.10.0](release-0100-published.md); application adoption and fiscal activation remain separate.
 
 The named case `ND-domestic-ordinary-fe-increment-iva13-v1` contains:
 
@@ -19,7 +19,7 @@ const delta = calculateExactNd(source);
 const xml = buildExactNotaDebitoXml(source);
 ```
 
-Original current ordinary FE identity/math must be coherent, but its total is **not** the debit amount. The new positive increment is calculated separately using the reviewed integer kernel (ordinary IVA13, CRC/USD). There is no arbitrary original-total ceiling. Party/currency/header overrides are not accepted; incompatible original conditions 09/11/12/13 and foreign/unreviewed parties reject instead of being rewritten. Current 02/10 positive credit lexemes remain unchanged. Unsupported fiscal regimes, charges, gifts/free lines or exoneration are not silently projected into ordinary IVA13. Existing FE/NC/current/retained and Number APIs stay unchanged; the unreleased TE issuer-name refinement below is the only existing additive-source follow-up; no historical ND signing/XML/POST builder is added.
+Original current ordinary FE identity/math must be coherent, but its total is **not** the debit amount. The new positive increment is calculated separately using the reviewed integer kernel (ordinary IVA13, CRC/USD). There is no arbitrary original-total ceiling. Party/currency/header overrides are not accepted; incompatible original conditions 09/11/12/13 and foreign/unreviewed parties reject instead of being rewritten. Current 02/10 positive credit lexemes remain unchanged. Unsupported fiscal regimes, charges, gifts/free lines or exoneration are not silently projected into ordinary IVA13. Existing FE/NC/current/retained and Number APIs stay unchanged; the TE issuer-name refinement released alongside it below is the only existing additive-source follow-up; no historical ND signing/XML/POST builder is added.
 
 ## Primary evidence and responsibility
 
@@ -29,14 +29,14 @@ Timestamp equality binds the reference to the exact supplied original lexeme. Se
 
 Native XSD, signature authenticity, reviewed trust and Hacienda acceptance are separate layers. Synthetic P12/response tests are not real institutional acceptance. SDK #69 and the recipient status protocol oracle in #85 stay open. FEE and the US entity remain outside domestic V1. CLI/MCP exact ND wrappers and app proof/series/worker/archive/PDF/delivery/UI integration are separate source slices/gates.
 
-## Native copied-party bounds and unreleased TE follow-up
+## Native copied-party bounds and TE follow-up
 
 ND copied issuer names require 5–100 Unicode characters, receiver names 3–100,
 and supplied commercial names 3–80. Values are never trimmed or normalized.
 The unchanged current ND XSD issuer restriction is at lines 987–995; TE has the
 same issuer minimum at lines 938–946. Review reproduced both builders accepting
 `abcd` before native validation rejected its length of four. This source PR
-therefore also tightens the unreleased exact TE issuer minimum from three to five.
+therefore also tightens the exact TE issuer minimum in 0.10.0 from three to five.
 It does not alter existing FE/current/retained schemas or Number APIs. Their
 pre-existing minimum-name/business-schema mismatch remains a separate #85 item;
 installed Zod already counts their maximum in Unicode characters.

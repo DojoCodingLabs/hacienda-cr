@@ -1,6 +1,6 @@
-# Exact ordinary domestic TE (source candidate)
+# Exact ordinary domestic TE (published in 0.10.0)
 
-Tracking: [SDK domestic V1 umbrella #85](https://github.com/DojoCodingLabs/hacienda-cr/issues/85). This additive source API is not yet published, does not enable a family in Facturador and does not establish Hacienda acceptance. It is intended for the single cohesive future linked release after the other required reviewed feature slices. Existing 0.9 versions, current/retained FE, total NC and Number APIs remain unchanged.
+Tracking: [SDK domestic V1 umbrella #85](https://github.com/DojoCodingLabs/hacienda-cr/issues/85). This additive API is published in [0.10.0](release-0100-published.md). It does not enable a family in Facturador or establish Hacienda acceptance. Historical published versions and retained/Number contracts remain independently bound; current FE name/allocation corrections are described in [their contract](current-fe-native-boundaries.md).
 
 `ExactTeInputSchema` / `ExactTeInput` are exported by shared. SDK exports `calculateExactTe`, `buildExactTiqueteXml` and the input/calculated types. Source facts use decimal strings; the SDK recomputes derived amounts using the existing BigInt ordinary IVA13 monetary kernel. The kernel has no document identity/receiver/case authority. FE and retained FE still parse their unchanged respective schemas before invoking the same math. No retained TE signing/XML/POST API is added.
 

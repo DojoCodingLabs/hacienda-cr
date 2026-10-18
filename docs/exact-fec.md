@@ -1,9 +1,9 @@
-# Exact ordinary domestic FEC (unreleased source candidate)
+# Exact ordinary domestic FEC (published in 0.10.0)
 
 The additive source exports are `ExactFecInputSchema`, `ExactFecReferenceSchema`,
 `ExactFecInput` and `ExactFecCalculated`; SDK exports are `calculateExactFec` and
 `buildExactFacturaCompraXml`. This is one source slice of [SDK #85](https://github.com/DojoCodingLabs/hacienda-cr/issues/85),
-not complete FEC coverage or a published package version.
+published in [0.10.0](release-0100-published.md), with complete FEC coverage and application acceptance still separate.
 
 The named case `FEC-domestic-ordinary-iva13-v1` requires real domestic supplier
 and buyer identities 01–04. The supplier remains XML Emisor; the buyer remains
