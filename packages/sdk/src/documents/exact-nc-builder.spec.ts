@@ -2,7 +2,11 @@ import { execFileSync } from "node:child_process";
 import { mkdtempSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { ExactNcTotalInputSchema, type ExactNcTotalInput } from "@dojocoding/hacienda-shared";
+import {
+  ExactNcTotalInputSchema,
+  ExactFeInputSchema,
+  type ExactNcTotalInput,
+} from "@dojocoding/hacienda-shared";
 import { exactNcFixture } from "../__fixtures__/exact-nc.js";
 import { fixtureClave } from "../__fixtures__/identity.js";
 import { calculateExactNcTotal } from "../tax/exact-nc.js";
@@ -16,6 +20,85 @@ function required<T>(value: T | null | undefined): T {
   if (value == null) throw new Error("Missing NC test value");
   return value;
 }
+function dated(originalAt: string, ncAt: string): ExactNcTotalInput {
+  const input = exactNcFixture();
+  input.original.fechaEmision = originalAt;
+  input.original.clave = fixtureClave(originalAt, "01", 1);
+  input.original.numeroConsecutivo = input.original.clave.slice(21, 41);
+  input.fechaEmision = ncAt;
+  input.clave = fixtureClave(ncAt, "03", 2);
+  input.numeroConsecutivo = input.clave.slice(21, 41);
+  input.informacionReferencia[0].numero = input.original.clave;
+  input.informacionReferencia[0].fechaEmision = originalAt;
+  return input;
+}
+it("full-precision chronology rejects earlier submillisecond NC across all exported boundaries and preserves offset-equivalent instants", () => {
+  for (const [originalAt, ncAt] of [
+    ["2026-10-18T12:00:00.0009-06:00", "2026-10-18T12:00:00.0001-06:00"],
+    ["2026-10-19T00:00:00.0009+02:00", "2026-10-18T22:00:00.0001Z"],
+    ["2026-10-18T12:00:00.999999999999999999-06:00", "2026-10-18T18:00:00.999999999999999998Z"],
+  ]) {
+    const source = dated(required(originalAt), required(ncAt));
+    expect(ExactNcTotalInputSchema.safeParse(source).success).toBe(false);
+    expect(() => calculateExactNcTotal(source)).toThrow();
+    expect(() => buildExactNotaCreditoTotalXml(source)).toThrow();
+  }
+  for (const [originalAt, ncAt] of [
+    ["2026-10-18T12:00:00.0009-06:00", "2026-10-18T18:00:00.000900Z"],
+    ["2026-10-19T00:00:00.0009+02:00", "2026-10-18T22:00:00.000900Z"],
+    ["2026-10-18T23:59:59.999999999-06:00", "2026-10-19T06:00:00Z"],
+    ["2024-02-29T12:00:00.0009-06:00", "2026-10-18T18:00:00.0009Z"],
+    ["2026-10-18T12:00:00.000000000000000009-06:00", "2026-10-18T18:00:00.000000000000000010Z"],
+  ]) {
+    const source = dated(required(originalAt), required(ncAt)),
+      before = JSON.stringify(source);
+    expect(ExactNcTotalInputSchema.safeParse(source).success).toBe(true);
+    expect(calculateExactNcTotal(source).resumenFactura.totalComprobante).toBe("113.00000");
+    const checked = xsd(buildExactNotaCreditoTotalXml(source));
+    expect(checked.valid, `${originalAt} → ${ncAt}: ${checked.errors}`).toBe(true);
+    expect(JSON.stringify(source)).toBe(before);
+  }
+});
+it("NC rejects family-inapplicable copied facts without changing FE0.6 source validation or silently rewriting them", () => {
+  for (const condicionVenta of ["09", "11", "12", "13"] as const) {
+    const input = exactNcFixture(),
+      invalid = { ...input, original: { ...input.original, condicionVenta } };
+    if (condicionVenta === "12" || condicionVenta === "13")
+      expect(ExactFeInputSchema.safeParse(invalid.original).success).toBe(true);
+    expect(ExactNcTotalInputSchema.safeParse(invalid).success).toBe(false);
+  }
+  for (const party of ["emisor", "receptor"] as const) {
+    const input = exactNcFixture();
+    input.original[party].identificacion.tipo = "06";
+    expect(ExactFeInputSchema.safeParse(input.original).success).toBe(true);
+    expect(() => buildExactNotaCreditoTotalXml(input)).toThrow();
+    expect(input.original[party].identificacion.tipo).toBe("06");
+  }
+  for (const condition of ["02", "10"] as const) {
+    for (const plazo of [undefined, "0", "00000"]) {
+      const input = exactNcFixture();
+      input.original.condicionVenta = condition;
+      input.original.plazoCredito = plazo;
+      expect(ExactNcTotalInputSchema.safeParse(input).success).toBe(false);
+    }
+    const input = exactNcFixture();
+    input.original.condicionVenta = condition;
+    input.original.plazoCredito = "90";
+    expect(xsd(buildExactNotaCreditoTotalXml(input)).valid).toBe(true);
+  }
+});
+it("source-only output remains reproducible for valid leap-day sources; it supplies no trusted-clock age eligibility", () => {
+  const source = dated("2024-02-29T12:00:00.0009-06:00", "2026-10-18T18:00:00.0009Z");
+  const clock = vi.spyOn(Date, "now");
+  try {
+    clock.mockReturnValue(Date.parse("2030-01-01T00:00:00Z"));
+    const first = buildExactNotaCreditoTotalXml(source);
+    clock.mockReturnValue(Date.parse("2040-01-01T00:00:00Z"));
+    expect(buildExactNotaCreditoTotalXml(source)).toBe(first);
+  } finally {
+    clock.mockRestore();
+  }
+});
 
 const xsd = (xml: string) =>
   validateAgainstXsd(xml, "NotaCreditoElectronica_V4.4.xsd", {

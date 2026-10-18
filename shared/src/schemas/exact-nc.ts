@@ -3,6 +3,7 @@
 import { z } from "zod";
 import { ExactFeInputSchema, type ExactFeCalculated } from "./exact-fe.js";
 import { FacturaElectronicaSchema } from "./factura.js";
+import { compareNcInstants } from "./exact-nc-instant.js";
 
 export const ExactNcTotalReferenceSchema = z
   .object({
@@ -10,14 +11,18 @@ export const ExactNcTotalReferenceSchema = z
     numero: FacturaElectronicaSchema.shape.clave,
     fechaEmision: z.iso.datetime({ offset: true }),
     codigo: z.literal("01"),
-    // NC XSD permits optional Razon with maxLength180 and no minLength.
-    // This named case additionally requires an explicit nonblank rationale.
+    // NC XSD permits optional Razon with maxLength 180 and no minLength.
+    // Current official annex p58 additionally requires 3..180 characters.
     razon: z
       .string()
       .max(360)
       .refine(
-        (value) => value.length <= 360 && value.trim().length > 0 && [...value].length <= 180,
-        "An explicit nonblank reason of at most180 Unicode characters is required",
+        (value) =>
+          value.length <= 360 &&
+          value.trim().length > 0 &&
+          [...value].length >= 3 &&
+          [...value].length <= 180,
+        "An explicit nonblank reason of 3–180 Unicode characters is required",
       ),
   })
   .strict();
@@ -51,15 +56,47 @@ export const ExactNcTotalInputSchema = z
         path: ["original", "codigoTipoMoneda", "codigoMoneda"],
         message: "Exact NC total supports CRC or USD only",
       });
+    // Annex p24 and Nota 5/p70: 09/11 are REP-only, 12 FE-only, 13 FEC-only.
+    // Existing FE source validation already rejects 09/11; do not project away
+    // any incompatible original fact to manufacture an eligible NC.
+    if (["09", "11", "12", "13"].includes(input.original.condicionVenta))
+      ctx.addIssue({
+        code: "custom",
+        path: ["original", "condicionVenta"],
+        message: "Original sale condition is not applicable to an ordinary total NC",
+      });
+    // Annex Nota 4/p69 limits 06 to the purchase issuer; 05 is foreign/special.
+    for (const party of ["emisor", "receptor"] as const) {
+      if (!["01", "02", "03", "04"].includes(input.original[party].identificacion.tipo))
+        ctx.addIssue({
+          code: "custom",
+          path: ["original", party, "identificacion", "tipo"],
+          message: "Ordinary NC parties require domestic identification types 01–04",
+        });
+    }
+    // Annex p25 requires positive explicit credit days for 02 AND 10.
+    const creditCondition = ["02", "10"].includes(input.original.condicionVenta);
+    if (
+      creditCondition &&
+      (!/^\d{1,5}$/.test(input.original.plazoCredito ?? "") ||
+        !/[1-9]/.test(input.original.plazoCredito ?? ""))
+    )
+      ctx.addIssue({
+        code: "custom",
+        path: ["original", "plazoCredito"],
+        message: "Credit conditions 02/10 require positive explicit credit days",
+      });
     if (input.clave === input.original.clave)
       ctx.addIssue({
         code: "custom",
         path: ["clave"],
         message: "Credit note needs its own identity",
       });
+    const chronology = compareNcInstants(input.original.fechaEmision, input.fechaEmision);
     if (
       !z.iso.datetime({ offset: true }).safeParse(input.original.fechaEmision).success ||
-      Date.parse(input.fechaEmision) < Date.parse(input.original.fechaEmision)
+      chronology === null ||
+      chronology > 0
     )
       ctx.addIssue({
         code: "custom",

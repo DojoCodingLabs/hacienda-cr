@@ -18,10 +18,21 @@ it("exact total NC requires explicit bound-reference fields and no unsupported k
   ])
     expect(ExactNcTotalReferenceSchema.safeParse(value).success).toBe(false);
 });
-it("reason case constraint is nonblank and uses the XSD180 Unicode-character maximum", () => {
+it("reason obeys current annex3..180 Unicode characters, beyond weaker XSD cardinality", () => {
   expect(ExactNcTotalReferenceSchema.parse({ ...reference, razon: "😀".repeat(180) }).razon).toBe(
     "😀".repeat(180),
   );
-  for (const razon of [undefined, "", " ", "a".repeat(181), "😀".repeat(181)])
+  expect(ExactNcTotalReferenceSchema.parse({ ...reference, razon: "a😀b" }).razon).toBe("a😀b");
+  for (const razon of [
+    undefined,
+    "",
+    " ",
+    "a",
+    "ab",
+    "😀",
+    "😀😀",
+    "a".repeat(181),
+    "😀".repeat(181),
+  ])
     expect(ExactNcTotalReferenceSchema.safeParse({ ...reference, razon }).success).toBe(false);
 });

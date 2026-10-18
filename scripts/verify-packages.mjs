@@ -158,6 +158,14 @@ assert.ok(ncXml.includes("<TipoDocIR>01</TipoDocIR>"));assert.ok(ncXml.includes(
 assert.ok((await validateDocumentXml(ncXml)).valid);
 assert.equal(buildExactNotaCreditoTotalXml(exactNc),ncXml);
 assert.throws(()=>buildExactNotaCreditoTotalXml({...exactNc,total:"1"}));
+assert.throws(()=>buildExactNotaCreditoTotalXml({...exactNc,informacionReferencia:[{...exactNc.informacionReferencia[0],razon:"ab"}]}));
+assert.throws(()=>buildExactNotaCreditoTotalXml({...exactNc,original:{...exactNc.original,condicionVenta:"12"}}));
+const preciseOriginalAt=exact.fechaEmision.replace(/(\\d{2}:\\d{2}:\\d{2})(?=Z|[+-])/,'$1.0009');
+assert.ok(preciseOriginalAt.includes('.0009'));
+const preciseNcAt=preciseOriginalAt.replace('.0009','.0001');
+const earlierNc={...exactNc,fechaEmision:preciseNcAt,original:{...exact,fechaEmision:preciseOriginalAt},informacionReferencia:[{...exactNc.informacionReferencia[0],fechaEmision:preciseOriginalAt}]};
+assert.throws(()=>calculateExactNcTotal(earlierNc));assert.throws(()=>buildExactNotaCreditoTotalXml(earlierNc));
+
 assert.ok(XADES_POLICY_URI.includes("/xml-schemas/"));
 assert.equal(XADES_POLICY_HASH,"DWxin1xWOeI8OuWQXazh4VjLWAaCLAA954em7DMh0h8=");
 assert.equal(XADES_POLICY_HASH_ALGORITHM,"http://www.w3.org/2001/04/xmlenc#sha256");
