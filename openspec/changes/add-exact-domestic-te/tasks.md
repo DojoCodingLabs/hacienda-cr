@@ -5,7 +5,7 @@
 - [x] Add genuine TE04 calculator/XML builder and installed-consumer exports.
 - [x] Verify Decimal/native XSD/synthetic legitimate signing and pinned absent/identified receiver response cases.
 - [x] Run full verification and fresh packed consumers.
-- [ ] Obtain independent source review before merge.
+- [x] Obtain independent source review before merge. Root reviewed exact `6381143748663cadab6d48145ba3b2771c9c6e1a`: strict TE schema/actual optional receiver, genuine TE04 XML/identity, monetary-only extraction, FE/NC published-byte compatibility, public exports and response binding. Independent focused run: 25 tests passed; `/private/tmp/root-sdk-te-review-tests.log`. Full author verification remains separately recorded in `docs/exact-te.md`.
 
 ## Separate release and consumer gates
 
