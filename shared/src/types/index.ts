@@ -43,6 +43,8 @@ export type {
   ComprobanteListItem,
   ComprobantesListResponse,
   ComprobanteDetail,
+  ComprobanteMetadataIdentity,
+  ComprobanteReference,
   ActividadEconomica,
   ActividadEconomicaResponse,
   TokenResponse,

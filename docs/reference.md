@@ -405,12 +405,14 @@ import { listComprobantes, getComprobante } from "@dojocoding/hacienda-sdk";
 const lista = await listComprobantes(httpClient, {
   offset: 0,
   limit: 10,
-  fechaEmisionDesde: "2025-01-01",
-  fechaEmisionHasta: "2025-12-31",
+  emisor: "02003101234567",
+  receptor: "01123456789",
 });
 
 const detalle = await getComprobante(httpClient, factura.clave);
 ```
+
+Son metadatos observados (`fecha`), no XML original ni estado. Las cabeceras de rango no certifican historial completo. Ver [migración del contrato](history-contract.md).
 
 **Reintentos con backoff exponencial:**
 

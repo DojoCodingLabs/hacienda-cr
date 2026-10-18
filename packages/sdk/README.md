@@ -108,20 +108,20 @@ Review the [v4.4 migration notes](MIGRATION-v4.4.md) before adapting existing in
 
 ### API Client
 
-| Export                     | Type     | Description                                               |
-| -------------------------- | -------- | --------------------------------------------------------- |
-| `HttpClient`               | Class    | Typed HTTP client with auth header injection              |
-| `bootstrapClient()`        | Function | Creates an authenticated HTTP client from a saved profile |
-| `RateLimiter`              | Class    | Request rate limiter                                      |
-| `submitDocument()`         | Function | Submits a document (POST /recepcion)                      |
-| `getStatus()`              | Function | Gets document status (GET /recepcion/{clave})             |
-| `submitAndWait()`          | Function | Submits and polls until terminal status                   |
-| `withRetry()`              | Function | Wraps an async operation with retry logic                 |
-| `listComprobantes()`       | Function | Lists comprobantes with filters                           |
-| `getComprobante()`         | Function | Gets full comprobante details by clave                    |
-| `lookupTaxpayer()`         | Function | Looks up taxpayer by cedula (public API)                  |
-| `isTerminalStatus()`       | Function | Checks if a status is final                               |
-| `extractRejectionReason()` | Function | Extracts rejection reason from response XML               |
+| Export                     | Type     | Description                                                  |
+| -------------------------- | -------- | ------------------------------------------------------------ |
+| `HttpClient`               | Class    | Typed HTTP client with auth header injection                 |
+| `bootstrapClient()`        | Function | Creates an authenticated HTTP client from a saved profile    |
+| `RateLimiter`              | Class    | Request rate limiter                                         |
+| `submitDocument()`         | Function | Submits a document (POST /recepcion)                         |
+| `getStatus()`              | Function | Gets document status (GET /recepcion/{clave})                |
+| `submitAndWait()`          | Function | Submits and polls until terminal status                      |
+| `withRetry()`              | Function | Wraps an async operation with retry logic                    |
+| `listComprobantes()`       | Function | Lists one observed metadata page with combined party filters |
+| `getComprobante()`         | Function | Gets observed metadata/references by clave (not XML/status)  |
+| `lookupTaxpayer()`         | Function | Looks up taxpayer by cedula (public API)                     |
+| `isTerminalStatus()`       | Function | Checks if a status is final                                  |
+| `extractRejectionReason()` | Function | Extracts rejection reason from response XML                  |
 
 ### Configuration
 
@@ -188,3 +188,5 @@ case. They use scaled BigInt and exact decimal XML without Number conversion.
 Legacy numeric APIs remain unchanged. This is ordinary IVA13 with completely
 allocated payments, not every fiscal regime. See [contract, precision, limits
 and independent checks](../../docs/specs/exact-ordinary-fe.md).
+
+History wrappers now follow the documented metadata contract and expose raw observed range headers. See [the explicit migration and limits](../../docs/history-contract.md) before changing a backfill consumer.

@@ -183,6 +183,7 @@ export {
   lookupTaxpayer,
 } from "./api/index.js";
 export type {
+  HistoryRequestOptions,
   HttpClientOptions,
   RequestOptions,
   HttpResponse,

@@ -90,7 +90,6 @@ Turborepo configuration, task behavior, and CLI commands can vary between instal
 Read `docs/README.md` inside that installed package first, then read the relevant pages from its `docs/` directory before changing Turborepo configuration or commands. Heed deprecation notices. These bundled docs match the installed package version and are available without network access.
 
 This block is written and re-added by `turbo` before repository-scoped commands when an AI agent is detected. In the Turborepo source repository, its template is defined in `crates/turborepo-cli/src/cli/agent_guidance.rs`. Removing the managed block while updates are enabled means a later qualifying invocation will add it again. Set `"agentGuidance": false` in the root `turbo.json` or `turbo.jsonc` to opt out; this does not remove an existing block. Keep the block committed with your work to avoid an uncommitted change on the next agent invocation.
-
 <!-- END:turborepo-agent-rules -->
 
 ## Exact ordinary FE boundary
@@ -101,3 +100,5 @@ strict schema, BigInt calculation, JSON and XML. Do not normalize to Number,
 silently drop unsupported regimes or relax official XSD bounds. Preserve
 independent Python Decimal, native xmllint and fresh packed-consumer checks;
 none establishes real Hacienda acceptance or authorizes activation/publication.
+
+History wrappers expose observed metadata and raw range headers, not XML/status/totals or complete-history authority. Preserve strict pre-auth filter validation, exact string identity/clave and cancellation. See [history contract and migration](docs/history-contract.md); release/adoption and live history evidence remain separate.

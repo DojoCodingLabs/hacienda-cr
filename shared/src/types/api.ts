@@ -83,95 +83,46 @@ export interface StatusResponse {
 // Comprobantes query (GET /comprobantes)
 // ---------------------------------------------------------------------------
 
-/** Query parameters for listing comprobantes. */
+/** Explicitly requested, bounded page. Unsupported/date/legacy ID filters fail before I/O. */
 export interface ComprobantesQueryParams {
-  /** Offset for pagination. */
   offset?: number;
-
-  /** Limit (page size). */
   limit?: number;
-
-  /** Start date filter (ISO 8601). */
-  fechaEmisionDesde?: string;
-
-  /** End date filter (ISO 8601). */
-  fechaEmisionHasta?: string;
-
-  /** Issuer identification number filter. */
-  emisorIdentificacion?: string;
-
-  /** Receiver identification number filter. */
-  receptorIdentificacion?: string;
+  /** Combined domestic type + number; preserve any supplied leading zeros. */
+  emisor?: string;
+  receptor?: string;
 }
-
-/** A single comprobante in the list response. */
+export interface ComprobanteMetadataIdentity {
+  tipoIdentificacion: string;
+  numeroIdentificacion: string;
+  nombre: string;
+}
+export interface ComprobanteReference {
+  clave: string;
+  fecha: string;
+}
+/** Observed history metadata, never original XML or acceptance evidence. */
 export interface ComprobanteListItem {
-  /** 50-digit clave. */
   clave: string;
-
-  /** Emission date. */
-  fechaEmision: string;
-
-  /** Issuer identification. */
-  emisor: {
-    tipoIdentificacion: string;
-    numeroIdentificacion: string;
-  };
-
-  /** Receiver identification. */
-  receptor?: {
-    tipoIdentificacion: string;
-    numeroIdentificacion: string;
-  };
-
-  /** Processing status. */
-  estado: HaciendaStatus;
+  fecha: string;
+  emisor: ComprobanteMetadataIdentity;
+  receptor: ComprobanteMetadataIdentity;
+  notasCredito?: ComprobanteReference[];
+  notasDebito?: ComprobanteReference[];
 }
-
-/** Response from the comprobantes list endpoint. */
 export interface ComprobantesListResponse {
-  /** Total number of matching records. */
-  totalRegistros: number;
-
-  /** Current offset. */
-  offset: number;
-
-  /** List of comprobantes. */
   comprobantes: ComprobanteListItem[];
-}
-
-/** Full comprobante details (GET /comprobantes/{clave}). */
-export interface ComprobanteDetail {
-  /** 50-digit clave. */
-  clave: string;
-
-  /** Emission date. */
-  fechaEmision: string;
-
-  /** Issuer identification. */
-  emisor: {
-    tipoIdentificacion: string;
-    numeroIdentificacion: string;
+  /** Requested values sent by this wrapper, not provider-effective range. */
+  offset: number;
+  limit: number;
+  pagination: {
+    httpStatus: 200 | 206;
+    /** Raw observed headers. No inferred total, next offset or coverage claim. */
+    acceptRange: string | null;
+    contentRange: string | null;
   };
-
-  /** Receiver identification. */
-  receptor?: {
-    tipoIdentificacion: string;
-    numeroIdentificacion: string;
-  };
-
-  /** Base64-encoded submitted XML. */
-  comprobanteXml: string;
-
-  /** Processing status. */
-  estado: HaciendaStatus;
-
-  /** Base64-encoded Hacienda response XML. */
-  respuestaXml?: string;
-
-  /** Hacienda response date. */
-  fechaRespuesta?: string;
 }
+/** GET /comprobantes/{clave} is metadata; use /recepcion for status/response. */
+export type ComprobanteDetail = ComprobanteListItem;
 
 // ---------------------------------------------------------------------------
 // Economic Activity Lookup
