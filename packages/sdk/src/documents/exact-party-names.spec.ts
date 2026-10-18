@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest";
 import {
   ExactFeInputSchema,
+  RetainedExactFeInputSchema,
+  EmisorSchema,
+  ReceptorSchema,
   ExactNdInputSchema,
   ExactTeInputSchema,
 } from "@dojocoding/hacienda-shared";
@@ -76,13 +79,19 @@ for (const family of ["TE", "ND"] as const) {
     });
   });
 }
-it("does not silently change existing FE name validation or Unicode maximum", () => {
+it("explicitly tightens current FE while preserving retained and legacy name validation/Unicode maximum", () => {
   const original = exactNdFixture().original;
   original.emisor.nombre = "a";
   original.receptor.nombre = "b";
-  expect(ExactFeInputSchema.safeParse(original).success).toBe(true);
+  expect(ExactFeInputSchema.safeParse(original).success).toBe(false);
+  expect(RetainedExactFeInputSchema.safeParse(original).success).toBe(true);
+  expect(EmisorSchema.safeParse(original.emisor).success).toBe(true);
+  expect(ReceptorSchema.safeParse(original.receptor).success).toBe(true);
+  original.receptor.nombre = "abc";
   original.emisor.nombre = "😀".repeat(100);
   expect(ExactFeInputSchema.safeParse(original).success).toBe(true);
   original.emisor.nombre = "😀".repeat(101);
   expect(ExactFeInputSchema.safeParse(original).success).toBe(false);
+  expect(RetainedExactFeInputSchema.safeParse(original).success).toBe(false);
+  expect(EmisorSchema.safeParse(original.emisor).success).toBe(false);
 });

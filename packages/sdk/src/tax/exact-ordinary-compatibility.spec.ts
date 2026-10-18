@@ -34,6 +34,10 @@ it("preserves actual published0.9 current FE/NC bytes/math and retained math aft
     medioPago: [{ tipoMedioPago: "01" as const, totalMedioPago: "0" }],
   };
   expect(() => calculateExactFe(unallocated)).toThrow(
+    "Supplied payment allocation must be positive",
+  );
+  // Historical broad input still reaches the former arithmetic reconciliation guard.
+  expect(() => calculateRetainedExactFe(unallocated)).toThrow(
     "Exact ordinary FE payment allocation must equal invoice total",
   );
   const zero = structuredClone(nc.original);

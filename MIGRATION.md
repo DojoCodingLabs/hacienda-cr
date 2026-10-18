@@ -114,3 +114,15 @@ consecutive and exact retained institutionally rejected FE reference. Neither
 source contract establishes acceptance, cash effects or age eligibility. The
 replacement reference requires native 2026 reason 16. See the [full contract and
 caller prerequisites](docs/exact-credit-extensions.md) before adopting it.
+
+### Unreleased current FE native-name/payment validation
+
+Current exact FE now refuses issuer names shorter than five, receiver/commercial
+names shorter than three, and zero supplied payment allocations. Valid Unicode
+lexemes and exact math/XML remain unchanged. `ExactFePaymentSchema` is current
+and positive; historical source/math and calculated-output decoding retain their
+separate broad shapes. Current TE also inherits the positive allocation check.
+Do not use the unchanged economic case string to relabel a historical 0.9
+producer. The future exact published tuple and a separate consumer adoption must
+distinguish current authority from retained original custody. See [migration and
+verification limits](docs/current-fe-native-boundaries.md).

@@ -1,0 +1,8 @@
+- [x] Inspect actual current/retained source sharing and official native/annex bounds.
+- [x] Propose current-only validation and explicit future-published versus retained 0.9 producer boundary.
+- [x] Confirm root review and actual merged PR #89 main before runtime changes.
+- [x] Implement strict current names/payments without changing retained source/math/output decoding.
+- [x] Prove genuine registry 0.9 byte/schema/math compatibility and current native/business edge matrix (32 focused cases).
+- [x] Pass independent Decimal, full verify (1,513 unit/118 script tests; four live skips), fresh all-four packed consumers and strict OpenSpec.
+- [ ] Obtain independent exact-head source review before merge.
+- [ ] Separately review coherent linked release and app current/retained adoption; no activation implied.

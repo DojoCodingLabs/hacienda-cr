@@ -90,3 +90,10 @@ and moderate uuid advisory
 The registry listed no patched node-forge version at this check. No override,
 dependency change, suppression or clean-security assertion follows. These checks
 are local source/artifact tests, not a published 0.9.0 release or app adoption.
+
+## Later current-input name/payment correction
+
+The source-only [native-name and positive-allocation correction](current-fe-native-boundaries.md)
+keeps the historical source/math shape above intact through reviewed 0.9 custody,
+including old zero allocations. Its future producer/release/adoption boundary is
+explicitly separate from the historical 0.9 release evidence recorded here.
