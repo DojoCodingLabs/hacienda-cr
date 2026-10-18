@@ -1,5 +1,37 @@
 # @dojocoding/hacienda-shared
 
+## 0.10.0
+
+### Minor Changes
+
+- 7d5891a: Add exact-string ordinary partial NC amount correction and independently valid
+  FE replacement with an explicit institutionally rejected FE reference. Preserve
+  existing current/retained and Number APIs. Source math/XML does not establish
+  acceptance, cumulative credit authority, legal age, cash receipt or live activation.
+- e7c4fdc: Add a bounded exact domestic ordinary IVA13 FEC source/calculator/XML API. Preserve actual supplier Emisor and buyer Receptor, buyer-owned 08 identity, mandatory buyer activity and explicit supporting evidence. Derived amounts remain decimal text. Existing FE/TE/ND/NC and legacy behavior remain unchanged; foreign 05 and used-goods 06/condition 13 need separate reviewed source contracts. No publication, supplier qualification, VAT eligibility or app activation is implied.
+- a59d968: Add an exact ordinary domestic FE-reference ND amount-increment source contract, independent decimal calculation and genuine ND02 XML builder. Explicit original line/reference binding preserves original facts while calculating only positive incremental amounts. Also align the unreleased exact TE issuer-name minimum with native XSD (five Unicode characters); ND copied issuer/receiver/commercial names enforce their own native Unicode bounds. Existing FE/NC/current/retained and Number APIs remain unchanged. This contributes to the single coherent domestic V1 release tracked in #85; no publication, legal-age eligibility or app activation is implied.
+- 6381143: Add source-only exact ordinary domestic TE schemas, calculation and XML building with optional actual receiver. Monetary strings never pass through Number. Existing FE/current/retained and legacy Number APIs remain compatible. No new family activation, retained signing builder or live acceptance is implied; this source slice contributes to the coherent domestic V1 release tracked in issue #85.
+- 6297a5b: Add an explicitly selected foreign-service ordinary IVA13 FEC source/calculator/XML
+  contract. Preserve actual supplier 05 and foreign address/reference 16/reason 11,
+  buyer-owned 08 identity, positive exact allocations and existing family outputs.
+  Supplier identity does not establish tax liability, eligibility, creditability or
+  acceptance; used-goods06/condition 13 and other regimes remain separately required.
+  No publication or app activation is implied.
+- 43feefa: Add source-bound exact recipient confirmation for ordinary domestic FE, with
+  original full tax/total and buyer-owned message consecutive. Preserve legacy
+  Number APIs. Source/native/signature structure does not establish tax entitlement,
+  institutional acceptance, legal timing or recipient transport/recovery authority.
+- e8fa2ed: Add an explicitly selected exact non-subject personal-used-goods FEC source with
+  supplier06, buyer-owned08 identity, condition13, tariff11, ordinary commercial
+  discounts and exact positive allocations. This does not infer qualification,
+  credit, tax payment, resale treatment, acceptance or transport authority.
+- a1e0e1c: Validate current exact FE party names against native Unicode bounds and require
+  positive supplied payment allocations (including new exact TE). Preserve the
+  separate historical source/math and calculated-output decoding contracts, actual
+  0.9 originals and legacy Number APIs. A future reviewed published producer tuple
+  must distinguish this stricter current contract from retained 0.9; no release,
+  app adoption or fiscal acceptance follows from the source change.
+
 ## 0.9.0
 
 ### Minor Changes
