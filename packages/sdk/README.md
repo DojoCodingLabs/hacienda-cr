@@ -252,3 +252,5 @@ or creditability. Used-goods06/condition 13 and other regimes remain unfinished.
 See [source, primary rules and independent gates](../../docs/exact-foreign-service-fec.md).
 
 Exact recipient source contract and remaining transport/outcome gates: [recipient confirmation](../../docs/exact-recipient-message.md).
+
+- Source-only explicit [non-subject personal-used-goods FEC](../../docs/exact-used-personal-goods-fec.md): actual supplier 06/buyer 08, ordinary discounts, exact non-subject amounts; qualification, resale and acceptance remain independent.

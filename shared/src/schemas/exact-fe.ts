@@ -72,7 +72,7 @@ export const ExactDiscountSchema = discountMetadata
   .extend({ montoDescuento: ExactMoneySchema })
   .strict()
   .superRefine(discountCompanion);
-const ExactFeLineBaseSchema = LineaDetalleSchema.pick({
+export const ExactFeLineBaseSchema = LineaDetalleSchema.pick({
   numeroLinea: true,
   codigoCabys: true,
   unidadMedida: true,
@@ -100,7 +100,10 @@ const ExactFeLineBaseSchema = LineaDetalleSchema.pick({
   .strict();
 // Official ANEXOS pp50–52: CABYS0–4 goods,5–9 services. This validates
 // classification only, not existence in CABYS or its applicable tax treatment.
-function classification(line: { codigoCabys: string; esServicio: boolean }, ctx: z.RefinementCtx) {
+export function classification(
+  line: { codigoCabys: string; esServicio: boolean },
+  ctx: z.RefinementCtx,
+) {
   if (line.esServicio !== /^[5-9]/.test(line.codigoCabys))
     ctx.addIssue({
       code: "custom",
