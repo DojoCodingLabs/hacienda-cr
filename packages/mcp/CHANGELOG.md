@@ -1,5 +1,20 @@
 # @dojocoding/hacienda-mcp
 
+## 0.10.0
+
+### Patch Changes
+
+- Updated dependencies [7d5891a]
+- Updated dependencies [e7c4fdc]
+- Updated dependencies [a59d968]
+- Updated dependencies [6381143]
+- Updated dependencies [6297a5b]
+- Updated dependencies [43feefa]
+- Updated dependencies [e8fa2ed]
+- Updated dependencies [a1e0e1c]
+  - @dojocoding/hacienda-shared@0.10.0
+  - @dojocoding/hacienda-sdk@0.10.0
+
 ## 0.9.0
 
 ### Minor Changes
