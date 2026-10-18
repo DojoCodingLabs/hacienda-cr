@@ -76,6 +76,7 @@ try {
       '\nimport { calculateExactFe, calculateRetainedExactFe, buildExactFacturaXml, type ExactFeInput, type RetainedExactFeInput } from "@dojocoding/hacienda-sdk";\nimport { ExactFeInputSchema, RetainedExactFeInputSchema, ExactFeCalculatedSchema } from "@dojocoding/hacienda-shared";\nexport const exactFeContract = (input: ExactFeInput) => ({ calculated: ExactFeCalculatedSchema.parse(calculateExactFe(ExactFeInputSchema.parse(input))), xml: buildExactFacturaXml(input) });\n' +
       "\nexport const retainedFeReadContract = (input: RetainedExactFeInput) => calculateRetainedExactFe(RetainedExactFeInputSchema.parse(input));\n" +
       '\nimport { calculateExactTe, buildExactTiqueteXml, type ExactTeInput } from "@dojocoding/hacienda-sdk";\nimport { ExactTeInputSchema } from "@dojocoding/hacienda-shared";\nexport const exactTeContract = (input: ExactTeInput) => ({ calculated: calculateExactTe(ExactTeInputSchema.parse(input)), xml: buildExactTiqueteXml(input) });\n' +
+      '\nimport { calculateExactNd, buildExactNotaDebitoXml, type ExactNdInput } from "@dojocoding/hacienda-sdk";\nimport { ExactNdInputSchema } from "@dojocoding/hacienda-shared";\nexport const exactNdContract = (input: ExactNdInput) => ({ calculated: calculateExactNd(ExactNdInputSchema.parse(input)), xml: buildExactNotaDebitoXml(input) });\n' +
       '\nimport { calculateExactNcTotal, buildExactNotaCreditoTotalXml, type ExactNcTotalInput } from "@dojocoding/hacienda-sdk";\nimport { ExactNcTotalInputSchema } from "@dojocoding/hacienda-shared";\nexport const exactNcContract = (input: ExactNcTotalInput) => ({ calculated: calculateExactNcTotal(ExactNcTotalInputSchema.parse(input)), xml: buildExactNotaCreditoTotalXml(input) });\n',
   );
   await writeFile(
@@ -140,8 +141,8 @@ import assert from "node:assert/strict";
 import {writeFile, readFile} from "node:fs/promises";
 import {execFileSync,spawnSync} from "node:child_process";
 import {SIMPLE_INVOICE} from "./fixtures.mjs";
-import {calculateExactTe,buildExactTiqueteXml,HttpClient,listComprobantes,getComprobante,calculateExactNcTotal,buildExactNotaCreditoTotalXml,buildFacturaXml,calculateExactFe,calculateRetainedExactFe,buildExactFacturaXml,validateDocumentXml,HaciendaClient,Environment,loadCredentials,signXml,verifyHaciendaResponseXml,ResponseVerificationError} from "@dojocoding/hacienda-sdk";
-import {ExactTeInputSchema,ExactFeInputSchema,RetainedExactFeInputSchema,XADES_POLICY_URI,XADES_POLICY_HASH,XADES_POLICY_HASH_ALGORITHM,ExonerationTypeSchema,UNITS_OF_MEASURE} from "@dojocoding/hacienda-shared";
+import {calculateExactNd,buildExactNotaDebitoXml,calculateExactTe,buildExactTiqueteXml,HttpClient,listComprobantes,getComprobante,calculateExactNcTotal,buildExactNotaCreditoTotalXml,buildFacturaXml,calculateExactFe,calculateRetainedExactFe,buildExactFacturaXml,validateDocumentXml,HaciendaClient,Environment,loadCredentials,signXml,verifyHaciendaResponseXml,ResponseVerificationError} from "@dojocoding/hacienda-sdk";
+import {ExactNdInputSchema,ExactTeInputSchema,ExactFeInputSchema,RetainedExactFeInputSchema,XADES_POLICY_URI,XADES_POLICY_HASH,XADES_POLICY_HASH_ALGORITHM,ExonerationTypeSchema,UNITS_OF_MEASURE} from "@dojocoding/hacienda-shared";
 import {createServer} from "@dojocoding/hacienda-mcp";
 import {Client} from "@modelcontextprotocol/sdk/client/index.js";
 import {StdioClientTransport} from "@modelcontextprotocol/sdk/client/stdio.js";
@@ -191,6 +192,11 @@ assert.throws(()=>buildExactTiqueteXml({...exactTe,codigoActividadReceptor:"6201
 assert.throws(()=>buildExactTiqueteXml({...exactTe,condicionVenta:"12"}));
 const ncClave=exact.clave.slice(0,29)+"03"+exact.clave.slice(31);
 const exactNc={caseCode:"NC-domestic-ordinary-fe-total-iva13-v1",original:exact,clave:ncClave,numeroConsecutivo:ncClave.slice(21,41),fechaEmision:exact.fechaEmision,informacionReferencia:[{tipoDoc:"01",numero:exact.clave,fechaEmision:exact.fechaEmision,codigo:"01",razon:"Packed synthetic full credit"}]};
+const ndClave=exact.clave.slice(0,29)+"02"+exact.clave.slice(31);
+const exactNd={caseCode:"ND-domestic-ordinary-fe-increment-iva13-v1",original:exact,clave:ndClave,numeroConsecutivo:ndClave.slice(21,41),fechaEmision:exact.fechaEmision,adjustments:[{originalLineNumber:1,line:{...exact.detalleServicio[0],precioUnitario:"10.00001"}}],medioPago:[{tipoMedioPago:"01",totalMedioPago:"11.30001"}],informacionReferencia:[{tipoDoc:"01",numero:exact.clave,fechaEmision:exact.fechaEmision,codigo:"02",razon:"Packed synthetic positive increment"}]};
+const ndXml=buildExactNotaDebitoXml(ExactNdInputSchema.parse(JSON.parse(JSON.stringify(exactNd))));
+assert.equal(calculateExactNd(exactNd).resumenFactura.totalComprobante,"11.30001");assert.ok(ndXml.includes("<NotaDebitoElectronica "));assert.ok(ndXml.includes("<Codigo>02</Codigo>"));assert.ok((await validateDocumentXml(ndXml)).valid);assert.equal(buildExactNotaDebitoXml(exactNd),ndXml);
+assert.throws(()=>buildExactNotaDebitoXml({...exactNd,total:"1"}));assert.throws(()=>buildExactNotaDebitoXml({...exactNd,informacionReferencia:[{...exactNd.informacionReferencia[0],codigo:"01"}]}));
 const ncXml=buildExactNotaCreditoTotalXml(JSON.parse(JSON.stringify(exactNc)));
 assert.equal(calculateExactNcTotal(exactNc).resumenFactura.totalComprobante,"9999999999999.99999");
 assert.ok(ncXml.includes("<TipoDocIR>01</TipoDocIR>"));assert.ok(ncXml.includes("<Numero>"+exact.clave+"</Numero>"));
