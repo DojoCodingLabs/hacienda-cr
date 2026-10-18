@@ -47,8 +47,8 @@ pp. 19–22 and Note 4/p. 69 bind foreign supplier 05, its document/address and
 actual roles. Reference type 16 is FEC-only and required for that supplier;
 Note 9/p. 73 names reason 11 for the non-domiciled provider. Pages 57–58/74
 define reference fields, p. 60 buyer signing, p. 56 positive supplied allocations
-and Note 8.1/p. 72 the distinct ordinary general13 tariff. These facts do not
-make every foreign acquisition ordinary taxable13.
+and Note 8.1/p. 72 the distinct ordinary general 13 tariff. These facts do not
+make every foreign acquisition ordinary taxable 13.
 
 The unchanged native FEC XSD SHA256 is
 `57e4cedb12d5045884670ff2e4795d2027e69b96d45752f60cd1a1930e2768a3`.
@@ -75,7 +75,7 @@ expected-party mapper, trust source or live acceptance claim is introduced.
 App eligibility/current policy/proof/allocation/worker/custody/UI and actual
 acceptance remain independent gates; no provider, version or activation change.
 
-Supplier06/condition13 is still required unfinished work. A dated used-goods
+Supplier 06/condition 13 is still required unfinished work. A dated used-goods
 purchase example without charged VAT cannot choose a modern XML no-subject,
 exempt, factor or zero-tariff representation automatically. Broader foreign
 intangible/mixed-tax cases, recipient lifecycle, REP oracle and SDK #69 also
@@ -83,8 +83,8 @@ remain open under SDK #85 before the coherent release is considered complete.
 
 ## Executed source checks
 
-Final `pnpm verify` completed successfully on 18 October 2026: shared247,
-SDK1,149, CLI75 and MCP49 unit tests passed (1,520 total; four intentional live
+Final `pnpm verify` completed successfully on 18 October 2026: shared 247,
+SDK 1,149, CLI 75 and MCP 49 unit tests passed (1,520 total; four intentional live
 SDK skips), 118 script regressions and actual fresh packed consumers for all
 four packages. Formatting/lint/types/build/native-schema provenance also passed.
 The focused four-file source/sign/response/golden selection passed 13 tests;

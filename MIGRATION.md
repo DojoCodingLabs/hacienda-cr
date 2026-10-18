@@ -131,8 +131,8 @@ verification limits](docs/current-fe-native-boundaries.md).
 
 Use the separate `ExactFecForeignServiceIva13InputSchema` and matching calculator/
 builder only for explicitly selected ordinary taxable services. Actual foreign
-supplier05 remains Emisor, actual buyer owns08, and foreign address/document
-reference16/reason11 are required. No local supplier header/address or tax default
+supplier 05 remains Emisor, actual buyer owns 08, and foreign address/document
+reference 16/reason 11 are required. No local supplier header/address or tax default
 is invented. Existing domestic FEC and other APIs are unchanged. See the
 [full contract](docs/exact-foreign-service-fec.md); selecting the source case does
 not establish legal eligibility, liability, creditability or app activation.
