@@ -18,7 +18,7 @@ Toolkit open-source en TypeScript para trabajar con comprobantes electrónicos v
 
 [Casos de uso](#qué-podés-construir) · [Empezar](#empezá-acá) · [Documentación](#documentación) · [Contribuir](#desarrollo-y-contribuciones) · [Reportar un problema](https://github.com/DojoCodingLabs/hacienda-cr/issues/new)
 
-La versión **0.9.0** está publicada. La [preparación 0.10.0](docs/release-0100-readiness.md) reúne nuevas APIs exactas revisadas y conserva sus límites: REP exacto, transporte y correlación de mensajes del receptor, adopción en aplicaciones y aceptación fiscal siguen siendo trabajos separados. Esta preparación no publica paquetes ni activa operaciones fiscales. El [registro histórico 0.7.0](docs/release-070-published.md) conserva su verificación y recuperación de publicación.
+La versión **0.10.0** está publicada en los cuatro paquetes. El [registro de publicación](docs/release-0100-published.md) conserva los bytes verificados, procedencia y recuperación tras una demora de indexación de npm. La [preparación revisada](docs/release-0100-readiness.md) detalla sus APIs exactas y límites: REP exacto, transporte y correlación de mensajes del receptor, adopción en aplicaciones y aceptación fiscal siguen siendo trabajos separados. El [registro histórico 0.7.0](docs/release-070-published.md) conserva su verificación y recuperación de publicación.
 
 ## La visión: facturación dentro de tu producto
 

@@ -71,6 +71,7 @@ ambiguous submission failure, query the same clave before deciding to resubmit.
 
 ## Documentation map
 
+- [Published 0.10.0](docs/release-0100-published.md): exact registry bytes, provenance, single indexing recovery and remaining fiscal/application gates.
 - [0.10.0 preparation](docs/release-0100-readiness.md): completed exact-source APIs, remaining REP/recipient transport boundaries and reviewed release gates.
 - [Recipient transport correlation](docs/mr-transport-correlation-research.md): exact primary evidence and required receiver-specific outcome oracle.
 - [REP monetary oracle](docs/rep-monetary-oracle-research.md): primary sources, reproducible native counterexamples and incomplete exact-producer gates.
@@ -95,6 +96,7 @@ Turborepo configuration, task behavior, and CLI commands can vary between instal
 Read `docs/README.md` inside that installed package first, then read the relevant pages from its `docs/` directory before changing Turborepo configuration or commands. Heed deprecation notices. These bundled docs match the installed package version and are available without network access.
 
 This block is written and re-added by `turbo` before repository-scoped commands when an AI agent is detected. In the Turborepo source repository, its template is defined in `crates/turborepo-cli/src/cli/agent_guidance.rs`. Removing the managed block while updates are enabled means a later qualifying invocation will add it again. Set `"agentGuidance": false` in the root `turbo.json` or `turbo.jsonc` to opt out; this does not remove an existing block. Keep the block committed with your work to avoid an uncommitted change on the next agent invocation.
+
 <!-- END:turborepo-agent-rules -->
 
 ## Exact ordinary FE boundary
