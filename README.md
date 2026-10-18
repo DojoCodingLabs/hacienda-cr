@@ -18,6 +18,8 @@ Toolkit open-source en TypeScript para trabajar con comprobantes electrónicos v
 
 [Casos de uso](#qué-podés-construir) · [Empezar](#empezá-acá) · [Documentación](#documentación) · [Contribuir](#desarrollo-y-contribuciones) · [Reportar un problema](https://github.com/DojoCodingLabs/hacienda-cr/issues/new)
 
+La versión **0.7.0** está publicada y verificada en los cuatro paquetes. El [registro del release](docs/release-070-published.md) conserva versiones, integridades, procedencia y recuperación de la publicación, junto con los avisos de seguridad pendientes. Publicar el SDK no activa una integración fiscal ni adopta la versión en una aplicación.
+
 ## La visión: facturación dentro de tu producto
 
 **Que cada venta pueda convertirse en un comprobante electrónico desde el mismo lugar donde ocurre.** Un checkout, una caja, un sistema de gestión o una conversación con un asistente pueden ser el punto de partida.
