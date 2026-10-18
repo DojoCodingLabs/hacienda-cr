@@ -10,7 +10,7 @@
  * - 07: Rechazo del Comprobante
  *
  * Root element: MensajeReceptor
- * Namespace: https://cdn.comprobanteselectronicos.go.cr/xml-schemas/v4.4/MensajeReceptor
+ * Namespace: https://cdn.comprobanteselectronicos.go.cr/xml-schemas/v4.4/mensajeReceptor
  */
 
 import type { MensajeReceptor } from "@dojocoding/hacienda-shared";
@@ -49,6 +49,23 @@ import { buildXml } from "../xml/builder.js";
  * ```
  */
 export function buildMensajeReceptorXml(input: MensajeReceptor): string {
+  return buildXml("MensajeReceptor", buildMensajeReceptorFields(input));
+}
+
+/** Internal projection keeps the legacy Number API and exact source API separate. */
+type RecipientWireSource = Omit<
+  MensajeReceptor,
+  | "montoTotalImpuesto"
+  | "montoTotalImpuestoAcreditar"
+  | "montoTotalDeGastoAplicable"
+  | "totalFactura"
+> & {
+  montoTotalImpuesto?: number | string;
+  montoTotalImpuestoAcreditar?: number | string;
+  montoTotalDeGastoAplicable?: number | string;
+  totalFactura: number | string;
+};
+export function buildMensajeReceptorFields(input: RecipientWireSource) {
   const data: Record<string, unknown> = {
     Clave: input.clave,
     NumeroCedulaEmisor: input.numeroCedulaEmisor,
@@ -84,5 +101,5 @@ export function buildMensajeReceptorXml(input: MensajeReceptor): string {
   data.NumeroCedulaReceptor = input.numeroCedulaReceptor;
   data.NumeroConsecutivoReceptor = input.numeroConsecutivoReceptor;
 
-  return buildXml("MensajeReceptor", data);
+  return data;
 }

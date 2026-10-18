@@ -134,3 +134,9 @@ export {
   type ExactFecForeignServiceIva13Input,
   type ExactFecForeignServiceIva13Calculated,
 } from "./exact-fec-foreign-service.js";
+
+export {
+  ExactRecipientMessageInputSchema,
+  ExactRecipientIvaDecisionSchema,
+  type ExactRecipientMessageInput,
+} from "./exact-recipient-message.js";
