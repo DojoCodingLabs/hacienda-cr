@@ -144,7 +144,7 @@ import {writeFile, readFile} from "node:fs/promises";
 import {execFileSync,spawnSync} from "node:child_process";
 import {SIMPLE_INVOICE} from "./fixtures.mjs";
 import {calculateExactNcPartial,buildExactNotaCreditoPartialXml,calculateExactFeReplacement,buildExactFacturaReplacementXml,calculateExactFec,buildExactFacturaCompraXml,calculateExactNd,buildExactNotaDebitoXml,calculateExactTe,buildExactTiqueteXml,HttpClient,listComprobantes,getComprobante,calculateExactNcTotal,buildExactNotaCreditoTotalXml,buildFacturaXml,calculateExactFe,calculateRetainedExactFe,buildExactFacturaXml,validateDocumentXml,HaciendaClient,Environment,loadCredentials,signXml,verifyHaciendaResponseXml,ResponseVerificationError} from "@dojocoding/hacienda-sdk";
-import {ExactNcPartialInputSchema,ExactFeReplacementInputSchema,ExactFecInputSchema,ExactNdInputSchema,ExactTeInputSchema,ExactFeInputSchema,RetainedExactFeInputSchema,XADES_POLICY_URI,XADES_POLICY_HASH,XADES_POLICY_HASH_ALGORITHM,ExonerationTypeSchema,UNITS_OF_MEASURE} from "@dojocoding/hacienda-shared";
+import {ExactFePaymentSchema,ExactFeCalculatedSchema,ExactNcPartialInputSchema,ExactFeReplacementInputSchema,ExactFecInputSchema,ExactNdInputSchema,ExactTeInputSchema,ExactFeInputSchema,RetainedExactFeInputSchema,XADES_POLICY_URI,XADES_POLICY_HASH,XADES_POLICY_HASH_ALGORITHM,ExonerationTypeSchema,UNITS_OF_MEASURE} from "@dojocoding/hacienda-shared";
 import {createServer} from "@dojocoding/hacienda-mcp";
 import {Client} from "@modelcontextprotocol/sdk/client/index.js";
 import {StdioClientTransport} from "@modelcontextprotocol/sdk/client/stdio.js";
@@ -181,6 +181,18 @@ for(const condition of ["02","10"]){
 }
 for(const condition of ["09","11","13"]){const source={...exact,condicionVenta:condition};assert.equal(ExactFeInputSchema.safeParse(source).success,false);assert.throws(()=>calculateExactFe(source));assert.throws(()=>buildExactFacturaXml(source));if(condition==="13")assert.equal(calculateRetainedExactFe(RetainedExactFeInputSchema.parse(source)).resumenFactura.totalComprobante,"9999999999999.99999");else assert.equal(RetainedExactFeInputSchema.safeParse(source).success,false);}
 for(const historical of [{...exact,condicionVenta:"02",plazoCredito:"00000"},{...exact,condicionVenta:"10"}]){const retained=RetainedExactFeInputSchema.parse(historical);assert.equal(calculateRetainedExactFe(retained).resumenFactura.totalComprobante,"9999999999999.99999");assert.throws(()=>buildExactFacturaXml(retained));}
+for(const [party,field,bad] of [["emisor","nombre","abcd"],["receptor","nombre","ab"],["emisor","nombreComercial",""],["receptor","nombreComercial","ab"]]){
+ const historical={...exact,[party]:{...exact[party],[field]:bad}};
+ assert.equal(ExactFeInputSchema.safeParse(historical).success,false);assert.throws(()=>buildExactFacturaXml(historical));
+ assert.equal(calculateRetainedExactFe(RetainedExactFeInputSchema.parse(historical)).resumenFactura.totalComprobante,"9999999999999.99999");
+}
+for(const zero of ["0","0.00000"]){
+ assert.equal(ExactFePaymentSchema.safeParse({tipoMedioPago:"01",totalMedioPago:zero}).success,false);
+ const historical={...exact,medioPago:[{tipoMedioPago:"01",totalMedioPago:zero},{tipoMedioPago:"04",totalMedioPago:"9999999999999.99999"}]};
+ assert.equal(ExactFeInputSchema.safeParse(historical).success,false);assert.throws(()=>calculateExactFe(historical));
+ const result=calculateRetainedExactFe(RetainedExactFeInputSchema.parse(historical));
+ assert.equal(result.resumenFactura.medioPago[0].totalMedioPago,"0.00000");assert.deepEqual(ExactFeCalculatedSchema.parse(result),result);
+}
 const teClave=exact.clave.slice(0,29)+"04"+exact.clave.slice(31);
 const {receptor:teReceiver,...teFacts}=exact;
 const exactTe={...teFacts,caseCode:"TE-domestic-ordinary-iva13-v1",clave:teClave,numeroConsecutivo:teClave.slice(21,41)};
@@ -188,6 +200,7 @@ const teXml=buildExactTiqueteXml(ExactTeInputSchema.parse(JSON.parse(JSON.string
 assert.equal(calculateExactTe(exactTe).resumenFactura.totalComprobante,"9999999999999.99999");
 assert.ok(teXml.includes("<TiqueteElectronico "));assert.ok(!teXml.includes("<Receptor>"));assert.ok(!teXml.includes("CodigoActividadReceptor"));
 assert.ok((await validateDocumentXml(teXml)).valid);assert.equal(buildExactTiqueteXml(exactTe),teXml);
+assert.throws(()=>buildExactTiqueteXml({...exactTe,medioPago:[{tipoMedioPago:"01",totalMedioPago:"0"},{tipoMedioPago:"04",totalMedioPago:"9999999999999.99999"}]}));
 assert.ok(buildExactTiqueteXml({...exactTe,receptor:{nombre:"Actual named consumer"}}).includes("<Receptor>"));
 assert.ok((await validateDocumentXml(buildExactTiqueteXml({...exactTe,receptor:teReceiver}))).valid);
 assert.throws(()=>buildExactTiqueteXml({...exactTe,codigoActividadReceptor:"620100"}));

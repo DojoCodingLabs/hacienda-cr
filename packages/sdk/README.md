@@ -233,3 +233,11 @@ is external immutable concurrent ledger authority, not the original-total cap.
 with a retained institutionally rejected reference, fresh identity and explicit
 reason 16. Existing APIs are unchanged. See [source contracts and independent
 authority/release limits](../../docs/exact-credit-extensions.md).
+
+## Unreleased current FE validation correction
+
+Current exact FE uses native Unicode issuer/receiver/commercial-name bounds and
+positive supplied payment allocations; new exact TE shares the positive-payment
+contract. Historical 0.6–0.9 source/math and calculated-output decoding remain
+separately readable, without a retained builder or authority to issue. See
+[current rules, genuine registry evidence and version-bound migration](../../docs/current-fe-native-boundaries.md).

@@ -9,6 +9,7 @@ import { ReceptorSchema } from "./receptor.js";
 import { IdentificacionSchema } from "./identification.js";
 import { UbicacionSchema, TelefonoSchema } from "./common.js";
 import { CURRENCY_CODES } from "../constants/index.js";
+import { exactPartyName } from "./exact-party-name.js";
 
 export const ExactMoneySchema = z.string().regex(/^(?:0|[1-9]\d{0,12})(?:\.\d{1,5})?$/);
 const positiveMoney = ExactMoneySchema.refine(
@@ -108,7 +109,8 @@ function classification(line: { codigoCabys: string; esServicio: boolean }, ctx:
     });
 }
 export const ExactFeLineInputSchema = ExactFeLineBaseSchema.superRefine(classification);
-export const ExactFePaymentSchema = MedioPagoSchema.omit({ totalMedioPago: true })
+// Frozen read/output structure: historical allocations may contain zero.
+const RetainedExactFePaymentSchema = MedioPagoSchema.omit({ totalMedioPago: true })
   .extend({ totalMedioPago: ExactMoneySchema })
   .strict()
   .superRefine((p, ctx) => {
@@ -119,6 +121,14 @@ export const ExactFePaymentSchema = MedioPagoSchema.omit({ totalMedioPago: true 
         message: "Explicit other-payment text required",
       });
   });
+/** Current supplied allocation must be positive (annex p. 56). This is not a
+ * cash-receipt assertion and must not tighten historical/output decoding. */
+export const ExactFePaymentSchema = RetainedExactFePaymentSchema.safeExtend({
+  totalMedioPago: ExactMoneySchema.refine(
+    (value) => /[1-9]/.test(value),
+    "Supplied payment allocation must be positive",
+  ),
+});
 const ExactFeStructureSchema = FacturaElectronicaSchema.omit({
   detalleServicio: true,
   resumenFactura: true,
@@ -152,7 +162,7 @@ const ExactFeStructureSchema = FacturaElectronicaSchema.omit({
         ),
       })
       .strict(),
-    medioPago: z.array(ExactFePaymentSchema).min(1).max(4),
+    medioPago: z.array(RetainedExactFePaymentSchema).min(1).max(4),
   })
   .strict()
   .superRefine((input, ctx) => {
@@ -186,7 +196,7 @@ const ExactFeStructureSchema = FacturaElectronicaSchema.omit({
         });
     });
   });
-/** Read-only historical decimal-source shape for immutable 0.6–0.8 FE custody.
+/** Read-only historical decimal-source shape for immutable 0.6–0.9 FE custody.
  * This preserves the former term acceptance, not current issuance readiness.
  * Callers must independently bind the exact reviewed producer and retained bytes.
  * No retained XML/signing/transport builder is provided. */
@@ -200,7 +210,17 @@ export const RetainedExactFeInputSchema = ExactFeStructureSchema.superRefine((in
 });
 /** Official current annex p25: 02/10 require positive 1–5 digit days. Any present
  * term must also be positive. Preserve valid leading-zero lexemes verbatim. */
-export const ExactFeInputSchema = ExactFeStructureSchema.superRefine((input, ctx) => {
+export const ExactFeInputSchema = ExactFeStructureSchema.safeExtend({
+  emisor: ExactFeStructureSchema.shape.emisor.safeExtend({
+    nombre: exactPartyName(5, 100),
+    nombreComercial: exactPartyName(3, 80).optional(),
+  }),
+  receptor: ExactFeStructureSchema.shape.receptor.safeExtend({
+    nombre: exactPartyName(3, 100),
+    nombreComercial: exactPartyName(3, 80).optional(),
+  }),
+  medioPago: z.array(ExactFePaymentSchema).min(1).max(4),
+}).superRefine((input, ctx) => {
   // Current official annex p70, Nota 5 footnotes 20/22/24: 09/11 are REP-only; 13 is FEC-only.
   if (["09", "11", "13"].includes(input.condicionVenta))
     ctx.addIssue({
@@ -267,7 +287,7 @@ export const ExactFeSummarySchema = z
         })
         .strict(),
     ]),
-    medioPago: z.array(ExactFePaymentSchema).min(1).max(4),
+    medioPago: z.array(RetainedExactFePaymentSchema).min(1).max(4),
   })
   .strict();
 export const ExactFeCalculatedSchema = z

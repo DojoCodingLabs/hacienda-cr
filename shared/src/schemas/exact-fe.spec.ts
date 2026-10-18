@@ -1,6 +1,31 @@
-import { ExactMoneySchema, ExactQuantitySchema, ExactDiscountInputSchema } from "./exact-fe.js";
+import {
+  ExactMoneySchema,
+  ExactQuantitySchema,
+  ExactDiscountInputSchema,
+  ExactFePaymentSchema,
+} from "./exact-fe.js";
 
 describe("public exact ordinary FE decimal schemas", () => {
+  it("public current payment schema refuses zero but preserves positive exact text and companion checks", () => {
+    for (const totalMedioPago of ["0", "0.00000", 0, -1, "-1", "1e-5", undefined])
+      expect(ExactFePaymentSchema.safeParse({ tipoMedioPago: "01", totalMedioPago }).success).toBe(
+        false,
+      );
+    for (const totalMedioPago of ["0.00001", "113", "9999999999999.99999"])
+      expect(
+        ExactFePaymentSchema.parse({ tipoMedioPago: "01", totalMedioPago }).totalMedioPago,
+      ).toBe(totalMedioPago);
+    expect(
+      ExactFePaymentSchema.safeParse({ tipoMedioPago: "99", totalMedioPago: "1" }).success,
+    ).toBe(false);
+    expect(
+      ExactFePaymentSchema.safeParse({
+        tipoMedioPago: "99",
+        totalMedioPago: "1",
+        medioPagoOtros: "Actual allocation",
+      }).success,
+    ).toBe(true);
+  });
   it("accepts full supported maxima and rejects number coercion", () => {
     expect(ExactMoneySchema.parse("9999999999999.99999")).toBe("9999999999999.99999");
     expect(ExactQuantitySchema.parse("9999999999999999")).toBe("9999999999999999");

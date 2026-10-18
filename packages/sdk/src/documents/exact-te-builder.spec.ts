@@ -170,7 +170,7 @@ describe("exact ordinary TE", () => {
     expect(calculateExactTe(source).resumenFactura.totalComprobante).toBe("9999999999999.99999");
     expect(() =>
       calculateExactTe({ ...source, medioPago: [{ tipoMedioPago: "01", totalMedioPago: "0" }] }),
-    ).toThrow("Exact ordinary TE payment allocation");
+    ).toThrow("Supplied payment allocation must be positive");
     const overflow = exactTeFixture();
     required(overflow.detalleServicio[0]).cantidad = "2";
     required(overflow.detalleServicio[0]).precioUnitario = "9999999999999.99999";
