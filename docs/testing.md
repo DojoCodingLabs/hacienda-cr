@@ -2,7 +2,7 @@
 
 ## Full offline gate
 
-Use Node.js 22+ and pnpm as pinned in `package.json`. Install native `xmllint`
+Use Node.js 22.13+ for repository tooling and pnpm as pinned in `package.json`. Install native `xmllint`
 (`libxml2-utils` on Ubuntu; libxml2 on macOS with its bin directory on PATH).
 Install `pdftotext` (`poppler-utils` on Ubuntu; `poppler` on macOS) for the
 vendored PDF catalog freshness checks. The SDK runtime uses bundled WASM and does

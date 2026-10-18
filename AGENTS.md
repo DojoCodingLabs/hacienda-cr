@@ -18,7 +18,7 @@ shared directly. Put reusable domain logic in shared or SDK, not in an adapter.
 
 ## Workflow and verification
 
-Use Node.js 22+ and the pnpm version pinned in `package.json`.
+Use Node.js 22.13+ for repository tooling and the pnpm version pinned in `package.json`.
 
 ```sh
 pnpm install --frozen-lockfile

@@ -10,7 +10,7 @@
   "homepage": "https://github.com/DojoCodingLabs/hacienda-cr#readme",
   "packageManager": "pnpm@12.10.1",
   "engines": {
-    "node": ">=22"
+    "node": ">=22.13"
   },
   "scripts": {
     "build": "turbo run build",
