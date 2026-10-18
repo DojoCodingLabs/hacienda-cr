@@ -78,3 +78,26 @@ PKCS#12 input is capped at 1 MiB.
 See the [security scope and remaining boundaries](https://github.com/DojoCodingLabs/hacienda-cr/blob/main/docs/security-hardening.md),
 including the unpatched Forge verification advisory. These checks do not establish
 certificate-chain trust or real Hacienda acceptance.
+
+## Additive exact ordinary FE API (0.6.0)
+
+`calculateExactFe` and `buildExactFacturaXml` accept the new `ExactFeInput`;
+shared exports its `ExactFeInputSchema` and calculated-output schema. This is
+an opt-in, source-fact API; existing numeric DTOs/calculators/builders and the
+CLI/MCP behavior are unchanged. Do not cast a Number DTO into this input or
+convert exact strings to Number at JSON/XML boundaries.
+
+Use decimal strings for quantity (XSD16 significant digits/up to3 decimals),
+price/discount/payment/exchange amounts (up to5 decimals, max9999999999999.99999)
+and percentage discounts (up to5 decimals). The explicit case code is
+`FE-domestic-ordinary-iva13-v1`: IVA01/tariff08/rate string13, normal transaction
+omitted or01, positive unit/gross/net, CABYS-consistent service/goods and fully
+allocated payments. Gift/bonus discount01/02/03, other taxes, exonerations,
+free/special transactions, other charges and references are rejected.
+
+The exact calculator uses documented per-line five-decimal HALF_UP boundaries
+and returns JSON-safe decimal strings. The XML builder recalculates from source
+facts, rejects supplied totals and emits exact decimal text. It does not prove
+CABYS catalog existence, tax applicability, legal signing or real Hacienda
+acceptance. Preserve immutable source/provenance and first signed bytes in the
+consumer. Broader fiscal cases require their own reviewed contract.

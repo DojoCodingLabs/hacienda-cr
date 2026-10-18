@@ -3,8 +3,7 @@
 ## Prepare a version PR
 
 1. Merge product/DX changes with their changesets. Run `pnpm changeset status` and
-   review the intended versions. The 0.5.0 release includes corrected A2 policy/catalog wire behavior and explicit
-   pinned response verification while preserving the 0.4.2 maintenance guards.
+   review the intended versions. The 0.6.0 release adds the explicitly bounded exact-string ordinary IVA13/full-payment API, preserving the legacy numeric APIs and 0.5.0 policy/response-verifier guards.
 2. Run `pnpm version-packages`, then `pnpm install --lockfile-only`. Review package
    manifests, internal dependencies, changelogs and consumed changesets together.
 3. Run `pnpm verify` and `pnpm test:coverage`. Review the packaged migration guide.
@@ -19,16 +18,16 @@ checkout. The release script checks all four versions against the same stable ta
 and requires all pending changesets to have been consumed.
 
 ```sh
-pnpm release:prepare --tag v0.5.0
+pnpm release:prepare --tag v0.6.0
 ```
 
 This checks registry availability, runs full verification and packs exact tarballs
-into ignored `.release/v0.5.0/packed`. It tests those actual tarballs and records
+into ignored `.release/v0.6.0/packed`. It tests those actual tarballs and records
 the commit and SHA-512 integrity. Preparation does not publish or create a tag.
 CI uses npm 11.21.0 on Node 22; local publishing requires a provenance-capable CI
 identity and is intended to run in the GitHub workflow.
 
-When the version PR is approved and merged, create and push an annotated `v0.5.0`
+When the version PR is approved and merged, create and push an annotated `v0.6.0`
 tag pointing at that exact main commit. This triggers publish.yml. The workflow
 verifies the tag/main relationship, installs native xmllint, repeats preparation,
 then publishes the verified tarballs in shared -> SDK -> CLI -> MCP order.
@@ -52,11 +51,11 @@ build change causes different bytes, recover from the saved verified artifacts
 using the same checkout and release.json, rather than bypassing integrity checks:
 
 ```sh
-pnpm release:publish --tag v0.5.0 --resume
+pnpm release:publish --tag v0.6.0 --resume
 ```
 
 Run this in a correctly authenticated provenance-capable CI environment after
-restoring `.release/v0.5.0` and the exact release commit. The script verifies every
+restoring `.release/v0.6.0` and the exact release commit. The script verifies every
 file/commit before writing to npm and verifies each registry artifact afterwards.
 After a successful publish, verification waits up to 37 lookups with five-second
 intervals for npm indexing, always checking the exact integrity once visible.
