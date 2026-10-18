@@ -98,3 +98,5 @@ export {
   ComprobanteMetadataSchema,
   ComprobantesMetadataArraySchema,
 } from "./history.js";
+
+export { ExactTeInputSchema, type ExactTeInput, type ExactTeCalculated } from "./exact-te.js";

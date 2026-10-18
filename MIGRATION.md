@@ -72,3 +72,13 @@ Offline verification does not establish live Hacienda acceptance.
 ## Next reviewed release: history metadata contract
 
 The pending pre-1.0 minor Changeset corrects list/detail metadata, combined filters and observed headers across shared/SDK/CLI/MCP. Published 0.7.0 is unchanged until a separately reviewed release. Follow [the explicit migration](docs/history-contract.md); no real history/retention/original-recovery acceptance is implied.
+
+## Unreleased: additive exact ordinary domestic TE
+
+Existing FE/current/retained, total NC and legacy Number APIs keep their behavior.
+New strict `ExactTeInputSchema` and `calculateExactTe` / `buildExactTiqueteXml`
+provide the named ordinary TE04 source path with optional actual receiver and
+exact decimal amounts. Do not convert existing Number input to a claim of exact
+source provenance or use a dummy FE receiver. See [the contract](docs/exact-te.md).
+The source PR contributes to SDK #85's one eventual cohesive release; package
+versions and app fiscal activation do not change here.

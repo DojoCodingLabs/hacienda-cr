@@ -2,6 +2,7 @@ import {
   ExactFeInputSchema,
   type ExactFeInput,
   type ExactFeCalculated,
+  type Receptor,
 } from "@dojocoding/hacienda-shared";
 import { calculateExactFe } from "../tax/exact-fe.js";
 import { assertDocumentIdentity } from "../xml/document-identity.js";
@@ -18,7 +19,11 @@ export function buildExactFacturaXml(source: ExactFeInput): string {
 }
 
 /** Internal exact projection shared with full NC; not a public calculated-input API. */
-export function buildExactOrdinaryFields(input: ExactFeInput, calculated: ExactFeCalculated) {
+type ExactOrdinaryXmlSource = Omit<ExactFeInput, "caseCode" | "receptor"> & { receptor?: Receptor };
+export function buildExactOrdinaryFields(
+  input: ExactOrdinaryXmlSource,
+  calculated: ExactFeCalculated,
+) {
   const summary = calculated.resumenFactura;
   return {
     Clave: input.clave,
@@ -30,7 +35,7 @@ export function buildExactOrdinaryFields(input: ExactFeInput, calculated: ExactF
     NumeroConsecutivo: input.numeroConsecutivo,
     FechaEmision: input.fechaEmision,
     Emisor: buildEmisorXml(input.emisor),
-    Receptor: buildReceptorXml(input.receptor),
+    ...(input.receptor ? { Receptor: buildReceptorXml(input.receptor) } : {}),
     CondicionVenta: input.condicionVenta,
     ...(input.condicionVentaOtros ? { CondicionVentaOtros: input.condicionVentaOtros } : {}),
     ...(input.plazoCredito ? { PlazoCredito: input.plazoCredito } : {}),
