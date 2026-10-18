@@ -34,26 +34,30 @@ describe("public exact ordinary FE decimal schemas", () => {
       "100.00001",
       "9".repeat(20000),
     ]) {
-      const source = { codigoDescuento: "01", porcentaje: value };
+      const source = { codigoDescuento: "07", porcentaje: value };
       expect(() => ExactDiscountInputSchema.safeParse(source)).not.toThrow();
       expect(ExactDiscountInputSchema.safeParse(source).success).toBe(false);
     }
   });
   it("requires exclusive amount/percent facts and code99 companion without invented nature", () => {
     expect(
-      ExactDiscountInputSchema.safeParse({ codigoDescuento: "01", montoDescuento: "0.00001" })
+      ExactDiscountInputSchema.safeParse({ codigoDescuento: "07", montoDescuento: "0.00001" })
         .success,
     ).toBe(true);
     expect(
-      ExactDiscountInputSchema.safeParse({ codigoDescuento: "01", porcentaje: "1.23456" }).success,
+      ExactDiscountInputSchema.safeParse({ codigoDescuento: "07", porcentaje: "1.23456" }).success,
     ).toBe(true);
     expect(
       ExactDiscountInputSchema.safeParse({
-        codigoDescuento: "01",
+        codigoDescuento: "07",
         montoDescuento: "1",
         porcentaje: "1",
       }).success,
     ).toBe(false);
+    for (const code of ["01", "02", "03"])
+      expect(
+        ExactDiscountInputSchema.safeParse({ codigoDescuento: code, montoDescuento: "1" }).success,
+      ).toBe(false);
     expect(
       ExactDiscountInputSchema.safeParse({ codigoDescuento: "99", montoDescuento: "1" }).success,
     ).toBe(false);

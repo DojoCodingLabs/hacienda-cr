@@ -20,3 +20,10 @@ implicit numeric coercion, schema overprecision and computed overflow.
 - **WHEN** the exact API calculates the invoice
 - **THEN** its five-decimal half-up results agree with an independent Decimal oracle
 - **AND** unsupported regimes, wrong payment allocation and overflow are rejected
+
+#### Scenario: Special or free transactions are not ordinary IVA13
+
+- **GIVEN** a special transaction code02–13, gift/bonus discount01–03, zero price/gross/net or conflicting CABYS class
+- **WHEN** the named exact ordinary API validates or calculates the line
+- **THEN** it rejects the unsupported facts before XML
+- **AND** transaction omission stays omitted while explicit normal-sale01 remains supported

@@ -121,12 +121,10 @@ describe("additive exact ordinary FE strings → BigInt → XML", () => {
   it("preserves maximum schema money, smallestfraction and full quantity range without float conversion", () => {
     const cases = [input(), input(), input(), input()];
     required(required(cases[0]).detalleServicio[0]).precioUnitario = "9999999999999.99999";
-    required(required(cases[0]).detalleServicio[0]).descuento = [
-      { codigoDescuento: "01", porcentaje: "100" },
-    ];
-    required(required(cases[1]).detalleServicio[0]).precioUnitario = "9999999999999.99999";
-    required(required(cases[1]).detalleServicio[0]).cantidad = "0.001";
-    required(required(cases[2]).detalleServicio[0]).precioUnitario = "0";
+    required(required(cases[0]).detalleServicio[0]).cantidad = "0.001";
+    required(required(cases[1]).detalleServicio[0]).precioUnitario = "0.00001";
+    required(required(cases[1]).detalleServicio[0]).cantidad = "9999999999999.999";
+    required(required(cases[2]).detalleServicio[0]).precioUnitario = "0.00001";
     required(required(cases[2]).detalleServicio[0]).cantidad = "9999999999999999";
     required(required(cases[3]).detalleServicio[0]).precioUnitario = "8849557522123.89380";
     for (const source of cases) {
@@ -155,14 +153,20 @@ describe("additive exact ordinary FE strings → BigInt → XML", () => {
         line = required(source.detalleServicio[0]);
       line.cantidad = `${n}.137`;
       line.precioUnitario = `${7919 * n}.12345`;
-      line.descuento = [{ codigoDescuento: "01", porcentaje: `${n % 31}.12501` }];
+      line.descuento = [{ codigoDescuento: "07", porcentaje: `${n % 31}.12501` }];
       if (n % 3 === 0)
         line.descuento.push({
           codigoDescuento: "99",
           codigoDescuentoOtros: "Descuento explícito",
           montoDescuento: "0.00001",
         });
-      const second = { ...line, numeroLinea: 2, esServicio: false, descuento: undefined };
+      const second = {
+        ...line,
+        numeroLinea: 2,
+        codigoCabys: "0123400000000",
+        esServicio: false,
+        descuento: undefined,
+      };
       source.detalleServicio.push(second);
       cases.push(source);
     }
@@ -222,17 +226,78 @@ describe("additive exact ordinary FE strings → BigInt → XML", () => {
     allocate(gross);
     expect(required(calculateExactFe(gross).detalleServicio[0]).montoTotal).toBe("0.00001");
     const discount = input();
-    required(discount.detalleServicio[0]).precioUnitario = "0.00001";
-    required(discount.detalleServicio[0]).descuento = [{ codigoDescuento: "01", porcentaje: "50" }];
+    required(discount.detalleServicio[0]).precioUnitario = "0.00003";
+    required(discount.detalleServicio[0]).descuento = [{ codigoDescuento: "07", porcentaje: "50" }];
     allocate(discount);
     expect(
       required(required(required(calculateExactFe(discount).detalleServicio[0]).descuento)[0])
         .montoDescuento,
-    ).toBe("0.00001");
+    ).toBe("0.00002");
     const tax = input();
     required(tax.detalleServicio[0]).precioUnitario = "0.00050";
     allocate(tax);
     expect(required(calculateExactFe(tax).detalleServicio[0]).impuestoNeto).toBe("0.00007");
+  });
+  it("rejects unsupported free/special cases and mismatched CABYS classification before exact XML", () => {
+    for (const type of ["02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12", "13"]) {
+      const source = input();
+      expect(() =>
+        buildExactFacturaXml({
+          ...source,
+          detalleServicio: [{ ...required(source.detalleServicio[0]), tipoTransaccion: type }],
+        } as ExactFeInput),
+      ).toThrow();
+    }
+    for (const code of ["01", "02", "03"]) {
+      const source = input();
+      expect(() =>
+        buildExactFacturaXml({
+          ...source,
+          detalleServicio: [
+            {
+              ...required(source.detalleServicio[0]),
+              descuento: [{ codigoDescuento: code, porcentaje: "10" }],
+            },
+          ],
+        } as ExactFeInput),
+      ).toThrow();
+    }
+    for (const mutate of [
+      (line: ExactFeInput["detalleServicio"][number]) => {
+        line.precioUnitario = "0";
+      },
+      (line: ExactFeInput["detalleServicio"][number]) => {
+        line.precioUnitario = "0.00001";
+        line.cantidad = "0.001";
+      },
+      (line: ExactFeInput["detalleServicio"][number]) => {
+        line.descuento = [{ codigoDescuento: "07", porcentaje: "100" }];
+      },
+      (line: ExactFeInput["detalleServicio"][number]) => {
+        line.esServicio = false;
+      },
+      (line: ExactFeInput["detalleServicio"][number]) => {
+        line.codigoCabys = "0123400000000";
+      },
+    ]) {
+      const source = input();
+      mutate(required(source.detalleServicio[0]));
+      expect(() => buildExactFacturaXml(source)).toThrow();
+    }
+    const ordinary = input(),
+      line = required(ordinary.detalleServicio[0]);
+    line.tipoTransaccion = "01";
+    line.codigoCabys = "0123400000000";
+    line.esServicio = false;
+    const calculated = calculateExactFe(ordinary),
+      xml = buildExactFacturaXml(ordinary);
+    expect(calculated.resumenFactura.totalServGravados).toBe("0.00000");
+    expect(calculated.resumenFactura.totalMercanciasGravadas).toBe("100.00000");
+    expect(xml).toContain("<TipoTransaccion>01</TipoTransaccion>");
+    expect(buildExactFacturaXml(input())).not.toContain("<TipoTransaccion>");
+    expect(
+      validateAgainstXsd(xml, "FacturaElectronica_V4.4.xsd", { allowMissingSignature: true }),
+    ).toEqual({ valid: true, errors: "" });
   });
   it("rejects numeric coercion, unsupported facts, overprecision, overflow and inconsistent payment or discount intent", () => {
     for (const change of [
@@ -252,7 +317,7 @@ describe("additive exact ordinary FE strings → BigInt → XML", () => {
         (s.detalleServicio[0].descuento = [{ codigoDescuento: "99", montoDescuento: "1" }]),
       (s: UnsafeFe) =>
         (s.detalleServicio[0].descuento = [
-          { codigoDescuento: "01", montoDescuento: "1", porcentaje: "1" },
+          { codigoDescuento: "07", montoDescuento: "1", porcentaje: "1" },
         ]),
     ]) {
       const source = input();
@@ -272,7 +337,7 @@ describe("additive exact ordinary FE strings → BigInt → XML", () => {
     expect(() => calculateExactFe(aggregate)).toThrow("Exact FE monetary bound exceeded");
     const excessive = input();
     required(excessive.detalleServicio[0]).descuento = [
-      { codigoDescuento: "01", montoDescuento: "101" },
+      { codigoDescuento: "07", montoDescuento: "101" },
     ];
     expect(() => calculateExactFe(excessive)).toThrow();
     const badPayment = input();

@@ -32,6 +32,7 @@ export function calculateExactFe(source: ExactFeInput): ExactFeCalculated {
   const detalleServicio = input.detalleServicio.map((line) => {
     const gross = round(scaled(line.cantidad, 3) * scaled(line.precioUnitario, 5), 1000n);
     money(gross);
+    if (gross <= 0n) throw new RangeError("Zero-gross line is outside ordinary exact FE");
     const discount = line.descuento?.map((d) => {
       const amount =
         "porcentaje" in d
@@ -46,7 +47,8 @@ export function calculateExactFe(source: ExactFeInput): ExactFeCalculated {
       };
     });
     const deduction = sum((discount ?? []).map((d) => scaled(d.montoDescuento, 5)));
-    if (deduction > gross) throw new RangeError("Exact FE discounts exceed gross line amount");
+    if (deduction >= gross)
+      throw new RangeError("Zero or negative net line is outside ordinary exact FE");
     const net = gross - deduction,
       tax = round(net * 13n, 100n);
     if (line.esServicio) services += gross;

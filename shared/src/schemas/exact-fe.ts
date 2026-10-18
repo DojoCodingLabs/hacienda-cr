@@ -11,6 +11,10 @@ import { UbicacionSchema, TelefonoSchema } from "./common.js";
 import { CURRENCY_CODES } from "../constants/index.js";
 
 export const ExactMoneySchema = z.string().regex(/^(?:0|[1-9]\d{0,12})(?:\.\d{1,5})?$/);
+const positiveMoney = ExactMoneySchema.refine(
+  (v) => /[1-9]/.test(v),
+  "Ordinary FE amount must be positive",
+);
 export const ExactQuantitySchema = z
   .string()
   .max(20)
@@ -36,7 +40,9 @@ const discountMetadata = DescuentoSchema.pick({
   codigoDescuento: true,
   codigoDescuentoOtros: true,
   naturalezaDescuento: true,
-}).strict();
+})
+  .extend({ codigoDescuento: DescuentoSchema.shape.codigoDescuento.exclude(["01", "02", "03"]) })
+  .strict();
 const discountCompanion = (
   d: { codigoDescuento: string; codigoDescuentoOtros?: string },
   ctx: z.RefinementCtx,
@@ -65,7 +71,7 @@ export const ExactDiscountSchema = discountMetadata
   .extend({ montoDescuento: ExactMoneySchema })
   .strict()
   .superRefine(discountCompanion);
-export const ExactFeLineInputSchema = LineaDetalleSchema.pick({
+const ExactFeLineBaseSchema = LineaDetalleSchema.pick({
   numeroLinea: true,
   codigoCabys: true,
   unidadMedida: true,
@@ -75,7 +81,8 @@ export const ExactFeLineInputSchema = LineaDetalleSchema.pick({
 })
   .extend({
     cantidad: ExactQuantitySchema,
-    precioUnitario: ExactMoneySchema,
+    precioUnitario: positiveMoney,
+    tipoTransaccion: z.literal("01").optional(),
     codigoComercial: z.array(CodigoComercialSchema.strict()).max(5).optional(),
     descuento: z.array(ExactDiscountInputSchema).min(1).max(5).optional(),
     impuesto: z.tuple([
@@ -90,6 +97,17 @@ export const ExactFeLineInputSchema = LineaDetalleSchema.pick({
     esServicio: z.boolean(),
   })
   .strict();
+// Official ANEXOS pp50–52: CABYS0–4 goods,5–9 services. This validates
+// classification only, not existence in CABYS or its applicable tax treatment.
+function classification(line: { codigoCabys: string; esServicio: boolean }, ctx: z.RefinementCtx) {
+  if (line.esServicio !== /^[5-9]/.test(line.codigoCabys))
+    ctx.addIssue({
+      code: "custom",
+      path: ["esServicio"],
+      message: "Service/goods declaration must match CABYS prefix",
+    });
+}
+export const ExactFeLineInputSchema = ExactFeLineBaseSchema.superRefine(classification);
 export const ExactFePaymentSchema = MedioPagoSchema.omit({ totalMedioPago: true })
   .extend({ totalMedioPago: ExactMoneySchema })
   .strict()
@@ -174,15 +192,15 @@ export const ExactFeInputSchema = FacturaElectronicaSchema.omit({
         });
     });
   });
-export const ExactFeCalculatedLineSchema = ExactFeLineInputSchema.omit({
+export const ExactFeCalculatedLineSchema = ExactFeLineBaseSchema.omit({
   descuento: true,
   impuesto: true,
 })
   .extend({
     descuento: z.array(ExactDiscountSchema).optional(),
-    montoTotal: ExactMoneySchema,
-    subTotal: ExactMoneySchema,
-    baseImponible: ExactMoneySchema,
+    montoTotal: positiveMoney,
+    subTotal: positiveMoney,
+    baseImponible: positiveMoney,
     impuesto: z.tuple([
       z
         .object({
@@ -194,9 +212,10 @@ export const ExactFeCalculatedLineSchema = ExactFeLineInputSchema.omit({
         .strict(),
     ]),
     impuestoNeto: ExactMoneySchema,
-    montoTotalLinea: ExactMoneySchema,
+    montoTotalLinea: positiveMoney,
   })
-  .strict();
+  .strict()
+  .superRefine(classification);
 export const ExactFeSummarySchema = z
   .object({
     codigoTipoMoneda: z
