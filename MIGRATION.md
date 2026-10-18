@@ -82,3 +82,13 @@ exact decimal amounts. Do not convert existing Number input to a claim of exact
 source provenance or use a dummy FE receiver. See [the contract](docs/exact-te.md).
 The source PR contributes to SDK #85's one eventual cohesive release; package
 versions and app fiscal activation do not change here.
+
+## Unreleased: exact ordinary FE-reference ND increment
+
+Additive `ExactNdInputSchema`, `calculateExactNd` and `buildExactNotaDebitoXml`
+accept a positive independent adjustment referencing one unchanged ordinary FE.
+Explicit original-line correspondence and current reference02 keep the delta
+separate from the original total. Supplied ND allocations must be positive.
+Existing FE/TE/NC/current/retained and legacy APIs do not change. Caller source
+acceptance, trusted actual age eligibility and concurrency remain required;
+see [the ND contract](docs/exact-nd.md). No release or activation follows here.

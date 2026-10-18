@@ -204,3 +204,11 @@ The additive `calculateExactTe` / `buildExactTiqueteXml` and shared
 They do not fabricate an FE receiver or enable live TE issuance. See the
 [contract, scope and verification limits](../../docs/exact-te.md). This source
 slice is not a new published version or exact CLI/MCP activation.
+
+### Exact ordinary ND source candidate
+
+`calculateExactNd` / `buildExactNotaDebitoXml` calculate independently supplied
+positive FE-reference increments with explicit original-line and reference
+binding. They preserve original facts and do not establish original acceptance,
+legal-age eligibility or account effects. See [scope and primary rules](../../docs/exact-nd.md).
+This additive SDK/shared source slice is not a version bump or live activation.
