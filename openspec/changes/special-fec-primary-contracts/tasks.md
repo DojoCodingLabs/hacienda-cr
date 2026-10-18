@@ -1,0 +1,8 @@
+- [x] Read current primary annex/native identities, references, roles and address conditions.
+- [x] Capture dated official used-goods worked example and precise primary access limits.
+- [x] Reproduce eight native counterexamples without claiming a tax oracle or editing official schemas.
+- [x] Propose separate foreign/used-goods source shapes and independent tax-case gates.
+- [ ] Obtain independent primary/tax-case review before production source changes.
+- [ ] Implement only explicitly reviewed exact source/math/XML cases and meaningful Decimal/native/sign/packed evidence.
+- [ ] Complete broader FEC special tax/response/eligibility matrix and app lifecycle; do not mark SDK #85 complete.
+- [ ] Review coherent linked release separately; no versions/publication/activation in this checkpoint.

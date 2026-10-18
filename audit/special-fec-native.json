@@ -1,0 +1,126 @@
+{
+  "baseline": "7d5891a7c96f5f084b2e97e4d33fbf7839a74537",
+  "scope": "Audit-only synthetic mutated XML; mutually incompatible native-valid hypotheses are not producers, legal eligibility, signatures or fiscal acceptance",
+  "results": [
+    {
+      "name": "05 with explicit ordinary 13 hypothesis",
+      "xmlSha256": "a6bd67101d09dda69afa3acc02a79f0a90969a59524674c9254c9249827e3707",
+      "taxTreatmentApproved": false,
+      "native": [
+        {
+          "generation": "2024",
+          "valid": true
+        },
+        {
+          "generation": "2026",
+          "valid": true
+        }
+      ]
+    },
+    {
+      "name": "05 with distinct zero/no-credit hypothesis",
+      "xmlSha256": "a757c9e5ce501c4758fac7f63009a354b8794aeb8d7ae05e62d74c34fb099d3f",
+      "taxTreatmentApproved": false,
+      "native": [
+        {
+          "generation": "2024",
+          "valid": true
+        },
+        {
+          "generation": "2026",
+          "valid": true
+        }
+      ]
+    },
+    {
+      "name": "05 missing mandatory foreign address",
+      "xmlSha256": "24242d0be1d5aa3bd139daffac8c21f50f7568cd700a951dfd55cf4181a1cef0",
+      "taxTreatmentApproved": false,
+      "native": [
+        {
+          "generation": "2024",
+          "valid": true
+        },
+        {
+          "generation": "2026",
+          "valid": true
+        }
+      ]
+    },
+    {
+      "name": "05 missing required reference16",
+      "xmlSha256": "3e70f8a0b139662ed827c7ae091676901969f748759881752d49f2d62eef456e",
+      "taxTreatmentApproved": false,
+      "native": [
+        {
+          "generation": "2024",
+          "valid": true
+        },
+        {
+          "generation": "2026",
+          "valid": true
+        }
+      ]
+    },
+    {
+      "name": "06 condition13 ordinary13 hypothesis",
+      "xmlSha256": "8d25091cb54671f23ed2f8a0b5db09555bbc0eab42632b5bd33131d63f12ee2c",
+      "taxTreatmentApproved": false,
+      "native": [
+        {
+          "generation": "2024",
+          "valid": true
+        },
+        {
+          "generation": "2026",
+          "valid": true
+        }
+      ]
+    },
+    {
+      "name": "06 condition13 zero/no-credit hypothesis",
+      "xmlSha256": "8f94e35a9e1e89c2d5c5f488378e15eae85fa66f80d93e314acf596498f2d45f",
+      "taxTreatmentApproved": false,
+      "native": [
+        {
+          "generation": "2024",
+          "valid": true
+        },
+        {
+          "generation": "2026",
+          "valid": true
+        }
+      ]
+    },
+    {
+      "name": "06 wrong condition01",
+      "xmlSha256": "cbd4b785a208043c0ff5be963e70e9f3024845f0886795f05c7d539be8131fde",
+      "taxTreatmentApproved": false,
+      "native": [
+        {
+          "generation": "2024",
+          "valid": true
+        },
+        {
+          "generation": "2026",
+          "valid": true
+        }
+      ]
+    },
+    {
+      "name": "native name violation control",
+      "xmlSha256": "2b5f2c18b77efe94279826a8f23d9c8ed4068dc22eb5f2876755c82615ee8014",
+      "taxTreatmentApproved": false,
+      "native": [
+        {
+          "generation": "2024",
+          "valid": false
+        },
+        {
+          "generation": "2026",
+          "valid": false
+        }
+      ]
+    }
+  ]
+}
