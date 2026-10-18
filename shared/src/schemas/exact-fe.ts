@@ -201,6 +201,13 @@ export const RetainedExactFeInputSchema = ExactFeStructureSchema.superRefine((in
 /** Official current annex p25: 02/10 require positive 1–5 digit days. Any present
  * term must also be positive. Preserve valid leading-zero lexemes verbatim. */
 export const ExactFeInputSchema = ExactFeStructureSchema.superRefine((input, ctx) => {
+  // Current official annex p70, notes 20/22/24: 09/11 are REP-only; 13 is FEC-only.
+  if (["09", "11", "13"].includes(input.condicionVenta))
+    ctx.addIssue({
+      code: "custom",
+      path: ["condicionVenta"],
+      message: "Sale condition belongs to another document family, not FE",
+    });
   if (["02", "10"].includes(input.condicionVenta) && input.plazoCredito === undefined)
     ctx.addIssue({
       code: "custom",

@@ -130,7 +130,19 @@ describe("current credit days versus read-only retained source", () => {
     ).toBe(false);
   });
   it("does not make other valid sale conditions require credit terms, but refuses any explicit zero term", () => {
-    for (const condicionVenta of ["01", "03", "08", "99"]) {
+    for (const condicionVenta of [
+      "01",
+      "03",
+      "04",
+      "05",
+      "06",
+      "07",
+      "08",
+      "12",
+      "14",
+      "15",
+      "99",
+    ]) {
       const input = {
         ...creditFixture,
         condicionVenta,
@@ -140,4 +152,12 @@ describe("current credit days versus read-only retained source", () => {
       expect(ExactFeInputSchema.safeParse({ ...input, plazoCredito: "0" }).success).toBe(false);
     }
   });
+});
+
+it("rejects REP/FEC-only current FE conditions while preserving historical read-only source shape", () => {
+  for (const condicionVenta of ["09", "11", "13"]) {
+    const source = { ...creditFixture, condicionVenta };
+    expect(ExactFeInputSchema.safeParse(source).success).toBe(false);
+    expect(RetainedExactFeInputSchema.safeParse(source).success).toBe(condicionVenta === "13");
+  }
 });

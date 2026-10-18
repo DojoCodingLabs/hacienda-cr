@@ -435,3 +435,59 @@ describe("current exact FE credit-day contract and historical read-only custody"
     }
   });
 });
+
+describe("current FE document-family sale conditions", () => {
+  it("refuses REP-only 09/11 and FEC-only 13 before calculation/XML, retaining read-only historical math", () => {
+    for (const condicionVenta of ["09", "11", "13"] as const) {
+      const source = { ...input(), condicionVenta };
+      const before = JSON.stringify(source);
+      expect(ExactFeInputSchema.safeParse(source).success).toBe(false);
+      expect(() => calculateExactFe(source)).toThrow();
+      expect(() => buildExactFacturaXml(source)).toThrow();
+      if (condicionVenta === "13") {
+        const retained = RetainedExactFeInputSchema.parse(source);
+        expect(calculateRetainedExactFe(retained).resumenFactura.totalComprobante).toBe(
+          required(oracle([retained])[0]).total,
+        );
+        const legacy = { ...SIMPLE_INVOICE, condicionVenta };
+        expect(FacturaElectronicaSchema.safeParse(legacy).success).toBe(true);
+        expect(buildFacturaXml(legacy)).toContain(
+          `<CondicionVenta>${condicionVenta}</CondicionVenta>`,
+        );
+      } else {
+        expect(RetainedExactFeInputSchema.safeParse(source).success).toBe(false);
+        expect(
+          FacturaElectronicaSchema.safeParse({ ...SIMPLE_INVOICE, condicionVenta }).success,
+        ).toBe(false);
+      }
+      expect(JSON.stringify(source)).toBe(before);
+    }
+  });
+  it("preserves all other valid FE sale-condition inputs", () => {
+    for (const condicionVenta of [
+      "01",
+      "02",
+      "03",
+      "04",
+      "05",
+      "06",
+      "07",
+      "08",
+      "10",
+      "12",
+      "14",
+      "15",
+      "99",
+    ] as const) {
+      const source = {
+        ...input(),
+        condicionVenta,
+        ...(["02", "10"].includes(condicionVenta) ? { plazoCredito: "00030" } : {}),
+        ...(condicionVenta === "99" ? { condicionVentaOtros: "Acuerdo explícito sintético" } : {}),
+      };
+      expect(buildExactFacturaXml(source)).toContain(
+        `<CondicionVenta>${condicionVenta}</CondicionVenta>`,
+      );
+    }
+  });
+});

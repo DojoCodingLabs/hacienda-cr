@@ -5,6 +5,7 @@ import { join } from "node:path";
 import {
   ExactNcTotalInputSchema,
   ExactFeInputSchema,
+  RetainedExactFeInputSchema,
   type ExactNcTotalInput,
 } from "@dojocoding/hacienda-shared";
 import { exactNcFixture } from "../__fixtures__/exact-nc.js";
@@ -59,12 +60,13 @@ it("full-precision chronology rejects earlier submillisecond NC across all expor
     expect(JSON.stringify(source)).toBe(before);
   }
 });
-it("NC rejects family-inapplicable copied facts without changing FE0.6 source validation or silently rewriting them", () => {
+it("NC rejects family-inapplicable copied facts while retaining historical FE source validation or silently rewriting them", () => {
   for (const condicionVenta of ["09", "11", "12", "13"] as const) {
     const input = exactNcFixture(),
       invalid = { ...input, original: { ...input.original, condicionVenta } };
     if (condicionVenta === "12" || condicionVenta === "13")
-      expect(ExactFeInputSchema.safeParse(invalid.original).success).toBe(true);
+      expect(RetainedExactFeInputSchema.safeParse(invalid.original).success).toBe(true);
+    expect(ExactFeInputSchema.safeParse(invalid.original).success).toBe(condicionVenta === "12");
     expect(ExactNcTotalInputSchema.safeParse(invalid).success).toBe(false);
   }
   for (const party of ["emisor", "receptor"] as const) {

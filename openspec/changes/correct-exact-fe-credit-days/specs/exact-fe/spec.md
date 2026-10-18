@@ -20,3 +20,13 @@ The SDK SHALL expose a separately named read-only retained exact FE schema/calcu
 - **THEN** retained decoding/calculation preserves those facts and unchanged bytes under independently bound custody
 - **AND** current exact construction still rejects them
 - **AND** structural XSD/signature presence does not establish fiscal acceptance or authorize another emission.
+
+### Requirement: Current exact FE respects document-family sale conditions
+
+Current exact FE schema, calculator and XML builder SHALL reject REP-only sale conditions 09/11 and FEC-only 13. Other valid FE conditions SHALL retain their existing behavior. Read-only historical decoding/calculation and legacy Number APIs SHALL retain their prior behavior without granting current issuance authority.
+
+#### Scenario: Wrong-family current FE source
+
+- **WHEN** a current exact FE supplies sale condition 09, 11 or 13
+- **THEN** current validation, arithmetic and XML generation fail before output
+- **AND** independently bound historical source-only calculation remains available without rewriting facts or exposing a retained builder.

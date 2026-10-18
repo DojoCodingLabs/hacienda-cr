@@ -8,12 +8,20 @@ zero/all-zero, negative, fractional and over-width terms are refused before
 current exact arithmetic/XML generation.
 
 Primary source: [Hacienda current v4.4 annex](https://www.hacienda.go.cr/docs/ANEXOS_Y_ESTRUCTURAS_V4.4.pdf),
-page 25, inspected 2026-10-18 (99 pages; adjustments 22/04/2026), SHA256
+pages 25 and 70 (notes 20, 22 and 24), inspected 2026-10-18 (99 pages; adjustments 22/04/2026), SHA256
 `6e093226b29b38c5c8de825f70c1b1cb8ed81e2f4a6eb0b3ff52708fc1eb2769`.
 The XSD's optional integer/five-digit shape does not enforce that conditional
 business rule or positivity. Native XSD conformance is therefore separate from
 current business readiness and from Hacienda acceptance. The name of condition 10
 identifies a tax regime, not a universal contractual 90-day account maturity.
+
+Current exact FE also rejects sale conditions 09 and 11 (REP-only) and 13
+(FEC-only), as specified by those page 70 notes. Other valid FE sale conditions
+retain their existing behavior. The shared regular-document enum already rejected
+09/11; that denial remains unchanged in current, retained and legacy FE APIs.
+Current exact FE now additionally rejects 13. The retained schema/calculator and
+legacy Number FE APIs preserve their former acceptance of 13, without authorizing
+a new document in the wrong family.
 
 ## Current versus historical APIs
 
@@ -69,11 +77,11 @@ separate release stages. Existing dependency advisories are not suppressed.
 ## Executed source checks
 
 The complete `pnpm verify` exits 0: all 16 lint/type/build/test tasks pass, with
-1462 unit tests passing and four explicitly skipped live-auth tests. All 118
+1465 unit tests passing and four explicitly skipped live-auth tests. All 118
 script regressions and actual packed NodeNext/Bundler/ESM/CLI/MCP consumers pass.
-`pnpm test:coverage` also exits 0; SDK coverage is 95.31% statements and 90.59%
+The initial credit-term candidate’s `pnpm test:coverage` also exits 0; SDK coverage is 95.31% statements and 90.59%
 branches (coverage across other packages is reported separately, not a universal
-coverage claim). No real credential/live-test environment was present.
+coverage claim). The subsequent family-guard delta passed a fresh complete `pnpm verify`, including packed consumers; coverage was not rerun for that delta. No real credential/live-test environment was present.
 
 `pnpm audit --json` exits 1 with the existing high node-forge RSA verification
 advisory [GHSA-86w9-cpqp-85rv](https://github.com/advisories/GHSA-86w9-cpqp-85rv)
