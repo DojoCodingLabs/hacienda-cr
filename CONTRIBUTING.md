@@ -1,8 +1,8 @@
 # Contributing
 
-Use Node.js 22+ and the pnpm version in package.json. With Corepack available,
-run `corepack enable`; otherwise install pnpm 9.15.4 using the supported pnpm
-installation instructions. Clone the repository, then:
+Use Node.js 22.13+ and the pnpm version in package.json. With Corepack available,
+run `corepack enable`; otherwise install pnpm 12.10.1 using the supported pnpm
+[installation instructions](https://pnpm.io/installation). Node.js 22.13+ is the repository tooling baseline (including installation of pnpm through npm); published packages keep their existing Node.js >=22 runtime engines. Clone the repository, then:
 
 ```sh
 pnpm install --frozen-lockfile
@@ -18,6 +18,8 @@ system xmllint. Verification fails clearly when the conformance tool is absent.
 `pnpm verify` checks formatting, lint, types, builds, offline tests, release-script
 regressions and installed tarballs. It disables live credential tests even if
 credentials are present in your shell. No real Hacienda documents are submitted.
+
+See [the pnpm 12 verification checkpoint](docs/pnpm12-upgrade-verification.md) for the unchanged application graph, dependency-build approval and current local evidence.
 
 ## Repository guidance
 

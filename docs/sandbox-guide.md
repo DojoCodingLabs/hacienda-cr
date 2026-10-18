@@ -6,7 +6,7 @@ Este recorrido conecta los datos de una venta con una factura, calcula sus total
 
 ## Preparar el entorno
 
-Necesitás Node.js 22+ y pnpm 9.15.4 para ejecutar el ejemplo desde este repositorio:
+Necesitás Node.js 22.13+ y pnpm 12.10.1 para ejecutar el ejemplo desde este repositorio:
 
 ```bash
 pnpm install
