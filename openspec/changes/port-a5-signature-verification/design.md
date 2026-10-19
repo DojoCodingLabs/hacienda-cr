@@ -36,3 +36,42 @@ se acepta y se marca `ok` sin comparar nada.
 - **[Riesgo: el oráculo depende de binarios nativos]** → ya son prerrequisito de CI; si faltan, el lane se marca `skipped`.
 - **[Riesgo: verificar el documento propio no prueba aceptación de Hacienda]** → se documenta: probar la firma es ≠ aceptación fiscal.
 - **[Riesgo: el pin de hoja es por实例]** → cada consumidor declara sus propios pines revisados; el SDK no trae ninguno por defecto.
+
+## Desviaciones encontradas al portar sobre `main`
+
+1. **El verificador de respuestas no verifica documentos.** `main` autentica la
+   respuesta de Hacienda (`MensajeHacienda`); el gap del brief —nadie verifica el
+   comprobante que firma el propio SDK— no se cierra con esa función. El port
+   **extrajo el núcleo criptográfico** del verificador de respuestas a un módulo
+   interno (`signing/signature-core.ts`: perfil estricto de la firma, decisión de
+   confianza por pin de hoja y verificación RSA nativa) y construyó encima el
+   verificador de documentos. El verificador de respuestas conserva su
+   comportamiento y sus códigos de motivo: el refactor es un movimiento, no una
+   reescritura, y sus 49 pruebas siguen verdes.
+
+2. **El oráculo ya verificaba el documento propio.** `policy-oracle.spec.ts`
+   ya contrastaba la factura firmada con `libxml2 --c14n` + OpenSSL y ya
+   comprobaba que el digest emitido es el SHA-256 del PDF de política. El port
+   extrajo ese oráculo a un módulo reutilizable (`signing/native-oracle.ts`) y
+   añadió la contraste del **corpus dorado completo** (las siete familias) bajo
+   el oráculo y bajo el verificador.
+
+3. **El lane externo tiene dos formas.** El requisito habla de un binario
+   alternativo (`xmlsec1`); el oráculo del repositorio es una _implementación_,
+   no un binario. El verificador acepta ambas: un verificador inyectado
+   (`options.externalVerifier`, que es como se usa el oráculo) o un binario
+   (`options.externalVerifierBinary` / `XMLSEC1_BIN`). Sin ninguno, el lane
+   queda `skipped`; con discrepancia entre las dos fuentes, el fallo nombra a
+   las dos.
+
+4. **La confianza es por pin de hoja, y el pin es del consumidor.** No hay
+   `trustRoots` en el árbol vigente (el verificador local nunca llegó a `main`),
+   así que la tarea de retirarlo se cumple por construcción: la única vía de
+   confianza es `options.trustedSignerCertificates`, y sin ella el resultado
+   declara la confianza como no establecida y no es válido.
+
+5. **La identidad se contrasta contra la clave, no contra un期望 externo.** El
+   requisito habla de "la identidad de las partes": para un documento propio no
+   hay una contraparte externa que esperar, así que la identidad se comprueba
+   contra la propia clave (contribuyente, consecutivo, fecha y tipo), que es lo
+   que `validateDocumentIdentity` ya garantiza en el árbol vigente.

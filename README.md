@@ -190,6 +190,25 @@ Herramientas: `draft_invoice`, `create_invoice`, `lookup_taxpayer`, `check_statu
 - [Integración MCP](docs/reference.md#mcp-server--integración-con-ia): configuración del cliente y recursos.
 - [Tipos y constantes compartidos](shared/README.md).
 
+### Verificación de firma
+
+`verifySignedDocumentXml` (SDK) verifica el comprobante que el propio SDK firma:
+los digests de cada referencia, la firma RSA sobre el `ds:SignedInfo` canónico, la
+canonicalización declarada, la vigencia del certificado, la política de firma
+(identificador, método de digest y hash contra la política publicada) y la
+identidad de las partes contra la clave. El tipo de comprobante sale de la raíz
+del documento, nunca del contenido.
+
+La confianza la establece **el pin de hoja que provee el consumidor**: el
+certificado embebido en el documento no establece confianza, no se valida cadena de
+CA ni revocación, y nada sale a la red. Sin pin, el resultado declara la
+confianza como no establecida y no es válido.
+
+**Verificar una firma no es aceptación fiscal.** El verificador no consulta a
+Hacienda, no habilita regímenes y no sustituye la respuesta del API: un
+documento puede verificar criptográficamente y ser rechazado. La aceptación real
+sólo la establece Hacienda sobre el documento enviado.
+
 ### Credenciales y configuración
 
 | Variable            | Uso                                                                    |

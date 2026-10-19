@@ -1,18 +1,15 @@
 /** Authenticate the exact MensajeHacienda root against caller-reviewed leaf pins.
  * Does not acquire trust anchors, validate a CA chain, check revocation, or send HTTP.
  */
-import { X509Certificate } from "node:crypto";
 import { DOMParser } from "@xmldom/xmldom";
 import { XMLValidator } from "fast-xml-parser";
 import { ResponseVerificationError } from "../errors.js";
 import { checkXmlInput } from "../xml/input-limits.js";
 import { validateDocumentXml } from "../xml/schema-validator.js";
 import {
-  DS,
   SignatureCoreError,
   certificateValidity,
   children,
-  one,
   required,
   resolvePinnedCertificate,
   signatureProfile,

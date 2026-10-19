@@ -164,8 +164,22 @@ export type { LoggerOptions, LogFormat, LogWriter, LogEntry } from "./logging/in
 // Signing module — XAdES-EPES digital signature
 // ---------------------------------------------------------------------------
 
-export { loadP12, signXml, signAndEncode, verifyHaciendaResponseXml } from "./signing/index.js";
-export type { P12Credentials, SignXmlOptions, XadesPolicyConfig } from "./signing/index.js";
+export {
+  loadP12,
+  signXml,
+  signAndEncode,
+  verifyHaciendaResponseXml,
+  verifySignedDocumentXml,
+} from "./signing/index.js";
+export type {
+  P12Credentials,
+  SignXmlOptions,
+  XadesPolicyConfig,
+  DocumentVerificationCode,
+  SignedDocumentType,
+  SignedDocumentVerification,
+  VerifySignedDocumentOptions,
+} from "./signing/index.js";
 
 // ---------------------------------------------------------------------------
 // API module — HTTP client, submission, polling, orchestrator

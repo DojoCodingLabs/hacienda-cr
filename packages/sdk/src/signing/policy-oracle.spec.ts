@@ -1,4 +1,7 @@
 /** Independent libxml2 canonicalization + OpenSSL RSA verification. No network. */
+import { createHash } from "node:crypto";
+import { readFileSync } from "node:fs";
+import { DOMParser, type Element } from "@xmldom/xmldom";
 import { describe, expect, it } from "vitest";
 import {
   XADES_POLICY_URI,
@@ -14,7 +17,6 @@ import { buildExactNotaCreditoTotalXml } from "../documents/exact-nc-builder.js"
 import { exactNcFixture } from "../__fixtures__/exact-nc.js";
 const ds = "http://www.w3.org/2000/09/xmldsig#";
 const xades = "http://uri.etsi.org/01903/v1.3.2#";
-const canonicalMethod = "http://www.w3.org/TR/2001/REC-xml-c14n-20010315";
 function required<T>(value: T | null | undefined): T {
   if (value === null || value === undefined) throw new Error("Missing oracle fixture value");
   return value;

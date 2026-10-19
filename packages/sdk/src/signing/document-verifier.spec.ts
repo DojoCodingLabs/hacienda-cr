@@ -8,7 +8,7 @@ import { verifyWithLibxml2AndOpenSsl } from "./native-oracle.js";
 import { SIMPLE_INVOICE } from "../__fixtures__/invoices.js";
 import { buildFacturaXml } from "../documents/factura-builder.js";
 import { GOLDEN_CORPUS } from "../golden-corpus/index.js";
-import { XADES_POLICY_HASH } from "@dojocoding/hacienda-shared";
+import { XADES_POLICY_HASH, XADES_POLICY_URI } from "@dojocoding/hacienda-shared";
 
 const PIN = "synthetic";
 
@@ -104,9 +104,11 @@ describe("verificación del documento firmado", () => {
 
   it("falla con un identificador de política adulterado", async () => {
     const { signed, certificatePem } = await signedFactura();
+    // Only the policy identifier is altered: the root namespace shares the
+    // prefix, so the replacement targets the full identifier.
     const altered = signed.replace(
-      "https://cdn.comprobanteselectronicos.go.cr/xml-schemas/",
-      "https://cdn.comprobanteselectronicos.go.cr/xmlschemas/",
+      XADES_POLICY_URI,
+      XADES_POLICY_URI.replace("/xml-schemas/", "/xmlschemas/"),
     );
     const result = await verifySignedDocumentXml(altered, {
       trustedSignerCertificates: [certificatePem],

@@ -17,3 +17,11 @@ export type {
   VerifyHaciendaResponseOptions,
   VerifiedHaciendaResponse,
 } from "./response-verifier.js";
+
+export { verifySignedDocumentXml } from "./document-verifier.js";
+export type {
+  DocumentVerificationCode,
+  SignedDocumentType,
+  SignedDocumentVerification,
+  VerifySignedDocumentOptions,
+} from "./document-verifier.js";
