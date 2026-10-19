@@ -8,7 +8,7 @@ Generación aleatoria de documentos electrónicos estructuralmente válidos y as
 
 ### Requirement: El generador cubre todo el espacio de documentos
 
-El generador de pruebas SHALL producir documentos estructuralmente válidos de los siete tipos de comprobante (Factura Electrónica, Tiquete Electrónico, Nota de Crédito, Nota de Débito, Factura Electrónica de Compra, Factura Electrónica de Exportación y Recibo Electrónico de Pago), y SHALL cubrir en su espacio, como mínimo: cada tarifa de impuesto aplicable, exoneraciones parciales y totales, múltiples descuentos, hasta cuatro medios de pago con su monto, moneda extranjera con su tipo de cambio, y notas de crédito y débito que referencian un documento previo. El generador NO SHALL producir documentos con campos obligatorios ausentes ni con combinaciones que la validación de entrada rechace.
+El generador de pruebas SHALL producir documentos estructuralmente válidos de los siete tipos de comprobante (Factura Electrónica, Tiquete Electrónico, Nota de Crédito, Nota de Débito, Factura Electrónica de Compra, Factura Electrónica de Exportación y Recibo Electrónico de Pago), y SHALL cubrir en su espacio, como mínimo: cada tarifa de impuesto aplicable, exoneraciones parciales y totales, múltiples descuentos, hasta cuatro medios de pago con su monto, moneda extranjera con su tipo de cambio, y notas de crédito y débito que referencian un documento previo. El generador NO SHALL producir documentos con campos obligatorios ausentes ni con combinaciones que la validación de entrada rechace. Los montos que el generador produzca SHALL construirse con la capa de cálculo vigente del constructor de su tipo —cálculo decimal exacto en el camino exacto, cálculo del contrato `Number` en los constructores legacy, que la rama preserva— y SHALL ser representables exactamente, sin pérdida por redondeo binario en el camino legacy.
 
 #### Scenario: Se cubren los siete tipos de documento
 
@@ -24,6 +24,12 @@ El generador de pruebas SHALL producir documentos estructuralmente válidos de l
 
 - **WHEN** el generador produce un documento y se valida con la validación de entrada del SDK
 - **THEN** la validación lo acepta; un documento generado que la validación rechace hace fallar la corrida, de modo que la conformidad XSD no pasa por vacuidad
+
+#### Scenario: Los montos generados son exactos
+
+- **WHEN** el generador produce un caso con un monto de cinco decimales
+- **THEN** el monto del documento es el valor exacto que el cálculo produjo y no una
+  representación binaria redondeada
 
 ### Requirement: El XML generado valida contra el XSD oficial, sin excepciones
 
@@ -79,7 +85,7 @@ Para toda entrada válida al constructor de la clave numérica, descomponer la c
 
 ### Requirement: Las tres propiedades corren en CI sobre miles de casos
 
-Las tres propiedades SHALL ejecutarse en CI sobre al menos unos miles de casos generados por propiedad, a través del mismo comando de pruebas de propiedades integrado en la verificación del repositorio, y NO SHALL depender de credenciales ni de red.
+Las tres propiedades SHALL ejecutarse en CI sobre al menos unos miles de casos generados por propiedad, a través del mismo comando de pruebas de propiedades integrado en la verificación del repositorio, y NO SHALL depender de credenciales ni de red. Los casos que invocan la validación XSD SHALL tener un presupuesto propio y configurable, por ser más caros que el resto.
 
 #### Scenario: La verificación del repositorio ejecuta las propiedades
 
@@ -90,3 +96,9 @@ Las tres propiedades SHALL ejecutarse en CI sobre al menos unos miles de casos g
 
 - **WHEN** se ajusta la variable de entorno del presupuesto de casos
 - **THEN** el número de casos por propiedad cambia en consecuencia y una corrida con pocos casos sigue juzgando las mismas propiedades
+
+#### Scenario: El presupuesto de los casos XSD es propio
+
+- **WHEN** se ajusta el presupuesto específico de los casos con validación XSD
+- **THEN** esos casos cambian de cantidad sin alterar el presupuesto de las
+  propiedades baratas
