@@ -88,6 +88,8 @@ ambiguous submission failure, query the same clave before deciding to resubmit.
 - [Migration](MIGRATION.md) and [SDK migration notes](packages/sdk/MIGRATION-v4.4.md).
 - [v4.4 compliance](docs/specs/v4.4-compliance.md) and
   [security boundaries](docs/security-hardening.md).
+- [OpenSpec root](openspec/README.md): capability specs, changes in flight and their
+  archive — the planning contracts live with the code, not outside the repository.
 - [SDK instructions](packages/sdk/AGENTS.md) and [MCP instructions](packages/mcp/AGENTS.md).
 
 <!-- BEGIN:turborepo-agent-rules -->
