@@ -14,6 +14,26 @@
 //   contiene los 19-20 (revisión abril 2026 pendiente de vendorizar).
 // - CodigoReferenciaType / REFERENCE_CODES — ídem, faltan 13-16.
 // - DocumentTypeCode — catálogo de la clave, no una enumeración del XSD.
+// Alias deprecados de la API publicada: nombres heredados de un código
+// canónico que el XSD no enumera. No son códigos del catálogo y por eso no
+// entran en la paridad de valor (no hay tabla que los pardee); se declaran
+// aquí para que la prueba de paridad los verifique contra la API publicada
+// y para que un alias nuevo exija una decisión consciente.
+export const ALIASES = [
+  {
+    exportName: "DocumentTypeCode",
+    alias: "COMPRA_PAGO",
+    canonical: "FACTURA_ELECTRONICA_COMPRA",
+    reason: "Nombre heredado de la factura electrónica de compra, publicado en la API.",
+  },
+  {
+    exportName: "DocumentTypeCode",
+    alias: "GASTO_VIAJE",
+    canonical: "FACTURA_ELECTRONICA_EXPORTACION",
+    reason: "Nombre heredado de la factura electrónica de exportación, publicado en la API.",
+  },
+];
+
 export const TABLE_MAP = [
   {
     // Medio de Pago: variante canónica de Factura; las 7 variantes por tipo de documento son idénticas en el set vigente (verificado al sembrar).

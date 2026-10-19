@@ -228,6 +228,27 @@ docs/           Referencia, banner y métricas de npm
 
 Para trabajar en un paquete: `pnpm --filter @dojocoding/hacienda-sdk test`.
 
+### Catálogos de códigos y sus alias
+
+Los catálogos de códigos se generan desde `packages/sdk/schemas/codes.json` con
+`pnpm spec:generate` y viven en `shared/src/generated/` (nunca se editan a
+mano: cada archivo empieza con `NO EDITAR`). El registro de parejas
+tabla→export vive en `scripts/codes-generate/table-map.mjs`; cuando Hacienda
+publica un código nuevo, se amplía ahí con la clave revisada y se regenera.
+
+Ese mismo registro declara los **alias deprecados** que la API publicada
+expone y que el generador no emite (no son códigos del XSD, son nombres
+heredados de un código canónico):
+
+| Alias                          | Código canónico                                           | Motivo                                                   |
+| ------------------------------ | --------------------------------------------------------- | -------------------------------------------------------- |
+| `DocumentTypeCode.COMPRA_PAGO` | `DocumentTypeCode.FACTURA_ELECTRONICA_COMPRA` (`08`)      | nombre heredado de la factura electrónica de compra      |
+| `DocumentTypeCode.GASTO_VIAJE` | `DocumentTypeCode.FACTURA_ELECTRONICA_EXPORTACION` (`09`) | nombre heredado de la factura electrónica de exportación |
+
+La paridad de valor no los cuenta (no hay tabla que los pardee); una prueba
+verifica que cada alias declarado siga publicado y apunte a su código
+canónico.
+
 Encontrá trabajo en [Issues](https://github.com/DojoCodingLabs/hacienda-cr/issues), abrí un issue con pasos para reproducir un error o proponé una mejora. Para contribuir código, hacé un fork, creá una rama, agregá los tests correspondientes y ejecutá los checks anteriores antes de abrir un pull request. Usamos Changesets para versionar los paquetes.
 
 ## Agradecimientos

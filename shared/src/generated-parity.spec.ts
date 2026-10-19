@@ -9,6 +9,8 @@
  * byte porque su contrato es el vendorizado verbatim.
  */
 import { describe, expect, it } from "vitest";
+import { ALIASES } from "../../scripts/codes-generate/table-map.mjs";
+import { DocumentTypeCode } from "./constants/index.js";
 import {
   PaymentMethod,
   SaleCondition,
@@ -23,6 +25,28 @@ import {
   OTHER_CHARGE_TYPES,
   EXONERATION_INSTITUTIONS,
 } from "./generated/index.js";
+
+describe("aliases deprecados: la API publicada los conserva", () => {
+  it("cada alias declarado existe y apunta a su código canónico", () => {
+    const published: Record<string, Readonly<Record<string, string>>> = {
+      DocumentTypeCode,
+    };
+    for (const alias of ALIASES) {
+      const catalog = published[alias.exportName];
+      expect(catalog, `alias sobre un export desconocido: ${alias.exportName}`).toBeDefined();
+      expect(catalog?.[alias.alias], `alias publicado ausente: ${alias.alias}`).toBe(
+        catalog?.[alias.canonical],
+      );
+      expect(catalog?.[alias.canonical], `canónico ausente: ${alias.canonical}`).toBeDefined();
+    }
+  });
+
+  it("el registro de aliases está vacío o declara motivo para cada entrada", () => {
+    for (const alias of ALIASES) {
+      expect(alias.reason.length, `alias sin motivo: ${alias.alias}`).toBeGreaterThan(10);
+    }
+  });
+});
 
 describe("catálogos generados: la API publicada queda congelada", () => {
   const frozenObjects: readonly (readonly [

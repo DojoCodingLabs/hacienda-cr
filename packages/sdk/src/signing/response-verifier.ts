@@ -7,6 +7,7 @@ import { XMLValidator } from "fast-xml-parser";
 import xpath from "xpath";
 import * as xadesjs from "xadesjs";
 import * as xmldsigjs from "xmldsigjs";
+import { MensajeReceptorCode } from "@dojocoding/hacienda-shared";
 import { ResponseVerificationError } from "../errors.js";
 import { checkXmlInput } from "../xml/input-limits.js";
 import { validateDocumentXml } from "../xml/schema-validator.js";
@@ -281,9 +282,9 @@ export async function verifyHaciendaResponseXml(
     const message = text(root, "Mensaje").trim();
     const state = text(root, "EstadoMensaje").trim().toLowerCase();
     const status =
-      message === "1" && state === "aceptado"
+      message === MensajeReceptorCode.ACEPTADO && state === "aceptado"
         ? "accepted"
-        : message === "3" && state === "rechazado"
+        : message === MensajeReceptorCode.RECHAZADO && state === "rechazado"
           ? "rejected"
           : undefined;
     if (!status) fail("context-mismatch");

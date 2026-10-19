@@ -10,6 +10,7 @@ import { assertDocumentIdentity } from "../xml/document-identity.js";
  * Namespace: https://cdn.comprobanteselectronicos.go.cr/xml-schemas/v4.4/ReciboElectronicoPago
  */
 
+import { DocumentTypeCode } from "@dojocoding/hacienda-shared";
 import type { ReciboElectronicoPago } from "@dojocoding/hacienda-shared";
 import { buildXml } from "../xml/builder.js";
 import { buildStandardDocumentBody, DOCUMENT_VARIANTS } from "./shared-xml-helpers.js";
@@ -41,6 +42,6 @@ import { buildStandardDocumentBody, DOCUMENT_VARIANTS } from "./shared-xml-helpe
  */
 export function buildReciboPagoXml(input: ReciboElectronicoPago): string {
   const data = buildStandardDocumentBody(input, DOCUMENT_VARIANTS.ReciboElectronicoPago);
-  assertDocumentIdentity(input, "10");
+  assertDocumentIdentity(input, DocumentTypeCode.RECIBO_ELECTRONICO_PAGO);
   return buildXml("ReciboElectronicoPago", data);
 }

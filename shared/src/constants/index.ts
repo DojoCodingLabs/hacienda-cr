@@ -34,6 +34,7 @@ export {
   REFERENCE_DOC_TYPES,
   REFERENCE_CODES,
   REP_REFERENCE_CODES,
+  CODIGO_REFERENCIA_PAGO_COMPROBANTE,
 } from "./document-references.js";
 export type { ReferenceDocType, ReferenceCode, RepReferenceCode } from "./document-references.js";
 

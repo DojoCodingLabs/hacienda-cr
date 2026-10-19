@@ -53,6 +53,21 @@ export default tseslint.config(
       "packages/sdk/src/api/error-codes.ts", // catálogo de rechazos de la API (no XSD); candidato a fase futura
       "packages/sdk/src/auth/types.ts", // enum IdType del API de autenticación (no XSD; duplica IdentificationType 01-04); candidato a fase futura
       "packages/sdk/src/clave/build-clave.ts", // ceros de relleno de padStart y sucursal/POS por defecto, no códigos de catálogo
+      // Camino exacto: caso cerrado y revisado (IVA13 ordinario, pago totalmente
+      // asignado). Sus literales son hechos declarados del caso (el código de
+      // impuesto, la tarifa y su código, el tipo de comprobante), no
+      // catálogos de negocio; y sus bytes de salida están fijados por el
+      // baseline publicado del SDK. Candidato a la siguiente fase del candado,
+      // cuando el camino exacto cubra más de un caso.
+      "packages/sdk/src/tax/exact-*.ts",
+      "packages/sdk/src/documents/exact-*.ts",
+      "shared/src/schemas/exact-*.ts",
+      // Ceros de relleno de padStart/padEnd: no son códigos de catálogo. Los
+      // códigos de catálogo de estos archivos ya usan las constantes.
+      "packages/sdk/src/api/comprobantes.ts",
+      "packages/sdk/src/signing/response-verifier.ts",
+      "packages/sdk/src/xml/document-identity.ts",
+      "shared/src/schemas/history.ts",
     ],
     rules: {
       "no-restricted-syntax": "off",

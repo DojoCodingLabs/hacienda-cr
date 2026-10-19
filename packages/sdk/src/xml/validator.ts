@@ -13,7 +13,10 @@
 
 import type { FacturaElectronicaInput } from "@dojocoding/hacienda-shared";
 import {
+  CODIGO_REFERENCIA_PAGO_COMPROBANTE,
+  DocumentTypeCode,
   FacturaElectronicaSchema,
+  IvaRateCode,
   IVA_RATE_PERCENTAGES,
   SaleCondition,
   TaxCode,
@@ -55,6 +58,13 @@ function amountsEqual(a: number, b: number): boolean {
   return Math.abs(a - b) < 0.001;
 }
 
+/** Transitional IVA rate codes (Ley 9635), invalid for a new document. */
+const TRANSITIONAL_IVA_RATE_CODES: readonly IvaRateCode[] = [
+  IvaRateCode.TRANSITORIO_0,
+  IvaRateCode.TRANSITORIO_4,
+  IvaRateCode.TRANSITORIO_8,
+];
+
 /** IVA-related tax codes. */
 const IVA_TAX_CODES: string[] = [
   TaxCode.IVA,
@@ -72,14 +82,17 @@ const IVA_TAX_CODES: string[] = [
  * @returns Array of validation errors. Empty if all rules pass.
  */
 function validateBusinessRules(input: FacturaElectronicaInput): FacturaValidationError[] {
-  const errors: FacturaValidationError[] = validateDocumentIdentity(input, "01");
+  const errors: FacturaValidationError[] = validateDocumentIdentity(
+    input,
+    DocumentTypeCode.FACTURA_ELECTRONICA,
+  );
   if (!input.receptor.identificacion)
     errors.push({
       path: "receptor.identificacion",
       message: "Factura Receptor requires identificacion when the Receptor node is present",
     });
   for (const [index, reference] of (input.informacionReferencia ?? []).entries()) {
-    if ((reference.codigo as string | undefined) === "17")
+    if ((reference.codigo as string | undefined) === CODIGO_REFERENCIA_PAGO_COMPROBANTE)
       errors.push({
         path: `informacionReferencia.${index}.codigo`,
         message: "Reference reason 17 is valid only for ReciboElectronicoPago",
@@ -164,7 +177,7 @@ function validateBusinessRules(input: FacturaElectronicaInput): FacturaValidatio
               path: `${prefix}.impuesto.${taxIndex}.tarifa`,
               message: `IVA tarifa must match codigoTarifaIVA ${tax.codigoTarifaIVA} (${expectedRate}%)`,
             });
-          if (["05", "06", "07"].includes(tax.codigoTarifaIVA))
+          if (TRANSITIONAL_IVA_RATE_CODES.includes(tax.codigoTarifaIVA))
             errors.push({
               path: `${prefix}.impuesto.${taxIndex}.codigoTarifaIVA`,
               message:

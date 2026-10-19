@@ -13,6 +13,14 @@
  * `EXONERATION_INSTITUTIONS` sí migraron a `shared/src/generated/`.
  */
 
+/**
+ * Código de referencia "Pago de comprobante" (`CodigoReferenciaType` 17).
+ *
+ * Admitido sólo por el Recibo Electrónico de Pago: la curaduría lo nombra
+ * para que el validador no escriba el literal del catálogo a mano.
+ */
+export const CODIGO_REFERENCIA_PAGO_COMPROBANTE = "17";
+
 /** Referenced document type codes (TipoDocIR / TipoDocReferenciaType). */
 export const REFERENCE_DOC_TYPES = [
   "01", // Factura electronica
