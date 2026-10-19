@@ -90,7 +90,7 @@
 
 - [x] 4.1 Añadir a `scripts/verify.mjs` (D7), tras `spec:verify`, los pasos
       `pnpm spec:generate -- --no-extract` y `git diff --exit-code --
-    shared/src/generated`, con mensajes que distingan «la generación
+shared/src/generated`, con mensajes que distingan «la generación
       falló» (fallo del paso de generación; no se ejecuta el diff) de «la
       regeneración produjo diff» (indicando regenerar y commitear)
 - [x] 4.2 Probar los escenarios del candado: árbol en sincronía → verify

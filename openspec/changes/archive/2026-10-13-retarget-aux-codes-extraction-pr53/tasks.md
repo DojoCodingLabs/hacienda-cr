@@ -12,7 +12,7 @@
 ## 2. Reasar `feat/add-aux-codes-extraction` sobre el nuevo head de #52
 
 - [x] 2.1 Reasar con upstream explícito: `git rebase --onto 07d5fb9 e6aa2aa
-    feat/add-aux-codes-extraction`; si se detiene, caer a rama scratch desde
+feat/add-aux-codes-extraction`; si se detiene, caer a rama scratch desde
       `07d5fb9` + `git cherry-pick e6aa2aa` y resolver el contexto sobre el
       texto actual, sin arrastrar la cadena pre-squash
 - [x] 2.2 Verificar la forma (D3): `git log --oneline 07d5fb9..HEAD` muestra

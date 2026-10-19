@@ -12,7 +12,7 @@
       que los tres commits que la rama arrastra no aportan nada (si no sale
       vacío, detenerse a reportar: el análisis de la propuesta deja de valer)
 - [x] 1.3 Confirmar el conflicto de historia de partida: `git merge-base
-    origin/main origin/feat/add-aux-codes-extraction` = `96e1836` y
+origin/main origin/feat/add-aux-codes-extraction` = `96e1836` y
       `git rev-list --left-right --count origin/main…origin/feat/add-aux-codes-extraction`
       = `0` / `5`, coherentes con el `CONFLICTING` de #53
 - [x] 1.4 Liberar la rama: `git worktree list` muestra la registración vieja
@@ -40,7 +40,7 @@
 
 - [x] 3.1 `git log --oneline origin/main..HEAD` muestra **exactamente dos**
       commits, en este orden: `ci: install poppler-utils for codes.json
-    freshness check` y `feat: extract aux code catalogs to codes.json`
+freshness check` y `feat: extract aux code catalogs to codes.json`
 - [x] 3.2 Verificar contenido negativo: ninguno de los tres descartados
       (`3dc61ef`, `08618fc`, `07d5fb9`) aparece en `origin/main..HEAD`
 - [x] 3.3 `git diff --name-only origin/main HEAD` lista **exactamente 12
