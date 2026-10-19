@@ -36,7 +36,7 @@ try {
   const tarballs = (await readdir(packed))
     .filter((name) => name.endsWith(".tgz"))
     .map((name) => join(packed, name));
-  assert.equal(tarballs.length, 4);
+  assert.equal(tarballs.length, 5);
   run(
     "npm",
     [
@@ -82,7 +82,8 @@ try {
       '\nimport { calculateExactNd, buildExactNotaDebitoXml, type ExactNdInput } from "@dojocoding/hacienda-sdk";\nimport { ExactNdInputSchema } from "@dojocoding/hacienda-shared";\nexport const exactNdContract = (input: ExactNdInput) => ({ calculated: calculateExactNd(ExactNdInputSchema.parse(input)), xml: buildExactNotaDebitoXml(input) });\n' +
       '\nimport { calculateExactNcPartial, buildExactNotaCreditoPartialXml, type ExactNcPartialInput, calculateExactFeReplacement, buildExactFacturaReplacementXml, type ExactFeReplacementInput } from "@dojocoding/hacienda-sdk";\nimport { ExactNcPartialInputSchema, ExactFeReplacementInputSchema } from "@dojocoding/hacienda-shared";\nexport const partialContract = (input: ExactNcPartialInput) => ({calculated: calculateExactNcPartial(ExactNcPartialInputSchema.parse(input)), xml: buildExactNotaCreditoPartialXml(input)});\nexport const replacementContract = (input: ExactFeReplacementInput) => ({calculated: calculateExactFeReplacement(ExactFeReplacementInputSchema.parse(input)), xml: buildExactFacturaReplacementXml(input)});\n' +
       '\nimport { buildExactMensajeReceptorXml, type ExactRecipientMessageInput } from "@dojocoding/hacienda-sdk";\nimport { ExactRecipientMessageInputSchema } from "@dojocoding/hacienda-shared";\nexport const recipientContract = (input: ExactRecipientMessageInput) => buildExactMensajeReceptorXml(ExactRecipientMessageInputSchema.parse(input));\n' +
-      '\nimport { calculateExactNcTotal, buildExactNotaCreditoTotalXml, type ExactNcTotalInput } from "@dojocoding/hacienda-sdk";\nimport { ExactNcTotalInputSchema } from "@dojocoding/hacienda-shared";\nexport const exactNcContract = (input: ExactNcTotalInput) => ({ calculated: calculateExactNcTotal(ExactNcTotalInputSchema.parse(input)), xml: buildExactNotaCreditoTotalXml(input) });\n',
+      '\nimport { calculateExactNcTotal, buildExactNotaCreditoTotalXml, type ExactNcTotalInput } from "@dojocoding/hacienda-sdk";\nimport { ExactNcTotalInputSchema } from "@dojocoding/hacienda-shared";\nexport const exactNcContract = (input: ExactNcTotalInput) => ({ calculated: calculateExactNcTotal(ExactNcTotalInputSchema.parse(input)), xml: buildExactNotaCreditoTotalXml(input) });\n' +
+      '\nimport { createMockServer } from "@dojocoding/hacienda-mock";\nexport const mockContract = { createMockServer };\n',
   );
   await writeFile(
     join(consumer, "history-consumer.ts"),

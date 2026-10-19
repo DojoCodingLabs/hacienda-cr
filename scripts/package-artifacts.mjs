@@ -3,7 +3,13 @@ import { mkdir, readFile, readdir, mkdtemp, writeFile, rm } from "node:fs/promis
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 import { x } from "tar";
-export const packagePaths = ["shared", "packages/sdk", "packages/cli", "packages/mcp"];
+export const packagePaths = [
+  "shared",
+  "packages/sdk",
+  "packages/cli",
+  "packages/mcp",
+  "packages/mock",
+];
 export function run(command, args, cwd, options = {}) {
   return execFileSync(command, args, {
     cwd,

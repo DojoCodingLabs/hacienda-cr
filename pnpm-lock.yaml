@@ -248,6 +248,15 @@ importers:
         specifier: ^4.6.5
         version: 4.6.5
 
+  packages/mock:
+    devDependencies:
+      '@dojocoding/hacienda-sdk':
+        specifier: workspace:*
+        version: link:../sdk
+      '@dojocoding/hacienda-shared':
+        specifier: workspace:*
+        version: link:../../shared
+
   packages/sdk:
     dependencies:
       '@dojocoding/hacienda-shared':

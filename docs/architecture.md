@@ -3,16 +3,21 @@
 Hacienda CR exposes one domain implementation through a library and two adapters.
 All four packages are ESM TypeScript targeting Node.js 22+.
 
-| Package        | Owns                                                   | Workspace dependencies |
-| -------------- | ------------------------------------------------------ | ---------------------- |
-| `shared`       | Common types, Zod schemas, enums, constants            | None                   |
-| `packages/sdk` | Auth, clave, taxes, XML, signing, state, HTTP          | shared                 |
-| `packages/cli` | Command arguments, files, text/JSON output, exit codes | SDK, shared            |
-| `packages/mcp` | Tool/resource schemas, responses, stdio transport      | SDK, shared            |
+| Package         | Owns                                                   | Workspace dependencies |
+| --------------- | ------------------------------------------------------ | ---------------------- |
+| `shared`        | Common types, Zod schemas, enums, constants            | None                   |
+| `packages/sdk`  | Auth, clave, taxes, XML, signing, state, HTTP          | shared                 |
+| `packages/cli`  | Command arguments, files, text/JSON output, exit codes | SDK, shared            |
+| `packages/mcp`  | Tool/resource schemas, responses, stdio transport      | SDK, shared            |
+| `packages/mock` | Mock of the reception API for offline E2E              | SDK, shared (dev only) |
 
 CLI and MCP are sibling adapters. Put domain rules in the SDK or shared so both
 adapters use the same behavior. Root and module barrels define public exports;
 workspace consumers resolve package `dist` artifacts. Turbo handles build order.
+
+`packages/mock` is a **development** package: it reproduces the reception API
+so the E2E suite runs without credentials or network. It has no runtime
+dependencies and never replaces the test against the real sandbox.
 
 ## Document lifecycle
 
