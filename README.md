@@ -189,6 +189,10 @@ Herramientas: `draft_invoice`, `create_invoice`, `lookup_taxpayer`, `check_statu
 - [Referencia de comandos](docs/reference.md#cli--referencia-de-comandos): opciones y ejemplos de la CLI.
 - [Integración MCP](docs/reference.md#mcp-server--integración-con-ia): configuración del cliente y recursos.
 - [Tipos y constantes compartidos](shared/README.md).
+- [Informe de conformidad de catálogos](docs/conformity-report.md): cada tabla de
+  códigos del SDK contra las fuentes primarias de Hacienda, con veredicto y cita por
+  fila. Es evidencia histórica (la lectura del 2026-10-14) más una reconciliación con
+  el `main` vigente: el apéndice es una foto de aquel momento, no el estado actual.
 
 ### Credenciales y configuración
 
