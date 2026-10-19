@@ -1,5 +1,66 @@
 # Migration guide
 
+## Próxima release: texto decimal acotado (aditivo)
+
+Esta release **no cambia** los DTOs monetarios públicos, ni
+`calculateLineItemTotals`, ni `calculateInvoiceSummary`, ni `FacturaElectronica`,
+ni los adaptadores de CLI y MCP. El camino decimal exacto sigue siendo
+**aditivo**, como exige el contrato de la rama (`AGENTS.md`,
+`docs/specs/exact-ordinary-fe.md`): los contratos `Number` legacy no cambian.
+
+Lo que se publica es la pieza que faltaba para poder moverse de `number` a
+texto decimal **sin reimplementar la exactitud** y **sin degradarla**:
+
+- `@dojocoding/hacienda-shared`: las primitivas de texto decimal acotado
+  (`MONEY_SCALE`, `MAX_MONEY_SCALED`, `MONETARY_TEXT_PATTERN`,
+  `parseMonetaryText`, `normalizeMonetaryInput`, `formatScaledDecimal`,
+  `scaledFromNumber`, `scaledFromPlainDecimal`, `isPositiveMonetaryText`,
+  `MonetaryValueError`) y los esquemas de frontera `MonetaryTextSchema`,
+  `MoneyInputSchema`, `MontoSchema` y `MontoPositiveSchema`.
+- `@dojocoding/hacienda-sdk`: el kernel monetario gana `parse`, `text`,
+  `fromNumber`, `multiply`, `percent` y `ratio`. Los primitivos publicados
+  `scaled`, `round`, `money` y `sum` conservan su comportamiento byte a byte,
+  de modo que el baseline publicado del SDK 0.9.0 no cambia.
+
+### Qué acepta la frontera y qué devuelve
+
+`MoneyInputSchema` acepta el `number` heredado (el JSON que CLI y MCP siguen
+enviando) **o** un texto decimal acotado, y devuelve **siempre texto decimal
+acotado**. Nunca normaliza a `Number`.
+
+| Entrada            | Salida      | Nota                                           |
+| ------------------ | ----------- | ---------------------------------------------- |
+| `100`              | `"100"`     | el entero exacto                               |
+| `0.1`              | `"0.1"`     | se lee por su representación decimal más corta |
+| `113000`           | `"113000"`  | sin ceros forzados                             |
+| `"0.10"`           | `"0.1"`     | el texto se canonicaliza                       |
+| `1.000005`         | `"1.00001"` | `HALF_UP` a cinco decimales                    |
+| `0.1 + 0.2`        | `"0.3"`     | el ruido binario no sobrevive                  |
+| `1e-7`             | `"0"`       | por debajo de la escala, redondea a cero       |
+| `Infinity`, `NaN`  | —           | rechazado, la causa se nombra                  |
+| `"1e5"`            | —           | rechazado: notación exponencial                |
+| `"1.123456"`       | —           | rechazado: más de cinco decimales              |
+| `"10000000000000"` | —           | rechazado: fuera de cota                       |
+
+### La advertencia que importa
+
+Un `number` de JavaScript **es binario**: su valor exacto ya se perdió antes
+de entrar en la frontera. La frontera lo lee por su representación decimal más
+corta y lo redondea `HALF_UP` a cinco decimales, de modo que **el resultado
+exacto no siempre coincide con el redondeo binario histórico** del SDK. La
+tabla anterior nombra los casos donde difieren.
+
+### Regla de redondeo
+
+Cinco decimales, `HALF_UP` (incrementar cuando el sexto decimal es mayor o
+igual que 5), tal como la establece el Anexo de Hacienda vendorizado
+(`packages/sdk/schemas/2024/v4.4/ANEXOS Y ESTRUCTURAS_V4.4.pdf`, "II.
+Especificaciones técnicas y formato de los comprobantes electrónicos",
+p. 13-14, `20.203518 ≈ 20.20352`). La regla y su cita viven en un solo sitio:
+`shared/src/monetary/decimal-text.ts`.
+
+La exactitud offline no constituye aceptación real por Hacienda.
+
 ## 0.4.2 → 0.5.0
 
 All four linked `@dojocoding/hacienda-{shared,sdk,cli,mcp}` packages advance to

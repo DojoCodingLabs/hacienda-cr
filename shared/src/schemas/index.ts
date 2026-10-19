@@ -12,6 +12,10 @@ export {
   SaleConditionSchema,
   TelefonoSchema,
   UbicacionSchema,
+  MonetaryTextSchema,
+  MoneyInputSchema,
+  MontoSchema,
+  MontoPositiveSchema,
   type TelefonoInput,
   type UbicacionInput,
 } from "./common.js";
