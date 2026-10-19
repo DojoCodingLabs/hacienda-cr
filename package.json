@@ -31,6 +31,7 @@
     "spec:update": "node scripts/spec-watch/update.mjs",
     "test:scripts": "node scripts/run-script-tests.mjs",
     "test:properties": "node scripts/run-properties-tests.mjs",
+    "test:mutation": "pnpm --filter @dojocoding/hacienda-sdk test:mutation",
     "test:coverage": "turbo run test:coverage",
     "release:prepare": "node scripts/release.mjs prepare",
     "release:publish": "node scripts/release.mjs publish",

@@ -1,0 +1,51 @@
+name: Mutation
+
+# Job separado de la CI: la mutation testing cuesta minutos y no debe
+# ralentizar los pull requests. Corre por evento manual y cada noche, y
+# publica el score; el gate (70 %) corta el job cuando un mutante sobrevive.
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 6 * * *" # cada noche, 06:00 UTC
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  mutation:
+    name: Mutation testing (SDK)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: ".nvmrc"
+          cache: "pnpm"
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      # La suite de mutation usa el runner de vitest: no necesita xmllint ni
+      # poppler, pero el baseline exacto sí compara bytes publicados.
+      - name: Run mutation testing
+        run: pnpm test:mutation
+
+      - name: Publish the score
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: mutation-report
+          path: packages/sdk/reports/mutation/
+          if-no-files-found: ignore
