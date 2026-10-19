@@ -2,7 +2,7 @@
 
 ### Requirement: El parser es la inversa fiel de los constructores
 
-El documento devuelto por el parser SHALL reconstruirse a bytes idénticos cuando se vuelve a serializar con el constructor del mismo tipo. Los montos SHALL reconstruirse como texto decimal acotado (no como números crudos ni como representación binaria) y las tarifas y cantidades como números, y la ausencia de elementos opcionales en el XML SHALL traducirse en ausencia de los campos correspondientes en el documento.
+El documento devuelto por el parser SHALL reconstruirse a bytes idénticos cuando se vuelve a serializar con el constructor del mismo tipo. Los montos SHALL reconstruirse con el tipo monetario que el constructor de ese tipo declara —texto decimal acotado en el camino exacto, número en los constructores legacy, cuyo contrato `Number` la rama preserva— y sin pérdida: el valor reconstruido representa exactamente el valor que el XML declara. Las tarifas y cantidades como números, y la ausencia de elementos opcionales en el XML SHALL traducirse en ausencia de los campos correspondientes en el documento.
 
 #### Scenario: Reconstruir devuelve los mismos bytes
 
@@ -12,7 +12,7 @@ El documento devuelto por el parser SHALL reconstruirse a bytes idénticos cuand
 #### Scenario: Los montos se reconstruyen como el tipo monetario
 
 - **WHEN** se parsea un XML con montos decimales a cinco cifras
-- **THEN** los campos monetarios del documento son del tipo monetario del SDK con el valor decimal exacto y su serialización reproduce el mismo texto
+- **THEN** los campos monetarios del documento llevan el valor decimal exacto que declara el XML, con el tipo que el constructor de ese tipo espera, y su serialización reproduce el mismo texto
 
 #### Scenario: Un elemento opcional ausente no se reintroduce
 

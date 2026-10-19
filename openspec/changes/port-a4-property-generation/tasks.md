@@ -1,12 +1,12 @@
 ## 1. Generador arbitrario
 
-- [ ] 1.1 Portar `packages/sdk/src/__fixtures__/document-generator.ts` al árbol vigente y migrarlo a la capa de cálculo decimal-text.
+- [ ] 1.1 Portar `packages/sdk/src/__fixtures__/document-generator.ts` al árbol vigente, sobre la capa de cálculo que declara cada constructor (el contrato `Number` legacy se preserva; el camino exacto ya es decimal exacto).
 - [ ] 1.2 Cubrir con casos: cada tarifa, exoneración parcial y total, descuentos múltiples, hasta cuatro medios de pago, moneda extranjera y notas con referencia.
 - [ ] 1.3 Verificar que el generador no produce montos no representables exactamente.
 
 ## 2. Parser XML→documento
 
-- [ ] 2.1 Portar `packages/sdk/src/documents/parser.ts` y migrar el decode de montos a texto decimal acotado.
+- [ ] 2.1 Portar `packages/sdk/src/documents/parser.ts` y decodificar los montos al tipo que declara el constructor de cada tipo (sin pérdida).
 - [ ] 2.2 Preservar la ausencia de elementos opcionales (no fabricar campos).
 - [ ] 2.3 Exportar el parser desde el barrel del SDK y añadir su prueba de round-trip por tipo.
 
@@ -21,12 +21,12 @@
 
 - [ ] 4.1 Portar `document-generation.properties.spec.ts` con las tres propiedades.
 - [ ] 4.2 Añadir la propiedad anti-vacuidad (el documento generado pasa la validación de entrada).
-- [ ] 4.3 Migrar `calculator.properties.spec.ts` al oráculo de enteros escalados.
+- [ ] 4.3 Las propiedades monetarias del camino exacto (oráculo de enteros escalados) las aporta A3: no se duplican aquí.
 - [ ] 4.4 Añadir los casos adversariales (montos extremos, muchas líneas, descuentos máximos, tarifas mixtas).
 
 ## 5. CI
 
-- [ ] 5.1 Añadir el suite de A4 a `scripts/run-properties-tests.mjs` con presupuesto XSD propio y configurable.
+- [ ] 5.1 Añadir el suite de A4 a `scripts/run-properties-tests.mjs` con presupuesto XSD propio y configurable, y conectarlo a `pnpm verify`.
 - [ ] 5.2 Verificar que `pnpm verify` ejecuta las tres propiedades sin credenciales ni red.
 
 ## 6. OpenSpec

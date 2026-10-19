@@ -2,7 +2,7 @@
 
 ### Requirement: El generador cubre todo el espacio de documentos
 
-El generador de pruebas SHALL producir documentos estructuralmente válidos de los siete tipos de comprobante (Factura Electrónica, Tiquete Electrónico, Nota de Crédito, Nota de Débito, Factura Electrónica de Compra, Factura Electrónica de Exportación y Recibo Electrónico de Pago), y SHALL cubrir en su espacio, como mínimo: cada tarifa de impuesto aplicable, exoneraciones parciales y totales, múltiples descuentos, hasta cuatro medios de pago con su monto, moneda extranjera con su tipo de cambio, y notas de crédito y débito que referencian un documento previo. El generador NO SHALL producir documentos con campos obligatorios ausentes ni con combinaciones que la validación de entrada rechace. Los montos que el generador produzca SHALL construirse con la capa de cálculo decimal-text vigente y SHALL ser representables exactamente, sin pasar por coma flotante.
+El generador de pruebas SHALL producir documentos estructuralmente válidos de los siete tipos de comprobante (Factura Electrónica, Tiquete Electrónico, Nota de Crédito, Nota de Débito, Factura Electrónica de Compra, Factura Electrónica de Exportación y Recibo Electrónico de Pago), y SHALL cubrir en su espacio, como mínimo: cada tarifa de impuesto aplicable, exoneraciones parciales y totales, múltiples descuentos, hasta cuatro medios de pago con su monto, moneda extranjera con su tipo de cambio, y notas de crédito y débito que referencian un documento previo. El generador NO SHALL producir documentos con campos obligatorios ausentes ni con combinaciones que la validación de entrada rechace. Los montos que el generador produzca SHALL construirse con la capa de cálculo vigente del constructor de su tipo —cálculo decimal exacto en el camino exacto, cálculo del contrato `Number` en los constructores legacy, que la rama preserva— y SHALL ser representables exactamente, sin pérdida por redondeo binario en el camino legacy.
 
 #### Scenario: Se cubren los siete tipos de documento
 
@@ -22,7 +22,7 @@ El generador de pruebas SHALL producir documentos estructuralmente válidos de l
 #### Scenario: Los montos generados son exactos
 
 - **WHEN** el generador produce un caso con un monto de cinco decimales
-- **THEN** el monto del documento es el texto decimal exacto y no una
+- **THEN** el monto del documento es el valor exacto que el cálculo produjo y no una
   representación binaria redondeada
 
 ### Requirement: Construir → parsear → construir es un punto fijo

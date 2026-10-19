@@ -10,6 +10,11 @@ for (const args of [
   ["format"],
   ["spec:verify"],
   ["exec", "turbo", "run", "lint", "typecheck", "build", "test"],
+  // The exhaustive property pass: thousands of generated documents checked
+  // against the XSD, the round-trip fixed point and the key round-trip. The
+  // same suites run inside `turbo run test` with a small budget; this is the
+  // CI-gated pass, and it needs neither credentials nor network.
+  ["test:properties"],
   ["test:scripts"],
   ["test:packages"],
 ])

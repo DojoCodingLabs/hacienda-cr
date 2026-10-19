@@ -149,7 +149,9 @@ export {
   buildFacturaExportacionXml,
   buildReciboPagoXml,
   buildMensajeReceptorXml,
+  parseDocumentXml,
 } from "./documents/index.js";
+export type { ParsedDocument, ParseDocumentResult } from "./documents/index.js";
 
 // ---------------------------------------------------------------------------
 // Logging module — structured logging
