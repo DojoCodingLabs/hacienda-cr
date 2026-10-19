@@ -8,12 +8,22 @@ Permite verificar de forma independiente una firma XAdES-EPES v4.4 sobre un comp
 
 ### Requirement: Verificar una firma XAdES-EPES sobre un documento
 
-El SDK SHALL exponer un verificador que tome el XML de un comprobante firmado y devuelva un resultado estructurado que indique si la firma es válida y, en caso contrario, qué comprobación falló. El verificador SHALL comprobar la integridad del XML, la presencia y la estructura de `ds:Signature`, el digest de cada referencia, la firma digital, la canonicalización y la identificación del firmante, sin depender del mismo camino de código que la generación de firmas.
+El verificador SHALL tomar un documento firmado por el SDK y comprobarlo en serio:
+el digest de cada referencia, la firma sobre `ds:SignedInfo` canónico, la
+canonicalización C14N declarada, la vigencia del certificado y la identidad de
+las partes. La comprobación SHALL determinar el tipo de comprobante por el
+elemento raíz y NO SHALL adivinarlo por el contenido.
 
 #### Scenario: Un documento firmado válido verifica
 
-- **WHEN** se verifica un XML firmado válida y correctamente con la política v4.4
-- **THEN** el verificador devuelve `valid: true` sin errores y enumera las comprobaciones exitosas
+- **WHEN** se verifica un comprobante firmado por el SDK con un pin de hoja revisado
+- **THEN** el verificador devuelve `valid: true` y enumera las comprobaciones exitosas
+
+#### Scenario: La raíz determina el tipo
+
+- **WHEN** se verifica un XML con raíz `FacturaElectronica` u otra de las siete
+- **THEN** el verificador declara la raíz y el tipo de comprobante, sin inferirlo
+  del contenido
 
 #### Scenario: Un documento sin firma no verifica
 
@@ -55,7 +65,7 @@ El verificador SHALL verificar `ds:SignatureValue` aplicando RSA-PKCS#1-v1.5 con
 
 ### Requirement: El certificado del firmante es válido
 
-El verificador SHALL extraer el certificado X.509 dentro de `ds:X509Certificate`, SHALL comprobar su vigencia (`notBefore` ≤ ahora ≤ `notAfter`) y SHALL devolver `CertificateExpired` o `CertificateNotYetValid` cuando corresponda. Cuando se provean anclas de confianza explícitas (`options.trustRoots`), el verificador SHALL comprobar que el certificado encadena a una de ellas; cuando no se provean, SHALL marcar el resultado de cadena como `partial` y no emitir `valid: true` sólo por encadenamiento implícito. No se SHALL verificar revocación por red.
+El verificador SHALL extraer el certificado X.509 dentro de `ds:X509Certificate`, SHALL comprobar su vigencia (`notBefore` ≤ ahora ≤ `notAfter`) y SHALL devolver `CertificateExpired` o `CertificateNotYetValid` cuando corresponda. La confianza en el firmante SHALL establecerse por **pin de hoja explícito** — el certificado esperado, provisionado y revisado — y NO por cadena de CA implícita ni por el certificado embebido en el propio mensaje; cuando no se provea pin, el resultado SHALL declarar la confianza como no establecida y NO SHALL emitir `valid: true` sólo porque la firma cuadre. No se SHALL verificar revocación por red.
 
 #### Scenario: Un certificado vencido falla
 
@@ -64,27 +74,40 @@ El verificador SHALL extraer el certificado X.509 dentro de `ds:X509Certificate`
 
 #### Scenario: Sin confianza declarada, la cadena queda parcial
 
-- **WHEN** se verifica sin `options.trustRoots`
-- **THEN** el resultado indica `partial` para la cadena y no declara `valid: true` sólo por la firma correcta
+- **WHEN** se verifica sin pin de hoja explícito
+- **THEN** el resultado declara la confianza como no establecida y no declara
+  `valid: true` sólo por la firma correcta
+
+#### Scenario: El certificado embebido no establece confianza
+
+- **WHEN** el XML declara un certificado embebido que no está en el conjunto de
+  pins revisados
+- **THEN** la verificación falla nombrando que el certificado no está permitido
 
 ### Requirement: La política de firma XAdES-EPES v4.4 concuerda con la publicada
 
-El verificador SHALL leer el bloque `SignaturePolicyIdentifier` de `QualifyingProperties` (SignedProperties), SHALL comparar por igualdad exacta el `policyIdentifier` (el URI de la resolución técnica v4.4) con el identificador publicado por el SDK (`XADES_POLICY_URI`), SHALL comparar `policyHash` codificando el mismo Base64-SHA-256 que el SDK (`XADES_POLICY_HASH`), SHALL comprobar que `policyHashAlgorithm` es SHA-256, y SHALL verificar que el `canonicalizationMethod` (C14N 1.0) aparezca declarado y consistente. Cualquier divergencia SHALL marcar el resultado inválido con códigos `PolicyMismatch` / `PolicyMethodMismatch` / `CanonicalizationMismatch`.
+El verificador SHALL leer el bloque `SignaturePolicyIdentifier` y comparar por
+igualdad exacta el `SignaturePolicyId` con el identificador oficial vigente y el
+`ds:SigPolicyHash` con el SHA-256 en Base64 del PDF de política vendorizado, y
+SHALL comprobar que el método de digest declarado sea SHA-256. Cualquier
+divergencia SHALL marcar el resultado inválido con un código nombrado.
 
 #### Scenario: La política publicada se verifica
 
 - **WHEN** un documento está firmado con la política v4.4 vigente
-- **THEN** los tres componentes (identificador, hash, método) concuerdan y la política aparece como `passed`
+- **THEN** los tres componentes (identificador, hash, método) concuerdan y la
+  política aparece como `passed`
 
 #### Scenario: Un identificador de política adulterado falla
 
-- **WHEN** se sustituye `SignaturePolicyId` por un URI distinto
+- **WHEN** se sustituye el `SignaturePolicyId` por un URI distinto
 - **THEN** el resultado falla con `PolicyMismatch` y `valid: false`
 
 #### Scenario: Un hash de política adulterado falla
 
-- **WHEN** se sustituye `SigPolicyHash` por otro valor Base64
-- **THEN** el resultado falla con `PolicyMismatch` porque el digest no concuerda con la política vigente
+- **WHEN** se sustituye el `ds:SigPolicyHash` por otro valor Base64
+- **THEN** el resultado falla con `PolicyMismatch` porque el digest no concuerda
+  con la política vigente
 
 ### Requirement: El digest de la política se fija y se recalcula desde el PDF vendorizado
 
@@ -97,7 +120,14 @@ El SDK SHALL publicar el digest de la política (`XADES_POLICY_HASH`) como const
 
 ### Requirement: Verificación externa opcional y no bloqueante en CI
 
-El SDK SHALL permitir un _lane_ de verificación externa que invoque una herramienta del sistema (`xmlsec1`) sólo si está disponible. El verificador SHALL aceptar la ruta del binario mediante `options.externalVerifierBinary` o la variable de entorno `XMLSEC1_BIN`; si no hay binario disponible o no se usan tests, SHALL reportarse `external: 'skipped'` sin fallar la suite, y cuando esté disponible SHALL fallar si su resultado difiere del verificador interno del SDK.
+El SDK SHALL permitir una verificación cruzada contra una segunda implementación. La
+implementación por defecto del repositorio SHALL ser el oráculo de `libxml2`
+(`xmllint --c14n`) más OpenSSL sobre el mismo documento firmado, que no requiere
+red ni credenciales. El verificador SHALL aceptar además un binario externo
+alternativo (p. ej. `xmlsec1`) mediante `options.externalVerifierBinary` o la
+variable de entorno `XMLSEC1_BIN`; si no hay binario disponible o no se usan
+tests, SHALL reportarse `external: 'skipped'` sin fallar la suite, y cuando esté
+disponible SHALL fallar si su resultado difiere del verificador interno del SDK.
 
 #### Scenario: Sin herramienta externa, la suite no falla
 
@@ -108,6 +138,12 @@ El SDK SHALL permitir un _lane_ de verificación externa que invoque una herrami
 
 - **WHEN** `XMLSEC1_BIN` apunta a un binario que confirma/rechaza distinto que el SDK
 - **THEN** la prueba contrasta y falla nombrando ambas fuentes
+
+#### Scenario: El oráculo por defecto contrasta sin red
+
+- **WHEN** se ejecuta la verificación cruzada con el oráculo del repositorio
+- **THEN** el documento firmado verifica bajo el oráculo sin red ni credenciales y
+  un documento alterado es rechazado por él
 
 ### Requirement: Pruebas de anti-manipulación sobre documentos firmados
 
