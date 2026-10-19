@@ -76,7 +76,9 @@ interface RawLine {
   esServicio: boolean;
   codigoCabys: string;
   withDiscount: boolean;
-  descuentoAmount: number;
+  discountAmount: number;
+  /** Cuántos descuentos aplica la línea (1..3). */
+  discountCount: number;
   withExoneracion: boolean;
 }
 
@@ -106,7 +108,7 @@ function buildLines(rawLines: RawLine[], allowExoneracion: boolean) {
     // Cada descuento se descuenta una vez, del bruto y nunca de lo ya
     // descontado; la suma de todos deja la línea con un neto positivo.
     const discountAmt = r.withDiscount
-      ? Math.min(r.descuentoAmount, Math.floor((total - 1) / r.discountCount))
+      ? Math.min(r.discountAmount, Math.floor((total - 1) / r.discountCount))
       : 0;
     const descuentos =
       discountAmt > 0

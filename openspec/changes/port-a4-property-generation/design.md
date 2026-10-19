@@ -34,3 +34,34 @@ constructores vigentes y la representación decimal-text, y depende de que A3 ya
 - **[Riesgo: coste de CI]** → presupuesto XSD configurable y separado.
 - **[Riesgo: el parser no cubre los constructores _exact_]** → se documenta el alcance: el parser cubre los siete tipos de comprobante con los constructores vigentes.
 - **[Riesgo: A4 sin A3]** → el port se ejecuta después de A3, en ese orden.
+
+## Desviaciones encontradas al portar sobre `main`
+
+El port se hizo sobre el árbol vigente, no sobre la línea de trabajo de la que
+salió el diseño. Cuatro cosas cambian respecto de lo que el diseño asumía:
+
+1. **La representación monetaria es la que declara cada constructor.** El
+   contrato de la rama preserva las APIs `Number` legacy (_«Preserve legacy Number
+   APIs»_) y el camino exacto ya es decimal exacto. El port trabaja, por tanto,
+   sobre el contrato vigente: el generador, el parser y el corpus hablan el
+   tipo que cada constructor declara. Las propiedades monetarias del camino
+   exacto (con oráculo de enteros escalados) las aporta A3: no se duplican aquí.
+
+2. **La identidad de los documentos se deriva, no se escribe.** Los
+   constructores validan que la clave case con el consecutivo, la fecha y el
+   contribuyente, y que el tipo de documento sea el oficial (FEC `08`, FEE `09`,
+   REP `10`). Una clave escrita a mano se desincroniza en cuanto cambia un
+   código: el generador y el corpus la construyen con `fixtureClave` y toman el
+   consecutivo de su propio tramo.
+
+3. **La exoneración y el reparto de medios de pago dependen de la familia.** El
+   XSD admite `Exoneracion` dentro del impuesto sólo en tiquete, nota de
+   crédito, nota de débito y factura de compra; la factura, la exportación y el
+   recibo no lo admiten ahí. Los descuentos múltiples se reparten para que su
+   suma deje la línea con neto positivo, y el reparto de medios de pago suma
+   exactamente el total (el último absorbe el redondeo).
+
+4. **Bug del port corregido:** el arbitrario generaba `discountAmount` y el
+   código leía `descuentoAmount`, de modo que el descuento nunca se aplicaba
+   (`Math.min(undefined, …)` → `NaN` → sin descuento). El nombre quedó
+   unificado.
