@@ -148,10 +148,6 @@ function checkPolicy(doc: any, errors: string[], checks: VerifyChecks) {
     .map((n: any) => n.getAttribute("Algorithm"))
     .filter(Boolean);
 
-  console.error("DEBUG POLICYNODE=", policyIdNodes[0] ? policyIdNodes[0].toString() : "NONE");
-  console.error("DEBUG POLICYURI=", JSON.stringify(policyUri));
-  console.error("DEBUG POLICYHASH=", JSON.stringify(policyHash));
-  console.error("DEBUG EXPECTED=", JSON.stringify(XADES_POLICY_HASH));
   if (policyUri !== XADES_POLICY_URI) errors.push("PolicyMismatch: SignaturePolicyId differs.");
   if (policyHash !== XADES_POLICY_HASH) errors.push("PolicyMismatch: SigPolicyHash differs.");
   if (!canonAlgorithms.includes(C14N_REQUIRED))

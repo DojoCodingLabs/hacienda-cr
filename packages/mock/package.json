@@ -1,0 +1,58 @@
+{
+  "name": "@dojocoding/hacienda-mock",
+  "version": "0.4.1",
+  "description": "Mock server of the Costa Rica Hacienda reception API (v4.4) for offline tests and CI",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "bin": {
+    "hacienda-mock": "./dist/cli.js"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "CHANGELOG.md"
+  ],
+  "keywords": [
+    "costa-rica",
+    "hacienda",
+    "mock",
+    "electronic-invoicing",
+    "factura-electronica",
+    "comprobantes-electronicos"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "prepublishOnly": "pnpm run build",
+    "test": "vitest run",
+    "lint": "eslint src/",
+    "typecheck": "tsc --noEmit",
+    "clean": "rm -rf dist",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "@dojocoding/hacienda-sdk": "workspace:*",
+    "@dojocoding/hacienda-shared": "workspace:*"
+  },
+  "license": "MIT",
+  "author": "Dojo Coding Labs <dev@dojocoding.io> (https://dojocoding.io)",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/DojoCodingLabs/hacienda-cr.git",
+    "directory": "packages/mock"
+  },
+  "homepage": "https://github.com/DojoCodingLabs/hacienda-cr#readme",
+  "engines": {
+    "node": ">=22"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

@@ -36,7 +36,7 @@ try {
   const tarballs = (await readdir(packed))
     .filter((name) => name.endsWith(".tgz"))
     .map((name) => join(packed, name));
-  assert.equal(tarballs.length, 4);
+  assert.equal(tarballs.length, 5);
   run(
     "npm",
     [

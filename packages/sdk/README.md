@@ -105,6 +105,13 @@ under `src/golden-corpus/`, plus fast-check properties in
 `pnpm test` with a modest budget and exhaustively via `pnpm test:properties`
 (`PROPERTY_RUNS`, plus `XSD_RUNS` for the more expensive XSD-conformance cases).
 
+### E2E contra el mock o el sandbox
+
+The end-to-end suite runs against `@dojocoding/hacienda-mock` by default — no
+credentials and no network. Set `HACIENDA_E2E_TARGET=sandbox` (with
+`HACIENDA_SANDBOX_E2E=1` and real credentials) to point the same suite at the
+real Hacienda sandbox.
+
 ### Hostile inputs (A6)
 
 All XML entry points (`validateDocumentXml`, `parseDocumentXml`, `signXml`) run

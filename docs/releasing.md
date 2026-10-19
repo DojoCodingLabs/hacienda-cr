@@ -15,7 +15,7 @@
 ## Prepare and publish the approved commit
 
 Use a clean checkout of the approved main commit. Do not publish from a dirty
-checkout. The release script checks all four versions against the same stable tag
+checkout. The release script checks all five versions against the same stable tag
 and requires all pending changesets to have been consumed.
 
 ```sh
@@ -31,7 +31,7 @@ identity and is intended to run in the GitHub workflow.
 When the version PR is approved and merged, create and push an annotated `v0.4.0`
 tag pointing at that exact main commit. This triggers publish.yml. The workflow
 verifies the tag/main relationship, installs native xmllint, repeats preparation,
-then publishes the verified tarballs in shared -> SDK -> CLI -> MCP order.
+then publishes the verified tarballs in shared -> SDK -> CLI -> MCP -> mock order.
 Publication is serialized across release tags. Dependency maps in final tarball
 manifests are canonicalized, preserving conditional-export order. The root release command uses
 this same verified path; Changesets publish is not a second supported path.
@@ -63,20 +63,20 @@ intervals for npm indexing, always checking the exact integrity once visible.
 If that bounded wait expires, inspect the registry and use recovery; do not assume
 it failed to publish. Registry errors and conflicting bytes fail immediately.
 
-Once all four versions exist, check npm dist-tags (`latest`), provenance and fresh
+Once all five versions exist, check npm dist-tags (`latest`), provenance and fresh
 installations of the registry artifacts. Announce only after all packages pass.
 
 ## Configure trusted publishing
 
 The workflow supports OIDC while retaining the existing token path until setup is
-confirmed. For each @dojocoding/hacienda-{shared,sdk,cli,mcp} package, a package
+confirmed. For each @dojocoding/hacienda-{shared,sdk,cli,mcp,mock} package, a package
 owner must configure the npm trusted publisher for organization DojoCodingLabs,
 repository hacienda-cr, workflow publish.yml (GitHub-hosted runners).
 
-Set repository variable NPM_TRUSTED_PUBLISHING=true only after all four publishers
+Set repository variable NPM_TRUSTED_PUBLISHING=true only after all five publishers
 are configured. The OIDC step receives no npm token; npm automatically exchanges
 the GitHub identity. After successful publishing and provenance verification for
-all four packages, revoke NPM_TOKEN and remove its fallback path. Never print
+all five packages, revoke NPM_TOKEN and remove its fallback path. Never print
 credentials to verify configuration. The repo cannot establish the npm-side
 trust relationship by changing YAML alone.
 

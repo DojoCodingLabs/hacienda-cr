@@ -68,11 +68,12 @@ La visión es una infraestructura abierta de facturación electrónica para Cost
 
 ## Elegí tu herramienta
 
-| Paquete                                                                              | Para qué usarlo                                                          | Documentación                 |
-| ------------------------------------------------------------------------------------ | ------------------------------------------------------------------------ | ----------------------------- |
-| [`@dojocoding/hacienda-sdk`](https://www.npmjs.com/package/@dojocoding/hacienda-sdk) | Integrar autenticación, XML, firma y API en tu aplicación.               | [SDK](packages/sdk/README.md) |
-| [`@dojocoding/hacienda-cli`](https://www.npmjs.com/package/@dojocoding/hacienda-cli) | Crear borradores, validar, firmar, enviar y consultar desde la terminal. | [CLI](packages/cli/README.md) |
-| [`@dojocoding/hacienda-mcp`](https://www.npmjs.com/package/@dojocoding/hacienda-mcp) | Generar borradores y XML con asistentes que soportan MCP.                | [MCP](packages/mcp/README.md) |
+| Paquete                                                                                | Para qué usarlo                                                          | Documentación                   |
+| -------------------------------------------------------------------------------------- | ------------------------------------------------------------------------ | ------------------------------- |
+| [`@dojocoding/hacienda-sdk`](https://www.npmjs.com/package/@dojocoding/hacienda-sdk)   | Integrar autenticación, XML, firma y API en tu aplicación.               | [SDK](packages/sdk/README.md)   |
+| [`@dojocoding/hacienda-cli`](https://www.npmjs.com/package/@dojocoding/hacienda-cli)   | Crear borradores, validar, firmar, enviar y consultar desde la terminal. | [CLI](packages/cli/README.md)   |
+| [`@dojocoding/hacienda-mcp`](https://www.npmjs.com/package/@dojocoding/hacienda-mcp)   | Generar borradores y XML con asistentes que soportan MCP.                | [MCP](packages/mcp/README.md)   |
+| [`@dojocoding/hacienda-mock`](https://www.npmjs.com/package/@dojocoding/hacienda-mock) | Probar contra el API de Hacienda sin credenciales ni red.                | [Mock](packages/mock/README.md) |
 
 El SDK y la CLI permiten trabajar en **sandbox y producción**. El servidor MCP genera XML sin firmar; completá la firma y el envío con el SDK o la CLI.
 
@@ -248,6 +249,7 @@ pnpm verify
 packages/sdk/   Autenticación, XML, firma digital, impuestos y API
 packages/cli/   Binario hacienda
 packages/mcp/   Servidor MCP con transporte stdio
+packages/mock/  Mock del API de recepción para pruebas offline
 shared/         Tipos, esquemas y constantes compartidos
 docs/           Referencia, banner y métricas de npm
 ```

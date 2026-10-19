@@ -1,18 +1,21 @@
 # Architecture
 
 Hacienda CR exposes one domain implementation through a library and two adapters.
-All four packages are ESM TypeScript targeting Node.js 22+.
+All five packages are ESM TypeScript targeting Node.js 22+.
 
-| Package        | Owns                                                   | Workspace dependencies |
-| -------------- | ------------------------------------------------------ | ---------------------- |
-| `shared`       | Common types, Zod schemas, enums, constants            | None                   |
-| `packages/sdk` | Auth, clave, taxes, XML, signing, state, HTTP          | shared                 |
-| `packages/cli` | Command arguments, files, text/JSON output, exit codes | SDK, shared            |
-| `packages/mcp` | Tool/resource schemas, responses, stdio transport      | SDK, shared            |
+| Package         | Owns                                                   | Workspace dependencies |
+| --------------- | ------------------------------------------------------ | ---------------------- |
+| `shared`        | Common types, Zod schemas, enums, constants            | None                   |
+| `packages/sdk`  | Auth, clave, taxes, XML, signing, state, HTTP          | shared                 |
+| `packages/cli`  | Command arguments, files, text/JSON output, exit codes | SDK, shared            |
+| `packages/mcp`  | Tool/resource schemas, responses, stdio transport      | SDK, shared            |
+| `packages/mock` | Mock of the reception API for offline tests and CI     | None                   |
 
 CLI and MCP are sibling adapters. Put domain rules in the SDK or shared so both
-adapters use the same behavior. Root and module barrels define public exports;
-workspace consumers resolve package `dist` artifacts. Turbo handles build order.
+adapters use the same behavior. The mock is a test double of Hacienda's
+reception API: it has no domain rules and is never used by the CLI or MCP.
+Root and module barrels define public exports; workspace consumers resolve
+package `dist` artifacts. Turbo handles build order.
 
 ## Document lifecycle
 
