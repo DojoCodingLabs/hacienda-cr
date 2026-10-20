@@ -215,6 +215,20 @@
       "vendored": true
     },
     {
+      "path": "feriados/README.md",
+      "set": null,
+      "sha256": "0db0a37467f29a549845f87d35ef50390cdba76d72f73487ea6b90827516075f",
+      "bytes": 4293,
+      "vendored": true
+    },
+    {
+      "path": "feriados/feriados-2026-2030.json",
+      "set": null,
+      "sha256": "0d8489e5bc3f293c096e43f9513c578623d301e52ba465d17fcc864f8be076e8",
+      "bytes": 3040,
+      "vendored": true
+    },
+    {
       "path": "xmldsig-core-schema.xsd",
       "set": null,
       "sha256": "35cf8197da812c85e40d57891b35c94187569ed474a2dac813ce5090dafcd35c",

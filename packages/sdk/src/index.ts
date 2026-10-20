@@ -161,6 +161,30 @@ export { Logger, LogLevel, noopLogger, sanitizeLogString, redactSecrets } from "
 export type { LoggerOptions, LogFormat, LogWriter, LogEntry } from "./logging/index.js";
 
 // ---------------------------------------------------------------------------
+// Calendar module — business days and holidays for Costa Rica
+// ---------------------------------------------------------------------------
+
+export {
+  isBusinessDay,
+  addBusinessDays,
+  businessDaysBetween,
+  checkBusinessDayDeadline,
+  calculateObservedDate,
+  getObservedHolidaysForYear,
+  getAllObservedHolidays,
+  CALENDAR_RANGE,
+  TIMEZONE,
+} from "./calendar/index.js";
+export type {
+  HolidayEntry,
+  HolidaysData,
+  ObservedHoliday,
+  BusinessDayOptions,
+  BusinessDayResult,
+  CalendarRange,
+} from "./calendar/index.js";
+
+// ---------------------------------------------------------------------------
 // Signing module — XAdES-EPES digital signature
 // ---------------------------------------------------------------------------
 

@@ -1,0 +1,114 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "description": "Calendario de feriados costarricenses 2026–2030 (fechas nominales). Fuente: calendariocostarica.com (externo, no oficial). Las fechas observadas se derivan por la regla de traslado declarada en el README.",
+  "version": "2026-2030",
+  "yearRange": [2026, 2030],
+  "source": {
+    "name": "calendariocostarica.com",
+    "url": "https://www.calendariocostarica.com/feriados/",
+    "type": "external",
+    "disclaimer": "Esta tabla proviene de un sitio de terceros y NO es la lista oficial que exige el Reglamento 44739-H. La fuente oficial y la confirmación de la regla de traslado se trackean en la issue #105. Mientras tanto, el SDK no presenta este dato como la lista que exige el reglamento."
+  },
+  "holidays": [
+    {
+      "name": "Año Nuevo",
+      "dates": {
+        "2026": "2026-01-01",
+        "2027": "2027-01-01",
+        "2028": "2028-01-01",
+        "2029": "2029-01-01",
+        "2030": "2030-01-01"
+      }
+    },
+    {
+      "name": "Jueves Santo",
+      "dates": {
+        "2026": "2026-04-02",
+        "2027": "2027-03-25",
+        "2028": "2028-04-13",
+        "2029": "2029-03-29",
+        "2030": "2030-04-18"
+      }
+    },
+    {
+      "name": "Viernes Santo",
+      "dates": {
+        "2026": "2026-04-03",
+        "2027": "2027-03-26",
+        "2028": "2028-04-14",
+        "2029": "2029-03-30",
+        "2030": "2030-04-19"
+      }
+    },
+    {
+      "name": "Día de Juan Santamaría",
+      "dates": {
+        "2026": "2026-04-11",
+        "2027": "2027-04-11",
+        "2028": "2028-04-11",
+        "2029": "2029-04-11",
+        "2030": "2030-04-11"
+      }
+    },
+    {
+      "name": "Día del Trabajo",
+      "dates": {
+        "2026": "2026-05-01",
+        "2027": "2027-05-01",
+        "2028": "2028-05-01",
+        "2029": "2029-05-01",
+        "2030": "2030-05-01"
+      }
+    },
+    {
+      "name": "Anexión del Partido de Nicoya",
+      "dates": {
+        "2026": "2026-07-25",
+        "2027": "2027-07-25",
+        "2028": "2028-07-25",
+        "2029": "2029-07-25",
+        "2030": "2030-07-25"
+      }
+    },
+    {
+      "name": "Día de la Virgen de los Ángeles",
+      "dates": {
+        "2026": "2026-08-02",
+        "2027": "2027-08-02",
+        "2028": "2028-08-02",
+        "2029": "2029-08-02",
+        "2030": "2030-08-02"
+      }
+    },
+    {
+      "name": "Día de la Madre",
+      "dates": {
+        "2026": "2026-08-15",
+        "2027": "2027-08-15",
+        "2028": "2028-08-15",
+        "2029": "2029-08-15",
+        "2030": "2030-08-15"
+      }
+    },
+    {
+      "name": "Día de la Independencia",
+      "dates": {
+        "2026": "2026-09-15",
+        "2027": "2027-09-15",
+        "2028": "2028-09-15",
+        "2029": "2029-09-15",
+        "2030": "2030-09-15"
+      }
+    },
+    {
+      "name": "Navidad",
+      "dates": {
+        "2026": "2026-12-25",
+        "2027": "2027-12-25",
+        "2028": "2028-12-25",
+        "2029": "2029-12-25",
+        "2030": "2030-12-25"
+      }
+    }
+  ]
+}
