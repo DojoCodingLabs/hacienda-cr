@@ -271,7 +271,7 @@ export async function retryStoredDocuments(
       await store.transition(
         doc.clave,
         "ALMACENADO",
-        "ENVIADO",
+        result.state,
         "Reintento tras enlace restablecido",
       );
       succeeded++;

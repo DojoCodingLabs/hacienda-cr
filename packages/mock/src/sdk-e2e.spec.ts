@@ -125,13 +125,13 @@ describe.skipIf(TARGET !== "mock")("E2E del SDK contra el mock de Hacienda", () 
       linkDown: true,
     });
 
-    const client = await clientFor(linkDownMock);
+    const linkDownClient = await clientFor(linkDownMock);
     const body = submissionBody();
     const store = new FileDocumentStore({ baseDir: "./.delivery-test-linkdown" });
 
     // 1. Enviar con persistencia - el mock devuelve 503 (enlace caído)
     await expect(
-      submitAndWait(client, body as never, {
+      submitAndWait(linkDownClient, body as never, {
         pollIntervalMs: 10,
         timeoutMs: 5000,
         persist: true,
@@ -198,7 +198,5 @@ describe.skipIf(TARGET !== "mock")("E2E del SDK contra el mock de Hacienda", () 
     } finally {
       await normalMock.close();
     }
-
-    await linkDownMock.close();
   });
 });

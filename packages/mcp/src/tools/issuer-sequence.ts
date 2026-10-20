@@ -2,13 +2,7 @@
 import { createHash } from "node:crypto";
 import { readFile, access } from "node:fs/promises";
 import { join } from "node:path";
-import {
-  getConfigDir,
-  buildClave,
-  assignSequenceWithDocument,
-  Situation,
-  type DocumentType,
-} from "@dojocoding/hacienda-sdk";
+import { getConfigDir, getNextSequence } from "@dojocoding/hacienda-sdk";
 
 export function issuerSequenceDirectory(
   environment: "sandbox" | "production",
@@ -23,14 +17,21 @@ export function issuerSequenceDirectory(
 }
 
 /**
- * Assigns a sequence number for a document, binding it to a placeholder clave.
- * This replaces the legacy `getNextSequence` which issued loose sequences.
- * The sequence is assigned atomically with a placeholder document record.
- * The caller MUST persist the actual document with the real clave (which includes
- * the assigned sequence) to complete the binding.
+ * Gets the next sequence number for an issuer/environment series.
  *
- * @deprecated This function issues a sequence without a complete document.
- * Use `assignSequenceWithDocument` directly with the final document clave instead.
+ * @deprecated This is a legacy operation that assigns a sequence without a document.
+ * Use `assignSequenceWithDocument` instead, which assigns the sequence and
+ * persists the document in a single atomic step, guaranteeing that every assigned
+ * sequence belongs to a persisted document.
+ *
+ * @param environment - "sandbox" or "production"
+ * @param idType - Taxpayer ID type
+ * @param idNumber - Taxpayer ID number
+ * @param documentType - Document type code (e.g. "01" for Factura)
+ * @param branch - Branch/sucursal code
+ * @param pos - Point-of-sale code
+ * @param configDir - Optional config directory override
+ * @returns The next sequence number
  */
 export async function nextIssuerSequence(
   environment: "sandbox" | "production",
@@ -64,20 +65,13 @@ export async function nextIssuerSequence(
   } catch (error) {
     if (!(error instanceof Error && "code" in error && error.code === "ENOENT")) throw error;
   }
-
-  // Build a placeholder clave with sequence 0 (will be validated as placeholder)
-  const placeholderClave = buildClave({
-    date: new Date(),
-    taxpayerId: idNumber,
-    documentType: documentType as DocumentType,
-    sequence: 0,
-    situation: Situation.NORMAL,
-    branch,
-    pos,
-  });
-
-  // Assign sequence atomically with placeholder document record
-  return assignSequenceWithDocument(documentType, branch, pos, placeholderClave, {
-    configDir: destination,
-  });
+  // Emit deprecation warning
+  if (process.env.NODE_ENV !== "test") {
+    console.warn(
+      "WARNING: nextIssuerSequence() is a legacy operation that assigns a sequence without a document. " +
+        "Use assignSequenceWithDocument() instead, which guarantees every assigned sequence " +
+        "belongs to a persisted document. See https://github.com/DojoCodingLabs/hacienda-cr for migration guide.",
+    );
+  }
+  return getNextSequence(documentType, branch, pos, { configDir: destination });
 }
