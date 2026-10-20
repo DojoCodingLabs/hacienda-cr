@@ -21,13 +21,25 @@ import {
   draftCommand,
 } from "./commands/index.js";
 
+/** Package name published to npm. */
 export const PACKAGE_NAME = "@dojocoding/hacienda-cli" as const;
+
+/** Resolved package version, read from package.json at module load. */
 export const VERSION = (
   JSON.parse(readFileSync(new URL("../package.json", import.meta.url), "utf8")) as {
     version: string;
   }
 ).version;
 
+/**
+ * Root `hacienda` command definition.
+ *
+ * Defines the CLI entry point with all subcommands (auth, submit, status,
+ * list, get, sign, validate, lookup, draft). Separated from index.ts so tests
+ * can import without triggering runMain().
+ *
+ * @module main
+ */
 export const main = defineCommand({
   meta: {
     name: "hacienda",
