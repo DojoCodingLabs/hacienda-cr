@@ -79,3 +79,70 @@ export const DEFAULT_BRANCH = "001";
 
 /** Default point-of-sale code */
 export const DEFAULT_POS = "00001";
+
+/** Pipeline failure points for crash injection. */
+export const FAILURE_POINTS = [
+  "assign", // consecutivo se toma de la serie
+  "build", // el XML del documento
+  "sign", // la firma digital
+  "persist", // el documento entra al outbox
+  "send", // el POST a Hacienda
+  "poll", // la consulta del estado de la clave
+  "settle", // el estado final (aceptado / rechazado)
+] as const;
+
+/** Pipeline failure point type. */
+export type FailurePoint = (typeof FAILURE_POINTS)[number];
+
+/** Record of a sequence assignment (linked to a document). */
+export const SequenceAssignmentSchema = z.object({
+  /** The sequence number assigned. */
+  sequence: z.number().int().min(1).max(MAX_SEQUENCE),
+  /** The 50-digit clave numerica of the document (or legacy placeholder). */
+  clave: z.string().min(1),
+  /** Document type code. */
+  docType: z.string(),
+  /** Branch/sucursal code. */
+  branch: z.string(),
+  /** Point-of-sale code. */
+  pos: z.string(),
+  /** ISO 8601 timestamp of assignment. */
+  assignedAt: z.string(),
+  /** Whether the document was successfully emitted. */
+  emitted: z.boolean().default(false),
+  /** Emission timestamp if emitted. */
+  emittedAt: z.string().optional(),
+  /** Hacienda acceptance/rejection status if known. */
+  haciendaStatus: z.enum(["aceptado", "rechazado", "pendiente"]).default("pendiente"),
+});
+export type SequenceAssignment = z.infer<typeof SequenceAssignmentSchema>;
+
+/** Record of a discarded sequence. */
+export const SequenceDiscardSchema = z.object({
+  /** The discarded sequence number. */
+  sequence: z.number().int().min(1).max(MAX_SEQUENCE),
+  /** The 50-digit clave numerica of the document (if persisted). */
+  clave: z.string().length(50).optional(),
+  /** Document type code. */
+  docType: z.string(),
+  /** Branch/sucursal code. */
+  branch: z.string(),
+  /** Point-of-sale code. */
+  pos: z.string(),
+  /** Reason for discarding. */
+  reason: z.string(),
+  /** ISO 8601 timestamp of discard. */
+  discardedAt: z.string(),
+});
+export type SequenceDiscard = z.infer<typeof SequenceDiscardSchema>;
+
+/** Extended sequence store file with assignments and discards. */
+export const ExtendedSequenceFileSchema = z.object({
+  /** Current sequence numbers by key. */
+  sequences: SequenceFileSchema,
+  /** Assignment history. */
+  assignments: z.array(SequenceAssignmentSchema),
+  /** Discard records. */
+  discards: z.array(SequenceDiscardSchema),
+});
+export type ExtendedSequenceFile = z.infer<typeof ExtendedSequenceFileSchema>;

@@ -15,6 +15,10 @@ export {
   MAX_SEQUENCE,
   DEFAULT_BRANCH,
   DEFAULT_POS,
+  FAILURE_POINTS,
+  SequenceAssignmentSchema,
+  SequenceDiscardSchema,
+  ExtendedSequenceFileSchema,
 } from "./types.js";
 export type {
   Environment,
@@ -23,6 +27,10 @@ export type {
   ConfigFile,
   ResolvedConfig,
   SequenceFile,
+  FailurePoint,
+  SequenceAssignment,
+  SequenceDiscard,
+  ExtendedSequenceFile,
 } from "./types.js";
 
 // Config manager
@@ -45,5 +53,10 @@ export {
   getCurrentSequence,
   resetSequence,
   SequenceOverflowError,
+  assignSequenceWithDocument,
+  markSequenceEmitted,
+  discardSequence,
+  querySeries,
+  LegacySequenceWarning,
 } from "./sequence-store.js";
-export type { SequenceStoreOptions } from "./sequence-store.js";
+export type { SequenceStoreOptions, SeriesQueryResult } from "./sequence-store.js";

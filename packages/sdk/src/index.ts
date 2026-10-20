@@ -95,6 +95,11 @@ export {
   getCurrentSequence,
   resetSequence,
   SequenceOverflowError,
+  assignSequenceWithDocument,
+  markSequenceEmitted,
+  discardSequence,
+  querySeries,
+  LegacySequenceWarning,
   // Schemas and constants
   EnvironmentSchema,
   CedulaTypeSchema,
@@ -104,6 +109,10 @@ export {
   MAX_SEQUENCE,
   DEFAULT_BRANCH,
   DEFAULT_POS,
+  FAILURE_POINTS,
+  SequenceAssignmentSchema,
+  SequenceDiscardSchema,
+  ExtendedSequenceFileSchema,
   // Types
   type Environment as ConfigEnvironment,
   type CedulaType,
@@ -113,6 +122,11 @@ export {
   type SequenceFile,
   type ConfigManagerOptions,
   type SequenceStoreOptions,
+  type SeriesQueryResult,
+  type FailurePoint,
+  type SequenceAssignment,
+  type SequenceDiscard,
+  type ExtendedSequenceFile,
 } from "./config/index.js";
 
 // XML module — XML generation and validation

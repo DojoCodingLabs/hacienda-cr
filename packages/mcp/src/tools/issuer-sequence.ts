@@ -2,7 +2,13 @@
 import { createHash } from "node:crypto";
 import { readFile, access } from "node:fs/promises";
 import { join } from "node:path";
-import { getConfigDir, getNextSequence } from "@dojocoding/hacienda-sdk";
+import {
+  getConfigDir,
+  buildClave,
+  assignSequenceWithDocument,
+  Situation,
+  type DocumentType,
+} from "@dojocoding/hacienda-sdk";
 
 export function issuerSequenceDirectory(
   environment: "sandbox" | "production",
@@ -16,6 +22,16 @@ export function issuerSequenceDirectory(
   return join(getConfigDir(configDir), "issuer-sequences", environment, identity);
 }
 
+/**
+ * Assigns a sequence number for a document, binding it to a placeholder clave.
+ * This replaces the legacy `getNextSequence` which issued loose sequences.
+ * The sequence is assigned atomically with a placeholder document record.
+ * The caller MUST persist the actual document with the real clave (which includes
+ * the assigned sequence) to complete the binding.
+ *
+ * @deprecated This function issues a sequence without a complete document.
+ * Use `assignSequenceWithDocument` directly with the final document clave instead.
+ */
 export async function nextIssuerSequence(
   environment: "sandbox" | "production",
   idType: string,
@@ -48,5 +64,20 @@ export async function nextIssuerSequence(
   } catch (error) {
     if (!(error instanceof Error && "code" in error && error.code === "ENOENT")) throw error;
   }
-  return getNextSequence(documentType, branch, pos, { configDir: destination });
+
+  // Build a placeholder clave with sequence 0 (will be validated as placeholder)
+  const placeholderClave = buildClave({
+    date: new Date(),
+    taxpayerId: idNumber,
+    documentType: documentType as DocumentType,
+    sequence: 0,
+    situation: Situation.NORMAL,
+    branch,
+    pos,
+  });
+
+  // Assign sequence atomically with placeholder document record
+  return assignSequenceWithDocument(documentType, branch, pos, placeholderClave, {
+    configDir: destination,
+  });
 }
