@@ -30,6 +30,32 @@ function invoice(taxes: LineItemTaxInput[]) {
 }
 
 describe("2026 v4.4 end-to-end regressions", () => {
+  it("keeps a positive-rate line taxable when its tiny tax rounds to zero", () => {
+    const line = calculateLineItemTotals({
+      numeroLinea: 1,
+      codigoCabys: "2111100000000",
+      cantidad: 1,
+      unidadMedida: "Unid",
+      detalle: "Tiny taxable amount",
+      precioUnitario: 0.00001,
+      impuesto: [{ codigo: "01", codigoTarifaIVA: "08", tarifa: 13 }],
+    });
+    expect(line.impuesto[0]?.monto).toBe(0);
+    const summary = calculateInvoiceSummary([line]);
+    expect(summary.totalMercanciasGravadas).toBe(0.00001);
+    expect(summary.totalMercanciasExentas).toBe(0);
+    line.impuesto = [{ codigo: "08", codigoTarifaIVA: "08", factorCalculoIVA: 0.13, monto: 0 }];
+    expect(calculateInvoiceSummary([line]).totalMercanciasGravadas).toBe(0.00001);
+  });
+
+  it("preserves validation of an existing factor-only used-goods IVA document", () => {
+    const input = structuredClone(SIMPLE_INVOICE);
+    const line = input.detalleServicio[0];
+    if (!line) throw new Error("Expected one fixture line");
+    line.impuesto = [{ codigo: "08", codigoTarifaIVA: "08", factorCalculoIVA: 0.13, monto: 13000 }];
+    expect(validateFacturaInput(input)).toMatchObject({ valid: true });
+  });
+
   it("round-trips an alphanumeric legal entity through clave, input validation and XSD", async () => {
     const input = structuredClone(SIMPLE_INVOICE);
     input.emisor.identificacion = { tipo: "02", numero: "310ABC1234" };

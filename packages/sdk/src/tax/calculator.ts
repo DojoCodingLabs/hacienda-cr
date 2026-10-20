@@ -433,8 +433,15 @@ function classifyLineItem(item: CalculatedLineItem): {
     return { gravado: 0, exento: grossAmount, exonerado: 0 };
   }
 
-  // Check if all taxes have rate 0 => exempt
-  const allZeroRate = item.impuesto.every((t: Impuesto) => t.monto === 0);
+  // A positive rate/factor remains taxable even if its computed tax rounds to zero.
+  // Amount-only taxes use their supplied amount to determine taxability.
+  const allZeroRate = item.impuesto.every((tax: Impuesto) =>
+    tax.tarifa !== undefined
+      ? tax.tarifa === 0
+      : tax.factorCalculoIVA !== undefined
+        ? tax.factorCalculoIVA === 0
+        : tax.monto === 0,
+  );
   if (allZeroRate) {
     return { gravado: 0, exento: grossAmount, exonerado: 0 };
   }

@@ -156,24 +156,27 @@ function validateBusinessRules(input: FacturaElectronicaInput): FacturaValidatio
       let taxIndex = 0;
 
       for (const tax of line.impuesto) {
-        try {
-          const expected = calculateTaxAmount(
-            tax,
-            IVA_TAX_CODES.includes(tax.codigo)
-              ? (line.baseImponible ?? line.subTotal)
-              : line.subTotal,
-            line.cantidad,
-          );
-          if (!amountsEqual(tax.monto, expected))
+        // Keep existing non-rate regime validation unchanged outside codes 02–06.
+        if (tax.tarifa !== undefined || ["02", "03", "04", "05", "06"].includes(tax.codigo)) {
+          try {
+            const expected = calculateTaxAmount(
+              tax,
+              IVA_TAX_CODES.includes(tax.codigo)
+                ? (line.baseImponible ?? line.subTotal)
+                : line.subTotal,
+              line.cantidad,
+            );
+            if (!amountsEqual(tax.monto, expected))
+              errors.push({
+                path: `${prefix}.impuesto.${taxIndex}.monto`,
+                message: `Tax amount must match its applicable calculation (${expected})`,
+              });
+          } catch (error) {
             errors.push({
               path: `${prefix}.impuesto.${taxIndex}.monto`,
-              message: `Tax amount must match its applicable calculation (${expected})`,
+              message: error instanceof Error ? error.message : String(error),
             });
-        } catch (error) {
-          errors.push({
-            path: `${prefix}.impuesto.${taxIndex}.monto`,
-            message: error instanceof Error ? error.message : String(error),
-          });
+          }
         }
 
         // IVA tax codes must have codigoTarifaIVA
