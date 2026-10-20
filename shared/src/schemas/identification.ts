@@ -18,7 +18,7 @@ export const IdentificationTypeSchema = z.enum([
 /**
  * Schema for taxpayer identification (tipo + numero).
  *
- * Types 01-04 are digit-only with fixed lengths; types 05/06 are
+ * Types 01/03/04 are digit-only; type 02 accepts ten alphanumeric characters. Types 05/06 are
  * free-form strings up to 20 characters (v4.4 XSD).
  */
 export const IdentificacionSchema = z
@@ -35,10 +35,15 @@ export const IdentificacionSchema = z
       // Types 05/06: free-form, max 20 chars (already enforced above).
       return;
     }
-    if (!/^\d+$/.test(data.numero)) {
+    if (
+      !(data.tipo === IdentificationType.CEDULA_JURIDICA ? /^[A-Za-z0-9]+$/ : /^\d+$/).test(
+        data.numero,
+      )
+    ) {
       ctx.addIssue({
         code: "custom",
-        message: "Must contain only digits",
+        message:
+          "Legal entity IDs may contain letters and digits; other domestic IDs must contain only digits",
         path: ["numero"],
       });
       return;

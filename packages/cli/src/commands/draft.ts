@@ -177,7 +177,9 @@ async function collectEmisor(): Promise<DraftEmisor> {
 
   const nombre = await prompt("Business name (Nombre o Razon Social)");
   const tipoId = await promptSelect("Identification type", IDENTIFICATION_TYPES, "02");
-  const numero = await prompt("Identification number (digits only)");
+  const numero = await prompt(
+    "Identification number (letters and digits for legal entities; digits for other domestic IDs)",
+  );
   const provincia = await prompt("Province code (1-7)", "1");
   const canton = await prompt("Canton code (2 digits)", "01");
   const distrito = await prompt("District code (2 digits)", "01");
@@ -209,7 +211,9 @@ async function collectReceptor(): Promise<DraftReceptor> {
 
   if (hasId) {
     const tipoId = await promptSelect("Identification type", IDENTIFICATION_TYPES, "02");
-    const numero = await prompt("Identification number (digits only)");
+    const numero = await prompt(
+      "Identification number (letters and digits for legal entities; digits for other domestic IDs)",
+    );
     receptor.identificacion = { tipo: tipoId, numero };
   } else {
     // Facturas require a receptor identification in v4.4; foreign receivers

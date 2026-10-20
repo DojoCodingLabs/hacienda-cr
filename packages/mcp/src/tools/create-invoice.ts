@@ -27,7 +27,7 @@ import {
   DEFAULT_POS,
 } from "@dojocoding/hacienda-sdk";
 import type { LineItemInput, CalculatedLineItem } from "@dojocoding/hacienda-sdk";
-import { UNITS_OF_MEASURE } from "@dojocoding/hacienda-shared";
+import { TelefonoSchema, UNITS_OF_MEASURE } from "@dojocoding/hacienda-shared";
 import type { FacturaElectronica } from "@dojocoding/hacienda-shared";
 
 // ---------------------------------------------------------------------------
@@ -37,7 +37,17 @@ import type { FacturaElectronica } from "@dojocoding/hacienda-shared";
 const ImpuestoInputSchema = z.object({
   codigo: z.string().describe('Tax type code (e.g. "01" for IVA)'),
   codigoTarifaIVA: z.string().optional().describe('IVA rate code (e.g. "08" for 13%)'),
-  tarifa: z.number().describe("Tax rate percentage (e.g. 13 for 13%)"),
+  tarifa: z.number().min(0).optional().describe("Percentage rate; omit for amount-only ISC"),
+  monto: z.number().min(0).optional().describe("Explicit ISC amount (code 02), instead of tarifa"),
+  datosImpuestoEspecifico: z
+    .object({
+      cantidadUnidadMedida: z.number().min(0),
+      porcentaje: z.number().min(0).optional(),
+      proporcion: z.number().min(0).optional().describe("Alcohol proportion, up to 5 decimals"),
+      volumenUnidadConsumo: z.number().positive().optional(),
+      impuestoUnidad: z.number().min(0),
+    })
+    .optional(),
 });
 
 const DescuentoInputSchema = z.object({
@@ -78,7 +88,9 @@ const LineItemInputSchema = z.object({
 
 const IdentificacionInputSchema = z.object({
   tipo: z.string().describe('ID type: "01"=Fisica, "02"=Juridica, "03"=DIMEX, "04"=NITE'),
-  numero: z.string().describe("ID number (digits only)"),
+  numero: z
+    .string()
+    .describe("ID number (letters and digits for legal entities; digits for other domestic IDs)"),
 });
 
 const UbicacionInputSchema = z.object({
@@ -108,6 +120,7 @@ const UbicacionInputSchema = z.object({
 });
 
 const EmisorInputSchema = z.object({
+  telefono: TelefonoSchema.optional(),
   nombre: z.string().describe("Issuer name (max 100 chars)"),
   identificacion: IdentificacionInputSchema.describe("Taxpayer identification"),
   nombreComercial: z.string().optional().describe("Commercial name"),
@@ -116,6 +129,7 @@ const EmisorInputSchema = z.object({
 });
 
 const ReceptorInputSchema = z.object({
+  telefono: TelefonoSchema.optional(),
   nombre: z.string().describe("Receiver name (max 100 chars)"),
   identificacion: IdentificacionInputSchema.optional().describe("Taxpayer identification"),
   correoElectronico: z.string().optional().describe("Email address"),
@@ -233,6 +247,7 @@ export function registerCreateInvoiceTool(server: McpServer): void {
           fechaEmision,
           emisor: {
             nombre: args.emisor.nombre,
+            ...(args.emisor.telefono ? { telefono: args.emisor.telefono } : {}),
             identificacion: {
               tipo: args.emisor.identificacion
                 .tipo as FacturaElectronica["emisor"]["identificacion"]["tipo"],
@@ -246,6 +261,7 @@ export function registerCreateInvoiceTool(server: McpServer): void {
           },
           receptor: {
             nombre: args.receptor.nombre,
+            ...(args.receptor.telefono ? { telefono: args.receptor.telefono } : {}),
             ...(args.receptor.identificacion
               ? {
                   identificacion: {

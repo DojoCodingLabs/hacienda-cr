@@ -1010,7 +1010,7 @@ describe("calculateInvoiceSummary – totalDesgloseImpuesto", () => {
     expect(summary.totalDesgloseImpuesto[0]).toEqual({
       codigo: "01",
       codigoTarifaIVA: "08",
-      totalMontoImpuesto: 1300,
+      totalMontoImpuesto: 1430,
     });
     expect(summary.totalDesgloseImpuesto[1]).toEqual({
       codigo: "02",
@@ -1206,14 +1206,14 @@ describe("calculateLineItemTotals – edge cases", () => {
     const result = calculateLineItemTotals(item);
     expect(result.impuesto).toBeDefined();
     expect(result.impuesto).toHaveLength(2);
-    // IVA: 10000 * 0.13 = 1300
-    expect(result.impuesto?.[0]?.monto).toBe(1300);
+    // IVA includes ISC in its base: 11000 * 0.13 = 1430
+    expect(result.impuesto?.[0]?.monto).toBe(1430);
     // Selectivo: 10000 * 0.10 = 1000
     expect(result.impuesto?.[1]?.monto).toBe(1000);
-    // impuestoNeto only counts IVA (code "01"), not selectivo consumo ("02")
-    expect(result.impuestoNeto).toBe(1300);
-    // montoTotalLinea = subTotal + impuestoNeto (only IVA net)
-    expect(result.montoTotalLinea).toBe(11300);
+    // Net tax includes both IVA and ISC.
+    expect(result.impuestoNeto).toBe(2430);
+    // Line total includes every net tax.
+    expect(result.montoTotalLinea).toBe(12430);
   });
 
   it("should count IVA calculo especial (07) and bienes usados (08) as IVA", () => {

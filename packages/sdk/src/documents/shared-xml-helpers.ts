@@ -277,6 +277,18 @@ export function buildImpuestoXml(impuesto: Impuesto): Record<string, unknown> {
     result.FactorCalculoIVA = impuesto.factorCalculoIVA;
   }
 
+  if (impuesto.datosImpuestoEspecifico) {
+    const data = impuesto.datosImpuestoEspecifico;
+    result.DatosImpuestoEspecifico = {
+      CantidadUnidadMedida: data.cantidadUnidadMedida,
+      ...(data.porcentaje !== undefined ? { Porcentaje: data.porcentaje } : {}),
+      ...(data.proporcion !== undefined ? { Proporcion: data.proporcion } : {}),
+      ...(data.volumenUnidadConsumo !== undefined
+        ? { VolumenUnidadConsumo: data.volumenUnidadConsumo }
+        : {}),
+      ImpuestoUnidad: data.impuestoUnidad,
+    };
+  }
   result.Monto = impuesto.monto;
 
   if (impuesto.exoneracion) {

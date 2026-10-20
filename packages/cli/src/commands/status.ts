@@ -19,7 +19,7 @@ export const statusCommand = defineCommand({
   args: {
     clave: {
       type: "positional",
-      description: "50-digit clave numerica",
+      description: "50-character clave numerica",
       required: true,
     },
     profile: {
@@ -38,8 +38,10 @@ export const statusCommand = defineCommand({
       const clave = args.clave;
 
       // Validate clave format
-      if (!/^\d{50}$/.test(clave)) {
-        error("Invalid clave. Must be a 50-digit numeric string.");
+      if (!/^\d{9}[A-Za-z0-9]{12}\d{29}$/.test(clave)) {
+        error(
+          "Invalid clave. Must be a 50-character clave with letters only in the taxpayer ID segment.",
+        );
         process.exitCode = 1;
         return;
       }

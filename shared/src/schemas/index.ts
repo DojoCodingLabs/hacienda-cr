@@ -30,6 +30,7 @@ export {
   CodigoComercialSchema,
   ExoneracionSchema,
   ImpuestoSchema,
+  DatosImpuestoEspecificoSchema,
   DescuentoSchema,
   LineaDetalleSchema,
   type CodigoComercialInput,

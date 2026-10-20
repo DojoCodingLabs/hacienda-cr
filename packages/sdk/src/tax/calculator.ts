@@ -14,8 +14,9 @@ import type {
   CodigoComercial,
   Exoneracion,
   TotalDesgloseImpuesto,
+  DatosImpuestoEspecifico,
 } from "@dojocoding/hacienda-shared";
-import { TaxCode } from "@dojocoding/hacienda-shared";
+import { ImpuestoSchema, TaxCode } from "@dojocoding/hacienda-shared";
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -42,6 +43,46 @@ export function round5(value: number): number {
   return Number(value.toFixed(DECIMAL_PLACES));
 }
 
+/** Compute a tax amount without prematurely rounding the specific-tax factors. */
+export function calculateTaxAmount(
+  tax: Pick<LineItemTaxInput, "codigo" | "tarifa" | "monto" | "datosImpuestoEspecifico">,
+  base: number,
+  cantidad: number,
+): number {
+  const data = tax.datosImpuestoEspecifico;
+  if (["03", "04", "05", "06"].includes(tax.codigo)) {
+    if (!data) throw new Error(`Specific tax ${tax.codigo} requires datosImpuestoEspecifico`);
+    if (tax.codigo === "04") {
+      if (data.proporcion === undefined || data.porcentaje === undefined)
+        throw new Error("Alcohol tax requires porcentaje and proporcion");
+      const expectedProportion = round5((data.cantidadUnidadMedida * data.porcentaje) / 100);
+      if (Math.abs(data.proporcion - expectedProportion) > 0.000001)
+        throw new Error("Alcohol proporcion must equal cantidadUnidadMedida * porcentaje / 100");
+      return round5(cantidad * data.proporcion * data.impuestoUnidad);
+    }
+    // Code 05 has different formulas for beverages and toilet soap. Its amount
+    // must be supplied by the caller rather than guessing the product category.
+    if (tax.codigo === "05") {
+      if (tax.monto === undefined || !Number.isFinite(tax.monto) || tax.monto < 0)
+        throw new Error("Tax 05 requires an explicit monto calculated for the product category");
+      return round5(tax.monto);
+    }
+    return round5(
+      (tax.codigo === "06" ? cantidad : 1) * data.cantidadUnidadMedida * data.impuestoUnidad,
+    );
+  }
+  if (tax.codigo === "02" && tax.tarifa === undefined && tax.monto !== undefined) {
+    if (!Number.isFinite(tax.monto) || tax.monto < 0)
+      throw new Error("ISC amount must be finite and non-negative");
+    return round5(tax.monto);
+  }
+  if (tax.tarifa === undefined) throw new Error(`Tax ${tax.codigo} requires tarifa`);
+  const amount = round5((base * tax.tarifa) / 100);
+  if (tax.monto !== undefined && Math.abs(amount - tax.monto) > 0.000001)
+    throw new Error("Tax amount does not match its percentage rate");
+  return amount;
+}
+
 // ---------------------------------------------------------------------------
 // Line Item Input (simplified — for calculation, before computed fields)
 // ---------------------------------------------------------------------------
@@ -55,7 +96,12 @@ export interface LineItemTaxInput {
   codigoTarifaIVA?: string;
 
   /** Tax rate percentage (e.g., 13 for 13%). */
-  tarifa: number;
+  tarifa?: number;
+
+  /** Explicit amount for ISC (02) or product-specific tax 05. */
+  monto?: number;
+
+  datosImpuestoEspecifico?: DatosImpuestoEspecifico;
 
   /** Exoneration information (v4.4 shape). Optional. */
   exoneracion?: {
@@ -163,7 +209,7 @@ export interface CalculatedLineItem {
   /** Taxes applied to this line item (v4.4 requires at least one). */
   impuesto: Impuesto[];
 
-  /** Net IVA tax amount. */
+  /** Net tax amount. */
   impuestoNeto?: number;
 
   /** Total line amount including taxes. */
@@ -189,9 +235,9 @@ const IVA_TAX_CODES: string[] = [
  * Computes:
  * - `montoTotal` = cantidad * precioUnitario
  * - `subTotal` = montoTotal - sum(discounts)
- * - `baseImponible` = subTotal (or adjusted for exonerations)
- * - `impuesto[].monto` = subTotal * tarifa / 100
- * - `impuestoNeto` = sum of all IVA tax amounts (after exonerations)
+ * - `baseImponible` = subTotal + applicable ISC and beverage taxes
+ * - `impuesto[].monto` = applicable rate, specific-tax formula or explicit ISC amount
+ * - `impuestoNeto` = sum of all tax amounts (after exonerations)
  * - `montoTotalLinea` = subTotal + impuestoNeto
  *
  * @param item - The line item input with core values.
@@ -209,8 +255,18 @@ export function calculateLineItemTotals(item: LineItemInput): CalculatedLineItem
   // SubTotal = montoTotal - discounts
   const subTotal = round5(montoTotal - totalDescuento);
 
-  // BaseImponible = subTotal (taxable base)
-  const baseImponible = subTotal;
+  // ISC and beverage taxes are included in the IVA base.
+  const baseImponible = round5(
+    subTotal +
+      (item.impuesto ?? []).reduce(
+        (sum, tax) =>
+          sum +
+          (["02", "04", "05"].includes(tax.codigo)
+            ? calculateTaxAmount(tax, subTotal, item.cantidad)
+            : 0),
+        0,
+      ),
+  );
 
   // Calculate taxes. v4.4 requires at least one Impuesto per line, so an
   // untaxed line gets a synthetic exempt IVA entry (codigo 01, tarifa 0).
@@ -223,8 +279,12 @@ export function calculateLineItemTotals(item: LineItemInput): CalculatedLineItem
       : [{ codigo: TaxCode.IVA, codigoTarifaIVA: "01", tarifa: 0 }];
 
   for (const tax of taxInputs) {
-    // Full tax amount = subTotal * tarifa / 100
-    const fullTaxAmount = round5((subTotal * tax.tarifa) / 100);
+    // Apply the applicable formula before monetary rounding.
+    const fullTaxAmount = calculateTaxAmount(
+      tax,
+      IVA_TAX_CODES.includes(tax.codigo) ? baseImponible : subTotal,
+      item.cantidad,
+    );
 
     let taxAmount = fullTaxAmount;
     let exoneracion: Exoneracion | undefined;
@@ -239,7 +299,11 @@ export function calculateLineItemTotals(item: LineItemInput): CalculatedLineItem
             "(exonerated tariff percentage points, 0..tarifa).",
         );
       }
-      const exonerationPortion = round5((subTotal * tax.exoneracion.tarifaExonerada) / 100);
+      const exonerationPortion = round5(
+        ((IVA_TAX_CODES.includes(tax.codigo) ? baseImponible : subTotal) *
+          tax.exoneracion.tarifaExonerada) /
+          100,
+      );
       taxAmount = round5(Math.max(0, fullTaxAmount - exonerationPortion));
 
       exoneracion = {
@@ -254,7 +318,10 @@ export function calculateLineItemTotals(item: LineItemInput): CalculatedLineItem
 
     const calculatedTax: Impuesto = {
       codigo: tax.codigo as Impuesto["codigo"],
-      tarifa: tax.tarifa,
+      ...(tax.tarifa !== undefined ? { tarifa: tax.tarifa } : {}),
+      ...(tax.datosImpuestoEspecifico
+        ? { datosImpuestoEspecifico: tax.datosImpuestoEspecifico }
+        : {}),
       monto: fullTaxAmount,
       ...(tax.codigoTarifaIVA
         ? { codigoTarifaIVA: tax.codigoTarifaIVA as Impuesto["codigoTarifaIVA"] }
@@ -262,12 +329,11 @@ export function calculateLineItemTotals(item: LineItemInput): CalculatedLineItem
       ...(exoneracion ? { exoneracion } : {}),
     };
 
+    ImpuestoSchema.parse(calculatedTax);
     calculatedTaxes.push(calculatedTax);
 
-    // ImpuestoNeto counts only the net IVA amount (after exoneration)
-    if (IVA_TAX_CODES.includes(tax.codigo)) {
-      impuestoNeto = round5(impuestoNeto + taxAmount);
-    }
+    // Net tax includes all tax codes after exoneration.
+    impuestoNeto = round5(impuestoNeto + taxAmount);
   }
 
   impuestoNeto = round5(impuestoNeto);
@@ -338,7 +404,7 @@ export interface InvoiceSummary {
   totalVentaNeta: number;
   /** Per-tax-code totals breakdown (v4.4 TotalDesgloseImpuesto). */
   totalDesgloseImpuesto: TotalDesgloseImpuesto[];
-  /** Total IVA tax. */
+  /** Total net tax across all tax codes. */
   totalImpuesto: number;
   /** Grand total. */
   totalComprobante: number;
@@ -368,7 +434,7 @@ function classifyLineItem(item: CalculatedLineItem): {
   }
 
   // Check if all taxes have rate 0 => exempt
-  const allZeroRate = item.impuesto.every((t: Impuesto) => t.tarifa === 0);
+  const allZeroRate = item.impuesto.every((t: Impuesto) => t.monto === 0);
   if (allZeroRate) {
     return { gravado: 0, exento: grossAmount, exonerado: 0 };
   }

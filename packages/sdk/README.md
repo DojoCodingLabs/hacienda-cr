@@ -254,3 +254,13 @@ See [source, primary rules and independent gates](../../docs/exact-foreign-servi
 Exact recipient source contract and remaining transport/outcome gates: [recipient confirmation](../../docs/exact-recipient-message.md).
 
 - Source-only explicit [non-subject personal-used-goods FEC](../../docs/exact-used-personal-goods-fec.md): actual supplier 06/buyer 08, ordinary discounts, exact non-subject amounts; qualification, resale and acceptance remain independent.
+
+### October 2026 v4.4 compatibility
+
+Legal entity IDs accept ten alphanumeric characters throughout identification
+and clave generation/parsing. Three-digit special phones such as `911` are
+supported. Taxes support amount-only ISC and `datosImpuestoEspecifico`, including
+five-decimal alcohol proportions. Mixed-tax calculations include applicable
+specific taxes in the IVA base and all net taxes in totals. See the
+[migration notes](./MIGRATION-v4.4.md#october-2026-compatibility-updates) for input
+examples and compatibility details.
