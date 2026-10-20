@@ -153,6 +153,16 @@ export interface Exoneracion {
   montoExoneracion: number;
 }
 
+/** Non-tariff tax inputs from Hacienda DatosImpuestoEspecifico. */
+export interface DatosImpuestoEspecifico {
+  cantidadUnidadMedida: number;
+  porcentaje?: number;
+  /** Alcohol proportion, up to five decimal places. */
+  proporcion?: number;
+  volumenUnidadConsumo?: number;
+  impuestoUnidad: number;
+}
+
 /** Tax applied to a line item (Impuesto). */
 export interface Impuesto {
   /** Tax type code. */
@@ -169,6 +179,8 @@ export interface Impuesto {
 
   /** Calculation factor for the used-goods IVA regime (code 08). */
   factorCalculoIVA?: number;
+
+  datosImpuestoEspecifico?: DatosImpuestoEspecifico;
 
   /** Tax amount for this line (Monto). */
   monto: number;

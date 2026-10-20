@@ -319,7 +319,7 @@ describe("validateFacturaInput — business rules", () => {
     expect(result.errors.some((e) => e.path === "detalleServicio.0.impuesto.0.monto")).toBe(true);
   });
 
-  it("should skip the tax amount check when tarifa is undefined", () => {
+  it("should include amount-only ISC in the base, net tax and payable total", () => {
     const baseLine = firstLineItem(SIMPLE_INVOICE);
     const input = {
       ...SIMPLE_INVOICE,
@@ -328,20 +328,21 @@ describe("validateFacturaInput — business rules", () => {
           ...baseLine,
           impuesto: [
             {
-              // Non-IVA tax with no rate: monto is not derivable, so not checked
+              // Amount-only ISC is supplied directly and included in all payable totals.
               codigo: "02" as const,
               monto: 5000,
             },
           ],
-          impuestoNeto: 0,
-          montoTotalLinea: 100000,
+          baseImponible: 105000,
+          impuestoNeto: 5000,
+          montoTotalLinea: 105000,
         },
       ],
       resumenFactura: {
         ...SIMPLE_INVOICE.resumenFactura,
-        totalImpuesto: 0,
-        medioPago: [{ tipoMedioPago: "01" as const, totalMedioPago: 100000 }],
-        totalComprobante: 100000,
+        totalImpuesto: 5000,
+        medioPago: [{ tipoMedioPago: "01" as const, totalMedioPago: 105000 }],
+        totalComprobante: 105000,
       },
     };
     const result = validateFacturaInput(input);

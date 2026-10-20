@@ -37,8 +37,8 @@ export const TelefonoSchema = z.object({
   /** Country code (e.g., "506"). Max 3 digits. */
   codigoPais: z.string().regex(/^\d{1,3}$/),
 
-  /** Phone number. Max 20 digits. */
-  numTelefono: z.string().regex(/^\d{1,20}$/),
+  /** Ordinary phones: 8–20 digits; special service numbers: 3 digits. */
+  numTelefono: z.string().regex(/^(?:[1-9]\d{2}|\d{8,20})$/),
 });
 
 export type TelefonoInput = z.infer<typeof TelefonoSchema>;

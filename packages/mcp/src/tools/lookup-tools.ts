@@ -27,7 +27,9 @@ export function registerLookupTaxpayerTool(server: McpServer): void {
         .string()
         .min(9)
         .max(12)
-        .describe("Taxpayer identification number (9-12 digits)"),
+        .describe(
+          "Taxpayer identification number (9-12 digits or a 10-character alphanumeric legal entity ID)",
+        ),
     },
     async (args) => {
       try {

@@ -172,6 +172,56 @@ describe("MCP Server", () => {
   // -------------------------------------------------------------------------
 
   describe("create_invoice", () => {
+    it.each([
+      { codigo: "02", monto: 100 },
+      {
+        codigo: "04",
+        datosImpuestoEspecifico: {
+          cantidadUnidadMedida: 333.33,
+          porcentaje: 12.34,
+          proporcion: 41.13292,
+          impuestoUnidad: 1,
+        },
+      },
+    ])("supports updated identity, special phones and tax $codigo through MCP", async (tax) => {
+      const result = await client.callTool({
+        name: "create_invoice",
+        arguments: {
+          proveedorSistemas: "3101234567",
+          codigoActividadEmisor: "620100",
+          emisor: {
+            nombre: "Empresa de Prueba",
+            identificacion: { tipo: "02", numero: "310ABC1234" },
+            correoElectronico: "test@empresa.com",
+            ubicacion: { provincia: "1", canton: "01", distrito: "01", otrasSenas: "Test address" },
+            telefono: { codigoPais: "506", numTelefono: "911" },
+          },
+          receptor: {
+            nombre: "Cliente de Prueba",
+            identificacion: { tipo: "02", numero: "310DEF5678" },
+          },
+          lineItems: [
+            {
+              codigoCabys: "2111100000000",
+              cantidad: 2,
+              unidadMedida: "Unid",
+              detalle: "Producto",
+              precioUnitario: 1000,
+              impuesto: [tax, { codigo: "01", codigoTarifaIVA: "08", tarifa: 13 }],
+            },
+          ],
+        },
+      });
+      expect(result.isError, JSON.stringify(result.content)).not.toBe(true);
+      const text = (result.content as { text: string }[])[0]?.text ?? "";
+      expect(text).toContain("Factura Electronica created successfully");
+      expect(text).toContain("00310ABC1234");
+      expect(text).toContain("<Numero>310DEF5678</Numero>");
+      expect(text).toContain("<NumTelefono>911</NumTelefono>");
+      if (tax.codigo === "04") expect(text).toContain("<Proporcion>41.13292</Proporcion>");
+      else expect(text).toContain("<BaseImponible>2100</BaseImponible>");
+    });
+
     it("rejects invalid line items before allocating a sequence", async () => {
       const result = await client.callTool({
         name: "create_invoice",

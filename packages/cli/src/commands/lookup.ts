@@ -19,7 +19,8 @@ export const lookupCommand = defineCommand({
   args: {
     cedula: {
       type: "positional",
-      description: "Taxpayer identification number (9-12 digits)",
+      description:
+        "Taxpayer identification number (9-12 digits or a 10-character alphanumeric legal entity ID)",
       required: true,
     },
     json: {
@@ -33,8 +34,10 @@ export const lookupCommand = defineCommand({
       const cedula = args.cedula;
 
       // Basic cedula format validation
-      if (!/^\d{9,12}$/.test(cedula)) {
-        error("Invalid cedula. Must be a 9-12 digit numeric string.");
+      if (!/^(?:\d{9,12}|[A-Za-z0-9]{10})$/.test(cedula)) {
+        error(
+          "Invalid cedula. Must be a 9-12 digit ID or a 10-character alphanumeric legal entity ID.",
+        );
         process.exitCode = 1;
         return;
       }

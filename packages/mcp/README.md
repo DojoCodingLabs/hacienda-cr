@@ -212,3 +212,12 @@ If an old global `sequences.json` contains positive counters, creating a new uns
 Authenticated clients are invalidated when the resolved profile, environment, issuer configuration, certificate path, password or PIN changes. Replacing certificate bytes at the same path still requires restarting the process or clearing the cache. Configure one profile per identity/environment.
 
 See the [history contract migration](../../docs/history-contract.md); unsupported keys are rejected before authentication.
+
+### October 2026 v4.4 inputs
+
+`create_invoice` supports alphanumeric legal entity IDs, optional issuer/receiver
+`telefono` (including three-digit special numbers), amount-only ISC
+(`{ codigo: "02", monto: 100 }`) and `datosImpuestoEspecifico` for specific taxes.
+Alcohol proportions retain up to five decimal places. The exposed invoice
+schema includes these fields. See the SDK
+[migration notes](../sdk/MIGRATION-v4.4.md#october-2026-compatibility-updates).

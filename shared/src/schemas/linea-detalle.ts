@@ -52,29 +52,72 @@ export const ExoneracionSchema = z.object({
 
 export type ExoneracionInput = z.infer<typeof ExoneracionSchema>;
 
-/** Schema for tax (Impuesto), per the v4.4 XSD. */
-export const ImpuestoSchema = z.object({
-  /** Tax type code. */
-  codigo: TaxCodeSchema,
-
-  /** Free-text tax type. Required when codigo is "99" (5-100 chars). */
-  codigoImpuestoOtros: z.string().min(5).max(100).optional(),
-
-  /** IVA rate code (CodigoTarifaIVA). Required when tax code is IVA-related. */
-  codigoTarifaIVA: IvaRateCodeSchema.optional(),
-
-  /** Tax rate percentage. Optional for non-rate taxes. */
-  tarifa: z.number().min(0).max(99.99).optional(),
-
-  /** Calculation factor for the used-goods IVA regime (code 08). */
-  factorCalculoIVA: z.number().min(0).max(9.9999).optional(),
-
-  /** Tax amount (Monto). */
-  monto: z.number().min(0),
-
-  /** Exoneration information. Optional. */
-  exoneracion: ExoneracionSchema.optional(),
+/** Decimal constraints for the specific-tax fields in the official XSD. */
+function decimal(digits: number, scale: number) {
+  return z
+    .number()
+    .finite()
+    .min(0)
+    .refine((value) => {
+      if (value >= 10 ** digits || Number(value.toFixed(scale)) !== value) return false;
+      const [integer = "", fraction = ""] = value.toFixed(scale).split(".");
+      const count = integer.replace(/^0+/, "").length + fraction.replace(/0+$/, "").length;
+      return count <= digits;
+    }, `Expected at most ${digits} total digits and ${scale} decimal places`);
+}
+export const DatosImpuestoEspecificoSchema = z.object({
+  cantidadUnidadMedida: decimal(7, 2),
+  porcentaje: decimal(4, 2).optional(),
+  proporcion: decimal(10, 5).optional(),
+  volumenUnidadConsumo: decimal(7, 2).optional(),
+  impuestoUnidad: decimal(18, 5),
 });
+
+/** Schema for tax (Impuesto), per the v4.4 XSD. */
+export const ImpuestoSchema = z
+  .object({
+    /** Tax type code. */
+    codigo: TaxCodeSchema,
+
+    /** Free-text tax type. Required when codigo is "99" (5-100 chars). */
+    codigoImpuestoOtros: z.string().min(5).max(100).optional(),
+
+    /** IVA rate code (CodigoTarifaIVA). Required when tax code is IVA-related. */
+    codigoTarifaIVA: IvaRateCodeSchema.optional(),
+
+    /** Tax rate percentage. Optional for non-rate taxes. */
+    tarifa: z.number().min(0).max(99.99).optional(),
+
+    /** Calculation factor for the used-goods IVA regime (code 08). */
+    factorCalculoIVA: z.number().min(0).max(9.9999).optional(),
+
+    datosImpuestoEspecifico: DatosImpuestoEspecificoSchema.optional(),
+
+    /** Tax amount (Monto). */
+    monto: z.number().min(0),
+
+    /** Exoneration information. Optional. */
+    exoneracion: ExoneracionSchema.optional(),
+  })
+  .superRefine((tax, ctx) => {
+    const issue = (path: string[], message: string) =>
+      ctx.addIssue({ code: "custom", path, message });
+    const specific = ["03", "04", "05", "06"].includes(tax.codigo);
+    if (specific && !tax.datosImpuestoEspecifico)
+      issue(["datosImpuestoEspecifico"], "Specific tax calculation data is required");
+    if (!specific && tax.datosImpuestoEspecifico)
+      issue(["datosImpuestoEspecifico"], "Specific data is only allowed for codes 03–06");
+    if (tax.codigo === "04" && tax.datosImpuestoEspecifico) {
+      for (const field of ["porcentaje", "proporcion"] as const)
+        if (tax.datosImpuestoEspecifico[field] === undefined)
+          issue(["datosImpuestoEspecifico", field], "Required for alcoholic beverages");
+    }
+    if (tax.codigo === "05" && tax.datosImpuestoEspecifico?.volumenUnidadConsumo === undefined)
+      issue(
+        ["datosImpuestoEspecifico", "volumenUnidadConsumo"],
+        "Required for non-alcoholic beverages",
+      );
+  });
 
 export type ImpuestoInput = z.infer<typeof ImpuestoSchema>;
 

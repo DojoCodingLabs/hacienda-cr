@@ -184,3 +184,12 @@ See the [command reference](https://github.com/DojoCodingLabs/hacienda-cr/blob/m
 Read the [migration guide](https://github.com/DojoCodingLabs/hacienda-cr/blob/main/packages/sdk/MIGRATION-v4.4.md) before upgrading.
 
 See the [history contract migration](../../docs/history-contract.md) for rejected date/legacy filters, exact identifiers and observed-only pagination.
+
+### October 2026 v4.4 compatibility
+
+`lookup` accepts ten-character alphanumeric legal entity IDs. `get` and `status`
+accept the resulting 50-character claves, with letters confined to the legal
+entity ID portion. JSON document inputs use the SDK's updated phone and tax
+fields; see the SDK
+[migration notes](../sdk/MIGRATION-v4.4.md#october-2026-compatibility-updates).
+The interactive draft wizard continues to collect basic IVA lines.

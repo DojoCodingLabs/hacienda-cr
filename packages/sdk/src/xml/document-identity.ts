@@ -18,8 +18,8 @@ export interface IdentityDocument {
   clave: string;
   numeroConsecutivo: string;
   fechaEmision: string;
-  emisor: { identificacion: { numero: string } };
-  receptor?: { identificacion?: { numero: string } };
+  emisor: { identificacion: { numero: string; tipo?: string } };
+  receptor?: { identificacion?: { numero: string; tipo?: string } };
 }
 
 /** FEC is generated/signed by its buyer (Receptor), unlike other documents.
@@ -37,10 +37,11 @@ export function validateDocumentIdentity(
   if (!/^\d{20}$/.test(input.numeroConsecutivo))
     add("numeroConsecutivo", "numeroConsecutivo must contain 20 digits");
   if (errors.length) return errors;
-  const owner =
-    expectedType === "08"
-      ? input.receptor?.identificacion?.numero
-      : input.emisor.identificacion.numero;
+  const ownerId =
+    expectedType === "08" ? input.receptor?.identificacion : input.emisor.identificacion;
+  const owner = ownerId?.numero;
+  if (owner && /[A-Za-z]/.test(owner) && ownerId?.tipo !== undefined && ownerId.tipo !== "02")
+    add("clave", "Letters in the clave taxpayer ID require identification type 02");
   if (
     !owner ||
     !/^[A-Za-z0-9]{9,12}$/.test(owner) ||

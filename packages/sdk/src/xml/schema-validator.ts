@@ -79,14 +79,24 @@ export async function validateDocumentXml(
           .item(0)
           ?.getElementsByTagNameNS(root.namespaceURI, "Numero")
           .item(0)?.textContent ?? "";
+      const partyType = (party: string) =>
+        root
+          .getElementsByTagNameNS(root.namespaceURI, party)
+          .item(0)
+          ?.getElementsByTagNameNS(root.namespaceURI, "Identificacion")
+          .item(0)
+          ?.getElementsByTagNameNS(root.namespaceURI, "Tipo")
+          .item(0)?.textContent ?? "";
       identityIssues.push(
         ...validateDocumentIdentity(
           {
             clave: text("Clave"),
             numeroConsecutivo: text("NumeroConsecutivo"),
             fechaEmision: text("FechaEmision"),
-            emisor: { identificacion: { numero: partyId("Emisor") } },
-            receptor: { identificacion: { numero: partyId("Receptor") } },
+            emisor: { identificacion: { numero: partyId("Emisor"), tipo: partyType("Emisor") } },
+            receptor: {
+              identificacion: { numero: partyId("Receptor"), tipo: partyType("Receptor") },
+            },
           },
           expectedType,
         ).map((issue) => `${issue.path}: ${issue.message}`),

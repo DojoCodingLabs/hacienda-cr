@@ -9,7 +9,7 @@
 export const IdentificationType = {
   /** Cedula Fisica (physical person ID) — 9 digits */
   CEDULA_FISICA: "01",
-  /** Cedula Juridica (legal entity ID) — 10 digits */
+  /** Cedula Juridica (legal entity ID) — 10 alphanumeric characters */
   CEDULA_JURIDICA: "02",
   /** DIMEX (foreign resident ID) — 11-12 digits */
   DIMEX: "03",

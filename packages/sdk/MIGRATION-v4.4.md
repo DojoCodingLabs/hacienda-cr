@@ -134,3 +134,60 @@ consumer. Broader fiscal cases require their own reviewed contract.
 The next reviewed pre-1.0 minor release corrects `listComprobantes` and `getComprobante` without changing fiscal FE/NC calculation, XML/signing or POST contracts. Lists return one bounded metadata page and raw observed range headers; detail returns metadata/references, not original XML, status or response bytes. Dates and old identification filter names are rejected before auth. Use combined domestic `emisor` / `receptor`, preserve exact string identifiers and current alphanumeric claves, and use `getStatus` separately.
 
 See the [complete migration and limits](https://github.com/DojoCodingLabs/hacienda-cr/blob/main/docs/history-contract.md). Applications must review adoption separately from historical immutable SDK 0.7 FE/NC proofs and cases; a new package version does not relabel stored evidence, enable fiscal transport or certify backfill coverage. Published 0.7.0 remains unchanged until release authorization.
+
+## October 2026 compatibility updates
+
+The legal entity identification (`tipo: "02"`) accepts exactly ten ASCII
+alphanumeric characters, without separators. Other supported identification
+types retain their numeric formats. The existing alphanumeric clave support is retained. Claves remain 50 characters: legal entity
+IDs occupy positions 10–21 with two leading zeros. Dates, consecutive numbers,
+situation and security codes remain numeric. No letters are removed or converted.
+Use the actual ID issued by Registro Nacional; support in the SDK does not imply
+that an invented alphanumeric ID is registered with Hacienda.
+
+Phone numbers accept ordinary 8–20 digit numbers and three-digit special service
+numbers such as `911`. The MCP invoice tool now accepts optional issuer and
+receiver `telefono` objects too.
+
+`Impuesto.tarifa` remains optional for amount-only ISC and non-tariff taxes.
+For `calculateLineItemTotals`, use `{ codigo: "02", monto: 100 }` for an explicit
+ISC amount, or `{ codigo: "02", tarifa: 5 }` for a percentage. Supplying both
+requires the amount to agree with the percentage calculation.
+
+Alcohol tax (`04`) uses the following structure instead of a percentage tarifa:
+
+```ts
+{
+  codigo: "04",
+  datosImpuestoEspecifico: {
+    cantidadUnidadMedida: 333.33,
+    porcentaje: 12.34,
+    proporcion: 41.13292,
+    impuestoUnidad: 1,
+  },
+}
+```
+
+`proporcion` supports five decimal places (10 total digits) and must equal
+`cantidadUnidadMedida * porcentaje / 100`, rounded to five decimals. The tax is
+`cantidad * proporcion * impuestoUnidad`, rounded only after multiplication.
+The SDK serializes `DatosImpuestoEspecifico` in official XSD order. Codes 03,
+05 and 06 also accept their structured data. The calculator requires an explicit
+`monto` for code 05 because beverages and toilet soap have different formulas.
+
+Recalculate existing mixed-tax lines and summaries: the IVA base includes ISC
+and taxes 04/05; `impuestoNeto`, line totals and invoice totals include all net
+taxes. The previous implementation counted only IVA in these totals. These
+calculations cover ordinary detail lines; surtidos and taxes assumed by the
+issuer or collected at the factory need their own document modeling.
+
+Reference document types 19/20 and reasons 13–16 were already included in the
+bundled official schemas. Reason 17 remains exclusive to REP. Hacienda's
+implementation notice sets November 1, 2026 for the new reference codes;
+the provider's October 21 release date is not a separate schema version.
+
+Sources: [Hacienda notice](https://www.hacienda.go.cr/docs/ActualizacionAnexosyEstructurasVersion4.4CEv2.pdf),
+[Anexos y Estructuras v4.4](https://www.hacienda.go.cr/docs/ANEXOS_Y_ESTRUCTURAS_V4.4.pdf).
+
+These updates apply to the legacy Number APIs. The additive exact APIs retain
+their existing supported-case boundaries and strict input contracts.

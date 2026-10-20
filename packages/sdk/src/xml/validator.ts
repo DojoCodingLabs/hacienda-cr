@@ -17,7 +17,7 @@ import {
   TaxCode,
   IVA_RATE_PERCENTAGES,
 } from "@dojocoding/hacienda-shared";
-import { round5 } from "../tax/calculator.js";
+import { calculateTaxAmount, round5 } from "../tax/calculator.js";
 import { validateDocumentIdentity } from "./document-identity.js";
 
 // ---------------------------------------------------------------------------
@@ -130,19 +130,51 @@ function validateBusinessRules(input: FacturaElectronicaInput): FacturaValidatio
       });
     }
 
+    // Standard IVA bases include ISC and alcoholic/non-alcoholic beverage taxes.
+    // Code 07 explicitly allows a separately supplied special base.
+    const includesSpecificBase = line.impuesto?.some((tax) =>
+      ["02", "04", "05"].includes(tax.codigo),
+    );
+    if (includesSpecificBase && !line.impuesto?.some((tax) => tax.codigo === "07")) {
+      const expectedBase = round5(
+        line.subTotal +
+          (line.impuesto ?? []).reduce(
+            (sum, tax) => sum + (["02", "04", "05"].includes(tax.codigo) ? tax.monto : 0),
+            0,
+          ),
+      );
+      if (line.baseImponible === undefined || !amountsEqual(line.baseImponible, expectedBase))
+        errors.push({
+          path: `${prefix}.baseImponible`,
+          message: `Base imponible must include applicable specific taxes (${expectedBase})`,
+        });
+    }
+
     // Tax amount validation
     if (line.impuesto && line.impuesto.length > 0) {
       let lineImpuestoNeto = 0;
       let taxIndex = 0;
 
       for (const tax of line.impuesto) {
-        // monto = subTotal * tarifa / 100 (only when a rate is given)
-        if (tax.tarifa !== undefined) {
-          const expectedTaxAmount = round5((line.subTotal * tax.tarifa) / 100);
-          if (!amountsEqual(tax.monto, expectedTaxAmount)) {
+        // Keep existing non-rate regime validation unchanged outside codes 02–06.
+        if (tax.tarifa !== undefined || ["02", "03", "04", "05", "06"].includes(tax.codigo)) {
+          try {
+            const expected = calculateTaxAmount(
+              tax,
+              IVA_TAX_CODES.includes(tax.codigo)
+                ? (line.baseImponible ?? line.subTotal)
+                : line.subTotal,
+              line.cantidad,
+            );
+            if (!amountsEqual(tax.monto, expected))
+              errors.push({
+                path: `${prefix}.impuesto.${taxIndex}.monto`,
+                message: `Tax amount must match its applicable calculation (${expected})`,
+              });
+          } catch (error) {
             errors.push({
               path: `${prefix}.impuesto.${taxIndex}.monto`,
-              message: `Tax amount (${tax.monto}) must equal subTotal * tarifa / 100 (${expectedTaxAmount})`,
+              message: error instanceof Error ? error.message : String(error),
             });
           }
         }
@@ -170,7 +202,7 @@ function validateBusinessRules(input: FacturaElectronicaInput): FacturaValidatio
                 "Transitional IVA rate codes 05, 06 and 07 are not valid for a new FacturaElectronica",
             });
         }
-        if (IVA_TAX_CODES.includes(tax.codigo)) {
+        {
           let netAmount = tax.monto;
           if (tax.exoneracion) {
             netAmount = round5(netAmount - tax.exoneracion.montoExoneracion);
@@ -186,7 +218,7 @@ function validateBusinessRules(input: FacturaElectronicaInput): FacturaValidatio
         if (!amountsEqual(line.impuestoNeto, lineImpuestoNeto)) {
           errors.push({
             path: `${prefix}.impuestoNeto`,
-            message: `impuestoNeto (${line.impuestoNeto}) must equal sum of net IVA taxes (${lineImpuestoNeto})`,
+            message: `impuestoNeto (${line.impuestoNeto}) must equal sum of net taxes (${lineImpuestoNeto})`,
           });
         }
       }

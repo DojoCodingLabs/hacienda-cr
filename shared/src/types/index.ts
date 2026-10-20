@@ -13,6 +13,7 @@ export type {
   Receptor,
   Exoneracion,
   Impuesto,
+  DatosImpuestoEspecifico,
   Descuento,
   CodigoComercial,
   LineaDetalle,
