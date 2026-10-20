@@ -92,6 +92,7 @@ export async function createMockServer(options: MockServerOptions = {}): Promise
   const callbackBackoffMs = options.callbackBackoffMs ?? DEFAULT_CALLBACK_BACKOFF_MS;
   const mode = options.mode ?? "replay";
   const logger = options.logger;
+  const linkDown = options.linkDown ?? false;
 
   const documents = new Map<string, DocumentState>();
   const tokens = new Map<string, TokenState>();
@@ -339,6 +340,17 @@ export async function createMockServer(options: MockServerOptions = {}): Promise
       }
       if (documents.has(clave)) {
         sendError(res, 409, `Duplicate clave numerica: ${clave} was already submitted.`, headers);
+        return;
+      }
+
+      // Simular enlace caído: devolver 503 sin almacenar el documento
+      if (linkDown) {
+        sendError(
+          res,
+          503,
+          "El enlace con Hacienda no está disponible. Intente más tarde.",
+          headers,
+        );
         return;
       }
 

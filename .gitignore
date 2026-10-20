@@ -49,3 +49,4 @@ sequences.json
 # Mutation testing (A6): temporales y reportes del runner
 packages/sdk/.stryker-tmp/
 packages/sdk/reports/
+openspec/

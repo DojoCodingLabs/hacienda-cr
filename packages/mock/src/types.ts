@@ -53,6 +53,8 @@ export interface MockServerOptions {
   readonly recordSink?: (entry: RecordedResponse) => void;
   /** Diagnostic sink; never receives credentials or document payloads. */
   readonly logger?: (line: string) => void;
+  /** Si true, simula que el enlace con Hacienda está caído (error de red / 503). */
+  readonly linkDown?: boolean;
 }
 
 /** A sanitized recorded response, reusable in `replay` mode. */

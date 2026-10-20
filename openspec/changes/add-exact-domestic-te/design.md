@@ -1,7 +1,0 @@
-# Design
-
-A strict `ExactTeInputSchema` owns TE source facts and the named ordinary IVA13 case. It permits an absent receiver or actual receiver with optional domestic identification, and rejects receiver activity and precomputed totals. Shared monetary kernel inputs contain only real lines/currency/payment fields. The current and retained FE wrappers parse their unchanged schemas; the TE wrapper parses its own schema and checks genuine type04 identity. A small internal exact XML field projection permits actual absent receiver; the public FE builder still requires and validates its unchanged FE source.
-
-No arbitrary-family framework, dummy receiver, Number money cast, retained XML/signing/POST builder or fiscal acceptance flag is added. CRC/USD, ordinary IVA13, CABYS classification/transaction/discount limits and current positive 02/10 terms are explicit. Unknown regimes and family-inapplicable conditions reject rather than normalize. Source-only calculations do not prove legal eligibility, actual collection or institutional acceptance.
-
-Official 2026 TE XSD lines46–54 and990–1038 establish optional receiver/identification and required actual name, with no receiver activity field. Preserve schema bytes and independently test unsigned/signed XML. Existing FE errors/output and genuine historical custody remain regression boundaries. The Forge advisory and recipient status oracle remain separate prerequisites in #69/#85.

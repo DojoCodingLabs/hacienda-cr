@@ -185,6 +185,45 @@ export type {
 } from "./calendar/index.js";
 
 // ---------------------------------------------------------------------------
+// Delivery module — outbox durable y máquina de estados de entrega
+// ---------------------------------------------------------------------------
+
+export {
+  FileDocumentStore,
+  createDefaultStore,
+  createStoredDocument,
+  transitionDocument,
+  evaluateDeadline,
+  classifySendResult,
+  retryStoredDocuments,
+  situationFromClave,
+  assertClaveSituationMatch,
+  createObligation,
+  validateSituationReference,
+  DEFAULT_DEADLINE_BUSINESS_DAYS,
+  DELIVERY_SITUATION_FROM_DIGIT,
+  DIGIT_FROM_DELIVERY_SITUATION,
+  VALID_TRANSITIONS,
+  isValidTransition,
+  InvalidTransitionError,
+  ImmutableSituationError,
+  ClaveSituationMismatchError,
+} from "./delivery/index.js";
+export type {
+  DeliverySituation,
+  DeliveryState,
+  Obligation,
+  TransitionRecord,
+  StoredDocument,
+  DocumentStore,
+  DeadlineEvaluation,
+  SendResult,
+  DeliverySubmitAndWaitOptions,
+  CreateStoredDocumentOptions,
+  FileStoreOptions,
+} from "./delivery/index.js";
+
+// ---------------------------------------------------------------------------
 // Signing module — XAdES-EPES digital signature
 // ---------------------------------------------------------------------------
 
