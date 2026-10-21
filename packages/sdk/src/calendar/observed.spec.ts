@@ -31,7 +31,15 @@ describe("official bounded 2026 civil calendar", () => {
     expect(isBusinessDay("2026-10-24T00:30:00-06:00")).toBe(false);
   });
   it("rejects invalid dates, unknown years and invalid counts, including zero-day shortcut", () => {
-    for (const date of ["2026-02-30", "2031-01-01", "2025-12-31", "bad", "2026-01-01T00:00:00"])
+    for (const date of [
+      "2026-02-30",
+      "2026-02-30T12:00:00-06:00",
+      "2026-10-21T24:00:00-06:00",
+      "2031-01-01",
+      "2025-12-31",
+      "bad",
+      "2026-01-01T00:00:00",
+    ])
       expect(() => addBusinessDays(date, 0)).toThrow();
     for (const count of [NaN, Infinity, 0.5, -1])
       expect(() => addBusinessDays("2026-10-21", count)).toThrow();
