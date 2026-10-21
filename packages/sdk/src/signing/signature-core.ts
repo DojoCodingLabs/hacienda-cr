@@ -9,7 +9,7 @@
  * This module is internal: it is not exported from the package barrel.
  */
 import { X509Certificate } from "node:crypto";
-import { DOMParser, XMLSerializer, type Element } from "@xmldom/xmldom";
+import { DOMParser, XMLSerializer, type Element, type Document } from "@xmldom/xmldom";
 import * as xadesjs from "xadesjs";
 import * as xmldsigjs from "xmldsigjs";
 import * as xpath from "xpath";
@@ -232,6 +232,19 @@ export function certificateValidity(
   if (at < notBefore) return { notBefore, notAfter, state: "not-yet-valid" };
   if (at > notAfter) return { notBefore, notAfter, state: "expired" };
   return { notBefore, notAfter, state: "valid" };
+}
+
+/** Parse without logging attacker-controlled diagnostics; normalize every failure. */
+export function parseSignatureXml(xml: string): Document {
+  try {
+    return new DOMParser({
+      onError: () => {
+        throw new Error("Invalid XML");
+      },
+    }).parseFromString(xml, "application/xml");
+  } catch {
+    throw new SignatureCoreError("invalid-xml");
+  }
 }
 
 /**

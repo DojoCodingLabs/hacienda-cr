@@ -1,4 +1,4 @@
-import { it, expect } from "vitest";
+import { it, expect, vi } from "vitest";
 import * as ds from "xmldsigjs";
 import * as xa from "xadesjs";
 import { DOMParser, XMLSerializer } from "@xmldom/xmldom";
@@ -65,3 +65,40 @@ function required<T>(value: T | null | undefined): T {
   if (value == null) throw new Error("Missing required value");
   return value;
 }
+
+it("rejects namespace-invalid XML as a structured result without stderr diagnostics", async () => {
+  const log = vi.spyOn(console, "error").mockImplementation(() => undefined);
+  const stderr = vi.spyOn(process.stderr, "write").mockImplementation(() => true);
+  try {
+    const external = vi.fn(() => true);
+    const result = await verifySignedDocumentXml(
+      "<secret:FacturaElectronica><Clave>synthetic</Clave></secret:FacturaElectronica>",
+      { externalVerifier: external },
+    );
+    expect(result.valid).toBe(false);
+    expect(result.errors.map((error) => error.code)).toContain("InvalidXml");
+    expect(log).not.toHaveBeenCalled();
+    expect(stderr).not.toHaveBeenCalled();
+    expect(external).not.toHaveBeenCalled();
+  } finally {
+    log.mockRestore();
+    stderr.mockRestore();
+  }
+});
+
+it("accepts a signed XSD-valid anonymous-receiver tiquete without inventing identification", async () => {
+  const { SIMPLE_TIQUETE } = await import("../__fixtures__/document-fixtures.js");
+  const { buildTiqueteXml } = await import("../documents/tiquete-builder.js");
+  const { validateDocumentXml } = await import("../xml/schema-validator.js");
+  const invoice = structuredClone(SIMPLE_TIQUETE);
+  invoice.receptor = { nombre: "Consumidor final" };
+  const xml = buildTiqueteXml(invoice);
+  expect((await validateDocumentXml(xml)).valid).toBe(true);
+  const p12 = createTestP12("synthetic"),
+    credentials = await loadP12(p12, "synthetic");
+  const signed = await signXml(xml, p12, "synthetic");
+  const verified = await verifySignedDocumentXml(signed, {
+    trustedSignerCertificates: [credentials.certificatePem],
+  });
+  expect(verified.valid, JSON.stringify(verified.errors)).toBe(true);
+});

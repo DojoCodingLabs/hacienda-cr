@@ -16,7 +16,7 @@
  *
  * @module signing/document-verifier
  */
-import { DOMParser, type Element } from "@xmldom/xmldom";
+import { type Element } from "@xmldom/xmldom";
 import { XMLValidator } from "fast-xml-parser";
 import {
   XADES_POLICY_HASH,
@@ -35,6 +35,7 @@ import {
   required,
   resolvePinnedCertificate,
   signatureProfile,
+  parseSignatureXml,
   textOf,
   verifySignatureBytes,
 } from "./signature-core.js";
@@ -162,18 +163,22 @@ function documentTypeOf(root: Element): SignedDocumentType | null {
 /** Read the identity facts the key carries and check them against each other. */
 function identityOf(root: Element, namespace: string, code: string): boolean {
   const emisor = one(root, namespace, "Emisor");
-  const emisorNumero = textOf(one(emisor, namespace, "Identificacion"), namespace, "Numero");
+  const issuerId = one(emisor, namespace, "Identificacion");
+  const emisorNumero = textOf(issuerId, namespace, "Numero");
+  const emisorTipo = textOf(issuerId, namespace, "Tipo");
   const receptor = children(root, namespace, "Receptor")[0];
-  const receptorNumero = receptor
-    ? textOf(one(receptor, namespace, "Identificacion"), namespace, "Numero")
-    : undefined;
+  const receiverId = receptor ? children(receptor, namespace, "Identificacion")[0] : undefined;
+  const receptorNumero = receiverId ? textOf(receiverId, namespace, "Numero") : undefined;
+  const receptorTipo = receiverId ? textOf(receiverId, namespace, "Tipo") : undefined;
   const issues = validateDocumentIdentity(
     {
       clave: textOf(root, namespace, "Clave"),
       numeroConsecutivo: textOf(root, namespace, "NumeroConsecutivo"),
       fechaEmision: textOf(root, namespace, "FechaEmision"),
-      emisor: { identificacion: { numero: emisorNumero } },
-      ...(receptorNumero ? { receptor: { identificacion: { numero: receptorNumero } } } : {}),
+      emisor: { identificacion: { numero: emisorNumero, tipo: emisorTipo } },
+      ...(receptorNumero
+        ? { receptor: { identificacion: { numero: receptorNumero, tipo: receptorTipo } } }
+        : {}),
     },
     code,
   );
@@ -287,8 +292,13 @@ export async function verifySignedDocumentXml(
       fail("InvalidXml", "The document is not well-formed XML.");
     else {
       checks.input = true;
-      const document = new DOMParser().parseFromString(xml, "application/xml");
-      const root = document.documentElement;
+      let document;
+      try {
+        document = parseSignatureXml(xml);
+      } catch {
+        checks.input = false;
+      }
+      const root = document?.documentElement;
       if (!root || root.nodeName === "parsererror")
         fail("InvalidXml", "The document could not be parsed.");
       else {
