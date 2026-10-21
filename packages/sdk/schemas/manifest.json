@@ -215,6 +215,27 @@
       "vendored": true
     },
     {
+      "path": "feriados/README.md",
+      "set": null,
+      "sha256": "f2297fb9772e02d50c6a17b3b305e0d1f10977c3f10d2fc8b1757f1cd268d96d",
+      "bytes": 897,
+      "vendored": true
+    },
+    {
+      "path": "feriados/feriados-2026.json",
+      "set": null,
+      "sha256": "e0236e9f7d2457605f7049b104f862b8540b24ad79d296ea3a7ab4f66f0ebb21",
+      "bytes": 1864,
+      "vendored": true
+    },
+    {
+      "path": "feriados/feriados-calendario-2026.pdf",
+      "set": null,
+      "sha256": "6f80b0b758770360013fa922a532f6446ff3dee2240e63f84c310a776f55eb59",
+      "bytes": 512176,
+      "vendored": true
+    },
+    {
       "path": "xmldsig-core-schema.xsd",
       "set": null,
       "sha256": "35cf8197da812c85e40d57891b35c94187569ed474a2dac813ce5090dafcd35c",

@@ -149,7 +149,9 @@ export {
   buildFacturaExportacionXml,
   buildReciboPagoXml,
   buildMensajeReceptorXml,
+  parseDocumentXml,
 } from "./documents/index.js";
+export type { ParsedDocument, ParseDocumentResult } from "./documents/index.js";
 
 // ---------------------------------------------------------------------------
 // Logging module — structured logging
@@ -159,11 +161,87 @@ export { Logger, LogLevel, noopLogger, sanitizeLogString, redactSecrets } from "
 export type { LoggerOptions, LogFormat, LogWriter, LogEntry } from "./logging/index.js";
 
 // ---------------------------------------------------------------------------
+// Calendar module — business days and holidays for Costa Rica
+// ---------------------------------------------------------------------------
+
+export {
+  isBusinessDay,
+  addBusinessDays,
+  businessDaysBetween,
+  checkBusinessDayDeadline,
+  calculateObservedDate,
+  getObservedHolidaysForYear,
+  getAllObservedHolidays,
+  CALENDAR_RANGE,
+  TIMEZONE,
+} from "./calendar/index.js";
+export type {
+  HolidayEntry,
+  HolidaysData,
+  ObservedHoliday,
+  BusinessDayOptions,
+  BusinessDayResult,
+  CalendarRange,
+} from "./calendar/index.js";
+
+// ---------------------------------------------------------------------------
+// Delivery module — outbox durable y máquina de estados de entrega
+// ---------------------------------------------------------------------------
+
+export {
+  FileDocumentStore,
+  createDefaultStore,
+  createStoredDocument,
+  transitionDocument,
+  evaluateDeadline,
+  classifySendResult,
+  situationFromClave,
+  assertClaveSituationMatch,
+  createObligation,
+  validateSituationReference,
+  DEFAULT_DEADLINE_BUSINESS_DAYS,
+  DELIVERY_SITUATION_FROM_DIGIT,
+  DIGIT_FROM_DELIVERY_SITUATION,
+  VALID_TRANSITIONS,
+  isValidTransition,
+  InvalidTransitionError,
+  ImmutableSituationError,
+  ClaveSituationMismatchError,
+} from "./delivery/index.js";
+export type {
+  DeliverySituation,
+  DeliveryState,
+  Obligation,
+  TransitionRecord,
+  StoredDocument,
+  DocumentStore,
+  DeadlineEvaluation,
+  SendResult,
+  DeliverySubmitAndWaitOptions,
+  CreateStoredDocumentOptions,
+  FileStoreOptions,
+} from "./delivery/index.js";
+
+// ---------------------------------------------------------------------------
 // Signing module — XAdES-EPES digital signature
 // ---------------------------------------------------------------------------
 
-export { loadP12, signXml, signAndEncode, verifyHaciendaResponseXml } from "./signing/index.js";
-export type { P12Credentials, SignXmlOptions, XadesPolicyConfig } from "./signing/index.js";
+export {
+  loadP12,
+  signXml,
+  signAndEncode,
+  verifyHaciendaResponseXml,
+  verifySignedDocumentXml,
+} from "./signing/index.js";
+export type {
+  P12Credentials,
+  SignXmlOptions,
+  XadesPolicyConfig,
+  DocumentVerificationCode,
+  SignedDocumentType,
+  SignedDocumentVerification,
+  VerifySignedDocumentOptions,
+} from "./signing/index.js";
 
 // ---------------------------------------------------------------------------
 // API module — HTTP client, submission, polling, orchestrator
@@ -262,3 +340,9 @@ export type {
   ExactFecUsedPersonalGoodsNonSubjectInput,
   ExactFecUsedPersonalGoodsNonSubjectCalculated,
 } from "@dojocoding/hacienda-shared";
+
+export {
+  assignSequenceWithDocument,
+  getAssignedDocument,
+  recordSequenceDiscard,
+} from "./config/index.js";

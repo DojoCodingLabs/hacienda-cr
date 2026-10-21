@@ -1,5 +1,14 @@
 # Migration guide
 
+## Next: reviewed additive SDK contracts
+
+- Legacy Number inputs/calculators remain unchanged. New shared monetary schemas accept bounded decimal text or explicit rounding of an already binary Number. SDK kernel helpers remain internal.
+- `parseDocumentXml` only inverts unsigned legacy-builder bytes without loss. It rejects alternate serialization, signed XML, unknown fields and amounts that cannot survive a Number DTO; it is not a general fiscal XML importer.
+- New signatures retain the library-generated Id so QualifyingProperties Target identifies the same signature. The strict new EPES verifier rejects historical documents with mismatched Target; do not rewrite or re-sign historical fiscal documents to silence that check.
+- Civil-calendar helpers cover only official 2026 dates. They do not determine exceptional closures or legal deadline origins.
+- Persistent submit requires an explicit store. After an uncertain POST, resume queries by the same clave and bytes; no automatic resend. Durable issuance uses one canonical ledger shared with legacy counters, and reset cannot reuse issued numbers. See docs/open-pr-remediation.md for recovery and operational limits.
+- Once durable issuance writes the versioned ledger, all writers sharing that config directory must use this SDK version. Older binaries only understand flat counters and must not share the upgraded directory; back up local state before deliberate adoption. There is no automatic downgrade or replay.
+
 ## 0.4.2 → 0.5.0
 
 All four linked `@dojocoding/hacienda-{shared,sdk,cli,mcp}` packages advance to

@@ -18,9 +18,9 @@ Toolkit open-source en TypeScript para trabajar con comprobantes electrónicos v
 
 [Casos de uso](#qué-podés-construir) · [Empezar](#empezá-acá) · [Documentación](#documentación) · [Contribuir](#desarrollo-y-contribuciones) · [Reportar un problema](https://github.com/DojoCodingLabs/hacienda-cr/issues/new)
 
-La versión **0.10.0** está publicada en los cuatro paquetes. El [registro de publicación](docs/release-0100-published.md) conserva los bytes verificados, procedencia y recuperación tras una demora de indexación de npm. La [preparación revisada](docs/release-0100-readiness.md) detalla sus APIs exactas y límites: REP exacto, transporte y correlación de mensajes del receptor, adopción en aplicaciones y aceptación fiscal siguen siendo trabajos separados. El [registro histórico 0.7.0](docs/release-070-published.md) conserva su verificación y recuperación de publicación.
+La versión **0.11.0** está publicada en los cuatro paquetes. El [release v0.11.0](https://github.com/DojoCodingLabs/hacienda-cr/releases/tag/v0.11.0) conserva los bytes verificados, procedencia y recuperación tras una demora de indexación de npm. La [preparación revisada](docs/release-0100-readiness.md) detalla sus APIs exactas y límites: REP exacto, transporte y correlación de mensajes del receptor, adopción en aplicaciones y aceptación fiscal siguen siendo trabajos separados. El [registro histórico 0.7.0](docs/release-070-published.md) conserva su verificación y recuperación de publicación.
 
-El desarrollo nuevo está en pausa por solicitud del usuario al 18 de octubre de 2026. El [contexto de continuación](docs/pause-context-2026-10-18.md) reúne el estado de los ocho issues, los límites pendientes y los criterios para retomar; la publicación 0.10.0 conserva su identidad y evidencia originales.
+El checkpoint del 18 de octubre de 2026 conserva el estado histórico anterior a la reanudación autorizada del trabajo. El [contexto de continuación](docs/pause-context-2026-10-18.md) reúne el estado de los ocho issues, los límites pendientes y los criterios para retomar; la publicación 0.10.0 conserva su identidad y evidencia originales.
 
 ## La visión: facturación dentro de tu producto
 
@@ -189,6 +189,29 @@ Herramientas: `draft_invoice`, `create_invoice`, `lookup_taxpayer`, `check_statu
 - [Referencia de comandos](docs/reference.md#cli--referencia-de-comandos): opciones y ejemplos de la CLI.
 - [Integración MCP](docs/reference.md#mcp-server--integración-con-ia): configuración del cliente y recursos.
 - [Tipos y constantes compartidos](shared/README.md).
+- [Informe de conformidad de catálogos](docs/conformity-report.md): cada tabla de
+  códigos del SDK contra las fuentes primarias de Hacienda, con veredicto y cita por
+  fila. Es evidencia histórica (la lectura del 2026-10-14) más una reconciliación con
+  el `main` vigente: el apéndice es una foto de aquel momento, no el estado actual.
+
+### Verificación de firma
+
+`verifySignedDocumentXml` (SDK) verifica el comprobante que el propio SDK firma:
+los digests de cada referencia, la firma RSA sobre el `ds:SignedInfo` canónico, la
+canonicalización declarada, la vigencia del certificado, la política de firma
+(identificador, método de digest y hash contra la política publicada) y la
+identidad de las partes contra la clave. El tipo de comprobante sale de la raíz
+del documento, nunca del contenido.
+
+La confianza la establece **el pin de hoja que provee el consumidor**: el
+certificado embebido en el documento no establece confianza, no se valida cadena de
+CA ni revocación, y nada sale a la red. Sin pin, el resultado declara la
+confianza como no establecida y no es válido.
+
+**Verificar una firma no es aceptación fiscal.** El verificador no consulta a
+Hacienda, no habilita regímenes y no sustituye la respuesta del API: un
+documento puede verificar criptográficamente y ser rechazado. La aceptación real
+sólo la establece Hacienda sobre el documento enviado.
 
 ### Credenciales y configuración
 
@@ -228,6 +251,27 @@ docs/           Referencia, banner y métricas de npm
 
 Para trabajar en un paquete: `pnpm --filter @dojocoding/hacienda-sdk test`.
 
+### Catálogos de códigos y sus alias
+
+Los catálogos de códigos se generan desde `packages/sdk/schemas/codes.json` con
+`pnpm spec:generate` y viven en `shared/src/generated/` (nunca se editan a
+mano: cada archivo empieza con `NO EDITAR`). El registro de parejas
+tabla→export vive en `scripts/codes-generate/table-map.mjs`; cuando Hacienda
+publica un código nuevo, se amplía ahí con la clave revisada y se regenera.
+
+Ese mismo registro declara los **alias deprecados** que la API publicada
+expone y que el generador no emite (no son códigos del XSD, son nombres
+heredados de un código canónico):
+
+| Alias                          | Código canónico                                           | Motivo                                                   |
+| ------------------------------ | --------------------------------------------------------- | -------------------------------------------------------- |
+| `DocumentTypeCode.COMPRA_PAGO` | `DocumentTypeCode.FACTURA_ELECTRONICA_COMPRA` (`08`)      | nombre heredado de la factura electrónica de compra      |
+| `DocumentTypeCode.GASTO_VIAJE` | `DocumentTypeCode.FACTURA_ELECTRONICA_EXPORTACION` (`09`) | nombre heredado de la factura electrónica de exportación |
+
+La paridad de valor no los cuenta (no hay tabla que los pardee); una prueba
+verifica que cada alias declarado siga publicado y apunte a su código
+canónico.
+
 Encontrá trabajo en [Issues](https://github.com/DojoCodingLabs/hacienda-cr/issues), abrí un issue con pasos para reproducir un error o proponé una mejora. Para contribuir código, hacé un fork, creá una rama, agregá los tests correspondientes y ejecutá los checks anteriores antes de abrir un pull request. Usamos Changesets para versionar los paquetes.
 
 ## Agradecimientos
@@ -248,3 +292,5 @@ The additive [exact decimal ordinary FE API](docs/specs/exact-ordinary-fe.md)
 preserves supported financial strings through BigInt calculation, JSON and XML;
 legacy numeric APIs are unchanged. Its explicit IVA13/full-payment scope does
 not imply all domestic fiscal cases or external acceptance.
+
+El simulador de transporte es una herramienta interna en [packages/mock](packages/mock/README.md); no está publicado en npm ni establece aceptación fiscal.

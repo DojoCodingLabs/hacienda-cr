@@ -1,4 +1,8 @@
-import { expect, it } from "vitest";
+import { expect, it, vi } from "vitest";
+
+// La prueba genera un par de claves RSA, firma y verifica: bajo carga
+// paralela puede pasar de los 5 s por defecto, asi que lleva presupuesto propio.
+vi.setConfig({ testTimeout: 60_000 });
 import { exactFecUsedPersonalGoodsNonSubjectFixture } from "../__fixtures__/exact-fec-used-personal.js";
 import { createTestP12 } from "../__fixtures__/signing.js";
 import { signXml } from "./signer.js";
@@ -53,4 +57,4 @@ it("binds a legitimate synthetic response to explicit used-personal-goods caller
       verifyHaciendaResponseXml(signed.replace("100.00000", "100.00001"), options),
     ).rejects.toBeInstanceOf(ResponseVerificationError);
   }
-});
+}, 60_000);

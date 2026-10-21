@@ -11,6 +11,7 @@ import { assertDocumentIdentity } from "../xml/document-identity.js";
  * Namespace: https://cdn.comprobanteselectronicos.go.cr/xml-schemas/v4.4/NotaCreditoElectronica
  */
 
+import { DocumentTypeCode } from "@dojocoding/hacienda-shared";
 import type { NotaCreditoElectronica } from "@dojocoding/hacienda-shared";
 import { buildXml } from "../xml/builder.js";
 import { buildStandardDocumentBody, DOCUMENT_VARIANTS } from "./shared-xml-helpers.js";
@@ -43,6 +44,6 @@ import { buildStandardDocumentBody, DOCUMENT_VARIANTS } from "./shared-xml-helpe
  */
 export function buildNotaCreditoXml(input: NotaCreditoElectronica): string {
   const data = buildStandardDocumentBody(input, DOCUMENT_VARIANTS.NotaCreditoElectronica);
-  assertDocumentIdentity(input, "03");
+  assertDocumentIdentity(input, DocumentTypeCode.NOTA_CREDITO_ELECTRONICA);
   return buildXml("NotaCreditoElectronica", data);
 }

@@ -8,7 +8,7 @@ import { EmisorSchema } from "./emisor.js";
 import { ReceptorSchema } from "./receptor.js";
 import { IdentificacionSchema } from "./identification.js";
 import { UbicacionSchema, TelefonoSchema } from "./common.js";
-import { CURRENCY_CODES } from "../constants/index.js";
+import { CURRENCY_CODES } from "../generated/index.js";
 import { exactPartyName } from "./exact-party-name.js";
 
 export const ExactMoneySchema = z.string().regex(/^(?:0|[1-9]\d{0,12})(?:\.\d{1,5})?$/);

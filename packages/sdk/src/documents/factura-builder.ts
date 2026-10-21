@@ -6,6 +6,7 @@ import { assertDocumentIdentity } from "../xml/document-identity.js";
  * compliant XML string using the XML builder core.
  */
 
+import { DocumentTypeCode } from "@dojocoding/hacienda-shared";
 import type { FacturaElectronica } from "@dojocoding/hacienda-shared";
 import { buildXml } from "../xml/builder.js";
 import { buildStandardDocumentBody, DOCUMENT_VARIANTS } from "./shared-xml-helpers.js";
@@ -37,6 +38,6 @@ import { buildStandardDocumentBody, DOCUMENT_VARIANTS } from "./shared-xml-helpe
  */
 export function buildFacturaXml(input: FacturaElectronica): string {
   const data = buildStandardDocumentBody(input, DOCUMENT_VARIANTS.FacturaElectronica);
-  assertDocumentIdentity(input, "01");
+  assertDocumentIdentity(input, DocumentTypeCode.FACTURA_ELECTRONICA);
   return buildXml("FacturaElectronica", data);
 }

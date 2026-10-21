@@ -97,8 +97,7 @@ export async function signXml(xml: string, p12Buffer: Buffer, p12Pin: string): P
     // 4. Create the XAdES signed XML object
     const signedXml = new xadesjs.SignedXml();
 
-    // 5. Generate a unique ID for this signature
-    const sigId = "xmldsig-" + generateId();
+    // 5. Keep the library-generated Signature Id and QualifyingProperties Target bound.
 
     // 6. Build and apply the XAdES-EPES signature with policy
     const signatureXml = await signedXml.Sign(
@@ -137,8 +136,6 @@ export async function signXml(xml: string, p12Buffer: Buffer, p12Pin: string): P
         ],
         // Embed the X.509 certificate in KeyInfo (as Base64 string)
         x509: [certBase64],
-        // Signature element ID
-        id: sigId,
       },
     );
 

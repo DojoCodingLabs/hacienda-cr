@@ -4,12 +4,12 @@
 
 import { z } from "zod";
 import {
-  TaxCode,
-  IvaRateCode,
-  ExonerationType,
-  PaymentMethod,
-  SaleCondition,
-} from "../constants/index.js";
+  MONETARY_TEXT_PATTERN,
+  isPositiveMonetaryText,
+  normalizeMonetaryInput,
+} from "../monetary/index.js";
+import { ExonerationType } from "../constants/index.js";
+import { IvaRateCode, PaymentMethod, SaleCondition, TaxCode } from "../generated/index.js";
 
 /** Schema for tax type codes (Codigo de Impuesto), full v4.4 catalog. */
 export const TaxCodeSchema = z.enum(TaxCode);
@@ -31,6 +31,51 @@ export const PaymentMethodSchema = z.enum(PaymentMethod);
 export const SaleConditionSchema = z
   .enum(SaleCondition)
   .exclude(["PAGO_SERVICIO_ESTADO", "PAGO_VENTA_CREDITO_IVA_90_DIAS"]);
+
+// Monetary values
+// ---------------------------------------------------------------------------
+
+/**
+ * Bounded monetary text: non-negative, at most 13 integer digits and at most
+ * 5 decimal places, in plain notation.
+ */
+export const MonetaryTextSchema = z
+  .string()
+  .regex(MONETARY_TEXT_PATTERN, "Monto must be a bounded decimal text (0..5 decimals)");
+
+/**
+ * Monetary input at the public boundary.
+ *
+ * Accepts the legacy JSON `number` (the shape CLI and MCP still send) or a
+ * bounded decimal text, and normalizes both to **bounded decimal text**.
+ * The normalization never produces a binary float: a number is read through
+ * its shortest round-trip representation and rounded HALF_UP at five
+ * decimals, and a text is validated strictly (no exponent, no sign, no more
+ * than five decimals, no value above the bound).
+ */
+export const MoneyInputSchema = z
+  .custom<number | string>((value) => typeof value === "number" || typeof value === "string", {
+    message: "Monto must be a number or a bounded decimal text",
+  })
+  .transform((value, ctx) => {
+    try {
+      return normalizeMonetaryInput(value);
+    } catch (error) {
+      ctx.addIssue({
+        code: "custom",
+        message: error instanceof Error ? error.message : "Invalid monetary amount",
+      });
+      return z.NEVER;
+    }
+  });
+
+/** Monetary amount, zero allowed. Normalizes to bounded decimal text. */
+export const MontoSchema = MoneyInputSchema;
+
+/** Monetary amount, strictly positive. Normalizes to bounded decimal text. */
+export const MontoPositiveSchema = MoneyInputSchema.refine(isPositiveMonetaryText, {
+  message: "Monto must be greater than zero",
+});
 
 /** Schema for phone number (Telefono). */
 export const TelefonoSchema = z.object({

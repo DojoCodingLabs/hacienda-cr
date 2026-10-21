@@ -16,7 +16,7 @@ import type {
   TotalDesgloseImpuesto,
   DatosImpuestoEspecifico,
 } from "@dojocoding/hacienda-shared";
-import { ImpuestoSchema, TaxCode } from "@dojocoding/hacienda-shared";
+import { ImpuestoSchema, IvaRateCode, TaxCode } from "@dojocoding/hacienda-shared";
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -276,7 +276,7 @@ export function calculateLineItemTotals(item: LineItemInput): CalculatedLineItem
   const taxInputs: LineItemTaxInput[] =
     item.impuesto && item.impuesto.length > 0
       ? item.impuesto
-      : [{ codigo: TaxCode.IVA, codigoTarifaIVA: "01", tarifa: 0 }];
+      : [{ codigo: TaxCode.IVA, codigoTarifaIVA: IvaRateCode.EXENTO, tarifa: 0 }];
 
   for (const tax of taxInputs) {
     // Apply the applicable formula before monetary rounding.

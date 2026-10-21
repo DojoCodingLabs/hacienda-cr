@@ -11,6 +11,7 @@ import { assertDocumentIdentity } from "../xml/document-identity.js";
  * Namespace: https://cdn.comprobanteselectronicos.go.cr/xml-schemas/v4.4/NotaDebitoElectronica
  */
 
+import { DocumentTypeCode } from "@dojocoding/hacienda-shared";
 import type { NotaDebitoElectronica } from "@dojocoding/hacienda-shared";
 import { buildXml } from "../xml/builder.js";
 import { buildStandardDocumentBody, DOCUMENT_VARIANTS } from "./shared-xml-helpers.js";
@@ -43,6 +44,6 @@ import { buildStandardDocumentBody, DOCUMENT_VARIANTS } from "./shared-xml-helpe
  */
 export function buildNotaDebitoXml(input: NotaDebitoElectronica): string {
   const data = buildStandardDocumentBody(input, DOCUMENT_VARIANTS.NotaDebitoElectronica);
-  assertDocumentIdentity(input, "02");
+  assertDocumentIdentity(input, DocumentTypeCode.NOTA_DEBITO_ELECTRONICA);
   return buildXml("NotaDebitoElectronica", data);
 }

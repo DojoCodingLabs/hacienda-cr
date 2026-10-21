@@ -1,0 +1,399 @@
+/**
+ * Congelación de la API de catálogo existente (contrato, no fuente).
+ *
+ * Cualquier regeneración que cambie un valor o clave de una exportación
+ * existente rompe esta suite y obliga a una decisión consciente (y a un
+ * Changeset acorde): cambiar nombre o valor de un export publicado es
+ * `major`. Las exportaciones nuevas solo suman y no rompen este contrato
+ * (por tecla congelada); los arrays de catálogo completo se exigen byte a
+ * byte porque su contrato es el vendorizado verbatim.
+ */
+import { describe, expect, it } from "vitest";
+import { ALIASES } from "../../scripts/codes-generate/table-map.mjs";
+import { DocumentTypeCode } from "./constants/index.js";
+import {
+  PaymentMethod,
+  SaleCondition,
+  TaxCode,
+  IvaRateCode,
+  MensajeReceptorCode,
+  SituationCode,
+  IdentificationType,
+  ProvinceCode,
+  CURRENCY_CODES,
+  DISCOUNT_CODES,
+  OTHER_CHARGE_TYPES,
+  EXONERATION_INSTITUTIONS,
+} from "./generated/index.js";
+
+describe("aliases deprecados: la API publicada los conserva", () => {
+  it("cada alias declarado existe y apunta a su código canónico", () => {
+    const published: Record<string, Readonly<Record<string, string>>> = {
+      DocumentTypeCode,
+    };
+    for (const alias of ALIASES) {
+      const catalog = published[alias.exportName];
+      expect(catalog, `alias sobre un export desconocido: ${alias.exportName}`).toBeDefined();
+      expect(catalog?.[alias.alias], `alias publicado ausente: ${alias.alias}`).toBe(
+        catalog?.[alias.canonical],
+      );
+      expect(catalog?.[alias.canonical], `canónico ausente: ${alias.canonical}`).toBeDefined();
+    }
+  });
+
+  it("el registro de aliases está vacío o declara motivo para cada entrada", () => {
+    for (const alias of ALIASES) {
+      expect(alias.reason.length, `alias sin motivo: ${alias.alias}`).toBeGreaterThan(10);
+    }
+  });
+});
+
+describe("catálogos generados: la API publicada queda congelada", () => {
+  const frozenObjects: readonly (readonly [
+    string,
+    Record<string, string>,
+    Record<string, string>,
+  ])[] = [
+    [
+      "PaymentMethod",
+      PaymentMethod,
+      {
+        OTROS: "99",
+        EFECTIVO: "01",
+        TARJETA: "02",
+        CHEQUE: "03",
+        TRANSFERENCIA: "04",
+        RECAUDADO_TERCEROS: "05",
+        SINPE_MOVIL: "06",
+        PLATAFORMA_DIGITAL: "07",
+      },
+    ],
+    [
+      "SaleCondition",
+      SaleCondition,
+      {
+        VENTA_CREDITO_IVA_90_DIAS: "10",
+        PAGO_VENTA_CREDITO_IVA_90_DIAS: "11",
+        VENTA_MERCANCIA_NO_NACIONALIZADA: "12",
+        VENTA_BIENES_USADOS_NO_CONTRIBUYENTE: "13",
+        ARRENDAMIENTO_OPERATIVO: "14",
+        ARRENDAMIENTO_FINANCIERO: "15",
+        OTROS: "99",
+        CONTADO: "01",
+        CREDITO: "02",
+        CONSIGNACION: "03",
+        APARTADO: "04",
+        ARRENDAMIENTO_OPCION_COMPRA: "05",
+        ARRENDAMIENTO_FUNCION_FINANCIERA: "06",
+        COBRO_FAVOR_TERCERO: "07",
+        SERVICIOS_ESTADO: "08",
+        PAGO_SERVICIO_ESTADO: "09",
+      },
+    ],
+    [
+      "TaxCode",
+      TaxCode,
+      {
+        IMPUESTO_CEMENTO: "12",
+        OTROS: "99",
+        IVA: "01",
+        IMPUESTO_SELECTIVO_CONSUMO: "02",
+        IMPUESTO_UNICO_COMBUSTIBLES: "03",
+        IMPUESTO_BEBIDAS_ALCOHOLICAS: "04",
+        IMPUESTO_BEBIDAS_SIN_ALCOHOL: "05",
+        IMPUESTO_TABACO: "06",
+        IVA_CALCULO_ESPECIAL: "07",
+        IVA_BIENES_USADOS: "08",
+      },
+    ],
+    [
+      "IvaRateCode",
+      IvaRateCode,
+      {
+        TARIFA_EXENTA: "10",
+        CERO_SIN_CREDITO: "11",
+        EXENTO: "01",
+        REDUCIDA_1: "02",
+        REDUCIDA_2: "03",
+        REDUCIDA_4: "04",
+        TRANSITORIO_0: "05",
+        TRANSITORIO_4: "06",
+        TRANSITORIO_8: "07",
+        GENERAL_13: "08",
+        REDUCIDA_0_5: "09",
+      },
+    ],
+    [
+      "MensajeReceptorCode",
+      MensajeReceptorCode,
+      {
+        ACEPTADO: "1",
+        ACEPTADO_PARCIALMENTE: "2",
+        RECHAZADO: "3",
+      },
+    ],
+    [
+      "SituationCode",
+      SituationCode,
+      {
+        NORMAL: "1",
+        CONTINGENCIA: "2",
+        SIN_INTERNET: "3",
+      },
+    ],
+    [
+      "IdentificationType",
+      IdentificationType,
+      {
+        CEDULA_FISICA: "01",
+        CEDULA_JURIDICA: "02",
+        DIMEX: "03",
+        NITE: "04",
+        EXTRANJERO_NO_DOMICILIADO: "05",
+        NO_CONTRIBUYENTE: "06",
+      },
+    ],
+    [
+      "ProvinceCode",
+      ProvinceCode,
+      {
+        SAN_JOSE: "1",
+        ALAJUELA: "2",
+        CARTAGO: "3",
+        HEREDIA: "4",
+        GUANACASTE: "5",
+        PUNTARENAS: "6",
+        LIMON: "7",
+      },
+    ],
+  ];
+
+  for (const [name, actual, expected] of frozenObjects) {
+    it(`${name} conserva sus claves y valores congelados`, () => {
+      for (const [key, value] of Object.entries(expected))
+        expect((actual as Record<string, string>)[key], `${name}.${key}`).toBe(value);
+    });
+  }
+
+  it("CURRENCY_CODES conserva exactamente los valores congelados", () => {
+    expect([...CURRENCY_CODES]).toEqual([
+      "AED",
+      "AFN",
+      "ALL",
+      "AMD",
+      "ANG",
+      "AOA",
+      "ARS",
+      "AUD",
+      "AWG",
+      "AZN",
+      "BAM",
+      "BBD",
+      "BDT",
+      "BGN",
+      "BHD",
+      "BIF",
+      "BMD",
+      "BND",
+      "BOB",
+      "BOV",
+      "BRL",
+      "BSD",
+      "BTN",
+      "BWP",
+      "BYR",
+      "BZD",
+      "CAD",
+      "CDF",
+      "CHE",
+      "CHF",
+      "CHW",
+      "CLF",
+      "CLP",
+      "CNY",
+      "COP",
+      "COU",
+      "CRC",
+      "CUC",
+      "CUP",
+      "CVE",
+      "CZK",
+      "DJF",
+      "DKK",
+      "DOP",
+      "DZD",
+      "EGP",
+      "ERN",
+      "ETB",
+      "EUR",
+      "FJD",
+      "FKP",
+      "GBP",
+      "GEL",
+      "GHS",
+      "GIP",
+      "GMD",
+      "GNF",
+      "GTQ",
+      "GYD",
+      "HKD",
+      "HNL",
+      "HRK",
+      "HTG",
+      "HUF",
+      "IDR",
+      "ILS",
+      "INR",
+      "IQD",
+      "IRR",
+      "ISK",
+      "JMD",
+      "JOD",
+      "JPY",
+      "KES",
+      "KGS",
+      "KHR",
+      "KMF",
+      "KPW",
+      "KRW",
+      "KWD",
+      "KYD",
+      "KZT",
+      "LAK",
+      "LBP",
+      "LKR",
+      "LRD",
+      "LSL",
+      "LYD",
+      "MAD",
+      "MDL",
+      "MGA",
+      "MKD",
+      "MMK",
+      "MNT",
+      "MOP",
+      "MRO",
+      "MUR",
+      "MVR",
+      "MWK",
+      "MXN",
+      "MXV",
+      "MYR",
+      "MZN",
+      "NAD",
+      "NGN",
+      "NIO",
+      "NOK",
+      "NPR",
+      "NZD",
+      "OMR",
+      "PAB",
+      "PEN",
+      "PGK",
+      "PHP",
+      "PKR",
+      "PLN",
+      "PYG",
+      "QAR",
+      "RON",
+      "RSD",
+      "RUB",
+      "RWF",
+      "SAR",
+      "SBD",
+      "SCR",
+      "SDG",
+      "SEK",
+      "SGD",
+      "SHP",
+      "SLL",
+      "SOS",
+      "SRD",
+      "SSP",
+      "STD",
+      "SVC",
+      "SYP",
+      "SZL",
+      "THB",
+      "TJS",
+      "TMT",
+      "TND",
+      "TOP",
+      "TRY",
+      "TTD",
+      "TWD",
+      "TZS",
+      "UAH",
+      "UGX",
+      "USD",
+      "USN",
+      "UYI",
+      "UYU",
+      "UZS",
+      "VEF",
+      "VND",
+      "VUV",
+      "WST",
+      "XAF",
+      "XCD",
+      "XDR",
+      "XOF",
+      "XPF",
+      "XSU",
+      "XUA",
+      "YER",
+      "ZAR",
+      "ZMW",
+      "ZWL",
+    ]);
+  });
+
+  it("DISCOUNT_CODES conserva exactamente los valores congelados", () => {
+    expect([...DISCOUNT_CODES]).toEqual([
+      "01",
+      "02",
+      "03",
+      "04",
+      "05",
+      "06",
+      "07",
+      "08",
+      "09",
+      "99",
+    ]);
+  });
+
+  it("OTHER_CHARGE_TYPES conserva exactamente los valores congelados", () => {
+    expect([...OTHER_CHARGE_TYPES]).toEqual([
+      "01",
+      "02",
+      "03",
+      "04",
+      "05",
+      "06",
+      "07",
+      "08",
+      "09",
+      "10",
+      "99",
+    ]);
+  });
+
+  it("EXONERATION_INSTITUTIONS conserva exactamente los valores congelados", () => {
+    expect([...EXONERATION_INSTITUTIONS]).toEqual([
+      "01",
+      "02",
+      "03",
+      "04",
+      "05",
+      "06",
+      "07",
+      "08",
+      "09",
+      "10",
+      "11",
+      "12",
+      "99",
+    ]);
+  });
+});

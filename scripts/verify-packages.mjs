@@ -71,6 +71,7 @@ try {
   await writeFile(
     join(consumer, "consumer.ts"),
     example +
+      '\nimport {isBusinessDay,addBusinessDays,verifySignedDocumentXml,parseDocumentXml,FileDocumentStore,assignSequenceWithDocument,getAssignedDocument} from "@dojocoding/hacienda-sdk";\nimport {MoneyInputSchema,MonetaryTextSchema} from "@dojocoding/hacienda-shared";\nexport const reviewedContracts={isBusinessDay,addBusinessDays,verifySignedDocumentXml,parseDocumentXml,FileDocumentStore,assignSequenceWithDocument,getAssignedDocument,MoneyInputSchema,MonetaryTextSchema};\n' +
       '\nconst issuedUsernameClient = new HaciendaClient({ environment: Environment.Sandbox, credentials: { username: \"cpf-01-1234-5678@stag.comprobanteselectronicos.go.cr\", password: \"synthetic\" } });\nexport { issuedUsernameClient };\n' +
       '\nimport { createServer } from "@dojocoding/hacienda-mcp";\nimport { FacturaElectronicaSchema } from "@dojocoding/hacienda-shared";\nexport const extra = {createServer, FacturaElectronicaSchema};\n' +
       '\nimport { calculateExactFe, calculateRetainedExactFe, buildExactFacturaXml, type ExactFeInput, type RetainedExactFeInput } from "@dojocoding/hacienda-sdk";\nimport { ExactFeInputSchema, RetainedExactFeInputSchema, ExactFeCalculatedSchema } from "@dojocoding/hacienda-shared";\nexport const exactFeContract = (input: ExactFeInput) => ({ calculated: ExactFeCalculatedSchema.parse(calculateExactFe(ExactFeInputSchema.parse(input))), xml: buildExactFacturaXml(input) });\n' +
@@ -151,6 +152,16 @@ import {ExactFecUsedPersonalGoodsNonSubjectInputSchema,ExactRecipientMessageInpu
 import {createServer} from "@dojocoding/hacienda-mcp";
 import {Client} from "@modelcontextprotocol/sdk/client/index.js";
 import {StdioClientTransport} from "@modelcontextprotocol/sdk/client/stdio.js";
+import {isBusinessDay,addBusinessDays,verifySignedDocumentXml,parseDocumentXml,FileDocumentStore} from "@dojocoding/hacienda-sdk";
+import {MoneyInputSchema,MonetaryTextSchema} from "@dojocoding/hacienda-shared";
+assert.equal(isBusinessDay("2026-01-01"),false);
+assert.equal(isBusinessDay("2026-04-02"),false);
+assert.equal(isBusinessDay("2026-08-31"),false);
+assert.equal(isBusinessDay("2026-10-23T23:30:00-06:00"),true);
+assert.throws(()=>addBusinessDays("2031-01-01",0));
+assert.equal(MoneyInputSchema.parse("0.10000"),"0.1");
+assert.equal(MonetaryTextSchema.safeParse("1e2").success,false);
+assert.equal(typeof FileDocumentStore,"function");
 const issuedUsername="cpf-01-1234-5678@stag.comprobanteselectronicos.go.cr";
 assert.deepEqual(loadCredentials({username:issuedUsername,password:"synthetic"}),{username:issuedUsername,password:"synthetic"});
 let tokenRequests=0;
@@ -259,6 +270,12 @@ execFileSync("openssl",["req","-x509","-newkey","rsa:2048","-nodes","-keyout","s
 execFileSync("openssl",["pkcs12","-export","-legacy","-inkey","synthetic.key","-in","synthetic.crt","-out","synthetic.p12","-passout","pass:synthetic"],{stdio:"pipe",timeout:15000});
 const signed=await signXml(xml,await readFile("synthetic.p12"),"synthetic");
 const signedNc=await signXml(ncXml,await readFile("synthetic.p12"),"synthetic");
+const ownVerification=await verifySignedDocumentXml(signed,{trustedSignerCertificates:[await readFile("synthetic.crt","utf8")]});
+assert.equal(ownVerification.valid,true,JSON.stringify(ownVerification.errors));
+const legacyXml=buildFacturaXml(SIMPLE_INVOICE);
+assert.equal(buildFacturaXml(parseDocumentXml(legacyXml).document),legacyXml);
+assert.throws(()=>parseDocumentXml(legacyXml.replace('xmlns="','xmlns="urn:attacker:')));
+
 const ncValidation=await validateDocumentXml(signedNc,{requireSignature:true});assert.ok(ncValidation.valid&&ncValidation.hasSignature);
 assert.ok(signed.includes(XADES_POLICY_URI));
 assert.ok(signed.includes(XADES_POLICY_HASH));
