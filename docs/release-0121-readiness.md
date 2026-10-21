@@ -15,8 +15,11 @@ attacker-controlled element names. Tests capture console/stderr and assert these
 boundaries as well as valid signed documents and explicit leaf pins.
 
 The v0.12.0 workflow (39652438536) was cancelled. Its tag and prepared artifacts
-remain immutable for audit; no tag was moved or package overwritten. Registry
-lookups after cancellation returned E404 for all four 0.12.0 versions. The corrected
+remain immutable for audit; no tag was moved or package overwritten. Initial registry lookups returned E404 for all four versions while indexing was
+pending; those responses did not prove publication absence. The workflow log and
+a later registry lookup confirm that shared@0.12.0 was published before cancellation.
+The SDK, CLI and MCP did not publish. The partial shared artifact is preserved;
+the buggy SDK release is not resumed. The corrected
 release uses annotated Git tag v0.12.1 and npm latest after verified publication.
 
 The [0.12 preparation evidence](release-0120-readiness.md), [contract and migration
