@@ -16,6 +16,11 @@ function toUtcNoon(input: Date | string): Date {
   if (typeof input === "string" && /^\d{4}-\d{2}-\d{2}$/.test(input)) return parseDateLocal(input);
   if (typeof input === "string" && !/T.*(?:Z|[+-]\d{2}:\d{2})$/.test(input))
     throw new RangeError("Expected a civil date or ISO instant with timezone");
+  if (typeof input === "string") {
+    // Date.parse normalizes impossible civil dates such as February 30.
+    parseDateLocal(input.slice(0, 10));
+    if (/T24:/.test(input)) throw new RangeError("Expected an hour from 00 to 23");
+  }
   const instant = input instanceof Date ? input : new Date(input);
   if (!Number.isFinite(instant.getTime())) throw new RangeError("Invalid date");
   const parts = new Intl.DateTimeFormat("en-CA", {
