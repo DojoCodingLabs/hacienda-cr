@@ -7,6 +7,8 @@ import { createTestP12 } from "../../../sdk/src/__fixtures__/signing.js";
 import { SIMPLE_INVOICE } from "../../../sdk/src/__fixtures__/invoices.js";
 import { submitCommand } from "./submit.js";
 import { validateCommand } from "./validate.js";
+import { DraftFacturaSchema, type DraftFactura } from "../utils/draft-document.js";
+import { buildDraftSummary, calculateDraftLineMoney } from "../utils/draft-money.js";
 
 const mocks = vi.hoisted(() => ({ submitAndWait: vi.fn(), signAndEncode: vi.fn() }));
 vi.mock("@dojocoding/hacienda-sdk", async (original) => ({
@@ -20,6 +22,39 @@ vi.mock("../utils/api-client.js", () => ({
     config: { profile: {}, p12Pin: "test-pin" },
   })),
 }));
+
+function exactDraftFixture(): DraftFactura {
+  const sourceLine = SIMPLE_INVOICE.detalleServicio[0];
+  const sourceTax = sourceLine?.impuesto?.[0];
+  if (!sourceLine || !sourceTax) throw new Error("SIMPLE_INVOICE fixture is incomplete");
+
+  const line = calculateDraftLineMoney({
+    cantidad: "1",
+    precioUnitario: "100",
+    tarifa: 13,
+  });
+  const { baseImponible: _, ...simpleLine } = sourceLine;
+
+  return DraftFacturaSchema.parse({
+    ...SIMPLE_INVOICE,
+    detalleServicio: [
+      {
+        ...simpleLine,
+        cantidad: line.cantidad,
+        precioUnitario: line.precioUnitario,
+        montoTotal: line.montoTotal,
+        subTotal: line.subTotal,
+        impuesto: [{ ...sourceTax, monto: line.impuestoMonto }],
+        impuestoNeto: line.impuestoNeto,
+        montoTotalLinea: line.montoTotalLinea,
+      },
+    ],
+    resumenFactura: buildDraftSummary(
+      [{ subTotal: line.subTotal, impuestoNeto: line.impuestoNeto, taxable: true }],
+      "01",
+    ),
+  });
+}
 
 describe("CLI submission and XML validation", () => {
   let dir: string;
@@ -81,5 +116,33 @@ describe("CLI submission and XML validation", () => {
     expect(JSON.parse(String(vi.mocked(console.log).mock.calls.at(-1)?.[0]))).toMatchObject({
       valid: false,
     });
+  });
+
+  it("accepts a decimal-text draft in validate and submit --dry-run", async () => {
+    const file = join(dir, "exact-draft.json");
+    const draft = exactDraftFixture();
+    await writeFile(file, JSON.stringify(draft));
+
+    await validateCommand.run?.({ args: { file, json: true }, rawArgs: [], cmd: validateCommand });
+    expect(process.exitCode).toBeUndefined();
+    expect(JSON.parse(String(vi.mocked(console.log).mock.calls.at(-1)?.[0]))).toMatchObject({
+      valid: true,
+      money: "decimal-text",
+    });
+
+    await submitCommand.run?.({
+      args: { file, json: true, profile: "default", "dry-run": true },
+      rawArgs: [],
+      cmd: submitCommand,
+    });
+    expect(process.exitCode).toBeUndefined();
+    const output = JSON.parse(String(vi.mocked(console.log).mock.calls.at(-1)?.[0])) as {
+      success?: boolean;
+      dryRun?: boolean;
+      xml?: string;
+    };
+    expect(output).toMatchObject({ success: true, dryRun: true });
+    expect(output.xml).toContain("<MontoTotal>100</MontoTotal>");
+    expect(output.xml).toContain("<TotalComprobante>113</TotalComprobante>");
   });
 });

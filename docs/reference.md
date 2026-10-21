@@ -730,6 +730,14 @@ hacienda draft --template nota-credito --output nc.json
 
 **Plantillas:** `factura` (default), `nota-credito`, `nota-debito`, `tiquete`
 
+El modo interactivo escribe `cantidad` y todos los campos monetarios como texto
+decimal acotado (máximo 3 y 5 decimales respectivamente). Los cálculos usan el
+kernel BigInt del SDK con la regla HALF_UP a cinco decimales, por lo que los
+valores conservan sus dígitos exactos al pasar por JSON. La precisión superior a
+la escala declarada se rechaza; no se redondea silenciosamente. `hacienda
+submit` y `hacienda validate` aceptan estos borradores de texto decimal, mientras
+que las facturas legacy con `number` mantienen el esquema y validador publicados.
+
 ### Variables de entorno
 
 | Variable            | Descripción                           |

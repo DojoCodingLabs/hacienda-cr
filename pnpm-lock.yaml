@@ -232,6 +232,9 @@ importers:
       citty:
         specifier: ^0.2.2
         version: 0.2.2
+      zod:
+        specifier: ^4.6.5
+        version: 4.6.5
 
   packages/mcp:
     dependencies:

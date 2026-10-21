@@ -28,6 +28,11 @@ import {
   UnitOfMeasure,
 } from "@dojocoding/hacienda-shared";
 import { success, error, detail, info, outputJson, bold, cyan, dim } from "../utils/format.js";
+import {
+  buildDraftSummary,
+  calculateDraftLineMoney,
+  type DraftSummary,
+} from "../utils/draft-money.js";
 
 // ---------------------------------------------------------------------------
 // Constants for interactive prompts
@@ -160,20 +165,20 @@ interface DraftReceptor {
 interface DraftLineItem {
   numeroLinea: number;
   codigoCabys: string;
-  cantidad: number;
+  cantidad: string;
   unidadMedida: string;
   detalle: string;
-  precioUnitario: number;
-  montoTotal: number;
-  subTotal: number;
+  precioUnitario: string;
+  montoTotal: string;
+  subTotal: string;
   impuesto?: {
     codigo: string;
     codigoTarifaIVA: string;
     tarifa: number;
-    monto: number;
+    monto: string;
   }[];
-  impuestoNeto?: number;
-  montoTotalLinea: number;
+  impuestoNeto?: string;
+  montoTotalLinea: string;
 }
 
 async function collectEmisor(): Promise<DraftEmisor> {
@@ -243,100 +248,57 @@ async function collectLineItem(lineNumber: number): Promise<DraftLineItem> {
   const unidadMedida = await promptSelect("Unit of measure", COMMON_UNITS, "Unid");
   // eslint-disable-next-line no-restricted-syntax -- cantidad por defecto de la línea, no un código de catálogo
   const cantidadStr = await prompt("Quantity", "1");
-  const cantidad = parseFloat(cantidadStr) || 1;
-  const precioStr = await prompt("Unit price");
-  const precioUnitario = parseFloat(precioStr) || 0;
-
-  const montoTotal = round5(cantidad * precioUnitario);
-  const subTotal = montoTotal; // No discounts in basic draft
+  const precioStr = await prompt("Unit price", "0");
 
   // Tax. v4.4 requires at least one Impuesto per line, so a tax-free line
-  // still carries an exempt IVA entry (codigo 01, tarifa 0).
+  // still carries an exempt IVA entry (codigo 01, tarifa 0). Pick the rate
+  // before calculating so the exact line result carries the right tax.
   const hasTax = await promptConfirm("Apply IVA tax?", true);
-  let impuesto: DraftLineItem["impuesto"];
-  let impuestoNeto = 0;
+  const ivaCode = hasTax
+    ? await promptSelect("IVA rate", IVA_RATES, IvaRateCode.GENERAL_13)
+    : IvaRateCode.EXENTO;
+  const rateEntry = hasTax ? IVA_RATES.find((r) => r.code === ivaCode) : undefined;
+  const tarifa = rateEntry?.rate ?? 0;
 
-  if (hasTax) {
-    const ivaCode = await promptSelect("IVA rate", IVA_RATES, IvaRateCode.GENERAL_13);
-    const rateEntry = IVA_RATES.find((r) => r.code === ivaCode);
-    const tarifa = rateEntry?.rate ?? 13;
-    const monto = round5(subTotal * (tarifa / 100));
-    impuestoNeto = monto;
+  const calculated = calculateDraftLineMoney({
+    cantidad: cantidadStr,
+    precioUnitario: precioStr,
+    tarifa,
+  });
 
-    impuesto = [
-      {
-        codigo: TaxCode.IVA, // IVA
-        codigoTarifaIVA: ivaCode,
-        tarifa,
-        monto,
-      },
-    ];
-  } else {
-    impuesto = [
-      {
-        codigo: TaxCode.IVA,
-        codigoTarifaIVA: IvaRateCode.EXENTO, // Exento
-        tarifa: 0,
-        monto: 0,
-      },
-    ];
-  }
+  const impuesto: DraftLineItem["impuesto"] = [
+    {
+      codigo: TaxCode.IVA,
+      codigoTarifaIVA: ivaCode,
+      tarifa,
+      monto: calculated.impuestoMonto,
+    },
+  ];
 
   return {
     numeroLinea: lineNumber,
     codigoCabys,
-    cantidad,
+    cantidad: calculated.cantidad,
     unidadMedida,
     detalle,
-    precioUnitario,
-    montoTotal,
-    subTotal,
+    precioUnitario: calculated.precioUnitario,
+    montoTotal: calculated.montoTotal,
+    subTotal: calculated.subTotal,
     impuesto,
-    impuestoNeto,
-    montoTotalLinea: round5(subTotal + impuestoNeto),
+    impuestoNeto: calculated.impuestoNeto,
+    montoTotalLinea: calculated.montoTotalLinea,
   };
 }
 
-function round5(value: number): number {
-  return Math.round(value * 100000) / 100000;
-}
-
-function buildResumenFactura(
-  lineItems: DraftLineItem[],
-  medioPago: string,
-): Record<string, unknown> {
-  let totalGravado = 0;
-  let totalExento = 0;
-  let totalImpuesto = 0;
-  const totalDescuentos = 0;
-
-  for (const item of lineItems) {
-    if (item.impuestoNeto && item.impuestoNeto > 0) {
-      totalGravado = round5(totalGravado + item.subTotal);
-      totalImpuesto = round5(totalImpuesto + item.impuestoNeto);
-    } else {
-      totalExento = round5(totalExento + item.subTotal);
-    }
-  }
-
-  const totalVenta = round5(totalGravado + totalExento);
-  const totalVentaNeta = round5(totalVenta - totalDescuentos);
-  const totalComprobante = round5(totalVentaNeta + totalImpuesto);
-
-  return {
-    totalServGravados: 0,
-    totalServExentos: 0,
-    totalMercanciasGravadas: totalGravado,
-    totalMercanciasExentas: totalExento,
-    totalGravado,
-    totalExento,
-    totalVenta,
-    totalDescuentos,
-    totalVentaNeta,
-    totalImpuesto,
-    medioPago: [{ tipoMedioPago: medioPago, totalMedioPago: totalComprobante }],
-    totalComprobante,
-  };
+function buildResumenFactura(lineItems: DraftLineItem[], medioPago: string): DraftSummary {
+  return buildDraftSummary(
+    lineItems.map((item) => ({
+      subTotal: item.subTotal,
+      impuestoNeto: item.impuestoNeto ?? "0",
+      taxable: (item.impuesto?.[0]?.tarifa ?? 0) > 0,
+    })),
+    medioPago,
+  );
 }
 
 // ---------------------------------------------------------------------------
@@ -521,37 +483,37 @@ function generateBlankTemplate(templateType: string): Record<string, unknown> {
       {
         numeroLinea: 1,
         codigoCabys: "0000000000000",
-        cantidad: 1,
+        cantidad: "1",
         unidadMedida: "Unid",
         detalle: "<<PRODUCT_OR_SERVICE_DESCRIPTION>>",
-        precioUnitario: 0,
-        montoTotal: 0,
-        subTotal: 0,
+        precioUnitario: "0",
+        montoTotal: "0",
+        subTotal: "0",
         impuesto: [
           {
             codigo: TaxCode.IVA,
             codigoTarifaIVA: IvaRateCode.GENERAL_13,
             tarifa: 13,
-            monto: 0,
+            monto: "0",
           },
         ],
-        impuestoNeto: 0,
-        montoTotalLinea: 0,
+        impuestoNeto: "0",
+        montoTotalLinea: "0",
       },
     ],
     resumenFactura: {
-      totalServGravados: 0,
-      totalServExentos: 0,
-      totalMercanciasGravadas: 0,
-      totalMercanciasExentas: 0,
-      totalGravado: 0,
-      totalExento: 0,
-      totalVenta: 0,
-      totalDescuentos: 0,
-      totalVentaNeta: 0,
-      totalImpuesto: 0,
-      medioPago: [{ tipoMedioPago: PaymentMethod.EFECTIVO, totalMedioPago: 0 }],
-      totalComprobante: 0,
+      totalServGravados: "0",
+      totalServExentos: "0",
+      totalMercanciasGravadas: "0",
+      totalMercanciasExentas: "0",
+      totalGravado: "0",
+      totalExento: "0",
+      totalVenta: "0",
+      totalDescuentos: "0",
+      totalVentaNeta: "0",
+      totalImpuesto: "0",
+      medioPago: [{ tipoMedioPago: PaymentMethod.EFECTIVO, totalMedioPago: "0" }],
+      totalComprobante: "0",
     },
   };
 

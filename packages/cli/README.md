@@ -165,6 +165,14 @@ hacienda draft --output my-invoice.json           # Custom output path
 | `--template`    | `factura`, `nota-credito`, `nota-debito`, `tiquete` | `factura`               |
 | `--interactive` | Step-by-step prompts                                | `true`                  |
 
+Interactive drafts store `cantidad` and all monetary fields as bounded decimal
+text (at most 3 and 5 decimals respectively). Calculations use the SDK's BigInt
+kernel with the Hacienda HALF_UP rule at five decimals, so draft values keep
+their exact digits through JSON. Precision above the declared scale is rejected,
+never silently rounded. `hacienda submit` and `hacienda validate` accept these
+decimal-text drafts; legacy Number invoices continue to use the published
+schema and validator.
+
 ## Environment Variables
 
 | Variable            | Description                       |

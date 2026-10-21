@@ -39,7 +39,8 @@
   "dependencies": {
     "@dojocoding/hacienda-sdk": "workspace:*",
     "@dojocoding/hacienda-shared": "workspace:*",
-    "citty": "^0.2.2"
+    "citty": "^0.2.2",
+    "zod": "^4.6.5"
   },
   "license": "MIT",
   "author": "Dojo Coding Labs <dev@dojocoding.io> (https://dojocoding.io)",
