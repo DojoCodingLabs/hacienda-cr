@@ -10,6 +10,7 @@ import { assertDocumentIdentity } from "../xml/document-identity.js";
  * Namespace: https://cdn.comprobanteselectronicos.go.cr/xml-schemas/v4.4/tiqueteElectronico
  */
 
+import { DocumentTypeCode } from "@dojocoding/hacienda-shared";
 import type { TiqueteElectronico } from "@dojocoding/hacienda-shared";
 import { buildXml } from "../xml/builder.js";
 import { buildStandardDocumentBody, DOCUMENT_VARIANTS } from "./shared-xml-helpers.js";
@@ -41,6 +42,6 @@ import { buildStandardDocumentBody, DOCUMENT_VARIANTS } from "./shared-xml-helpe
  */
 export function buildTiqueteXml(input: TiqueteElectronico): string {
   const data = buildStandardDocumentBody(input, DOCUMENT_VARIANTS.TiqueteElectronico);
-  assertDocumentIdentity(input, "04");
+  assertDocumentIdentity(input, DocumentTypeCode.TIQUETE_ELECTRONICO);
   return buildXml("TiqueteElectronico", data);
 }

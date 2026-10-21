@@ -1,3 +1,6 @@
+import { XMLParser } from "fast-xml-parser";
+import { validateDocumentXml } from "../xml/schema-validator.js";
+import { assertDocumentIdentity, STANDARD_DOCUMENT_CODES } from "../xml/document-identity.js";
 /**
  * Sequence number persistence for the clave numerica.
  *
@@ -6,8 +9,12 @@
  * by "{docType}-{branch}-{pos}".
  */
 
-import { readFile, writeFile, rename, mkdir, rm } from "node:fs/promises";
-import { randomBytes } from "node:crypto";
+import { readFile, mkdir, rm } from "node:fs/promises";
+import { writeDurableJson } from "./durable-file.js";
+import { StoredDocumentSchema } from "../delivery/types.js";
+import type { StoredDocument } from "../delivery/types.js";
+import { parseClave } from "../clave/parse-clave.js";
+import { z } from "zod";
 import { join } from "node:path";
 import { getConfigDir, ensureConfigDir } from "./config-manager.js";
 import { SequenceFileSchema, MAX_SEQUENCE, DEFAULT_BRANCH, DEFAULT_POS } from "./types.js";
@@ -107,7 +114,9 @@ async function readSequenceFile(configDir?: string): Promise<SequenceFile> {
 
     const parsed: unknown = JSON.parse(content);
 
-    const result = SequenceFileSchema.safeParse(parsed);
+    const result = SequenceFileSchema.safeParse(
+      isLedger(parsed) ? LedgerSchema.parse(parsed).sequences : parsed,
+    );
     if (!result.success) {
       throw new Error(`Invalid sequences file at ${filePath}: ${result.error.message}`);
     }
@@ -137,13 +146,9 @@ async function readSequenceFile(configDir?: string): Promise<SequenceFile> {
 async function writeSequenceFile(sequences: SequenceFile, configDir?: string): Promise<void> {
   await ensureConfigDir(configDir);
   const filePath = getSequencesPath(configDir);
-  // Use a unique temp file name per write to avoid collisions under concurrent access
-  const uniqueSuffix = randomBytes(6).toString("hex");
-  const tempPath = `${filePath}.${uniqueSuffix}.tmp`;
-
-  const content = JSON.stringify(sequences, null, 2) + "\n";
-  await writeFile(tempPath, content, { encoding: "utf-8", mode: 0o600 });
-  await rename(tempPath, filePath);
+  const ledger = await readLedger(configDir);
+  if (ledger) await writeDurableJson(filePath, { ...ledger, sequences });
+  else await writeDurableJson(filePath, sequences);
 }
 
 /**
@@ -263,8 +268,171 @@ export async function resetSequence(
   try {
     const key = buildSequenceKey(docType, branch, pos);
     const sequences = await readSequenceFile(options.configDir);
+    const ledger = await readLedger(options.configDir);
+    const issuedFloor = ledger
+      ? Math.max(
+          0,
+          ...Object.values(ledger.documents)
+            .filter(
+              (doc) =>
+                doc.clave.slice(21, 24) === branch &&
+                doc.clave.slice(24, 29) === pos &&
+                doc.clave.slice(29, 31) === docType,
+            )
+            .map((doc) => Number(doc.clave.slice(31, 41))),
+        )
+      : 0;
+    if (value < issuedFloor) throw new Error("Cannot rewind a sequence after durable issuance");
     sequences[key] = value;
     await writeSequenceFile(sequences, options.configDir);
+  } finally {
+    await unlock();
+  }
+}
+
+const LedgerSchema = z
+  .object({
+    version: z.literal(1),
+    sequences: SequenceFileSchema,
+    documents: z.record(z.string(), StoredDocumentSchema),
+    discarded: z.record(z.string(), z.string()),
+  })
+  .strict();
+function isLedger(value: unknown): boolean {
+  return !!value && typeof value === "object" && "version" in value;
+}
+async function readLedger(configDir?: string): Promise<z.infer<typeof LedgerSchema> | null> {
+  try {
+    const content = await readFile(getSequencesPath(configDir), "utf8");
+    if (!content.trim()) return null;
+    const value: unknown = JSON.parse(content);
+    return isLedger(value) ? LedgerSchema.parse(value) : null;
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code === "ENOENT") return null;
+    throw error;
+  }
+}
+
+/** Reserve a consecutive and persist the complete signed document in ONE ledger replacement.
+ * The builder runs inside the sequence lock and must not call another sequence API.
+ * Throwing leaves the counter unchanged; after commit the number cannot be reused.
+ * This binds bytes/identity, not signature authenticity or fiscal acceptance.
+ */
+export async function assignSequenceWithDocument(
+  docType: string,
+  build: (sequence: number) => Promise<StoredDocument> | StoredDocument,
+  options: SequenceStoreOptions & { branch?: string; pos?: string } = {},
+): Promise<{ sequence: number; document: StoredDocument }> {
+  const branch = options.branch ?? DEFAULT_BRANCH,
+    pos = options.pos ?? DEFAULT_POS;
+  if (!/^\d{2}$/.test(docType) || !/^\d{3}$/.test(branch) || !/^\d{5}$/.test(pos))
+    throw new Error("Expected canonical document type, branch and point of sale");
+  const directory = getConfigDir(options.configDir);
+  await ensureConfigDir(directory);
+  const unlock = await acquireLock(join(directory, ".sequences.lock"));
+  try {
+    const ledger = (await readLedger(directory)) ?? {
+      version: 1 as const,
+      sequences: await readSequenceFile(directory),
+      documents: {},
+      discarded: {},
+    };
+    const key = buildSequenceKey(docType, branch, pos),
+      current = ledger.sequences[key] ?? 0;
+    if (current >= MAX_SEQUENCE) throw new SequenceOverflowError(key, current);
+    const sequence = current + 1;
+    const document = StoredDocumentSchema.parse(await build(sequence));
+    const identity = parseClave(document.clave);
+    if (
+      identity.documentType !== docType ||
+      identity.branch !== branch ||
+      identity.pos !== pos ||
+      identity.sequence !== sequence ||
+      document.state !== "FIRMADO" ||
+      ledger.documents[document.clave]
+    )
+      throw new Error("Document does not bind the reserved consecutive");
+    const schema = await validateDocumentXml(document.xml, { requireSignature: true });
+    if (!schema.valid || !schema.hasSignature)
+      throw new Error("Issuance requires a signed XSD-conformant document");
+    const parsed = new XMLParser({ ignoreAttributes: false, parseTagValue: false }).parse(
+      document.xml,
+    ) as Record<string, unknown>;
+    const root = Object.keys(parsed).find((name) => Object.hasOwn(STANDARD_DOCUMENT_CODES, name));
+    if (!root || STANDARD_DOCUMENT_CODES[root] !== docType)
+      throw new Error("Document root does not match the reserved type");
+    const body = parsed[root] as {
+      Clave: string;
+      NumeroConsecutivo: string;
+      FechaEmision: string;
+      Emisor: { Identificacion: { Tipo: string; Numero: string } };
+      Receptor?: { Identificacion?: { Tipo: string; Numero: string } };
+    };
+    if (
+      body.Clave !== document.clave ||
+      Date.parse(body.FechaEmision) !== Date.parse(document.generatedAt)
+    )
+      throw new Error("Stored metadata does not match signed XML identity");
+    assertDocumentIdentity(
+      {
+        clave: body.Clave,
+        numeroConsecutivo: body.NumeroConsecutivo,
+        fechaEmision: body.FechaEmision,
+        emisor: {
+          identificacion: {
+            tipo: body.Emisor.Identificacion.Tipo,
+            numero: body.Emisor.Identificacion.Numero,
+          },
+        },
+        ...(body.Receptor?.Identificacion
+          ? {
+              receptor: {
+                identificacion: {
+                  tipo: body.Receptor.Identificacion.Tipo,
+                  numero: body.Receptor.Identificacion.Numero,
+                },
+              },
+            }
+          : {}),
+      },
+      docType,
+    );
+    ledger.sequences[key] = sequence;
+    ledger.documents[document.clave] = document;
+    await writeDurableJson(getSequencesPath(directory), ledger);
+    return { sequence, document };
+  } finally {
+    await unlock();
+  }
+}
+
+/** Read the exact immutable bytes committed with a sequence. */
+export async function getAssignedDocument(
+  clave: string,
+  options: SequenceStoreOptions = {},
+): Promise<StoredDocument | null> {
+  return (await readLedger(options.configDir))?.documents[clave] ?? null;
+}
+
+/** Record a discard reason without deleting bytes or returning a sequence to the pool.
+ * This is an audit annotation, not cancellation of a document at Hacienda.
+ */
+export async function recordSequenceDiscard(
+  clave: string,
+  reason: string,
+  options: SequenceStoreOptions = {},
+): Promise<void> {
+  if (!reason.trim() || reason.length > 500)
+    throw new Error("A bounded discard reason is required");
+  const directory = getConfigDir(options.configDir);
+  await ensureConfigDir(directory);
+  const unlock = await acquireLock(join(directory, ".sequences.lock"));
+  try {
+    const ledger = await readLedger(directory);
+    if (!ledger?.documents[clave]) throw new Error("No durable issuance for this clave");
+    if (ledger.discarded[clave]) throw new Error("Discard already recorded");
+    ledger.discarded[clave] = reason;
+    await writeDurableJson(getSequencesPath(directory), ledger);
   } finally {
     await unlock();
   }

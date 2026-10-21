@@ -1,7 +1,7 @@
 /** Read-only Hacienda metadata, separate from fiscal documents/status/XML. */
 import { z } from "zod";
 import { ClaveNumericaSchema } from "./clave.js";
-import type { IdentificationType } from "../constants/index.js";
+import type { IdentificationType } from "../generated/index.js";
 import { IDENTIFICATION_LENGTHS } from "../constants/index.js";
 
 /** API history filters are type + numeric domestic ID. Preserve supplied padding. */

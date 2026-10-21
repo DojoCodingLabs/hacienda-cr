@@ -5,6 +5,10 @@
  */
 
 export {
+  MonetaryTextSchema,
+  MoneyInputSchema,
+  MontoSchema,
+  MontoPositiveSchema,
   TaxCodeSchema,
   IvaRateCodeSchema,
   ExonerationTypeSchema,

@@ -10,6 +10,7 @@ import { assertDocumentIdentity } from "../xml/document-identity.js";
  * Namespace: https://cdn.comprobanteselectronicos.go.cr/xml-schemas/v4.4/FacturaElectronicaExportacion
  */
 
+import { DocumentTypeCode } from "@dojocoding/hacienda-shared";
 import type { FacturaElectronicaExportacion } from "@dojocoding/hacienda-shared";
 import { buildXml } from "../xml/builder.js";
 import { buildStandardDocumentBody, DOCUMENT_VARIANTS } from "./shared-xml-helpers.js";
@@ -42,6 +43,6 @@ import { buildStandardDocumentBody, DOCUMENT_VARIANTS } from "./shared-xml-helpe
  */
 export function buildFacturaExportacionXml(input: FacturaElectronicaExportacion): string {
   const data = buildStandardDocumentBody(input, DOCUMENT_VARIANTS.FacturaElectronicaExportacion);
-  assertDocumentIdentity(input, "09");
+  assertDocumentIdentity(input, DocumentTypeCode.FACTURA_ELECTRONICA_EXPORTACION);
   return buildXml("FacturaElectronicaExportacion", data);
 }

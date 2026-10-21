@@ -1,0 +1,61 @@
+{
+  "name": "@dojocoding/hacienda-mock",
+  "version": "0.11.0",
+  "description": "Internal synthetic Hacienda transport simulator; no fiscal or signature acceptance oracle",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "bin": {
+    "hacienda-mock": "./dist/cli.js"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "CHANGELOG.md"
+  ],
+  "keywords": [
+    "costa-rica",
+    "hacienda",
+    "mock",
+    "electronic-invoicing",
+    "factura-electronica",
+    "comprobantes-electronicos"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "prepublishOnly": "pnpm run build",
+    "test": "vitest run",
+    "lint": "eslint src/",
+    "typecheck": "tsc --noEmit",
+    "clean": "rm -rf dist",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage"
+  },
+  "dependencies": {
+    "fast-xml-parser": "^5.11.2"
+  },
+  "devDependencies": {
+    "@dojocoding/hacienda-sdk": "workspace:*",
+    "@dojocoding/hacienda-shared": "workspace:*"
+  },
+  "license": "MIT",
+  "author": "Dojo Coding Labs <dev@dojocoding.io> (https://dojocoding.io)",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/DojoCodingLabs/hacienda-cr.git",
+    "directory": "packages/mock"
+  },
+  "homepage": "https://github.com/DojoCodingLabs/hacienda-cr#readme",
+  "engines": {
+    "node": ">=22"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "private": true
+}

@@ -1,0 +1,68 @@
+name: Mutation
+
+# Job separado de la CI: la mutation testing cuesta minutos y no debe
+# ralentizar los pull requests. Corre por evento manual y cada noche, y
+# publica el score; el umbral inicial es 45%; no demuestra ausencia de defectos.
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 6 * * *" # cada noche, 06:00 UTC
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  mutation:
+    name: Mutation testing (${{ matrix.name }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { name: parser, file: src/documents/parser.ts }
+          - { name: decimal, file: src/tax/exact-decimal.ts }
+          - { name: identity, file: src/xml/document-identity.ts }
+          - { name: input, file: src/xml/input-limits.ts }
+          - { name: schema, file: src/xml/schema-validator.ts }
+    env:
+      MUTATION_FILE: ${{ matrix.file }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: ".nvmrc"
+          cache: "pnpm"
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Install native verification tools
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq libxml2-utils poppler-utils
+
+      - name: Build workspace dependencies
+        run: pnpm build
+
+      # Offline tests never inherit live credentials.
+
+      - name: Run mutation testing
+        run: env -u HACIENDA_USERNAME -u HACIENDA_PASSWORD -u HACIENDA_SANDBOX_E2E pnpm test:mutation
+
+      - name: Publish the score
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: mutation-report-${{ matrix.name }}
+          path: packages/sdk/reports/mutation/
+          if-no-files-found: ignore

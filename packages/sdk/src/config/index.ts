@@ -47,3 +47,9 @@ export {
   SequenceOverflowError,
 } from "./sequence-store.js";
 export type { SequenceStoreOptions } from "./sequence-store.js";
+
+export {
+  assignSequenceWithDocument,
+  getAssignedDocument,
+  recordSequenceDiscard,
+} from "./sequence-store.js";

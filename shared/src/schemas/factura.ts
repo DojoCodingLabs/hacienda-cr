@@ -4,12 +4,8 @@
  */
 
 import { z } from "zod";
-import {
-  REFERENCE_DOC_TYPES,
-  REFERENCE_CODES,
-  OTHER_CHARGE_TYPES,
-  CURRENCY_CODES,
-} from "../constants/index.js";
+import { REFERENCE_CODES, REFERENCE_DOC_TYPES } from "../constants/index.js";
+import { CURRENCY_CODES, OTHER_CHARGE_TYPES } from "../generated/index.js";
 import {
   TaxCodeSchema,
   IvaRateCodeSchema,

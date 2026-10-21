@@ -27,8 +27,18 @@ import {
   DEFAULT_POS,
 } from "@dojocoding/hacienda-sdk";
 import type { LineItemInput, CalculatedLineItem } from "@dojocoding/hacienda-sdk";
-import { TelefonoSchema, UNITS_OF_MEASURE } from "@dojocoding/hacienda-shared";
+import {
+  DISCOUNT_CODES,
+  SaleCondition,
+  PaymentMethod,
+  DocumentTypeCode,
+  TelefonoSchema,
+  UNITS_OF_MEASURE,
+} from "@dojocoding/hacienda-shared";
 import type { FacturaElectronica } from "@dojocoding/hacienda-shared";
+
+/** Primer código del catálogo de descuentos (01). */
+const DEFAULT_DISCOUNT_CODE = DISCOUNT_CODES[0];
 
 // ---------------------------------------------------------------------------
 // Input schema
@@ -54,7 +64,7 @@ const DescuentoInputSchema = z.object({
   montoDescuento: z.number().positive().describe("Discount amount"),
   codigoDescuento: z
     .string()
-    .default("01")
+    .default(DEFAULT_DISCOUNT_CODE)
     .describe('Discount code (v4.4 CodigoDescuento). Defaults to "01"'),
   naturalezaDescuento: z.string().describe("Reason for discount"),
 });
@@ -146,11 +156,11 @@ export const CreateInvoiceInputSchema = z.object({
   codigoActividadEmisor: z.string().describe("Issuer economic activity code (6 digits)"),
   condicionVenta: z
     .string()
-    .default("01")
+    .default(SaleCondition.CONTADO)
     .describe('Sale condition code: "01"=Cash, "02"=Credit, etc. Defaults to "01"'),
   medioPago: z
     .string()
-    .default("01")
+    .default(PaymentMethod.EFECTIVO)
     .describe(
       'Payment method: "01"=Cash, "02"=Card, "04"=Transfer, "06"=SINPE Movil. Defaults to "01"',
     ),
@@ -210,7 +220,7 @@ export function registerCreateInvoiceTool(server: McpServer): void {
         // 3. Get next sequence number and generate clave numerica
         const now = new Date();
         const taxpayerId = args.emisor.identificacion.numero;
-        const docTypeCode = "01"; // Factura Electronica
+        const docTypeCode = DocumentTypeCode.FACTURA_ELECTRONICA;
         const branch = DEFAULT_BRANCH; // "001"
         const pos = DEFAULT_POS; // "00001"
 
@@ -225,6 +235,7 @@ export function registerCreateInvoiceTool(server: McpServer): void {
         });
 
         // 4. Build consecutive number (branch + POS + doc type + sequence)
+        // eslint-disable-next-line no-restricted-syntax -- cero de relleno de padStart, no un código de catálogo
         const seq = String(sequence).padStart(10, "0");
         let numeroConsecutivo = `${branch}${pos}${docTypeCode}${seq}`;
 
@@ -335,6 +346,7 @@ export function registerCreateInvoiceTool(server: McpServer): void {
           sequence: allocatedSequence,
           situation: Situation.NORMAL,
         });
+        // eslint-disable-next-line no-restricted-syntax -- cero de relleno de padStart, no un código de catálogo
         numeroConsecutivo = `${branch}${pos}${docTypeCode}${String(allocatedSequence).padStart(10, "0")}`;
         factura.clave = clave;
         factura.numeroConsecutivo = numeroConsecutivo;

@@ -30,11 +30,14 @@
     "spec:check": "node scripts/spec-watch/check.mjs",
     "spec:update": "node scripts/spec-watch/update.mjs",
     "test:scripts": "node scripts/run-script-tests.mjs",
+    "test:properties": "node scripts/run-properties-tests.mjs",
+    "test:mutation": "node scripts/run-mutation-tests.mjs",
     "test:coverage": "turbo run test:coverage",
     "release:prepare": "node scripts/release.mjs prepare",
     "release:publish": "node scripts/release.mjs publish",
     "test:sandbox": "node scripts/sandbox-lifecycle.mjs",
-    "codes:extract": "node scripts/codes-extract/extract.mjs"
+    "codes:extract": "node scripts/codes-extract/extract.mjs",
+    "spec:generate": "node scripts/codes-generate/generate.mjs"
   },
   "devDependencies": {
     "@changesets/cli": "3.0.3",

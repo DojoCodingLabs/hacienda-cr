@@ -6,6 +6,7 @@ overrides:
   esbuild: "^0.28.2"
   "vitest>vite": "7.3.7"
   "@changesets/cli>launch-editor": "2.14.2"
+  "typed-rest-client>qs": "6.16.0"
 
 allowBuilds:
   "esbuild@0.28.2": true

@@ -1,3 +1,5 @@
+import type { DocumentStore, DeliverySituation, DeliveryState } from "../delivery/types.js";
+import { createStoredDocument } from "../delivery/state-machine.js";
 /**
  * Submit-and-poll orchestrator.
  *
@@ -7,7 +9,7 @@
  * @module api/orchestrator
  */
 
-import type { SubmissionRequest } from "@dojocoding/hacienda-shared";
+import type { StatusResponse, SubmissionRequest } from "@dojocoding/hacienda-shared";
 import { HaciendaStatus } from "@dojocoding/hacienda-shared";
 
 import { sleep, withSignal } from "./cancellation.js";
@@ -33,6 +35,15 @@ export interface SubmitAndWaitOptions {
   readonly timeoutMs?: number;
   /** Cancel submission, polling, and all waits. */
   readonly signal?: AbortSignal;
+  /** Enable persistence; requires an explicit store. */
+  readonly persist?: boolean;
+  readonly store?: DocumentStore;
+  /** Query the same clave without replaying an ambiguous POST. */
+  readonly resumePending?: boolean;
+  readonly situation?: DeliverySituation;
+  readonly deadlineBusinessDays?: number;
+  readonly provisionalReference?: string;
+  readonly onStateChange?: (clave: string, from: string, to: string) => void;
   /** Optional callback invoked on each poll iteration. */
   readonly onPoll?: (status: ParsedStatusResponse, attempt: number) => void;
 }
@@ -55,6 +66,8 @@ export interface SubmitAndWaitResult {
   readonly submissionStatus: number;
   /** Number of poll attempts made. */
   readonly pollAttempts: number;
+  readonly persisted?: boolean;
+  readonly deliveryState?: DeliveryState;
 }
 
 /** Default configuration values. */
@@ -97,7 +110,7 @@ const DEFAULTS = {
  * }
  * ```
  */
-export async function submitAndWait(
+async function submitAndWaitLegacy(
   httpClient: HttpClient,
   request: SubmissionRequest,
   options?: SubmitAndWaitOptions,
@@ -199,4 +212,100 @@ export async function submitAndWait(
   } finally {
     clearTimeout(timer);
   }
+}
+
+/** Persist before POST; after an uncertain outcome only resume status queries.
+ * Store CAS failures are surfaced rather than hidden. Acceptance is the observed
+ * API status, not authentication of response XML; use the response verifier for that.
+ */
+export async function submitAndWait(
+  httpClient: HttpClient,
+  request: SubmissionRequest,
+  options?: SubmitAndWaitOptions,
+): Promise<SubmitAndWaitResult> {
+  if (!options?.persist && !options?.store && !options?.resumePending)
+    return submitAndWaitLegacy(httpClient, request, options);
+  const timeoutMs = options?.timeoutMs ?? DEFAULTS.timeoutMs;
+  const pollIntervalMs = options?.pollIntervalMs ?? DEFAULTS.pollIntervalMs;
+  if (
+    !Number.isFinite(timeoutMs) ||
+    timeoutMs <= 0 ||
+    timeoutMs > 2147483647 ||
+    !Number.isFinite(pollIntervalMs) ||
+    pollIntervalMs < 0 ||
+    pollIntervalMs > 2147483647
+  )
+    throw new RangeError("Invalid submission timeout or polling interval.");
+  options?.signal?.throwIfAborted();
+  if (
+    typeof request.comprobanteXml !== "string" ||
+    Buffer.byteLength(request.comprobanteXml) > 12 * 1024 * 1024
+  )
+    throw new RangeError("Submission XML exceeds the bounded delivery input");
+  const store = options?.store;
+  if (!store) throw new Error("Persistent delivery requires an explicit DocumentStore");
+  const xml = Buffer.from(request.comprobanteXml, "base64").toString("utf8");
+  let doc = await store.get(request.clave);
+  if (doc && doc.xml !== xml) throw new Error("Clave is already bound to different document bytes");
+  if (!doc) {
+    if (options?.resumePending) throw new Error("No persisted document to resume");
+    doc = createStoredDocument({
+      xml,
+      clave: request.clave,
+      generatedAt: new Date(request.fecha),
+      situation: options?.situation ?? "normal",
+      deadlineBusinessDays: options?.deadlineBusinessDays,
+      provisionalReference: options?.provisionalReference,
+    });
+    await store.persist(doc);
+    doc = required(await store.get(request.clave));
+  }
+  if (["ACEPTADO", "RECHAZADO", "VENCIDO"].includes(doc.state))
+    throw new Error("Document already has a terminal persisted state");
+  const alreadyAttempted = doc.state !== "FIRMADO";
+  if (alreadyAttempted && !options?.resumePending)
+    throw new Error("Submission may already have occurred; resume status by the same clave");
+  const change = async (to: DeliveryState): Promise<void> => {
+    const current = await store.get(request.clave);
+    if (!current) throw new Error("Persisted document disappeared");
+    if (current.state === to) return;
+    await store.transition(request.clave, current.state, to);
+    options?.onStateChange?.(request.clave, current.state, to);
+  };
+  // The intent is durable before any network bytes. A crash afterwards is ambiguous.
+  options?.signal?.throwIfAborted();
+  if (!alreadyAttempted) {
+    // Claim the *original* FIRMADO state. An idempotent transition after rereading
+    // PENDIENTE would let two first callers both POST the same document.
+    await store.transition(request.clave, "FIRMADO", "PENDIENTE");
+    options?.onStateChange?.(request.clave, "FIRMADO", "PENDIENTE");
+  }
+  const transport = {
+    post: async (...args: Parameters<HttpClient["post"]>) => {
+      if (alreadyAttempted || options?.resumePending)
+        return { status: 0, headers: new Headers(), data: {} };
+      const result = await httpClient.post(...args);
+      await change("ENVIADO");
+      return result;
+    },
+    get: async (...args: Parameters<HttpClient["get"]>) => {
+      const result = await httpClient.get<StatusResponse>(...args);
+      if (result.data.clave !== request.clave) throw new ApiError("Status clave mismatch");
+      const status = result.data["ind-estado"];
+      if (status === HaciendaStatus.ACEPTADO) await change("ACEPTADO");
+      else if (status === HaciendaStatus.RECHAZADO) await change("RECHAZADO");
+      return result;
+    },
+  } as unknown as HttpClient;
+  const result = await submitAndWaitLegacy(transport, request, options);
+  return {
+    ...result,
+    persisted: true,
+    deliveryState: required(await store.get(request.clave)).state,
+  };
+}
+
+function required<T>(value: T | null | undefined): T {
+  if (value == null) throw new Error("Missing required value");
+  return value;
 }

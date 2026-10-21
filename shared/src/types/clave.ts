@@ -7,7 +7,8 @@
  * [506][DDMMYY][12-digit taxpayer ID][4-digit branch][4-digit POS][4-digit doc type][10-digit sequence][1-digit situation][8-digit security code]
  */
 
-import type { DocumentTypeCode, SituationCode } from "../constants/index.js";
+import type { DocumentTypeCode } from "../constants/index.js";
+import type { SituationCode } from "../generated/index.js";
 
 /** Total length of the clave numerica. */
 export const CLAVE_LENGTH = 50;

@@ -1,3 +1,4 @@
+import { DocumentTypeCode } from "@dojocoding/hacienda-shared";
 import { ValidationError } from "../errors.js";
 import { formatClaveDate } from "../clave/date.js";
 
@@ -6,13 +7,13 @@ export interface IdentityIssue {
   message: string;
 }
 export const STANDARD_DOCUMENT_CODES: Readonly<Record<string, string>> = {
-  FacturaElectronica: "01",
-  NotaDebitoElectronica: "02",
-  NotaCreditoElectronica: "03",
-  TiqueteElectronico: "04",
-  FacturaElectronicaCompra: "08",
-  FacturaElectronicaExportacion: "09",
-  ReciboElectronicoPago: "10",
+  FacturaElectronica: DocumentTypeCode.FACTURA_ELECTRONICA,
+  NotaDebitoElectronica: DocumentTypeCode.NOTA_DEBITO_ELECTRONICA,
+  NotaCreditoElectronica: DocumentTypeCode.NOTA_CREDITO_ELECTRONICA,
+  TiqueteElectronico: DocumentTypeCode.TIQUETE_ELECTRONICO,
+  FacturaElectronicaCompra: DocumentTypeCode.FACTURA_ELECTRONICA_COMPRA,
+  FacturaElectronicaExportacion: DocumentTypeCode.FACTURA_ELECTRONICA_EXPORTACION,
+  ReciboElectronicoPago: DocumentTypeCode.RECIBO_ELECTRONICO_PAGO,
 };
 export interface IdentityDocument {
   clave: string;
@@ -49,7 +50,7 @@ export function validateDocumentIdentity(
   ) {
     add(
       "clave",
-      expectedType === "08"
+      expectedType === DocumentTypeCode.FACTURA_ELECTRONICA_COMPRA
         ? "clave taxpayer must match the purchase invoice buyer (receptor)"
         : "clave taxpayer must match emisor.identificacion.numero",
     );

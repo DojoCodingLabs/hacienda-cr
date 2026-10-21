@@ -14,6 +14,7 @@ import { defineCommand } from "citty";
 import {
   IdentificationType,
   IDENTIFICATION_TYPE_NAMES,
+  ProvinceCode,
   SaleCondition,
   SALE_CONDITION_NAMES,
   PaymentMethod,
@@ -21,6 +22,9 @@ import {
   IvaRateCode,
   IVA_RATE_NAMES,
   IVA_RATE_PERCENTAGES,
+  REFERENCE_CODES,
+  REFERENCE_DOC_TYPES,
+  TaxCode,
   UnitOfMeasure,
 } from "@dojocoding/hacienda-shared";
 import { success, error, detail, info, outputJson, bold, cyan, dim } from "../utils/format.js";
@@ -182,6 +186,7 @@ async function collectEmisor(): Promise<DraftEmisor> {
   );
   const provincia = await prompt("Province code (1-7)", "1");
   const canton = await prompt("Canton code (2 digits)", "01");
+  // eslint-disable-next-line no-restricted-syntax -- sin constante: distrito sin pareja (tabla gigante)
   const distrito = await prompt("District code (2 digits)", "01");
   const otrasSenas = await prompt("Address details (min 5 chars)", "Sin otras senas");
   const correo = await prompt("Email address");
@@ -219,7 +224,7 @@ async function collectReceptor(): Promise<DraftReceptor> {
     // Facturas require a receptor identification in v4.4; foreign receivers
     // use type 05 (Extranjero No Domiciliado) with a free-form number.
     const numero = await prompt("Foreign identification number (max 20 chars)");
-    receptor.identificacion = { tipo: "05", numero };
+    receptor.identificacion = { tipo: IdentificationType.EXTRANJERO_NO_DOMICILIADO, numero };
   }
 
   const correo = await prompt("Receiver email (optional, press Enter to skip)");
@@ -236,6 +241,7 @@ async function collectLineItem(lineNumber: number): Promise<DraftLineItem> {
   const detalle = await prompt("Description");
   const codigoCabys = await prompt("CABYS code (13 digits)", "0000000000000");
   const unidadMedida = await promptSelect("Unit of measure", COMMON_UNITS, "Unid");
+  // eslint-disable-next-line no-restricted-syntax -- cantidad por defecto de la línea, no un código de catálogo
   const cantidadStr = await prompt("Quantity", "1");
   const cantidad = parseFloat(cantidadStr) || 1;
   const precioStr = await prompt("Unit price");
@@ -251,7 +257,7 @@ async function collectLineItem(lineNumber: number): Promise<DraftLineItem> {
   let impuestoNeto = 0;
 
   if (hasTax) {
-    const ivaCode = await promptSelect("IVA rate", IVA_RATES, "08");
+    const ivaCode = await promptSelect("IVA rate", IVA_RATES, IvaRateCode.GENERAL_13);
     const rateEntry = IVA_RATES.find((r) => r.code === ivaCode);
     const tarifa = rateEntry?.rate ?? 13;
     const monto = round5(subTotal * (tarifa / 100));
@@ -259,7 +265,7 @@ async function collectLineItem(lineNumber: number): Promise<DraftLineItem> {
 
     impuesto = [
       {
-        codigo: "01", // IVA
+        codigo: TaxCode.IVA, // IVA
         codigoTarifaIVA: ivaCode,
         tarifa,
         monto,
@@ -268,8 +274,8 @@ async function collectLineItem(lineNumber: number): Promise<DraftLineItem> {
   } else {
     impuesto = [
       {
-        codigo: "01",
-        codigoTarifaIVA: "01", // Exento
+        codigo: TaxCode.IVA,
+        codigoTarifaIVA: IvaRateCode.EXENTO, // Exento
         tarifa: 0,
         monto: 0,
       },
@@ -391,10 +397,18 @@ export const draftCommand = defineCommand({
       const codigoActividadEmisor = await prompt("Economic activity code (CIIU)", "620100");
 
       // Sale condition
-      const condicionVenta = await promptSelect("Sale condition", SALE_CONDITIONS, "01");
+      const condicionVenta = await promptSelect(
+        "Sale condition",
+        SALE_CONDITIONS,
+        SaleCondition.CONTADO,
+      );
 
       // Payment method
-      const medioPago = await promptSelect("Payment method", PAYMENT_METHODS, "01");
+      const medioPago = await promptSelect(
+        "Payment method",
+        PAYMENT_METHODS,
+        PaymentMethod.EFECTIVO,
+      );
 
       // Emisor
       const emisor = await collectEmisor();
@@ -489,18 +503,20 @@ function generateBlankTemplate(templateType: string): Record<string, unknown> {
     emisor: {
       nombre: "<<YOUR_BUSINESS_NAME>>",
       identificacion: {
-        tipo: "02",
+        tipo: IdentificationType.CEDULA_JURIDICA,
         numero: "<<YOUR_CEDULA>>",
       },
       ubicacion: {
-        provincia: "1",
+        provincia: ProvinceCode.SAN_JOSE,
+        // eslint-disable-next-line no-restricted-syntax -- sin constante: cantón sin pareja (tabla gigante)
         canton: "01",
+        // eslint-disable-next-line no-restricted-syntax -- sin constante: distrito sin pareja (tabla gigante)
         distrito: "01",
         otrasSenas: "<<YOUR_ADDRESS>>",
       },
       correoElectronico: "<<YOUR_EMAIL>>",
     },
-    condicionVenta: "01",
+    condicionVenta: SaleCondition.CONTADO,
     detalleServicio: [
       {
         numeroLinea: 1,
@@ -513,8 +529,8 @@ function generateBlankTemplate(templateType: string): Record<string, unknown> {
         subTotal: 0,
         impuesto: [
           {
-            codigo: "01",
-            codigoTarifaIVA: "08",
+            codigo: TaxCode.IVA,
+            codigoTarifaIVA: IvaRateCode.GENERAL_13,
             tarifa: 13,
             monto: 0,
           },
@@ -534,7 +550,7 @@ function generateBlankTemplate(templateType: string): Record<string, unknown> {
       totalDescuentos: 0,
       totalVentaNeta: 0,
       totalImpuesto: 0,
-      medioPago: [{ tipoMedioPago: "01", totalMedioPago: 0 }],
+      medioPago: [{ tipoMedioPago: PaymentMethod.EFECTIVO, totalMedioPago: 0 }],
       totalComprobante: 0,
     },
   };
@@ -548,14 +564,17 @@ function generateBlankTemplate(templateType: string): Record<string, unknown> {
         ...base,
         receptor: {
           nombre: "<<RECEIVER_NAME>>",
-          identificacion: { tipo: "02", numero: "<<RECEIVER_CEDULA>>" },
+          identificacion: {
+            tipo: IdentificationType.CEDULA_JURIDICA,
+            numero: "<<RECEIVER_CEDULA>>",
+          },
         },
         informacionReferencia: [
           {
-            tipoDoc: "01",
+            tipoDoc: REFERENCE_DOC_TYPES[0], // Factura electrónica (referenciada)
             numero: "<<ORIGINAL_DOCUMENT_CLAVE>>",
             fechaEmision: new Date().toISOString(),
-            codigo: "01",
+            codigo: REFERENCE_CODES[0], // Anula documento de referencia
             razon: "<<REASON_FOR_CREDIT_NOTE>>",
           },
         ],
@@ -567,14 +586,17 @@ function generateBlankTemplate(templateType: string): Record<string, unknown> {
         ...base,
         receptor: {
           nombre: "<<RECEIVER_NAME>>",
-          identificacion: { tipo: "02", numero: "<<RECEIVER_CEDULA>>" },
+          identificacion: {
+            tipo: IdentificationType.CEDULA_JURIDICA,
+            numero: "<<RECEIVER_CEDULA>>",
+          },
         },
         informacionReferencia: [
           {
-            tipoDoc: "01",
+            tipoDoc: REFERENCE_DOC_TYPES[0], // Factura electrónica (referenciada)
             numero: "<<ORIGINAL_DOCUMENT_CLAVE>>",
             fechaEmision: new Date().toISOString(),
-            codigo: "01",
+            codigo: REFERENCE_CODES[0], // Anula documento de referencia
             razon: "<<REASON_FOR_DEBIT_NOTE>>",
           },
         ],
@@ -587,7 +609,10 @@ function generateBlankTemplate(templateType: string): Record<string, unknown> {
         ...base,
         receptor: {
           nombre: "<<RECEIVER_NAME>>",
-          identificacion: { tipo: "02", numero: "<<RECEIVER_CEDULA>>" },
+          identificacion: {
+            tipo: IdentificationType.CEDULA_JURIDICA,
+            numero: "<<RECEIVER_CEDULA>>",
+          },
           correoElectronico: "<<RECEIVER_EMAIL>>",
         },
         _templateType: "FacturaElectronica",

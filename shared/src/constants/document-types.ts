@@ -3,6 +3,11 @@
  *
  * Defines the numeric codes for all electronic document types
  * as specified in the Hacienda v4.4 specification.
+ *
+ * Los catálogos que antes vivían aquí (`MensajeReceptorCode`,
+ * `SituationCode`) migraron a `shared/src/generated/`; `DocumentTypeCode`
+ * queda a mano porque es el catálogo de la clave numérica, no una
+ * enumeración del XSD.
  */
 
 /** Document type codes used in the clave numerica and XML documents. */
@@ -45,27 +50,3 @@ export const DOCUMENT_TYPE_NAMES: Record<DocumentTypeCode, string> = {
   [DocumentTypeCode.CONFIRMACION_ACEPTACION_PARCIAL]: "Confirmación de Aceptación Parcial",
   [DocumentTypeCode.CONFIRMACION_RECHAZO]: "Confirmación de Rechazo",
 } as const;
-
-/** Mensaje Receptor (receiver acknowledgment) message codes. */
-export const MensajeReceptorCode = {
-  /** Aceptado totalmente */
-  ACEPTADO: "1",
-  /** Aceptado parcialmente */
-  ACEPTADO_PARCIALMENTE: "2",
-  /** Rechazado */
-  RECHAZADO: "3",
-} as const;
-
-export type MensajeReceptorCode = (typeof MensajeReceptorCode)[keyof typeof MensajeReceptorCode];
-
-/** Submission situation codes for the clave numerica. */
-export const SituationCode = {
-  /** Normal */
-  NORMAL: "1",
-  /** Contingencia (contingency) */
-  CONTINGENCIA: "2",
-  /** Sin internet (no internet) */
-  SIN_INTERNET: "3",
-} as const;
-
-export type SituationCode = (typeof SituationCode)[keyof typeof SituationCode];

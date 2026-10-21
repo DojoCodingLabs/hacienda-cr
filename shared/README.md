@@ -8,13 +8,21 @@ This package is used internally by `@dojocoding/hacienda-sdk`, `@dojocoding/haci
 
 ### Constants
 
-- **Document type codes** -- All electronic document types (`01`-`09`) with human-readable names
-- **Identification types** -- Cedula Fisica, Juridica, DIMEX, NITE
-- **Tax codes** -- IVA codes and rate codes
-- **Sale conditions** -- Contado, Credito, etc.
-- **Payment methods** -- Efectivo, Tarjeta, Cheque, Transferencia, etc.
-- **Currency codes** -- CRC, USD, EUR, etc.
-- **Province codes** -- Costa Rica provinces and cantons
+- **Generated catalogs** (`shared/src/generated/`) -- Code catalogs rendered
+  from `packages/sdk/schemas/codes.json` by `pnpm spec:generate`: document
+  type-independent enumerations such as `PaymentMethod`, `SaleCondition`,
+  `TaxCode`, `IvaRateCode`, `IdentificationType`, `ProvinceCode`,
+  `CURRENCY_CODES`, `DISCOUNT_CODES`, `OTHER_CHARGE_TYPES`,
+  `EXONERATION_INSTITUTIONS`, `COMMERCIAL_CODE_TYPES` and
+  `TRANSACTION_TYPES`. Every file starts with a `NO EDITAR` header: never
+  edit them by hand (the parity-freeze test and the `pnpm verify` lock
+  detect drift). The pairing registry is
+  `scripts/codes-generate/table-map.mjs`.
+- **Curated companions** -- Human-readable `*_NAMES` maps, derived subsets
+  (`REP_*`), `IVA_RATE_PERCENTAGES`, `IDENTIFICATION_LENGTHS`, currency
+  accessors, and the catalogs without an exact `codes.json` pairing
+  (`ExonerationType`, `UNITS_OF_MEASURE`, `DocumentTypeCode`,
+  `REFERENCE_*`) -- hand-written in `shared/src/constants/`.
 - **XAdES policy** -- Policy URI and SHA-1 hash for XAdES-EPES signing
 - **Environment URLs** -- Sandbox and production API/IDP endpoints
 

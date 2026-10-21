@@ -11,6 +11,7 @@ import { assertDocumentIdentity } from "../xml/document-identity.js";
  * Namespace: https://cdn.comprobanteselectronicos.go.cr/xml-schemas/v4.4/FacturaElectronicaCompra
  */
 
+import { DocumentTypeCode } from "@dojocoding/hacienda-shared";
 import type { FacturaElectronicaCompra } from "@dojocoding/hacienda-shared";
 import { buildXml } from "../xml/builder.js";
 import { buildStandardDocumentBody, DOCUMENT_VARIANTS } from "./shared-xml-helpers.js";
@@ -41,6 +42,6 @@ import { buildStandardDocumentBody, DOCUMENT_VARIANTS } from "./shared-xml-helpe
  */
 export function buildFacturaCompraXml(input: FacturaElectronicaCompra): string {
   const data = buildStandardDocumentBody(input, DOCUMENT_VARIANTS.FacturaElectronicaCompra);
-  assertDocumentIdentity(input, "08");
+  assertDocumentIdentity(input, DocumentTypeCode.FACTURA_ELECTRONICA_COMPRA);
   return buildXml("FacturaElectronicaCompra", data);
 }
