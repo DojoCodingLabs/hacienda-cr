@@ -14,6 +14,12 @@ import { defineCommand } from "citty";
 import { FacturaElectronicaSchema } from "@dojocoding/hacienda-shared";
 import { validateFacturaInput, validateDocumentXml } from "@dojocoding/hacienda-sdk";
 import { success, error, info, outputJson } from "../utils/format.js";
+import {
+  DraftFacturaSchema,
+  hasDecimalTextMoney,
+  validateDraftFactura,
+  type DraftFactura,
+} from "../utils/draft-document.js";
 
 // ---------------------------------------------------------------------------
 // Command definition
@@ -89,8 +95,11 @@ async function validateJson(
     return;
   }
 
-  // Zod validation
-  const zodResult = FacturaElectronicaSchema.safeParse(invoiceData);
+  // Drafts emit bounded decimal text; legacy invoice files keep Numbers.
+  const exactDraft = hasDecimalTextMoney(invoiceData);
+  const zodResult = (exactDraft ? DraftFacturaSchema : FacturaElectronicaSchema).safeParse(
+    invoiceData,
+  );
   if (!zodResult.success) {
     const issues = zodResult.error.issues.map((issue) => ({
       path: issue.path.join("."),
@@ -109,18 +118,21 @@ async function validateJson(
     return;
   }
 
-  // SDK business-rule validation
-  const sdkResult = validateFacturaInput(zodResult.data);
-  if (!sdkResult.valid) {
+  // Business-rule validation. The exact path uses the BigInt kernel; the
+  // legacy path keeps the published Number validator unchanged.
+  const errors = exactDraft
+    ? validateDraftFactura(zodResult.data as DraftFactura)
+    : validateFacturaInput(zodResult.data).errors;
+  if (errors.length > 0) {
     if (jsonOutput) {
       outputJson({
         valid: false,
         stage: "business-rules",
-        issues: sdkResult.errors,
+        issues: errors,
       });
     } else {
       error("Business rule validation failed:");
-      for (const err of sdkResult.errors) {
+      for (const err of errors) {
         console.log(`  - ${err.path}: ${err.message}`);
       }
     }
@@ -129,7 +141,12 @@ async function validateJson(
   }
 
   if (jsonOutput) {
-    outputJson({ valid: true, format: "json", clave: zodResult.data.clave });
+    outputJson({
+      valid: true,
+      format: "json",
+      money: exactDraft ? "decimal-text" : "number",
+      clave: zodResult.data.clave,
+    });
   } else {
     success(`Validation passed for ${filePath}`);
     console.log(`  Clave: ${zodResult.data.clave}`);

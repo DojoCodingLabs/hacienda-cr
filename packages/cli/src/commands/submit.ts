@@ -22,6 +22,13 @@ import {
 } from "@dojocoding/hacienda-sdk";
 import { success, error, detail, info, outputJson } from "../utils/format.js";
 import { createAuthenticatedClient } from "../utils/api-client.js";
+import {
+  DraftFacturaSchema,
+  draftForXml,
+  hasDecimalTextMoney,
+  validateDraftFactura,
+  type DraftFactura,
+} from "../utils/draft-document.js";
 
 export const submitCommand = defineCommand({
   meta: {
@@ -84,8 +91,11 @@ export const submitCommand = defineCommand({
         return;
       }
 
-      // Validate with Zod schema
-      const validation = FacturaElectronicaSchema.safeParse(invoiceData);
+      // Drafts emit bounded decimal text; legacy invoice files keep Numbers.
+      const exactDraft = hasDecimalTextMoney(invoiceData);
+      const validation = (exactDraft ? DraftFacturaSchema : FacturaElectronicaSchema).safeParse(
+        invoiceData,
+      );
       if (!validation.success) {
         const issues = validation.error.issues.map(
           (issue) => `  - ${issue.path.join(".")}: ${issue.message}`,
@@ -106,28 +116,53 @@ export const submitCommand = defineCommand({
         return;
       }
 
-      // Also validate with the SDK's validator
-      const sdkValidation = validateFacturaInput(validation.data);
-      if (!sdkValidation.valid) {
-        if (args.json) {
-          outputJson({
-            success: false,
-            error: "SDK validation failed",
-            issues: sdkValidation.errors,
-          });
-        } else {
-          error("Invoice SDK validation failed:");
-          for (const err of sdkValidation.errors) {
-            console.log(`  - ${err.path}: ${err.message}`);
+      let invoiceDoc: FacturaElectronica;
+      if (exactDraft) {
+        const exact = validation.data as DraftFactura;
+        const exactErrors = validateDraftFactura(exact);
+        if (exactErrors.length > 0) {
+          if (args.json) {
+            outputJson({
+              success: false,
+              error: "Exact draft validation failed",
+              issues: exactErrors,
+            });
+          } else {
+            error("Exact draft validation failed:");
+            for (const err of exactErrors) {
+              console.log(`  - ${err.path}: ${err.message}`);
+            }
           }
+          process.exitCode = 1;
+          return;
         }
-        process.exitCode = 1;
-        return;
+        invoiceDoc = draftForXml(exact);
+      } else {
+        // Legacy Number contract: keep the published SDK validator unchanged.
+        const sdkValidation = validateFacturaInput(validation.data);
+        if (!sdkValidation.valid) {
+          if (args.json) {
+            outputJson({
+              success: false,
+              error: "SDK validation failed",
+              issues: sdkValidation.errors,
+            });
+          } else {
+            error("Invoice SDK validation failed:");
+            for (const err of sdkValidation.errors) {
+              console.log(`  - ${err.path}: ${err.message}`);
+            }
+          }
+          process.exitCode = 1;
+          return;
+        }
+        // Zod infers strings for enums while the type uses branded enums.
+        invoiceDoc = validation.data as unknown as FacturaElectronica;
       }
 
-      // Build XML — cast to FacturaElectronica since Zod infers string
-      // for enums while the type uses branded enum types
-      const xml = buildFacturaXml(validation.data as unknown as FacturaElectronica);
+      // Build XML. The XML mapper serializes decimal text unchanged; it never
+      // performs arithmetic on amounts.
+      const xml = buildFacturaXml(invoiceDoc);
 
       const xmlValidation = await validateDocumentXml(xml);
       if (!xmlValidation.valid)
@@ -138,13 +173,13 @@ export const submitCommand = defineCommand({
           outputJson({
             success: true,
             dryRun: true,
-            clave: validation.data.clave,
+            clave: invoiceDoc.clave,
             xml,
           });
         } else {
           success("Validation passed (dry run)");
-          detail("Clave", validation.data.clave);
-          detail("Consecutivo", validation.data.numeroConsecutivo);
+          detail("Clave", invoiceDoc.clave);
+          detail("Consecutivo", invoiceDoc.numeroConsecutivo);
           detail("XML Length", `${xml.length} bytes`);
           console.log("\n--- Generated XML ---");
           console.log(xml);
@@ -202,7 +237,6 @@ export const submitCommand = defineCommand({
         );
 
       // Build submission request
-      const invoiceDoc = validation.data;
       const receptor = invoiceDoc.receptor?.identificacion
         ? {
             tipoIdentificacion: invoiceDoc.receptor.identificacion.tipo,

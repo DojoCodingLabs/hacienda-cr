@@ -9,6 +9,23 @@
 - Persistent submit requires an explicit store. After an uncertain POST, resume queries by the same clave and bytes; no automatic resend. Durable issuance uses one canonical ledger shared with legacy counters, and reset cannot reuse issued numbers. See docs/open-pr-remediation.md for recovery and operational limits.
 - Once durable issuance writes the versioned ledger, all writers sharing that config directory must use this SDK version. Older binaries only understand flat counters and must not share the upgraded directory; back up local state before deliberate adoption. There is no automatic downgrade or replay.
 
+### `hacienda draft` en texto decimal exacto
+
+El modo interactivo de `hacienda draft` emite `cantidad` y todos los montos como
+texto decimal acotado (máximo 3 y 5 decimales respectivamente). Calcula con el
+kernel BigInt del SDK y suma el resumen como enteros exactos, sin `number`,
+`parseFloat` ni un `round5` local. La precisión superior a la escala declarada se
+rechaza; no se redondea en silencio.
+
+`hacienda submit` y `hacienda validate` detectan estos borradores y los validan
+por la ruta exacta, incluida la validación XSD. Los archivos legacy con `number`
+conservan el esquema, el validador y el constructor de XML publicados.
+
+La regla de redondeo es cinco decimales, `HALF_UP`, según el Anexo de Hacienda
+v4.4 (p. 13-14). La regla y su cita viven en
+`shared/src/monetary/decimal-text.ts`. La exactitud offline no constituye
+aceptación real por Hacienda.
+
 ## 0.4.2 → 0.5.0
 
 All four linked `@dojocoding/hacienda-{shared,sdk,cli,mcp}` packages advance to
