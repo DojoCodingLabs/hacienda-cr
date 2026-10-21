@@ -282,7 +282,8 @@ export async function submitAndWait(
   }
   const transport = {
     post: async (...args: Parameters<HttpClient["post"]>) => {
-      if (alreadyAttempted) return { status: 0, headers: new Headers(), data: {} };
+      if (alreadyAttempted || options?.resumePending)
+        return { status: 0, headers: new Headers(), data: {} };
       const result = await httpClient.post(...args);
       await change("ENVIADO");
       return result;

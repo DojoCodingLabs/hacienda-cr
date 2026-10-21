@@ -1,0 +1,65 @@
+{
+  "date": "2026-10-21",
+  "node": "26.8.2",
+  "stryker": "10.0.0",
+  "tests": 158,
+  "mutants": 1008,
+  "duration": "35m40s",
+  "aggregateScore": 59.32,
+  "files": {
+    "src/documents/parser.ts": {
+      "sha256": "a2ca90c5d2c372621e381d5f80f3f335e15590cd58f9d57ac00832da20a66639",
+      "counts": {
+        "Ignored": 69,
+        "Killed": 196,
+        "CompileError": 79,
+        "NoCoverage": 52,
+        "Survived": 140
+      },
+      "score": 50.52
+    },
+    "src/tax/exact-decimal.ts": {
+      "sha256": "a46d861edb21845b9e9d300ff3b56be33253b51209bca070dd8d1fbf198ae595",
+      "counts": {
+        "Ignored": 14,
+        "CompileError": 18,
+        "Killed": 69,
+        "Survived": 17
+      },
+      "score": 80.23
+    },
+    "src/xml/document-identity.ts": {
+      "sha256": "377f705be56fc78ad40c2628db244cc50991c0afa3c84e0ed95a1562cf802ff1",
+      "counts": {
+        "Ignored": 26,
+        "CompileError": 30,
+        "Survived": 38,
+        "Killed": 79,
+        "Timeout": 1,
+        "NoCoverage": 5
+      },
+      "score": 65.04
+    },
+    "src/xml/input-limits.ts": {
+      "sha256": "721ac34e638810e2cb3030cc37283868405a4931931bfb8eeb6d97bacf36f3b0",
+      "counts": {
+        "Ignored": 10,
+        "CompileError": 1,
+        "Killed": 34,
+        "Timeout": 5,
+        "Survived": 17
+      },
+      "score": 69.64
+    },
+    "src/xml/schema-validator.ts": {
+      "sha256": "17b9141b2afd683368a111ea0de9c5fe6738fac8147d1ca923e648f82a3b3b9d",
+      "counts": {
+        "Ignored": 34,
+        "CompileError": 46,
+        "Killed": 20,
+        "Survived": 8
+      },
+      "score": 71.43
+    }
+  }
+}

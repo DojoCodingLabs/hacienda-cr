@@ -17,9 +17,20 @@ permissions:
 
 jobs:
   mutation:
-    name: Mutation testing (SDK)
+    name: Mutation testing (${{ matrix.name }})
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { name: parser, file: src/documents/parser.ts }
+          - { name: decimal, file: src/tax/exact-decimal.ts }
+          - { name: identity, file: src/xml/document-identity.ts }
+          - { name: input, file: src/xml/input-limits.ts }
+          - { name: schema, file: src/xml/schema-validator.ts }
+    env:
+      MUTATION_FILE: ${{ matrix.file }}
 
     steps:
       - name: Checkout
@@ -52,6 +63,6 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: mutation-report
+          name: mutation-report-${{ matrix.name }}
           path: packages/sdk/reports/mutation/
           if-no-files-found: ignore

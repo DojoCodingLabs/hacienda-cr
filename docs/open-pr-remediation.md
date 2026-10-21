@@ -17,7 +17,7 @@ No live credentials, submissions, customer records or user configuration are use
 | #100        | A concise planning-status contract, preserving a link to the complete proposal history rather than importing 12,854 lines as implemented authority.                                                                                                                                                             |
 | #101        | Property generation, golden bytes and a strict inverse of supported unsigned legacy-builder XML. Unknown fields/namespace, alternate serialization, signed input and lossy Number conversion are rejected; specific-tax factors are preserved. It is not a general received-document importer.                  |
 | #102        | Native pinned document verifier with policy bound to referenced SignedProperties, invalid-clock rejection and independent libxml2/OpenSSL comparisons. The signer keeps its generated Id/Target consistent. Optional external checks are explicit injected implementations, not environment-triggered binaries. |
-| #103        | Bounded hostile XML and secret-output regressions; separate mutation workflow with native tools, built workspace dependencies, offline environment and an explicit 45% initial regression floor. This percentage is not proof of security.                                                                      |
+| #103        | Bounded hostile XML and secret-output regressions; separate mutation workflow with native tools, built workspace dependencies, offline environment and explicit global and per-module regression floors. This percentage is not proof of security.                                                              |
 | #106 / #108 | One corrected set of calendar, delivery and issuance contracts. The two PRs shared a head and were not independent changes. See operational limits below.                                                                                                                                                       |
 
 ## Trust and precision
@@ -98,8 +98,23 @@ under native oracles, precision/namespace/field loss, official dates and install
 calendar data, concurrent store CAS, immutable bytes, actual XML status polling,
 ambiguous delivery without replay, unified legacy/new counters and process recovery.
 `pnpm verify` checks source, generated catalogs and fresh packed consumers; mutation
-runs separately. The private mock's source tests use only loopback.
+runs separately. Independent module floors prevent a global score increase from
+hiding regressions in money, identity or XML controls; ignored/uncompilable mutants
+do not count as detections. The private mock's source tests use only loopback.
 
 This is source preparation. The current published release remains 0.11.0 until a
 separate version/tag/publication is verified. No source test proves live Hacienda
 acceptance or authorizes application activation.
+
+## Measured mutation baseline
+
+The expanded run completed 1,008 mutants against 158 selected tests in 35m40s:
+59.32% globally, 80.23% monetary kernel, 65.04% identity, 69.64% input bounds,
+71.43% XSD wrapper and 50.52% strict legacy parser. Six timeout detections and
+174 compile errors are reported separately; compile errors/ignored mutations do
+not count as detections. These figures expose remaining test gaps, not universal
+security. [Counts and immutable source hashes](mutation-baseline-2026-10-21.json)
+retain the measured evidence. CI splits the five modules into independent jobs
+with bounded execution and the same selected tests. Floors leave a conservative
+margin for property-seed/runtime variation; a high parser score cannot mask a
+money/identity/input/XSD regression. No fiscal-acceptance claim follows.

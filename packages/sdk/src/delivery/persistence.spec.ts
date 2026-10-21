@@ -138,3 +138,29 @@ it("only one concurrent first sender can claim the persisted intent", () =>
     expect(post).toHaveBeenCalledTimes(1);
     expect(calls.filter((result) => result.status === "fulfilled")).toHaveLength(1);
   }));
+
+it("explicit resume only queries even when the saved document has no send intent", () =>
+  isolated(async (store) => {
+    await store.persist(
+      createStoredDocument({
+        clave,
+        xml: "<signed/>",
+        situation: "normal",
+        generatedAt: new Date(request.fecha),
+      }),
+    );
+    const post = vi.fn(),
+      get = vi.fn(async () => ({
+        status: 200,
+        headers: new Headers(),
+        data: { clave, "ind-estado": "aceptado" },
+      }));
+    const result = await submitAndWait({ post, get } as unknown as HttpClient, request, {
+      store,
+      resumePending: true,
+      pollIntervalMs: 0,
+      timeoutMs: 1000,
+    });
+    expect(result.accepted).toBe(true);
+    expect(post).not.toHaveBeenCalled();
+  }));
