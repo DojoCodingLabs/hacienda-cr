@@ -29,3 +29,15 @@ function required<T>(value: T | null | undefined): T {
   if (value == null) throw new Error("Missing required value");
   return value;
 }
+
+it("does not echo attacker-controlled XML names in parser diagnostics", () => {
+  for (const xml of ["<SECRET_REVIEW/>", "<SECRET_REVIEW><missing></SECRET_REVIEW>"]) {
+    try {
+      parseDocumentXml(xml);
+      throw new Error("Unexpected acceptance");
+    } catch (error) {
+      expect(String(error)).not.toContain("SECRET_REVIEW");
+      expect(String(error)).not.toContain("Unexpected acceptance");
+    }
+  }
+});

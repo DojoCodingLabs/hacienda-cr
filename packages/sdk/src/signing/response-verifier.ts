@@ -2,7 +2,6 @@ import { MensajeReceptorCode } from "@dojocoding/hacienda-shared";
 /** Authenticate the exact MensajeHacienda root against caller-reviewed leaf pins.
  * Does not acquire trust anchors, validate a CA chain, check revocation, or send HTTP.
  */
-import { DOMParser } from "@xmldom/xmldom";
 import { XMLValidator } from "fast-xml-parser";
 import { ResponseVerificationError } from "../errors.js";
 import { checkXmlInput } from "../xml/input-limits.js";
@@ -14,6 +13,7 @@ import {
   required,
   resolvePinnedCertificate,
   signatureProfile,
+  parseSignatureXml,
   textOf,
   verifySignatureBytes,
 } from "./signature-core.js";
@@ -102,7 +102,7 @@ export async function verifyHaciendaResponseXml(
       XMLValidator.validate(xml) !== true
     )
       fail("invalid-xml");
-    const document = new DOMParser().parseFromString(xml, "application/xml");
+    const document = parseSignatureXml(xml);
     const root = document.documentElement;
     if (
       !root ||

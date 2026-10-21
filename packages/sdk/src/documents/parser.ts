@@ -488,23 +488,18 @@ export function parseDocumentXml(xml: string): ParseDocumentResult {
   const inputIssue = checkXmlInput(xml);
   if (inputIssue) throw new ValidationError(inputIssue);
   const syntax = XMLValidator.validate(xml);
-  if (syntax !== true) {
-    const msg =
-      typeof syntax === "object" && syntax !== null
-        ? ((syntax as { err?: { msg?: string } }).err?.msg ?? String(syntax))
-        : String(syntax);
-    throw new ValidationError(msg);
-  }
+  if (syntax !== true) throw new ValidationError("Malformed document XML");
+
   let parsed: any;
   try {
     parsed = parser.parse(xml);
-  } catch (error) {
-    throw new ValidationError(error instanceof Error ? error.message : String(error));
+  } catch {
+    throw new ValidationError("Malformed document XML");
   }
   const keys = Object.keys(parsed).filter((k) => k !== "?xml");
   if (keys.length !== 1) throw new ValidationError("Expected a single document root element");
   const root = keys[0] as string;
-  if (!ROOT_SET.has(root)) throw new ValidationError(`Unsupported document root element: ${root}`);
+  if (!ROOT_SET.has(root)) throw new ValidationError("Unsupported document root element");
   const body = parsed[root] as Record<string, unknown>;
   const expectedNamespace =
     "https://cdn.comprobanteselectronicos.go.cr/xml-schemas/v4.4/" +

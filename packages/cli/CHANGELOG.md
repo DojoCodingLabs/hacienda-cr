@@ -1,6 +1,21 @@
 # @dojocoding/hacienda-cli
 
+## 0.12.1
+
+### Patch Changes
+
+- Normalize malformed XML namespace failures to safe structured signature-verification
+  errors, suppress parser diagnostics and keep legacy XML errors generic. Preserve
+  explicit pinning and all valid-signature checks. Keep the four public package
+  versions aligned. The v0.12.0 publication workflow was cancelled and its tag is
+  preserved; this correction uses a new immutable 0.12.1 release identity.
+- Updated dependencies
+  - @dojocoding/hacienda-shared@0.12.1
+  - @dojocoding/hacienda-sdk@0.12.1
+
 ## 0.12.0
+
+Prepared release; its publication workflow was cancelled. Included in 0.12.1.
 
 ### Minor Changes
 
