@@ -45,6 +45,16 @@ follow the [sandbox walkthrough](https://github.com/DojoCodingLabs/hacienda-cr/b
 For application architecture, see the [production integration guide](https://github.com/DojoCodingLabs/hacienda-cr/blob/main/docs/production-integration.md).
 Review the [v4.4 migration notes](MIGRATION-v4.4.md) before adapting existing inputs.
 
+## Supported Inputs
+
+Legal entity IDs accept ten alphanumeric characters throughout identification
+and clave generation/parsing. Three-digit special phones such as `911` are
+supported. Taxes support amount-only ISC and `datosImpuestoEspecifico`, including
+five-decimal alcohol proportions. Mixed-tax calculations include applicable
+specific taxes in the IVA base and all net taxes in totals. See the
+[migration notes](MIGRATION-v4.4.md) for input
+examples and compatibility details.
+
 ## API Reference
 
 ### Client
@@ -67,12 +77,12 @@ Review the [v4.4 migration notes](MIGRATION-v4.4.md) before adapting existing in
 
 ### Clave Numerica
 
-| Export         | Type     | Description                             |
-| -------------- | -------- | --------------------------------------- |
-| `buildClave()` | Function | Builds a 50-digit clave from components |
-| `parseClave()` | Function | Parses a 50-digit clave into components |
-| `DocumentType` | Enum     | Document type codes (`01`-`09`)         |
-| `Situation`    | Enum     | Situation codes (`1`-`3`)               |
+| Export         | Type     | Description                                 |
+| -------------- | -------- | ------------------------------------------- |
+| `buildClave()` | Function | Builds a 50-character clave from components |
+| `parseClave()` | Function | Parses a 50-character clave into components |
+| `DocumentType` | Enum     | Document type codes (`01`-`09`)             |
+| `Situation`    | Enum     | Situation codes (`1`-`3`)                   |
 
 ### XML
 
@@ -254,13 +264,3 @@ See [source, primary rules and independent gates](../../docs/exact-foreign-servi
 Exact recipient source contract and remaining transport/outcome gates: [recipient confirmation](../../docs/exact-recipient-message.md).
 
 - Source-only explicit [non-subject personal-used-goods FEC](../../docs/exact-used-personal-goods-fec.md): actual supplier 06/buyer 08, ordinary discounts, exact non-subject amounts; qualification, resale and acceptance remain independent.
-
-### October 2026 v4.4 compatibility
-
-Legal entity IDs accept ten alphanumeric characters throughout identification
-and clave generation/parsing. Three-digit special phones such as `911` are
-supported. Taxes support amount-only ISC and `datosImpuestoEspecifico`, including
-five-decimal alcohol proportions. Mixed-tax calculations include applicable
-specific taxes in the IVA base and all net taxes in totals. See the
-[migration notes](./MIGRATION-v4.4.md#october-2026-compatibility-updates) for input
-examples and compatibility details.

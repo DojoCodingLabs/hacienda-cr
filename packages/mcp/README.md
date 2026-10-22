@@ -73,9 +73,10 @@ location placeholders. Complete these and review the activity, CABYS, taxes,
 and customer before passing it to `create_invoice`.
 
 `create_invoice` returns **unsigned XML**, its clave, and calculated totals. It
-does not sign or submit to Hacienda. It increments the default local sequence
-store for document type `01`, branch `001`, POS `00001`; the counter does not
-separate issuers or environments. Save the returned XML and clave before
+does not sign or submit to Hacienda. It reserves a local sequence for the
+issuer and environment, using document type `01`, branch `001`, POS `00001`.
+See [issuer numbering](#issuer-numbering-and-credential-rotation) for storage
+and migration details. Save the returned XML and clave before
 handing them to your backend for validation, signing, submission, and status
 tracking. Repeating `create_invoice` allocates a new number and clave.
 
@@ -93,12 +94,21 @@ when calling these tools; all three default to `"default"`. A desktop client's
 server may not inherit your terminal's environment. Use your client's secret
 or environment configuration to supply `HACIENDA_PASSWORD` to the server. The
 password is not stored by `auth login`; saving a profile alone is insufficient.
-Restart the server after updating profiles or credentials because authenticated
-clients are cached by profile name.
+Authenticated clients refresh when resolved profiles or credentials change.
+Restart the server when replacing certificate bytes at the same path.
 
 For a complete SDK handoff, see the [sandbox walkthrough](https://github.com/DojoCodingLabs/hacienda-cr/blob/main/docs/sandbox-guide.md#usar-la-cli-o-mcp-en-el-mismo-flujo).
 For multiple companies or application instances, see the
 [production integration guide](https://github.com/DojoCodingLabs/hacienda-cr/blob/main/docs/production-integration.md).
+
+## Supported Inputs
+
+`create_invoice` supports alphanumeric legal entity IDs, optional issuer/receiver
+`telefono` (including three-digit special numbers), amount-only ISC
+(`{ codigo: "02", monto: 100 }`) and `datosImpuestoEspecifico` for specific taxes.
+Alcohol proportions retain up to five decimal places. The exposed invoice
+schema includes these fields. See the SDK
+[migration notes](../sdk/MIGRATION-v4.4.md).
 
 ## Tools
 
@@ -110,6 +120,7 @@ unsigned XML. Local validation does not imply Hacienda acceptance.
 
 **Parameters:**
 
+- `environment` -- Numbering environment: `sandbox` (default) or `production`
 - `proveedorSistemas` -- Required identification of the invoicing system provider (9–12 digits)
 - `emisor` -- Issuer information: name, ID, email, and required `ubicacion` with `provincia`, `canton`, `distrito`, `otrasSenas`; optional `nombreComercial`
 - `receptor` -- Receiver information (name, optional ID, optional email)
@@ -126,11 +137,11 @@ the resulting amounts.
 
 ### `check_status`
 
-Check the processing status of a document by its 50-digit clave numerica.
+Check the processing status of a document by its 50-character clave.
 
 **Parameters:**
 
-- `clave` -- The 50-digit clave numerica
+- `clave` -- The 50-character clave
 - `profile` -- Saved profile name (default: `"default"`); requires server password environment
 
 ### `list_documents`
@@ -151,7 +162,7 @@ Get observed metadata/references by the current 50-character clave. Use `check_s
 
 **Parameters:**
 
-- `clave` -- The 50-digit clave numerica
+- `clave` -- The 50-character clave
 - `profile` -- Saved profile name (default: `"default"`); requires server password environment
 
 ### `lookup_taxpayer`
@@ -160,7 +171,7 @@ Look up a Costa Rica taxpayer by identification number (cedula). Returns name, I
 
 **Parameters:**
 
-- `identificacion` -- Taxpayer ID number (9-12 digits)
+- `identificacion` -- Taxpayer ID (9–12 digits, or ten alphanumeric characters for legal entities)
 
 ### `draft_invoice`
 
@@ -203,7 +214,7 @@ See the [MCP reference](https://github.com/DojoCodingLabs/hacienda-cr/blob/main/
 
 Read the [migration guide](https://github.com/DojoCodingLabs/hacienda-cr/blob/main/packages/sdk/MIGRATION-v4.4.md) before upgrading.
 
-### Issuer numbering and credential rotation
+## Issuer numbering and credential rotation
 
 `create_invoice` accepts `environment` (defaults to `sandbox`) and stores local counters under `issuer-sequences/<environment>/<sha256 identity>/sequences.json` in the configuration directory. The digest covers environment, identification type and identification number. Branch, terminal and document type remain separate counters within that file. This is local-process/file coordination, not a distributed transactional counter.
 
@@ -212,12 +223,3 @@ If an old global `sequences.json` contains positive counters, creating a new uns
 Authenticated clients are invalidated when the resolved profile, environment, issuer configuration, certificate path, password or PIN changes. Replacing certificate bytes at the same path still requires restarting the process or clearing the cache. Configure one profile per identity/environment.
 
 See the [history contract migration](../../docs/history-contract.md); unsupported keys are rejected before authentication.
-
-### October 2026 v4.4 inputs
-
-`create_invoice` supports alphanumeric legal entity IDs, optional issuer/receiver
-`telefono` (including three-digit special numbers), amount-only ISC
-(`{ codigo: "02", monto: 100 }`) and `datosImpuestoEspecifico` for specific taxes.
-Alcohol proportions retain up to five decimal places. The exposed invoice
-schema includes these fields. See the SDK
-[migration notes](../sdk/MIGRATION-v4.4.md#october-2026-compatibility-updates).

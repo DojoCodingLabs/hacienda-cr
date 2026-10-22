@@ -12,6 +12,15 @@ npm install -g @dojocoding/hacienda-cli
 
 Requires **Node.js 22+**.
 
+## Supported Inputs
+
+`lookup` accepts ten-character alphanumeric legal entity IDs. `get` and `status`
+accept the resulting 50-character claves, with letters confined to the legal
+entity ID portion. JSON document inputs use the SDK's updated phone and tax
+fields; see the SDK
+[migration notes](../sdk/MIGRATION-v4.4.md).
+The interactive draft wizard continues to collect basic IVA lines.
+
 ## Commands
 
 All commands support `--json` for machine-readable JSON output.
@@ -27,14 +36,14 @@ export HACIENDA_PASSWORD="your-password"
 hacienda auth login --cedula-type 01 --cedula 112345678 --environment sandbox
 ```
 
-| Argument        | Description                                       | Default              |
-| --------------- | ------------------------------------------------- | -------------------- |
-| `--cedula-type` | `01` Fisica, `02` Juridica, `03` DIMEX, `04` NITE | (required)           |
-| `--cedula`      | Identification number (9-12 digits)               | (required)           |
-| `--username`    | Full issued IDP username; saved in profile        | `$HACIENDA_USERNAME` |
-| `--password`    | IDP password (prefer `HACIENDA_PASSWORD` env var) | `$HACIENDA_PASSWORD` |
-| `--environment` | `sandbox` or `production`                         | `sandbox`            |
-| `--profile`     | Profile name                                      | `default`            |
+| Argument        | Description                                           | Default              |
+| --------------- | ----------------------------------------------------- | -------------------- |
+| `--cedula-type` | `01` Fisica, `02` Juridica, `03` DIMEX, `04` NITE     | (required)           |
+| `--cedula`      | Taxpayer ID (numeric or legal entity alphanumeric ID) | (required)           |
+| `--username`    | Full issued IDP username; saved in profile            | `$HACIENDA_USERNAME` |
+| `--password`    | IDP password (prefer `HACIENDA_PASSWORD` env var)     | `$HACIENDA_PASSWORD` |
+| `--environment` | `sandbox` or `production`                             | `sandbox`            |
+| `--profile`     | Profile name                                          | `default`            |
 
 ### `hacienda auth status`
 
@@ -86,7 +95,7 @@ See the [sandbox walkthrough](https://github.com/DojoCodingLabs/hacienda-cr/blob
 
 ### `hacienda status <clave>`
 
-Check document processing status by 50-digit clave numerica.
+Check document processing status by 50-character clave.
 
 ```bash
 hacienda status 50601012400310123456700100001010000000001199999999
@@ -175,11 +184,12 @@ schema and validator.
 
 ## Environment Variables
 
-| Variable            | Description                       |
-| ------------------- | --------------------------------- |
-| `HACIENDA_PASSWORD` | IDP password for authentication   |
-| `HACIENDA_P12_PIN`  | PIN for the .p12 certificate file |
-| `HACIENDA_P12_PATH` | Path to the .p12 certificate file |
+| Variable            | Description                        |
+| ------------------- | ---------------------------------- |
+| `HACIENDA_USERNAME` | Full issued IDP username for login |
+| `HACIENDA_PASSWORD` | IDP password for authentication    |
+| `HACIENDA_P12_PIN`  | PIN for the .p12 certificate file  |
+| `HACIENDA_P12_PATH` | Path to the .p12 certificate file  |
 
 ## Full Documentation
 
@@ -192,12 +202,3 @@ See the [command reference](https://github.com/DojoCodingLabs/hacienda-cr/blob/m
 Read the [migration guide](https://github.com/DojoCodingLabs/hacienda-cr/blob/main/packages/sdk/MIGRATION-v4.4.md) before upgrading.
 
 See the [history contract migration](../../docs/history-contract.md) for rejected date/legacy filters, exact identifiers and observed-only pagination.
-
-### October 2026 v4.4 compatibility
-
-`lookup` accepts ten-character alphanumeric legal entity IDs. `get` and `status`
-accept the resulting 50-character claves, with letters confined to the legal
-entity ID portion. JSON document inputs use the SDK's updated phone and tax
-fields; see the SDK
-[migration notes](../sdk/MIGRATION-v4.4.md#october-2026-compatibility-updates).
-The interactive draft wizard continues to collect basic IVA lines.
