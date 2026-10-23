@@ -13,6 +13,9 @@ conformance gate for generated XML (`src/__testing__/xsd.ts`).
   no login). Note: the host's WAF blocks browser-like User-Agents from CLI
   clients — plain `curl`/`wget` default agents work.
 - Files are vendored byte-for-byte as published (do not reformat).
+- The per-file evidence behind both sets — exact URLs, `Last-Modified`, SHA-256,
+  declared authority and the open question about `2026/v4.4` — is recorded in
+  [v4.4 schema provenance](../../../docs/specs/v4-4-schema-provenance.md).
 - `xmldsig-core-schema.xsd` — W3C XML-DSig core schema referenced by every
   Hacienda XSD via `../../xmldsig-core-schema.xsd` (hence the directory layout).
   Downloaded from `https://www.w3.org/TR/2002/REC-xmldsig-core-20020212/`.
