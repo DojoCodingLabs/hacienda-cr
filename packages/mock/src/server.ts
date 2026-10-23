@@ -58,6 +58,11 @@ interface RateWindow {
   readonly timestamps: number[];
 }
 
+type ReadBodyResult =
+  | { readonly ok: true; readonly body: string }
+  | { readonly ok: false; readonly reason: "too-large" }
+  | { readonly ok: false; readonly reason: "aborted" };
+
 function defaultOutcome(): MockOutcome {
   return "aceptado";
 }
@@ -151,6 +156,7 @@ export async function createMockServer(options: MockServerOptions = {}): Promise
     body: unknown,
     headers: Record<string, string> = {},
   ): void {
+    if (res.writableEnded || res.destroyed || res.headersSent) return;
     const payload = JSON.stringify(body);
     res.writeHead(status, {
       "Content-Type": "application/json; charset=utf-8",
@@ -243,244 +249,318 @@ export async function createMockServer(options: MockServerOptions = {}): Promise
     doc.callbackTimer.unref?.();
   }
 
-  function readBody(req: IncomingMessage): Promise<string> {
-    return new Promise((resolve, reject) => {
+  function readBody(req: IncomingMessage): Promise<ReadBodyResult> {
+    return new Promise((resolve) => {
       const chunks: Buffer[] = [];
       let size = 0;
+      let tooLarge = false;
+      let settled = false;
+      const finish = (result: ReadBodyResult): void => {
+        if (settled) return;
+        settled = true;
+        resolve(result);
+      };
       req.on("data", (chunk: Buffer) => {
+        if (settled) return;
+        if (tooLarge) return;
         size += chunk.length;
         if (size > MAX_BODY_BYTES) {
-          reject(new Error("Request body too large."));
-          req.destroy();
+          tooLarge = true;
+          finish({ ok: false, reason: "too-large" });
           return;
         }
         chunks.push(chunk);
       });
-      req.on("end", () => resolve(Buffer.concat(chunks).toString("utf8")));
-      req.on("error", reject);
+      req.on("end", () => {
+        if (settled) return;
+        finish({ ok: true, body: Buffer.concat(chunks).toString("utf8") });
+      });
+      req.on("error", () => {
+        finish({ ok: false, reason: "aborted" });
+      });
+      req.on("close", () => {
+        if (settled) return;
+        finish({ ok: false, reason: "aborted" });
+      });
     });
   }
 
-  function handleToken(req: IncomingMessage, res: ServerResponse): void {
-    void (async () => {
-      const headers = rateLimitHeaders(clientKey(req));
-      if (!consumeBudget(clientKey(req))) {
-        sendError(res, 429, "Rate limit exceeded for the current window.", headers);
-        return;
+  async function handleToken(req: IncomingMessage, res: ServerResponse): Promise<void> {
+    const key = clientKey(req);
+    const headers = rateLimitHeaders(key);
+    if (!consumeBudget(key)) {
+      sendError(res, 429, "Rate limit exceeded for the current window.", headers);
+      return;
+    }
+    const result = await readBody(req);
+    if (!result.ok) {
+      if (result.reason === "too-large") {
+        sendError(res, 400, "The request body is too large.", { ...headers, Connection: "close" });
+        res.on("finish", () => {
+          try {
+            req.destroy();
+          } catch {
+            /* ignore */
+          }
+        });
       }
-      const body = await readBody(req);
-      const params = new URLSearchParams(body);
-      const grantType = params.get("grant_type");
-      if (grantType !== "password" && grantType !== "refresh_token") {
-        sendError(res, 400, "Unsupported grant_type for the mock identity provider.", headers);
-        return;
-      }
-      const accessToken = `mock-access-${randomUUID()}`;
-      const refreshToken = `mock-refresh-${randomUUID()}`;
-      tokens.set(accessToken, { expiresAt: nowMs() + tokenTtlSeconds * 1000 });
-      tokens.set(refreshToken, { expiresAt: nowMs() + tokenTtlSeconds * 1000 });
-      sendJson(
-        res,
-        200,
-        {
-          access_token: accessToken,
-          token_type: "bearer",
-          expires_in: tokenTtlSeconds,
-          refresh_token: refreshToken,
-          refresh_expires_in: tokenTtlSeconds,
-          session_state: "mock-session",
-        },
-        headers,
-      );
-    })();
+      return;
+    }
+    const params = new URLSearchParams(result.body);
+    const grantType = params.get("grant_type");
+    if (grantType !== "password" && grantType !== "refresh_token") {
+      sendError(res, 400, "Unsupported grant_type for the mock identity provider.", headers);
+      return;
+    }
+    const accessToken = `mock-access-${randomUUID()}`;
+    const refreshToken = `mock-refresh-${randomUUID()}`;
+    tokens.set(accessToken, { expiresAt: nowMs() + tokenTtlSeconds * 1000 });
+    tokens.set(refreshToken, { expiresAt: nowMs() + tokenTtlSeconds * 1000 });
+    sendJson(
+      res,
+      200,
+      {
+        access_token: accessToken,
+        token_type: "bearer",
+        expires_in: tokenTtlSeconds,
+        refresh_token: refreshToken,
+        refresh_expires_in: tokenTtlSeconds,
+        session_state: "mock-session",
+      },
+      headers,
+    );
   }
 
-  function handleSubmit(req: IncomingMessage, res: ServerResponse): void {
-    void (async () => {
-      const key = clientKey(req);
-      const headers = rateLimitHeaders(key);
-      if (!consumeBudget(key)) {
-        sendError(res, 429, "Rate limit exceeded for the current window.", headers);
-        return;
-      }
-      const auth = req.headers.authorization ?? "";
-      const token = auth.startsWith("Bearer ") ? auth.slice(7) : "";
-      if (!token || !isTokenValid(token)) {
-        sendError(res, 401, "The access token is invalid or has expired.", headers);
-        return;
-      }
+  async function handleSubmit(req: IncomingMessage, res: ServerResponse): Promise<void> {
+    const key = clientKey(req);
+    const headers = rateLimitHeaders(key);
+    if (!consumeBudget(key)) {
+      sendError(res, 429, "Rate limit exceeded for the current window.", headers);
+      return;
+    }
+    const auth = req.headers.authorization ?? "";
+    const token = auth.startsWith("Bearer ") ? auth.slice(7) : "";
+    if (!token || !isTokenValid(token)) {
+      sendError(res, 401, "The access token is invalid or has expired.", headers);
+      return;
+    }
 
-      let payload: Record<string, unknown>;
+    const result = await readBody(req);
+    if (!result.ok) {
+      if (result.reason === "too-large") {
+        sendError(res, 400, "The request body is too large.", { ...headers, Connection: "close" });
+        res.on("finish", () => {
+          try {
+            req.destroy();
+          } catch {
+            /* ignore */
+          }
+        });
+      }
+      return;
+    }
+
+    let parsed: unknown;
+    try {
+      parsed = JSON.parse(result.body);
+    } catch {
+      sendError(res, 400, "The request body is not valid JSON.", headers);
+      return;
+    }
+    if (typeof parsed !== "object" || parsed === null || Array.isArray(parsed)) {
+      sendError(res, 400, "The request body must be a JSON object.", headers);
+      return;
+    }
+    const payload = parsed as Record<string, unknown>;
+
+    const clave = typeof payload["clave"] === "string" ? payload["clave"] : "";
+    if (!CLAVE_PATTERN.test(clave)) {
+      sendError(res, 400, "The clave numerica must be exactly 50 digits.", headers);
+      return;
+    }
+    if (typeof payload["fecha"] !== "string" || payload["fecha"] === "") {
+      sendError(res, 400, "The submission is missing the fecha de emision.", headers);
+      return;
+    }
+    const emisor = payload["emisor"] as Record<string, unknown> | undefined;
+    if (
+      !emisor ||
+      typeof emisor["tipoIdentificacion"] !== "string" ||
+      typeof emisor["numeroIdentificacion"] !== "string"
+    ) {
+      sendError(res, 400, "The submission is missing the emisor identification.", headers);
+      return;
+    }
+    const comprobanteXml = payload["comprobanteXml"];
+    if (typeof comprobanteXml !== "string" || comprobanteXml === "") {
+      sendError(res, 400, "The submission is missing the comprobanteXml document.", headers);
+      return;
+    }
+    if (documents.has(clave)) {
+      sendError(res, 409, `Duplicate clave numerica: ${clave} was already submitted.`, headers);
+      return;
+    }
+
+    // Simular enlace caído: devolver 503 sin almacenar el documento
+    if (linkDown) {
+      sendError(res, 503, "El enlace con Hacienda no está disponible. Intente más tarde.", headers);
+      return;
+    }
+
+    if (payload["callbackUrl"] !== undefined) {
       try {
-        const raw = await readBody(req);
-        payload = JSON.parse(raw) as Record<string, unknown>;
+        const url = new URL(String(payload["callbackUrl"]));
+        if (
+          url.protocol !== "http:" ||
+          !["127.0.0.1", "[::1]"].includes(url.hostname) ||
+          url.username ||
+          url.password
+        )
+          throw new Error("Callback must use a literal loopback address");
       } catch {
-        sendError(res, 400, "The request body is not valid JSON.", headers);
+        sendError(res, 400, "Mock callbacks require HTTP loopback URLs", headers);
         return;
       }
+    }
+    const rawOutcome =
+      typeof options.outcome === "function"
+        ? options.outcome(clave)
+        : (options.outcome ?? defaultOutcome());
+    const spec: MockOutcomeSpec =
+      typeof rawOutcome === "string" ? { status: rawOutcome } : rawOutcome;
+    const outcome = spec.status;
 
-      const clave = typeof payload["clave"] === "string" ? payload["clave"] : "";
-      if (!CLAVE_PATTERN.test(clave)) {
-        sendError(res, 400, "The clave numerica must be exactly 50 digits.", headers);
-        return;
-      }
-      if (typeof payload["fecha"] !== "string" || payload["fecha"] === "") {
-        sendError(res, 400, "The submission is missing the fecha de emision.", headers);
-        return;
-      }
-      const emisor = payload["emisor"] as Record<string, unknown> | undefined;
-      if (
-        !emisor ||
-        typeof emisor["tipoIdentificacion"] !== "string" ||
-        typeof emisor["numeroIdentificacion"] !== "string"
-      ) {
-        sendError(res, 400, "The submission is missing the emisor identification.", headers);
-        return;
-      }
-      const comprobanteXml = payload["comprobanteXml"];
-      if (typeof comprobanteXml !== "string" || comprobanteXml === "") {
-        sendError(res, 400, "The submission is missing the comprobanteXml document.", headers);
-        return;
-      }
-      if (documents.has(clave)) {
-        sendError(res, 409, `Duplicate clave numerica: ${clave} was already submitted.`, headers);
-        return;
-      }
+    const timestamp = nowMs();
+    const doc: DocumentState = {
+      clave,
+      status: outcome,
+      submittedAt: timestamp,
+      processingAt: timestamp + processingDelayMs,
+      terminalAt: timestamp + processingDelayMs + acceptanceDelayMs,
+      ...(typeof payload["callbackUrl"] === "string"
+        ? { callbackUrl: payload["callbackUrl"] }
+        : {}),
+      ...(spec.codigo !== undefined ? { codigo: spec.codigo } : {}),
+      callbackSent: false,
+    };
+    documents.set(clave, doc);
+    submissions.push({
+      clave,
+      emisorTipo: String(emisor["tipoIdentificacion"]),
+      emisorNumero: String(emisor["numeroIdentificacion"]),
+      ...(typeof payload["callbackUrl"] === "string"
+        ? { callbackUrl: payload["callbackUrl"] }
+        : {}),
+      receivedAt: new Date(timestamp).toISOString(),
+    });
 
-      // Simular enlace caído: devolver 503 sin almacenar el documento
-      if (linkDown) {
-        sendError(
-          res,
-          503,
-          "El enlace con Hacienda no está disponible. Intente más tarde.",
-          headers,
-        );
-        return;
-      }
+    const response = responseFor(doc, outcome);
+    if (mode === "record") {
+      const sanitized = sanitizeResponseXml(
+        Buffer.from(response.respuestaXml, "base64").toString("utf8"),
+      );
+      const entry: RecordedResponse = {
+        ...response,
+        clave: "0".repeat(50),
+        respuestaXml: toBase64Xml(sanitized),
+      };
+      recorded.push(entry);
+      options.recordSink?.(entry);
+    }
+    scheduleCallback(doc);
 
-      if (payload["callbackUrl"] !== undefined) {
-        try {
-          const url = new URL(String(payload["callbackUrl"]));
-          if (
-            url.protocol !== "http:" ||
-            !["127.0.0.1", "[::1]"].includes(url.hostname) ||
-            url.username ||
-            url.password
-          )
-            throw new Error("Callback must use a literal loopback address");
-        } catch {
-          sendError(res, 400, "Mock callbacks require HTTP loopback URLs", headers);
+    sendJson(
+      res,
+      201,
+      { status: 201, location: `/recepcion/${clave}` },
+      { ...headers, Location: `/recepcion/${clave}` },
+    );
+  }
+
+  async function handleStatus(
+    req: IncomingMessage,
+    res: ServerResponse,
+    clave: string,
+  ): Promise<void> {
+    const key = clientKey(req);
+    const headers = rateLimitHeaders(key);
+    if (!consumeBudget(key)) {
+      sendError(res, 429, "Rate limit exceeded for the current window.", headers);
+      return;
+    }
+    const auth = req.headers.authorization ?? "";
+    const token = auth.startsWith("Bearer ") ? auth.slice(7) : "";
+    if (!token || !isTokenValid(token)) {
+      sendError(res, 401, "The access token is invalid or has expired.", headers);
+      return;
+    }
+    const doc = documents.get(clave);
+    if (!doc) {
+      sendError(res, 404, `Unknown clave numerica: ${clave}.`, headers);
+      return;
+    }
+    const status = currentStatus(doc);
+    const response = responseFor(doc, doc.status);
+    sendJson(
+      res,
+      200,
+      {
+        clave: doc.clave,
+        "ind-estado": status,
+        fecha: response.fecha,
+        "respuesta-xml": response.respuestaXml,
+      },
+      headers,
+    );
+  }
+
+  function dispatch(
+    req: IncomingMessage,
+    res: ServerResponse,
+    handler: (r: IncomingMessage, s: ServerResponse) => Promise<void>,
+  ): void {
+    res.on("error", () => {
+      /* absorb late write errors on dead sockets */
+    });
+    void (async () => {
+      try {
+        await handler(req, res);
+      } catch (cause) {
+        const message = cause instanceof Error ? cause.message : String(cause);
+        log(`request handler failed: ${message}`);
+        if (res.headersSent) {
+          res.destroy();
           return;
         }
+        sendError(res, 500, "Internal server error.");
       }
-      const rawOutcome =
-        typeof options.outcome === "function"
-          ? options.outcome(clave)
-          : (options.outcome ?? defaultOutcome());
-      const spec: MockOutcomeSpec =
-        typeof rawOutcome === "string" ? { status: rawOutcome } : rawOutcome;
-      const outcome = spec.status;
-
-      const timestamp = nowMs();
-      const doc: DocumentState = {
-        clave,
-        status: outcome,
-        submittedAt: timestamp,
-        processingAt: timestamp + processingDelayMs,
-        terminalAt: timestamp + processingDelayMs + acceptanceDelayMs,
-        ...(typeof payload["callbackUrl"] === "string"
-          ? { callbackUrl: payload["callbackUrl"] }
-          : {}),
-        ...(spec.codigo !== undefined ? { codigo: spec.codigo } : {}),
-        callbackSent: false,
-      };
-      documents.set(clave, doc);
-      submissions.push({
-        clave,
-        emisorTipo: String(emisor["tipoIdentificacion"]),
-        emisorNumero: String(emisor["numeroIdentificacion"]),
-        ...(typeof payload["callbackUrl"] === "string"
-          ? { callbackUrl: payload["callbackUrl"] }
-          : {}),
-        receivedAt: new Date(timestamp).toISOString(),
-      });
-
-      const response = responseFor(doc, outcome);
-      if (mode === "record") {
-        const sanitized = sanitizeResponseXml(
-          Buffer.from(response.respuestaXml, "base64").toString("utf8"),
-        );
-        const entry: RecordedResponse = {
-          ...response,
-          clave: "0".repeat(50),
-          respuestaXml: toBase64Xml(sanitized),
-        };
-        recorded.push(entry);
-        options.recordSink?.(entry);
-      }
-      scheduleCallback(doc);
-
-      sendJson(
-        res,
-        201,
-        { status: 201, location: `/recepcion/${clave}` },
-        { ...headers, Location: `/recepcion/${clave}` },
-      );
-    })();
-  }
-
-  function handleStatus(req: IncomingMessage, res: ServerResponse, clave: string): void {
-    void (async () => {
-      const key = clientKey(req);
-      const headers = rateLimitHeaders(key);
-      if (!consumeBudget(key)) {
-        sendError(res, 429, "Rate limit exceeded for the current window.", headers);
-        return;
-      }
-      const auth = req.headers.authorization ?? "";
-      const token = auth.startsWith("Bearer ") ? auth.slice(7) : "";
-      if (!token || !isTokenValid(token)) {
-        sendError(res, 401, "The access token is invalid or has expired.", headers);
-        return;
-      }
-      const doc = documents.get(clave);
-      if (!doc) {
-        sendError(res, 404, `Unknown clave numerica: ${clave}.`, headers);
-        return;
-      }
-      const status = currentStatus(doc);
-      const response = responseFor(doc, doc.status);
-      sendJson(
-        res,
-        200,
-        {
-          clave: doc.clave,
-          "ind-estado": status,
-          fecha: response.fecha,
-          "respuesta-xml": response.respuestaXml,
-        },
-        headers,
-      );
     })();
   }
 
   const server: Server = createServer((req, res) => {
-    const url = new URL(req.url ?? "/", `http://${req.headers.host ?? "localhost"}`);
+    let url: URL;
+    try {
+      url = new URL(req.url ?? "/", "http://mock.invalid");
+    } catch {
+      sendError(res, 400, "Invalid request URL.");
+      return;
+    }
     const path = url.pathname;
     const method = req.method ?? "GET";
 
     if (method === "POST" && path.endsWith("/token")) {
-      handleToken(req, res);
+      dispatch(req, res, handleToken);
       return;
     }
     if (method === "POST" && path.endsWith("/recepcion")) {
-      handleSubmit(req, res);
+      dispatch(req, res, handleSubmit);
       return;
     }
     if (method === "GET") {
       const match = /\/recepcion\/(\d{50})$/.exec(path);
       if (match?.[1]) {
-        handleStatus(req, res, match[1]);
+        const clave = match[1];
+        dispatch(req, res, (r, s) => handleStatus(r, s, clave));
         return;
       }
     }
