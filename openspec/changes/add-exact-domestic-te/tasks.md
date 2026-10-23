@@ -9,5 +9,4 @@
 
 ## Separate release and consumer gates
 
-- [ ] Integrate other required #85 feature slices and prepare one reviewed coherent linked release.
-- [ ] Adopt verified registry artifacts in the app and prove independently authorized TE journeys; no activation follows from this source PR.
+- [ ] Integrate other required #85 feature slices and prepare one reviewed coherent linked release. 0.10.0 published this source (PR #94), but other #85 slices remain open.
