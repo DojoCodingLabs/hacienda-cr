@@ -1,18 +1,50 @@
 /**
  * PKCS#12 (.p12) certificate loader.
  *
- * Extracts the private key and X.509 certificate from a .p12 file
- * using `node-forge` for parsing and Node.js native `crypto` for
- * WebCrypto key import.
+ * Extracts the private key and X.509 certificate from a .p12 file.
+ *
+ * The PKCS#12 parser is an optional peer dependency: it is resolved lazily so
+ * that consumers who never load a `.p12` do not install or audit it. Node.js
+ * native `crypto` is still used to import the key into WebCrypto.
  *
  * @module signing/p12-loader
  */
 
 import { createPrivateKey } from "node:crypto";
-import forge from "node-forge";
+
+import type forge from "node-forge";
 
 import { SigningError } from "../errors.js";
 import type { P12Credentials } from "./types.js";
+
+type ForgeModule = typeof forge;
+
+// ---------------------------------------------------------------------------
+// Optional parser resolution
+// ---------------------------------------------------------------------------
+
+const MISSING_PARSER_MESSAGE =
+  'PKCS#12 loading requires the optional "node-forge" package. Install it with: npm install node-forge';
+
+let forgeModule: Promise<ForgeModule> | null = null;
+
+/**
+ * Resolves the optional PKCS#12 parser on first use.
+ *
+ * Fails closed with an actionable {@link SigningError} so that a consumer that
+ * did not opt in gets a clear remediation instead of a module-resolution stack.
+ * A failed resolution is not cached, so installing the parser and retrying works.
+ */
+function loadForge(): Promise<ForgeModule> {
+  forgeModule ??= import("node-forge").then(
+    (module) => ((module as { default?: ForgeModule }).default ?? module) as ForgeModule,
+    (cause: unknown) => {
+      forgeModule = null;
+      throw new SigningError(MISSING_PARSER_MESSAGE, cause);
+    },
+  );
+  return forgeModule;
+}
 
 // ---------------------------------------------------------------------------
 // OID constants (not in @types/node-forge but present at runtime)
@@ -31,19 +63,21 @@ const OID_CERT_BAG = "1.2.840.113549.1.12.10.1.3";
 /**
  * Extracts the private key and certificate from a PKCS#12 (.p12) file.
  *
- * Uses `node-forge` for ASN.1 parsing and `node:crypto` as a bridge
+ * Uses the optional PKCS#12 parser for ASN.1 and `node:crypto` as a bridge
  * to import the key into WebCrypto (RSASSA-PKCS1-v1_5 with SHA-256).
  *
  * @param p12Buffer - Raw bytes of the .p12 file.
  * @param pin - Password/PIN for the .p12 file.
  * @returns Extracted private key (as CryptoKey) and certificate.
- * @throws {SigningError} If the .p12 cannot be parsed or credentials extracted.
+ * @throws {SigningError} If the .p12 cannot be parsed, credentials cannot be
+ * extracted, or the optional parser is not installed.
  */
 export async function loadP12(p12Buffer: Buffer, pin: string): Promise<P12Credentials> {
   if (p12Buffer.length > 1024 * 1024)
     throw new SigningError("Certificate exceeds the 1 MiB input limit.");
   try {
-    // 1. Parse the PKCS#12 structure with node-forge
+    // 1. Resolve the optional parser and parse the PKCS#12 structure
+    const forge = await loadForge();
     const p12DerString = forge.util.binary.raw.encode(new Uint8Array(p12Buffer));
     const p12Asn1 = forge.asn1.fromDer(p12DerString);
     const p12 = forge.pkcs12.pkcs12FromAsn1(p12Asn1, pin);
@@ -74,7 +108,10 @@ export async function loadP12(p12Buffer: Buffer, pin: string): Promise<P12Creden
     const now = new Date();
     if (now < forgeCert.validity.notBefore || now > forgeCert.validity.notAfter)
       throw new SigningError("Certificate is not currently valid.");
-    const publicKey = forgeCert.publicKey as forge.pki.rsa.PublicKey;
+    const publicKey = forgeCert.publicKey as {
+      n?: { equals(other: unknown): boolean };
+      e: { equals(other: unknown): boolean };
+    };
     if (!publicKey.n || !publicKey.n.equals(forgeKey.n) || !publicKey.e.equals(forgeKey.e))
       throw new SigningError("Certificate and private key do not match.");
 

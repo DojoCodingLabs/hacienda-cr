@@ -155,3 +155,25 @@ The runtime advisory remains visible and issue #69 remains open for the reviewed
 patch/replacement and any required release/consumer update. These tests and audit
 documentation alone require no Changeset or npm publication. No real certificate,
 Hacienda credential, provider request, shared database or cloud setting is used.
+
+## Update 2026-10-23: parser PKCS#12 como peer opcional
+
+The SDK no longer declares `node-forge` as a required runtime dependency. It is
+now an optional peer dependency resolved lazily inside `loadP12`, so a default
+install contains no PKCS#12 parser and `npm audit --omit=dev` no longer reports
+GHSA-86w9-cpqp-85rv for consumers that never load a `.p12`.
+
+This is exposure reduction, not remediation. Consumers that opt in by installing
+`node-forge` still carry the unpatched advisory, and the call-path assessment
+above still applies: the SDK does not invoke Forge's RSA signature verification.
+Issue #69 remains open for the upstream patch or a future parser replacement.
+
+Evidence added by this change:
+
+- `packages/sdk/src/signing/p12-loader-missing-dep.spec.ts` proves the loader
+  fails closed with an actionable `SigningError` when the parser is absent.
+- `packages/sdk/src/signing/p12-loader-manifest.spec.ts` pins the manifest
+  invariant (no runtime dependency, optional peer, dev dependency for tests).
+- `scripts/verify-packages.mjs` installs the packed tarballs twice: one consumer
+  opts in and signs, another omits the parser, asserts the actionable failure,
+  and checks that the installed tree and production audit exclude `node-forge`.

@@ -1,6 +1,7 @@
 /** Test published artifacts in an isolated consumer with native ESM and stdio. */
 import assert from "node:assert/strict";
 import { execFileSync } from "node:child_process";
+import { existsSync } from "node:fs";
 import { mkdtemp, mkdir, writeFile, readFile, readdir, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
@@ -23,6 +24,54 @@ function run(command, args, cwd) {
     });
   }
 }
+
+/** Default install must not carry the optional PKCS#12 parser, and the loader
+ * must fail closed with an actionable error when a consumer did not opt in. */
+async function assertOptionalForgeAbsent(tarballs, stage) {
+  const consumer = join(stage, "consumer-without-forge");
+  await mkdir(consumer);
+  await writeFile(
+    join(consumer, "package.json"),
+    JSON.stringify({ private: true, type: "module" }),
+  );
+  run("npm", ["install", "--ignore-scripts", "--no-audit", "--no-fund", ...tarballs], consumer);
+  assert.equal(
+    existsSync(join(consumer, "node_modules", "node-forge")),
+    false,
+    "the default install must not include node-forge",
+  );
+  await writeFile(
+    join(consumer, "no-forge.mjs"),
+    `
+import assert from "node:assert/strict";
+import { readFile } from "node:fs/promises";
+import { spawnSync } from "node:child_process";
+import { loadP12 } from "@dojocoding/hacienda-sdk";
+const pin = "secret-pin-1234";
+const failure = await loadP12(Buffer.from("not a valid p12"), pin).then(() => null, (error) => error);
+assert.ok(failure, "loadP12 must reject when the optional parser is absent");
+assert.equal(failure.name, "SigningError");
+assert.equal(failure.code, "SIGNING_FAILED");
+assert.match(failure.message, /node-forge/);
+assert.match(failure.message, /npm install/);
+assert.equal(failure.message.includes(pin), false, "the error must not echo the PIN");
+const lock = JSON.parse(await readFile("package-lock.json", "utf8"));
+assert.equal(
+  Object.keys(lock.packages ?? {}).some((key) => key.endsWith("node_modules/node-forge")),
+  false,
+  "node-forge must not be installed",
+);
+const auditRun = spawnSync("npm", ["audit", "--omit=dev", "--json"], { encoding: "utf8", timeout: 120000 });
+assert.ok(auditRun.stdout, "npm audit must return JSON: " + auditRun.stderr);
+const audit = JSON.parse(auditRun.stdout);
+assert.equal(audit.vulnerabilities?.["node-forge"], undefined, "node-forge must not be audited");
+assert.equal(JSON.stringify(audit).includes("GHSA-86w9-cpqp-85rv"), false, "the node-forge advisory must not appear");
+console.log("Optional node-forge boundary passed: default install has no parser, fails closed, and audits clean.");
+`,
+  );
+  process.stdout.write(run(process.execPath, ["no-forge.mjs"], consumer));
+}
+
 try {
   const packIndex = process.argv.indexOf("--pack-dir");
   const packed = packIndex < 0 ? join(stage, "packed") : resolve(process.argv[packIndex + 1]);
@@ -47,6 +96,7 @@ try {
       ...tarballs,
       "typescript@5.9.3",
       "@types/node@22",
+      "node-forge@^1.4.0",
     ],
     consumer,
   );
@@ -328,6 +378,7 @@ console.log("Installed metadata, strict TypeScript examples, packaged sandbox pr
 `,
   );
   process.stdout.write(run(process.execPath, ["smoke.mjs"], consumer));
+  await assertOptionalForgeAbsent(tarballs, stage);
 } finally {
   await rm(stage, { recursive: true, force: true });
 }
