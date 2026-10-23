@@ -9,7 +9,6 @@
 ## Required integration
 
 - [ ] Establish receiver-message transport/recovery/outcome correlation oracle.
-- [ ] Implement app durable authorization, sequence, signing and immutable custody.
-- [ ] Complete other required original families and accountant workflow.
-- [ ] Prepare reviewed coherent release and separate app adoption.
+- [ ] Complete other required original families.
+- [ ] Prepare reviewed coherent release. 0.10.0 published the recipient XML source (PR #94), but the transport/outcome correlation gates remain open.
 - [ ] Verify actual authorized environments; no synthetic test is real acceptance.

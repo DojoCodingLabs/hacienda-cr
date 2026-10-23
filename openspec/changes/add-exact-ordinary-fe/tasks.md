@@ -8,6 +8,6 @@
 
 ## Separate acceptance
 
-- [ ] Adopt the reviewed published API in the application with its immutable validation contract.
+- [x] Adopt the reviewed published API in the application with its immutable validation contract. Facturador adopted the exact 0.6.0 registry artifacts, signed tuple and app consumer checks (`facturador-dojo/docs/testing/sdk-060-exact-consumer.md`); the app pin later advanced through 0.7–0.9.
 - [ ] Review other fiscal cases before expanding this explicitly ordinary case.
-- [ ] Publish only after explicit release review/authorization.
+- [x] Publish only after explicit release review/authorization. Release PR #74 produced tag `v0.6.0`; registry integrities, SLSA provenance and installed consumers were independently verified before app adoption.

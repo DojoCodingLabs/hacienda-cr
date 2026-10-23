@@ -11,4 +11,4 @@
 
 - [ ] Independently approve institutional public pin provenance/rotation and revocation policy.
 - [ ] Verify real authorized institutional response fixtures before production activation.
-- [ ] Review and publish a package release; do not merge unreviewed Money changes.
+- [x] Review and publish a package release; do not merge unreviewed Money changes. PR #71 merged and release PR #72 published `v0.5.0` with the verifier; the changelog records that the unmerged Money migration was not imported.
