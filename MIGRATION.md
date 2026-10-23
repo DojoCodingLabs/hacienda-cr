@@ -9,6 +9,24 @@
 - Persistent submit requires an explicit store. After an uncertain POST, resume queries by the same clave and bytes; no automatic resend. Durable issuance uses one canonical ledger shared with legacy counters, and reset cannot reuse issued numbers. See docs/open-pr-remediation.md for recovery and operational limits.
 - Once durable issuance writes the versioned ledger, all writers sharing that config directory must use this SDK version. Older binaries only understand flat counters and must not share the upgraded directory; back up local state before deliberate adoption. There is no automatic downgrade or replay.
 
+### `node-forge` pasa a peer dependency opcional
+
+`node-forge` ya no es una dependencia runtime obligatoria del SDK: es un peer
+opcional y se resuelve de forma perezosa dentro de `loadP12`. Quien nunca carga
+un `.p12` no lo instala y no hereda su advisory abierto.
+
+**Acción requerida** si llamás `loadP12` o `signXml`:
+
+```bash
+npm install node-forge
+```
+
+Sin el parser, el paquete se instala e importa normalmente, pero `loadP12`
+rechaza con un `SigningError` accionable antes de leer el archivo. El parseo,
+las validaciones (1 MiB, RSA ≥ 2048, vigencia, correspondencia clave/certificado)
+y la firma no cambian cuando el parser está presente. El issue #69 sigue abierto:
+esto reduce la exposición, no reemplaza la librería ni cierra el hallazgo.
+
 ### `hacienda draft` en texto decimal exacto
 
 El modo interactivo de `hacienda draft` emite `cantidad` y todos los montos como
