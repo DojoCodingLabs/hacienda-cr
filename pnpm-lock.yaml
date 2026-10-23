@@ -278,9 +278,6 @@ importers:
       fast-xml-parser:
         specifier: ^5.11.2
         version: 5.11.2
-      node-forge:
-        specifier: ^1.4.0
-        version: 1.4.0
       smol-toml:
         specifier: ^1.9.0
         version: 1.9.0
@@ -315,6 +312,9 @@ importers:
       fast-check:
         specifier: ^4.10.2
         version: 4.10.2
+      node-forge:
+        specifier: ^1.4.0
+        version: 1.4.0
 
   shared:
     dependencies:
