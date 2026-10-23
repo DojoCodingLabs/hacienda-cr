@@ -6,9 +6,9 @@ autoridad tiene cada set. Complementa el inventario mecánico de
 [`manifest.json`](../../packages/sdk/schemas/manifest.json) y la semántica de
 campos de [`packages/sdk/schemas/README.md`](../../packages/sdk/schemas/README.md).
 
-El registro **no** cambia `currentSet`, `nextSet`, el manifiesto ni los bytes
-vendorizados. Su única función es dejar visible la evidencia y el conflicto entre
-superficies.
+El registro **no** cambia por sí solo `currentSet`, `nextSet`, el manifiesto ni
+los bytes vendorizados. Su función es dejar visible la evidencia y la decisión
+cerrada sobre la autoridad de cada superficie.
 
 ## Superficies consultadas
 
@@ -37,9 +37,11 @@ abril de 2026 en esa superficie.
   que sirve `https://www.hacienda.go.cr/docs/` y llevan `Last-Modified` del
   2026-04-22. Que sea una publicación oficial de Hacienda no la convierte en
   sustitución oficial del esquema vigente mientras ATV no la publique.
-- El manifiesto mantiene `currentSet: "2024/v4.4"` y registra `2026/v4.4` como
-  `nextSet` con `effectiveFrom: "2026-11-01"`. Esa fecha y el rol del set están
-  **pendientes de decisión** (ver más abajo).
+- El manifiesto mantiene `currentSet: "2024/v4.4"` y registra `2026/v4.4` en
+  `sets[]` solo como **referencia vendorizada**. No existe `nextSet` ni fecha de
+  entrada en vigor: ATV no publica el set y no hay autoridad ni fecha confirmadas.
+- El build del SDK embebe y usa los XSD de `2024/v4.4` para la validación en
+  runtime; `2026/v4.4` no se usa como criterio de aceptación.
 
 ## Evidencia por set y archivo
 
@@ -62,17 +64,17 @@ la función del archivo en el repositorio, no una validación de Hacienda.
 
 ### Set `2026/v4.4` — superficie `ovi`
 
-| `set`       | `surface` | `url`                                                                    | `lastModified`                | `sha256`                                                           | `bytes` | `checkedAt` | `rol`                              |
-| ----------- | --------- | ------------------------------------------------------------------------ | ----------------------------- | ------------------------------------------------------------------ | ------- | ----------- | ---------------------------------- |
-| `2026/v4.4` | `ovi`     | `https://www.hacienda.go.cr/docs/FacturaElectronica_V4.4.xsd`            | Wed, 22 Apr 2026 21:01:06 GMT | `926ba81325bc21102755bd8e4e570a63caaca086e680a877c3a6d15d6ee8a62f` | 119689  | 2026-10-23  | `nextSet`, autoridad no confirmada |
-| `2026/v4.4` | `ovi`     | `https://www.hacienda.go.cr/docs/FacturaElectronicaCompra_V4.4.xsd`      | Wed, 22 Apr 2026 17:14:37 GMT | `57e4cedb12d5045884670ff2e4795d2027e69b96d45752f60cd1a1930e2768a3` | 97300   | 2026-10-23  | `nextSet`, autoridad no confirmada |
-| `2026/v4.4` | `ovi`     | `https://www.hacienda.go.cr/docs/FacturaElectronicaExportacion_V4.4.xsd` | Wed, 22 Apr 2026 17:14:36 GMT | `e571d8296bb74e86cb9ef7889601844c61ac50bedca90aa8d52badf15198242e` | 101881  | 2026-10-23  | `nextSet`, autoridad no confirmada |
-| `2026/v4.4` | `ovi`     | `https://www.hacienda.go.cr/docs/MensajeHacienda_V4.4.xsd`               | Wed, 22 Apr 2026 17:10:43 GMT | `b2606156042b7aa7b7f7f61945f0ff1323661b43b5a1489ad5eafad1c52fd25e` | 7799    | 2026-10-23  | `nextSet`, autoridad no confirmada |
-| `2026/v4.4` | `ovi`     | `https://www.hacienda.go.cr/docs/MensajeReceptor_V4.4.xsd`               | Wed, 22 Apr 2026 17:15:30 GMT | `b883e3a9321eadf2ccc1a9dc853d9e3bd483918dcd6e2152d902ddf2f244365f` | 6564    | 2026-10-23  | `nextSet`, autoridad no confirmada |
-| `2026/v4.4` | `ovi`     | `https://www.hacienda.go.cr/docs/NotaCreditoElectronica_V4.4.xsd`        | Wed, 22 Apr 2026 17:15:30 GMT | `b7ed3347c5599e78e5683d9ae83842695ab9497e173df9cd3be8d77c0851f556` | 123011  | 2026-10-23  | `nextSet`, autoridad no confirmada |
-| `2026/v4.4` | `ovi`     | `https://www.hacienda.go.cr/docs/NotaDebitoElectronica_V4.4.xsd`         | Wed, 22 Apr 2026 17:11:58 GMT | `3709389ccc434fb1ef4571079b1a628654fa04f07c1f3f1044b2416ba12eb7ff` | 123029  | 2026-10-23  | `nextSet`, autoridad no confirmada |
-| `2026/v4.4` | `ovi`     | `https://www.hacienda.go.cr/docs/ReciboElectronicoPago_V4.4.xsd`         | Wed, 22 Apr 2026 17:14:36 GMT | `86e3aa5f0615b757a3b2e9c300973d573ac321f76adba7b4b05e59d854da82b7` | 41655   | 2026-10-23  | `nextSet`, autoridad no confirmada |
-| `2026/v4.4` | `ovi`     | `https://www.hacienda.go.cr/docs/TiqueteElectronico_V4.4.xsd`            | Wed, 22 Apr 2026 17:11:58 GMT | `d7783baf818f316596d0b58b17481be689595982a248d98102d707f72967ae6e` | 117940  | 2026-10-23  | `nextSet`, autoridad no confirmada |
+| `set`       | `surface` | `url`                                                                    | `lastModified`                | `sha256`                                                           | `bytes` | `checkedAt` | `rol`                                           |
+| ----------- | --------- | ------------------------------------------------------------------------ | ----------------------------- | ------------------------------------------------------------------ | ------- | ----------- | ----------------------------------------------- |
+| `2026/v4.4` | `ovi`     | `https://www.hacienda.go.cr/docs/FacturaElectronica_V4.4.xsd`            | Wed, 22 Apr 2026 21:01:06 GMT | `926ba81325bc21102755bd8e4e570a63caaca086e680a877c3a6d15d6ee8a62f` | 119689  | 2026-10-23  | referencia no adoptada; autoridad no confirmada |
+| `2026/v4.4` | `ovi`     | `https://www.hacienda.go.cr/docs/FacturaElectronicaCompra_V4.4.xsd`      | Wed, 22 Apr 2026 17:14:37 GMT | `57e4cedb12d5045884670ff2e4795d2027e69b96d45752f60cd1a1930e2768a3` | 97300   | 2026-10-23  | referencia no adoptada; autoridad no confirmada |
+| `2026/v4.4` | `ovi`     | `https://www.hacienda.go.cr/docs/FacturaElectronicaExportacion_V4.4.xsd` | Wed, 22 Apr 2026 17:14:36 GMT | `e571d8296bb74e86cb9ef7889601844c61ac50bedca90aa8d52badf15198242e` | 101881  | 2026-10-23  | referencia no adoptada; autoridad no confirmada |
+| `2026/v4.4` | `ovi`     | `https://www.hacienda.go.cr/docs/MensajeHacienda_V4.4.xsd`               | Wed, 22 Apr 2026 17:10:43 GMT | `b2606156042b7aa7b7f7f61945f0ff1323661b43b5a1489ad5eafad1c52fd25e` | 7799    | 2026-10-23  | referencia no adoptada; autoridad no confirmada |
+| `2026/v4.4` | `ovi`     | `https://www.hacienda.go.cr/docs/MensajeReceptor_V4.4.xsd`               | Wed, 22 Apr 2026 17:15:30 GMT | `b883e3a9321eadf2ccc1a9dc853d9e3bd483918dcd6e2152d902ddf2f244365f` | 6564    | 2026-10-23  | referencia no adoptada; autoridad no confirmada |
+| `2026/v4.4` | `ovi`     | `https://www.hacienda.go.cr/docs/NotaCreditoElectronica_V4.4.xsd`        | Wed, 22 Apr 2026 17:15:30 GMT | `b7ed3347c5599e78e5683d9ae83842695ab9497e173df9cd3be8d77c0851f556` | 123011  | 2026-10-23  | referencia no adoptada; autoridad no confirmada |
+| `2026/v4.4` | `ovi`     | `https://www.hacienda.go.cr/docs/NotaDebitoElectronica_V4.4.xsd`         | Wed, 22 Apr 2026 17:11:58 GMT | `3709389ccc434fb1ef4571079b1a628654fa04f07c1f3f1044b2416ba12eb7ff` | 123029  | 2026-10-23  | referencia no adoptada; autoridad no confirmada |
+| `2026/v4.4` | `ovi`     | `https://www.hacienda.go.cr/docs/ReciboElectronicoPago_V4.4.xsd`         | Wed, 22 Apr 2026 17:14:36 GMT | `86e3aa5f0615b757a3b2e9c300973d573ac321f76adba7b4b05e59d854da82b7` | 41655   | 2026-10-23  | referencia no adoptada; autoridad no confirmada |
+| `2026/v4.4` | `ovi`     | `https://www.hacienda.go.cr/docs/TiqueteElectronico_V4.4.xsd`            | Wed, 22 Apr 2026 17:11:58 GMT | `d7783baf818f316596d0b58b17481be689595982a248d98102d707f72967ae6e` | 117940  | 2026-10-23  | referencia no adoptada; autoridad no confirmada |
 
 ### Auxiliares y dependencia W3C
 
@@ -121,21 +123,22 @@ Los XSD de Hacienda no se editan para acomodar salida inválida. Cualquier
 adopción de las restricciones del set `2026/v4.4` es una decisión de producto y
 de cumplimiento, no un ajuste de vendorización.
 
-## Decisión abierta: estatus de `2026/v4.4`
+## Decisión cerrada: estatus de `2026/v4.4`
 
-ATV no publica el set `2026/v4.4`. Mientras eso no cambie, quedan pendientes:
+ATV no publica el set `2026/v4.4`. La decisión del proyecto es:
 
-- Si `2026/v4.4` debe seguir declarado como `nextSet` y si
-  `effectiveFrom: "2026-11-01"` es la fecha correcta.
-- Si el build del SDK debe seguir embebiendo los XSD de `2026/v4.4` para la
-  validación en runtime.
-- Si la documentación de cumplimiento, migración y cambios debe seguir afirmando
-  que la revisión de abril de 2026 es obligatoria en esa fecha.
-- Si, cuando ATV publique la revisión, se re-vendoriza desde ATV, se contrasta
-  con los bytes de OVi o se retira el set.
+- `2024/v4.4` es el set **autoritativo** y el único que el SDK embebe y valida
+  por defecto.
+- `2026/v4.4` **no se adopta**: permanece vendorizado solo como referencia y
+  evidencia de procedencia. No se declara como `nextSet` ni se le atribuye una
+  fecha de obligatoriedad.
+- La clave, los tipos de documento de referencia y los códigos de referencia
+  admitidos se limitan a lo que exige el XSD 2024.
+- Si ATV publica y confirma la revisión en el futuro, su adopción será un cambio
+  separado con su propia evidencia y migración.
 
-Este registro no resuelve ninguno de esos puntos ni altera `currentSet`,
-`nextSet`, `manifest.json`, los archivos vendorizados o el set embebido.
+Este registro documenta la decisión; `manifest.json` ya no contiene `nextSet` y
+el set embebido es `2024/v4.4`.
 
 ## Verificación reproducible
 

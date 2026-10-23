@@ -8,7 +8,7 @@ import type { DocumentStore, StoredDocument, FileStoreOptions, DeliveryState } f
 export class FileDocumentStore implements DocumentStore {
   constructor(private readonly options: FileStoreOptions) {}
   private path(clave: string): string {
-    if (!/^506\d{6}[A-Za-z0-9]{12}\d{29}$/.test(clave)) throw new Error("Invalid document key");
+    if (!/^506\d{6}\d{12}\d{29}$/.test(clave)) throw new Error("Invalid document key");
     return join(this.options.baseDir, `${clave}.json`);
   }
   private async locked<T>(work: () => Promise<T>): Promise<T> {

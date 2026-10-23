@@ -13,7 +13,6 @@
 
 import type { FacturaElectronicaInput } from "@dojocoding/hacienda-shared";
 import {
-  CODIGO_REFERENCIA_PAGO_COMPROBANTE,
   DocumentTypeCode,
   FacturaElectronicaSchema,
   IvaRateCode,
@@ -91,14 +90,6 @@ function validateBusinessRules(input: FacturaElectronicaInput): FacturaValidatio
       path: "receptor.identificacion",
       message: "Factura Receptor requires identificacion when the Receptor node is present",
     });
-  for (const [index, reference] of (input.informacionReferencia ?? []).entries()) {
-    if ((reference.codigo as string | undefined) === CODIGO_REFERENCIA_PAGO_COMPROBANTE)
-      errors.push({
-        path: `informacionReferencia.${index}.codigo`,
-        message: "Reference reason 17 is valid only for ReciboElectronicoPago",
-      });
-  }
-
   // Rule: Sequential line numbers starting from 1
   let lineIndex = 0;
   for (const line of input.detalleServicio) {

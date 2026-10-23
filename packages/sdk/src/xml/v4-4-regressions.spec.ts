@@ -1,8 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { ClaveNumericaSchema } from "@dojocoding/hacienda-shared";
-import { buildClave } from "../clave/build-clave.js";
 import { parseClave } from "../clave/parse-clave.js";
-import { DocumentType, Situation } from "../clave/types.js";
 import { SIMPLE_INVOICE } from "../__fixtures__/invoices.js";
 import { buildFacturaXml } from "../documents/factura-builder.js";
 import {
@@ -29,7 +27,7 @@ function invoice(taxes: LineItemTaxInput[]) {
   return result;
 }
 
-describe("2026 v4.4 end-to-end regressions", () => {
+describe("v4.4 end-to-end regressions (2024 authoritative)", () => {
   it("keeps a positive-rate line taxable when its tiny tax rounds to zero", () => {
     const line = calculateLineItemTotals({
       numeroLinea: 1,
@@ -56,28 +54,14 @@ describe("2026 v4.4 end-to-end regressions", () => {
     expect(validateFacturaInput(input)).toMatchObject({ valid: true });
   });
 
-  it("round-trips an alphanumeric legal entity through clave, input validation and XSD", async () => {
+  it("rejects an alphanumeric taxpayer segment in the clave", () => {
     const input = structuredClone(SIMPLE_INVOICE);
     input.emisor.identificacion = { tipo: "02", numero: "310ABC1234" };
-    input.emisor.telefono = { codigoPais: "506", numTelefono: "911" };
-    input.clave = buildClave({
-      date: new Date(input.fechaEmision),
-      taxpayerId: "310ABC1234",
-      documentType: DocumentType.FACTURA_ELECTRONICA,
-      sequence: 1,
-      situation: Situation.NORMAL,
-      securityCode: "12345678",
-    });
-    expect(parseClave(input.clave).taxpayerId).toBe("00310ABC1234");
-    expect(ClaveNumericaSchema.safeParse(input.clave).success).toBe(true);
-    expect(ClaveNumericaSchema.safeParse("A" + input.clave.slice(1)).success).toBe(false);
-    expect(validateFacturaInput(input)).toMatchObject({ valid: true });
-    const xml = buildFacturaXml(input);
-    expect(xml).toContain("<NumTelefono>911</NumTelefono>");
-    expect(
-      (await validateDocumentXml(xml.replace("<Tipo>02</Tipo>", "<Tipo>01</Tipo>"))).valid,
-    ).toBe(false);
-    expect(await validateDocumentXml(xml)).toMatchObject({ valid: true });
+    input.clave = input.clave.slice(0, 9) + "00310ABC1234" + input.clave.slice(21);
+    expect(() => parseClave(input.clave)).toThrow(/50 digits/);
+    expect(ClaveNumericaSchema.safeParse(input.clave).success).toBe(false);
+    expect(validateFacturaInput(input).valid).toBe(false);
+    expect(() => buildFacturaXml(input)).toThrow();
   });
 
   it.each([

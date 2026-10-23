@@ -201,7 +201,7 @@ export const StoredDocumentSchema = z
       .string()
       .min(1)
       .max(12 * 1024 * 1024),
-    clave: z.string().regex(/^506\d{6}[A-Za-z0-9]{12}\d{29}$/),
+    clave: z.string().regex(/^506\d{6}\d{12}\d{29}$/),
     situation: z.enum(["normal", "sin_internet", "contingencia"]),
     generatedAt: z.iso.datetime({ offset: true }),
     deadlineBusinessDays: z.number().int().min(0).max(366),

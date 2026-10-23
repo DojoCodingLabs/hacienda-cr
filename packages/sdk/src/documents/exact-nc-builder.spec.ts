@@ -105,7 +105,7 @@ it("source-only output remains reproducible for valid leap-day sources; it suppl
 const xsd = (xml: string) =>
   validateAgainstXsd(xml, "NotaCreditoElectronica_V4.4.xsd", {
     allowMissingSignature: true,
-    generation: "2026",
+    generation: "2024",
   });
 it("full credit preserves exact positive original facts/JSON and separate FE/NC identities without mutating source", () => {
   const input = exactNcFixture(),

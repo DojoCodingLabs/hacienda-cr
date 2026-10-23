@@ -15,9 +15,9 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 /**
- * Vendored schema generations. "2026" is the April 22, 2026 revision
- * (accepted in production since 2026-04-22, mandatory 2026-11-01);
- * "2024" is the original base v4.4 package.
+ * Vendored schema generations. "2024" is the authoritative base v4.4 package.
+ * "2026" is the April 22, 2026 revision published outside ATV; it is not
+ * adopted and is kept only for negative tests and provenance.
  */
 export const SCHEMA_GENERATIONS = ["2024", "2026"] as const;
 export type SchemaGeneration = (typeof SCHEMA_GENERATIONS)[number];
@@ -61,7 +61,7 @@ export interface XsdValidationOptions {
    */
   allowMissingSignature?: boolean;
 
-  /** Which vendored schema generation to validate against. Default "2026". */
+  /** Which vendored schema generation to validate against. Default "2024". */
   generation?: SchemaGeneration;
 }
 
@@ -92,7 +92,7 @@ export function validateAgainstXsd(
   xsdFileName: string,
   options: XsdValidationOptions = {},
 ): XsdValidationResult {
-  const xsdPath = path.join(schemasDir(options.generation ?? "2026"), xsdFileName);
+  const xsdPath = path.join(schemasDir(options.generation ?? "2024"), xsdFileName);
   const dir = mkdtempSync(path.join(tmpdir(), "hacienda-xsd-"));
   const xmlPath = path.join(dir, "doc.xml");
 

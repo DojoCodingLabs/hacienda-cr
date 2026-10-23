@@ -42,7 +42,7 @@ describe("exact original-bound recipient confirmation", () => {
       expect(xml).toContain("<MontoTotalImpuesto>13.00000</MontoTotalImpuesto>");
       expect(xml).toContain("<TotalFactura>113.00000</TotalFactura>");
       expect(xml).not.toContain("<CondicionImpuesto>");
-      for (const generation of ["2024", "2026"] as const)
+      for (const generation of ["2024"] as const)
         expect(
           validateAgainstXsd(xml, "MensajeReceptor_V4.4.xsd", {
             allowMissingSignature: true,

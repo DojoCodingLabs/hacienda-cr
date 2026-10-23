@@ -33,16 +33,9 @@ describe("ClaveNumericaSchema", () => {
     expect(result.success).toBe(false);
   });
 
-  it("should accept letters in the taxpayer-ID segment (April 2026 revision)", () => {
+  it("should reject letters in the taxpayer-ID segment", () => {
     const result = ClaveNumericaSchema.safeParse(
       "50601072500ABC123456780100001010000000000119999999",
-    );
-    expect(result.success).toBe(true);
-  });
-
-  it("should reject letters outside the taxpayer-ID segment", () => {
-    const result = ClaveNumericaSchema.safeParse(
-      "5060107250001234567800100001010000000001A199999999",
     );
     expect(result.success).toBe(false);
   });
@@ -93,6 +86,14 @@ describe("ClaveComponentsSchema", () => {
     const result = ClaveComponentsSchema.safeParse({
       ...validComponents,
       taxpayerId: "12345678", // 8 digits instead of 12
+    });
+    expect(result.success).toBe(false);
+  });
+
+  it("should reject an alphanumeric taxpayer ID", () => {
+    const result = ClaveComponentsSchema.safeParse({
+      ...validComponents,
+      taxpayerId: "00ABC1234567",
     });
     expect(result.success).toBe(false);
   });
@@ -179,12 +180,12 @@ describe("ClaveInputSchema", () => {
     expect(result.success).toBe(false);
   });
 
-  it("should accept an alphanumeric taxpayer ID (April 2026 revision)", () => {
+  it("should reject an alphanumeric taxpayer ID", () => {
     const result = ClaveInputSchema.safeParse({
       ...validInput,
       taxpayerId: "31012345AB",
     });
-    expect(result.success).toBe(true);
+    expect(result.success).toBe(false);
   });
 
   it("should reject a taxpayer ID with symbols", () => {

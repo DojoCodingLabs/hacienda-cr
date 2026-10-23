@@ -183,7 +183,7 @@ describe("MCP Server", () => {
           impuestoUnidad: 1,
         },
       },
-    ])("supports updated identity, special phones and tax $codigo through MCP", async (tax) => {
+    ])("supports special phones and tax $codigo through MCP", async (tax) => {
       const result = await client.callTool({
         name: "create_invoice",
         arguments: {
@@ -191,14 +191,14 @@ describe("MCP Server", () => {
           codigoActividadEmisor: "620100",
           emisor: {
             nombre: "Empresa de Prueba",
-            identificacion: { tipo: "02", numero: "310ABC1234" },
+            identificacion: { tipo: "02", numero: "3101234567" },
             correoElectronico: "test@empresa.com",
             ubicacion: { provincia: "1", canton: "01", distrito: "01", otrasSenas: "Test address" },
             telefono: { codigoPais: "506", numTelefono: "911" },
           },
           receptor: {
             nombre: "Cliente de Prueba",
-            identificacion: { tipo: "02", numero: "310DEF5678" },
+            identificacion: { tipo: "02", numero: "3109876543" },
           },
           lineItems: [
             {
@@ -215,8 +215,8 @@ describe("MCP Server", () => {
       expect(result.isError, JSON.stringify(result.content)).not.toBe(true);
       const text = (result.content as { text: string }[])[0]?.text ?? "";
       expect(text).toContain("Factura Electronica created successfully");
-      expect(text).toContain("00310ABC1234");
-      expect(text).toContain("<Numero>310DEF5678</Numero>");
+      expect(text).toContain("003101234567");
+      expect(text).toContain("<Numero>3109876543</Numero>");
       expect(text).toContain("<NumTelefono>911</NumTelefono>");
       if (tax.codigo === "04") expect(text).toContain("<Proporcion>41.13292</Proporcion>");
       else expect(text).toContain("<BaseImponible>2100</BaseImponible>");

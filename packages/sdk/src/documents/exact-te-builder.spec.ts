@@ -35,7 +35,7 @@ describe("exact ordinary TE", () => {
       expect(xml.includes("<Identificacion>")).toBe(true); // Actual issuer always exists.
       expect(xml).not.toContain("CodigoActividadReceptor");
       expect(xml).toContain("<TotalComprobante>113.00001</TotalComprobante>");
-      for (const generation of ["2024", "2026"] as const)
+      for (const generation of ["2024"] as const)
         expect(
           validateAgainstXsd(xml, "TiqueteElectronico_V4.4.xsd", {
             allowMissingSignature: true,

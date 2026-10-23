@@ -13,7 +13,7 @@ import { SIMPLE_INVOICE } from "../__fixtures__/invoices.js";
 const xs = "http://www.w3.org/2001/XMLSchema";
 const schema = new DOMParser().parseFromString(
   readFileSync(
-    new URL("../../schemas/2026/v4.4/FacturaElectronica_V4.4.xsd", import.meta.url),
+    new URL("../../schemas/2024/v4.4/FacturaElectronica_V4.4.xsd", import.meta.url),
     "utf8",
   ),
   "application/xml",

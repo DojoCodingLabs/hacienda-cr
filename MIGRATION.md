@@ -130,16 +130,16 @@ and special tax cases remain separately required. Existing family/legacy APIs
 are unchanged. See [exact FEC boundary](docs/exact-fec.md)
 for independent eligibility/age/response-oracle and release gates.
 
-### Unreleased exact partial NC and rejected-FE replacement
+### Unreleased exact partial NC (rejected-FE replacement retired)
 
-These are additive named source APIs; existing producer and retained behavior is
-unchanged. Use `ExactNcPartialInputSchema` with positive correlated credit facts
-and a separately enforced atomic remaining-credit ledger. Use
-`ExactFeReplacementInputSchema` with an independently valid new FE, a fresh
-consecutive and exact retained institutionally rejected FE reference. Neither
-source contract establishes acceptance, cash effects or age eligibility. The
-replacement reference requires native 2026 reason 16. See the [full contract and
-caller prerequisites](docs/exact-credit-extensions.md) before adopting it.
+`ExactNcPartialInputSchema` remains an additive named source API for positive
+correlated credit facts with a separately enforced atomic remaining-credit
+ledger. It does not establish acceptance, cash effects or age eligibility.
+
+The rejected-FE replacement API (`ExactFeReplacementInputSchema`,
+`calculateExactFeReplacement`, `buildExactFacturaReplacementXml`) and reference
+reason 16 are removed: `2024/v4.4` is the authoritative schema and does not admit
+code 16. See the [partial NC contract and retirement note](docs/exact-credit-extensions.md).
 
 ### Unreleased current FE native-name/payment validation
 

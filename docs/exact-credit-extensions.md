@@ -1,4 +1,4 @@
-# Exact partial NC and rejected-FE replacement
+# Exact partial NC (rejected-FE replacement retired)
 
 These additive APIs, published in [0.10.0](release-0100-published.md), preserve existing FE, total NC, TE, ND,
 FEC, Number and read-only retained contracts. They do not authorize issuance,
@@ -27,37 +27,23 @@ and prior NC ledger, including concurrency, source ownership and applicable
 eligibility. Valid source math alone grants none of that authority. Total
 cancellation code 01 remains the separate existing total-NC API.
 
-## Replacement of an institutionally rejected FE
+## Retired: rejected-FE replacement
 
-Shared exports `ExactFeReplacementInputSchema`,
-`ExactFeReplacementReferenceSchema` and `ExactFeReplacementInput`; SDK exports
-`calculateExactFeReplacement` and `buildExactFacturaReplacementXml` for
-`FE-domestic-ordinary-rejected-replacement-iva13-v1`.
-
-`replacement` is an independently valid new ordinary FE with positive supplied
-payment allocations (allocation is not cash-receipt evidence). `rejected` contains
-only the retained old FE clave and emission timestamp. An old rejected document
-need not satisfy a valid FE input/math schema: preserving malformed facts as
-reference evidence must not require copying them into a new invoice. One
-mandatory reference uses type 10 (rejected by Hacienda), code 16 (replacement),
-exact old key/date and a nonblank reason of 3–180 Unicode characters. New parties
-may contain actual corrections, but this first named case requires the same
-issuing taxpayer, a retained old FE identity layout, and a fresh own key and
-consecutive. Different security bytes cannot make the old consecutive reusable.
-
-The caller proves genuine institutional rejection, exact retained bytes and
-scope, current user authority and a new idempotent issuance intent. Recipient
-rejection, pending/unknown JSON and an accepted original are not grounds for
-this contract. No status boolean, old signing/resubmission or financial effect
-is supplied by the SDK. Malformed old reference key/date cases require a
-separate reviewed policy; they are not silently repaired.
+`ExactFeReplacementInputSchema`, `ExactFeReplacementReferenceSchema`,
+`ExactFeReplacementInput`, `calculateExactFeReplacement` and
+`buildExactFacturaReplacementXml` are removed. The API emitted reference code 16,
+which exists only in the non-adopted `2026/v4.4` set. The authoritative
+`2024/v4.4` schema does not admit code 16, so the SDK no longer constructs or
+accepts that reference. A future adoption of the 2026 revision would require a
+separate change with its own authority, migration and tests.
 
 ## Primary evidence and limits
 
 The [current official annex](https://www.hacienda.go.cr/docs/ANEXOS_Y_ESTRUCTURAS_V4.4.pdf)
 (99 pages, SHA256 `6e093226b29b38c5c8de825f70c1b1cb8ed81e2f4a6eb0b3ff52708fc1eb2769`)
 pp. 57–58 and Notes 9/10 distinguish amount correction, retained facts, reason
-bounds, cumulative credit and rejected-document replacement. The
+bounds and cumulative credit. The rejected-document replacement path remains a
+documented 2026-only construction and is not part of the current SDK contract. The
 [official regulation](https://www.hacienda.go.cr/docs/REGLAMENTO_DE_COMPROBANTES_ELECTRONICOS.pdf)
 (SHA256 `32da4200481b6c21522d4ace59e5255e15aae0624be077594dc65195189fe4fc`)
 articles 10/19 separate correction of valid documents from new issuance after
@@ -67,8 +53,9 @@ Reference chronology compares complete accepted ISO fractions and offsets
 without millisecond truncation; exact reference lexemes are preserved. Trusted
 issuance/submission-time ten-year eligibility and its calendar-boundary policy
 remain caller requirements. There is no hidden wall clock or guessed leap-day
-rule. Native 2026 permits replacement reason 16; the unchanged base 2024 schema
-does not. Its expected rejection is not a reason to edit vendor schemas.
+rule. Native 2026 permits replacement reason 16; the authoritative 2024 schema
+does not, and 2026 is not adopted. Its expected rejection is not a reason to
+edit vendor schemas.
 
 Independent Decimal/native/signing and fresh packed consumers check source
 behavior. Synthetic pinned response tests check explicit context and signature

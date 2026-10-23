@@ -170,13 +170,11 @@ describe("documented history metadata", () => {
       ((c.fetchFn.mock.calls[0] as unknown as [string, RequestInit])[1] as RequestInit).headers,
     ).toHaveProperty("Authorization", "Bearer synthetic-token");
   });
-  it("preserves the current published alphanumeric taxpayer clave segment exactly", async () => {
+  it("rejects an alphanumeric taxpayer clave segment under the authoritative 2024 schema", async () => {
     const alpha = clave.slice(0, 9) + "0000A0123456" + clave.slice(21);
-    const metadata = { ...item(), clave: alpha };
-    const c = client(metadata);
-    expect((await getComprobante(c.http, alpha)).clave).toBe(alpha);
-    expect((c.fetchFn.mock.calls[0] as unknown as [string, RequestInit])[0]).toContain(alpha);
-    expect((await listComprobantes(client([metadata]).http)).comprobantes[0]?.clave).toBe(alpha);
+    const c = client({ ...item(), clave: alpha });
+    await expect(getComprobante(c.http, alpha)).rejects.toBeInstanceOf(ValidationError);
+    expect(c.token).not.toHaveBeenCalled();
   });
   it("detail is only metadata, keeps references, requires exact requested clave and never substitutes status endpoint", async () => {
     const c = client({ ...item(), estado: "aceptado", comprobanteXml: "CANARY" });

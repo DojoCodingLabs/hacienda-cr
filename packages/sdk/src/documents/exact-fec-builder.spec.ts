@@ -33,7 +33,7 @@ describe("exact ordinary domestic FEC", () => {
     expect(xml).toContain("<TipoDocIR>99</TipoDocIR>");
     expect(xml).toContain("<Numero>RECIBO-SINTETICO-0001</Numero>");
     expect(calculateExactFec(input).resumenFactura.totalComprobante).toBe("113.00000");
-    for (const generation of ["2024", "2026"] as const)
+    for (const generation of ["2024"] as const)
       expect(
         validateAgainstXsd(xml, "FacturaElectronicaCompra_V4.4.xsd", {
           allowMissingSignature: true,

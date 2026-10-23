@@ -18,7 +18,7 @@ import { buildFacturaCompraXml } from "./factura-compra-builder.js";
 import { buildFacturaExportacionXml } from "./factura-exportacion-builder.js";
 import { buildReciboPagoXml } from "./recibo-pago-builder.js";
 import { buildMensajeReceptorXml } from "./mensaje-receptor-builder.js";
-import { validateAgainstXsd, xmllintAvailable, SCHEMA_GENERATIONS } from "../__testing__/xsd.js";
+import { validateAgainstXsd, xmllintAvailable } from "../__testing__/xsd.js";
 import {
   SIMPLE_FACTURA,
   SIMPLE_TIQUETE,
@@ -126,47 +126,62 @@ const CASES: ConformanceCase[] = [
 ];
 
 run("XSD conformance against official v4.4 schemas", () => {
-  // Output must validate against both vendored generations: the base 2024
-  // package and the April 2026 revision (mandatory 2026-11-01).
-  describe.each(SCHEMA_GENERATIONS)("generation %s", (generation) => {
-    it.each(CASES.map((c) => [c.name, c] as const))("%s validates", (_name, c) => {
-      const result = validateAgainstXsd(c.build(), c.xsd, {
-        allowMissingSignature: true,
-        generation,
-      });
-      expect(result.errors).toBe("");
-      expect(result.valid).toBe(true);
+  // Every builder output validates against the authoritative 2024 set. The
+  // 2026 set is kept as reference and is never the default acceptance path.
+  it.each(CASES.map((c) => [c.name, c] as const))("%s validates", (_name, c) => {
+    const result = validateAgainstXsd(c.build(), c.xsd, {
+      allowMissingSignature: true,
+      generation: "2024",
     });
-
-    it("rejects structurally invalid XML (harness sanity check)", () => {
-      const bogus = `<?xml version="1.0" encoding="utf-8"?><FacturaElectronica xmlns="https://cdn.comprobanteselectronicos.go.cr/xml-schemas/v4.4/facturaElectronica"><Clave>123</Clave></FacturaElectronica>`;
-      const result = validateAgainstXsd(bogus, "FacturaElectronica_V4.4.xsd", {
-        allowMissingSignature: true,
-        generation,
-      });
-      expect(result.valid).toBe(false);
-    });
+    expect(result.errors).toBe("");
+    expect(result.valid).toBe(true);
   });
 
-  it("accepts an alphanumeric clave under the 2026 revision only", () => {
-    const doc = {
-      ...SIMPLE_FACTURA,
-      clave:
-        SIMPLE_FACTURA.clave.slice(0, 9) +
-        "310123456A".padStart(12, "0") +
-        SIMPLE_FACTURA.clave.slice(21),
-      emisor: {
-        ...SIMPLE_FACTURA.emisor,
-        identificacion: { ...SIMPLE_FACTURA.emisor.identificacion, numero: "310123456A" },
-      },
-    };
-    const xml = buildFacturaXml(doc);
+  it("rejects structurally invalid XML (harness sanity check)", () => {
+    const bogus = `<?xml version="1.0" encoding="utf-8"?><FacturaElectronica xmlns="https://cdn.comprobanteselectronicos.go.cr/xml-schemas/v4.4/facturaElectronica"><Clave>123</Clave></FacturaElectronica>`;
+    const result = validateAgainstXsd(bogus, "FacturaElectronica_V4.4.xsd", {
+      allowMissingSignature: true,
+      generation: "2024",
+    });
+    expect(result.valid).toBe(false);
+  });
+
+  it("rejects an alphanumeric taxpayer segment in the clave", () => {
+    const xml = buildFacturaXml(SIMPLE_FACTURA);
+    const alnum =
+      SIMPLE_FACTURA.clave.slice(0, 9) + "00310ABC1234" + SIMPLE_FACTURA.clave.slice(21);
+    const doc = xml.replace(`<Clave>${SIMPLE_FACTURA.clave}</Clave>`, `<Clave>${alnum}</Clave>`);
+    expect(doc).not.toBe(xml);
+    expect(
+      validateAgainstXsd(doc, "FacturaElectronica_V4.4.xsd", {
+        allowMissingSignature: true,
+        generation: "2024",
+      }).valid,
+    ).toBe(false);
+  });
+
+  it.each(["19", "20"])("rejects the 2026-only TipoDocIR %s", (tipoDoc) => {
+    const reference = REFERENCE_INVOICE.informacionReferencia?.[0];
+    if (!reference) throw new Error("Expected a reference in REFERENCE_INVOICE");
+    const xml = buildFacturaXml({
+      ...REFERENCE_INVOICE,
+      informacionReferencia: [{ ...reference, tipoDoc } as never],
+    });
     expect(
       validateAgainstXsd(xml, "FacturaElectronica_V4.4.xsd", {
         allowMissingSignature: true,
-        generation: "2026",
+        generation: "2024",
       }).valid,
-    ).toBe(true);
+    ).toBe(false);
+  });
+
+  it.each(["13", "14", "15", "16", "17"])("rejects the 2026-only reference code %s", (codigo) => {
+    const reference = REFERENCE_INVOICE.informacionReferencia?.[0];
+    if (!reference) throw new Error("Expected a reference in REFERENCE_INVOICE");
+    const xml = buildFacturaXml({
+      ...REFERENCE_INVOICE,
+      informacionReferencia: [{ ...reference, codigo } as never],
+    });
     expect(
       validateAgainstXsd(xml, "FacturaElectronica_V4.4.xsd", {
         allowMissingSignature: true,
