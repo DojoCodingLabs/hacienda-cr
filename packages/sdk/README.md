@@ -229,10 +229,9 @@ for independent eligibility/age/response-oracle and release gates.
 `calculateExactNcPartial` / `buildExactNotaCreditoPartialXml` calculate explicit
 correlated credit lines with exact decimal strings. Cumulative remaining credit
 is external immutable concurrent ledger authority, not the original-total cap.
-`calculateExactFeReplacement` / `buildExactFacturaReplacementXml` build a new FE
-with a retained institutionally rejected reference, fresh identity and explicit
-reason 16. Existing APIs are unchanged. See [source contracts and independent
-authority/release limits](../../docs/exact-credit-extensions.md).
+The rejected-FE replacement API and reference reason 16 were retired: the
+authoritative 2024 schema does not admit code 16, and 2026 is not adopted. See
+[source contracts and independent authority/release limits](../../docs/exact-credit-extensions.md).
 
 ## Unreleased current FE validation correction
 

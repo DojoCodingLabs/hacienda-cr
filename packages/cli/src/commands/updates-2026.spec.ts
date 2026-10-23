@@ -15,9 +15,9 @@ vi.mock("@dojocoding/hacienda-sdk", async (importOriginal) => ({
 vi.mock("../utils/api-client.js", () => ({
   createAuthenticatedClient: vi.fn().mockResolvedValue({ httpClient: {} }),
 }));
-const clave = "50620102600310ABC123400100001010000000001112345678";
+const clave = "50620102600310123456700100001010000000001112345678";
 
-describe("2026 alphanumeric CLI queries", () => {
+describe("CLI queries with the authoritative 2024 clave", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     process.exitCode = undefined;
@@ -48,9 +48,10 @@ describe("2026 alphanumeric CLI queries", () => {
     expect(getStatus).toHaveBeenCalledWith({}, clave);
     expect(process.exitCode).toBeUndefined();
   });
-  it("rejects letters outside the taxpayer segment before authenticating", async () => {
+  it("rejects letters in the taxpayer segment before authenticating", async () => {
+    const alnum = clave.slice(0, 9) + "00310ABC1234" + clave.slice(21);
     await getCommand.run?.({
-      args: { clave: "A" + clave.slice(1), profile: "test", json: true },
+      args: { clave: alnum, profile: "test", json: true },
       rawArgs: [],
       cmd: getCommand,
     });

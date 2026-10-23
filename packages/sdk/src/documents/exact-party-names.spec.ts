@@ -66,7 +66,7 @@ for (const family of ["TE", "ND"] as const) {
         expect(xml).toContain(`<Nombre>${receiver}</Nombre>`);
         expect(xml).toContain(`<NombreComercial>${commercial}</NombreComercial>`);
         expect(JSON.stringify(f.original)).toBe(before);
-        for (const generation of ["2024", "2026"] as const)
+        for (const generation of ["2024"] as const)
           expect(
             validateAgainstXsd(
               xml,

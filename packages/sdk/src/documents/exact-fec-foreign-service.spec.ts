@@ -37,7 +37,7 @@ describe("explicit foreign-service ordinary IVA13 purchase source", () => {
     expect(xml).not.toContain("ImpuestoAsumidoEmisorFabrica");
     const supplierXml = required(xml.split("</Emisor>")[0]);
     expect(supplierXml).not.toContain("Ubicacion");
-    for (const generation of ["2024", "2026"] as const)
+    for (const generation of ["2024"] as const)
       expect(
         validateAgainstXsd(xml, "FacturaElectronicaCompra_V4.4.xsd", {
           allowMissingSignature: true,

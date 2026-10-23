@@ -623,10 +623,10 @@ describe("InformacionReferenciaSchema", () => {
     expect(result.success).toBe(true);
   });
 
-  it("should accept the April 2026 tipoDoc codes 19 and 20", () => {
+  it("should reject the 2026-only tipoDoc codes 19 and 20", () => {
     for (const tipoDoc of ["19", "20"]) {
       const result = InformacionReferenciaSchema.safeParse({ ...validReferencia, tipoDoc });
-      expect(result.success).toBe(true);
+      expect(result.success).toBe(false);
     }
   });
 

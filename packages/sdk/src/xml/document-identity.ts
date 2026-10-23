@@ -33,21 +33,15 @@ export function validateDocumentIdentity(
 ): IdentityIssue[] {
   const errors: IdentityIssue[] = [];
   const add = (path: string, message: string) => errors.push({ path, message });
-  if (!/^506\d{6}[A-Za-z0-9]{12}\d{29}$/.test(input.clave))
-    add("clave", "clave must follow the 50-character Costa Rica identity layout");
+  if (!/^506\d{6}\d{12}\d{29}$/.test(input.clave))
+    add("clave", "clave must follow the 50-digit Costa Rica identity layout");
   if (!/^\d{20}$/.test(input.numeroConsecutivo))
     add("numeroConsecutivo", "numeroConsecutivo must contain 20 digits");
   if (errors.length) return errors;
   const ownerId =
     expectedType === "08" ? input.receptor?.identificacion : input.emisor.identificacion;
   const owner = ownerId?.numero;
-  if (owner && /[A-Za-z]/.test(owner) && ownerId?.tipo !== undefined && ownerId.tipo !== "02")
-    add("clave", "Letters in the clave taxpayer ID require identification type 02");
-  if (
-    !owner ||
-    !/^[A-Za-z0-9]{9,12}$/.test(owner) ||
-    input.clave.slice(9, 21) !== owner.padStart(12, "0")
-  ) {
+  if (!owner || !/^\d{9,12}$/.test(owner) || input.clave.slice(9, 21) !== owner.padStart(12, "0")) {
     add(
       "clave",
       expectedType === DocumentTypeCode.FACTURA_ELECTRONICA_COMPRA

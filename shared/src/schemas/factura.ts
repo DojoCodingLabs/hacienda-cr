@@ -177,11 +177,11 @@ export const OtroContenidoSchema = z.object({
 
 /** Schema for a full Factura Electronica input, per the v4.4 XSD. */
 export const FacturaElectronicaSchema = z.object({
-  /** 50-character clave (taxpayer segment alphanumeric since April 2026). */
+  /** 50-digit clave (2024 authoritative schema). */
   clave: z
     .string()
     .length(50)
-    .regex(/^\d{9}[A-Za-z0-9]{12}\d{29}$/),
+    .regex(/^\d{50}$/),
 
   /** Invoicing-system provider identification (ProveedorSistemas). */
   proveedorSistemas: z.string().min(1).max(20),

@@ -319,14 +319,7 @@ export type { ExactFecInput, ExactFecCalculated } from "@dojocoding/hacienda-sha
 
 export { calculateExactNcPartial } from "./tax/exact-nc-partial.js";
 export { buildExactNotaCreditoPartialXml } from "./documents/exact-nc-partial-builder.js";
-export { calculateExactFeReplacement } from "./tax/exact-fe-replacement.js";
-export { buildExactFacturaReplacementXml } from "./documents/exact-fe-replacement-builder.js";
-export type {
-  ExactNcPartialInput,
-  ExactNcPartialCalculated,
-  ExactFeReplacementInput,
-  ExactFeReplacementCalculated,
-} from "@dojocoding/hacienda-shared";
+export type { ExactNcPartialInput, ExactNcPartialCalculated } from "@dojocoding/hacienda-shared";
 
 export { calculateExactFecForeignServiceIva13 } from "./tax/exact-fec-foreign-service.js";
 export { buildExactFacturaCompraForeignServiceIva13Xml } from "./documents/exact-fec-foreign-service-builder.js";
