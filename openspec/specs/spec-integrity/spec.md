@@ -56,7 +56,7 @@ El repo SHALL mantener en `packages/sdk/schemas/` el conjunto vendorizable de la
 
 ### Requirement: El manifiesto declara los sets, cuál está en vigor y cuál entra después
 
-`manifest.json` SHALL declarar los sets vendorizados con `id`, año, versión, fecha de descarga (`downloadedAt`) y superficie de origen. `downloadedAt` SHALL significar la fecha de la **última descarga del set desde su superficie cuyos bytes se confirmaron idénticos a los vendorizados** (fecha de descarga verificada: puede avanzar sin que ningún archivo cambie; una descarga que detecta una diferencia en cambio detiene la vendorización). El manifiesto SHALL incluir `lastSyncedAt` de primer nivel = fecha de la última regeneración y verificación completa del manifiesto; con `spec:check`/`spec:update` disponibles, el README SHALL declararlo como la fecha de la **última ejecución de `spec:update`** (único comando que escribe el manifiesto) y advertirá que la semántica cambiará a "última ejecución del job" cuando exista un job que ejecute `spec:update` (fase 2). El job mensual de fase 1 solo ejecuta `spec:check` y reporta deriva: su existencia por sí sola SHALL no alterar esta semántica ni la advertencia del README. El campo `currentSet` SHALL identificar el set **en vigor hoy** (decisión 15, semántica: "vigente" = que rige, no "último publicado") y SHALL apuntar a un set declarado que no esté marcado como `policyOnly`. Cuando exista un set publicado cuya obligatoriedad empieza después, `manifest.json` SHALL registrarlo como `nextSet` con su `id` y su `effectiveFrom`; hasta esa fecha `nextSet` no puede ser `currentSet`, y cuando no haya próximo set la clave `nextSet` SHALL omitirse (nunca `null`). Los documentos auxiliares `Codigodemoneda_V4.4` y `Codificacionubicacion_V4.4` son parte de la especificación v4.4 (decisión 16) y comparten el set de los XSD del mismo número de versión. `xmldsig-core-schema.xsd`, que no pertenece a ningún set de Hacienda, SHALL quedar registrado sin pertenencia a set.
+`manifest.json` SHALL declarar los sets vendorizados con `id`, año, versión, fecha de descarga (`downloadedAt`) y superficie de origen. `downloadedAt` SHALL significar la fecha de la **última descarga del set desde su superficie cuyos bytes se confirmaron idénticos a los vendorizados** (fecha de descarga verificada: puede avanzar sin que ningún archivo cambie; una descarga que detecta una diferencia en cambio detiene la vendorización). El manifiesto SHALL incluir `lastSyncedAt` de primer nivel = fecha de la última regeneración y verificación completa del manifiesto; con `spec:check`/`spec:update` disponibles, el README SHALL declararlo como la fecha de la **última ejecución de `spec:update`** (único comando que escribe el manifiesto) y advertirá que la semántica cambiará a "última ejecución del job" cuando exista un job que ejecute `spec:update` (fase 2). El job mensual de fase 1 solo ejecuta `spec:check` y reporta deriva: su existencia por sí sola SHALL no alterar esta semántica ni la advertencia del README. El campo `currentSet` SHALL identificar el set **en vigor hoy** (decisión 15, semántica: "vigente" = que rige, no "último publicado") y SHALL apuntar a un set declarado que no esté marcado como `policyOnly`. La clave `nextSet` SHALL existir únicamente cuando una superficie oficial con autoridad para publicar el esquema (ATV) haya publicado un set con fecha de entrada en vigor confirmada; en ese caso SHALL incluir `id` y `effectiveFrom`, y `nextSet` no puede ser `currentSet`. Cuando no exista un próximo set confirmado, `nextSet` SHALL omitirse (nunca `null`). Una publicación de otra superficie sin autoridad ATV ni fecha confirmada SHALL NOT representarse como `nextSet`; el set puede permanecer en `sets[]` como referencia vendorizada. Los documentos auxiliares `Codigodemoneda_V4.4` y `Codificacionubicacion_V4.4` son parte de la especificación v4.4 (decisión 16) y comparten el set de los XSD del mismo número de versión. `xmldsig-core-schema.xsd`, que no pertenece a ningún set de Hacienda, SHALL quedar registrado sin pertenencia a set.
 
 #### Scenario: `currentSet` apunta a un set existente en vigor
 
@@ -65,13 +65,28 @@ El repo SHALL mantener en `packages/sdk/schemas/` el conjunto vendorizable de la
 
 #### Scenario: revisión publicada pero aún no obligatoria
 
-- **WHEN** la fecha es anterior a `nextSet.effectiveFrom` (por ejemplo, 2026-10-08 con `nextSet.effectiveFrom: "2026-11-01"`)
+- **WHEN** ATV publica un set con fecha de entrada en vigor futura y confirmada
 - **THEN** `currentSet` sigue apuntando al set en vigor (`2024/v4.4`) y la revisión aparece solo como `nextSet`, con su fecha de entrada en vigor
+
+#### Scenario: Una publicación sin autoridad confirmada no se declara como próximo set
+
+- **WHEN** `2026/v4.4` está vendorizado pero ATV no lo publica ni existe una fecha de entrada en vigor confirmada
+- **THEN** `manifest.json` no contiene la clave `nextSet`, `currentSet` sigue apuntando a `2024/v4.4` y `2026/v4.4` permanece en `sets[]` solo como referencia
+
+#### Scenario: `nextSet` solo existe con autoridad y fecha confirmadas
+
+- **WHEN** ATV publica un set nuevo y confirma su fecha de entrada en vigor
+- **THEN** `manifest.json` lo registra como `nextSet` con `id` y `effectiveFrom`, y `currentSet` no cambia hasta esa fecha
 
 #### Scenario: no hay próximo set
 
-- **WHEN** todos los sets publicados ya están en vigor o no hay fecha futura conocida
+- **WHEN** no hay un set publicado con autoridad ATV y fecha de entrada en vigor confirmada
 - **THEN** la clave `nextSet` no existe en el manifiesto (no es `null` ni un objeto vacío)
+
+#### Scenario: retiro editorial de un `nextSet` sin autoridad confirmada
+
+- **WHEN** una decisión de autoridad revisada cierra que el set vendorizado no se adopta y no existe una fecha de entrada en vigor confirmada
+- **THEN** `nextSet` se retira mediante una edición revisada del manifiesto (no mediante `spec:update`, que exige un set con `effectiveFrom`), `currentSet` no cambia, el set permanece en `sets[]` como referencia y `pnpm spec:verify` pasa
 
 #### Scenario: los auxiliares viajan con su set
 
@@ -717,9 +732,11 @@ identificar qué superficie toma el proyecto como autoritativa y con qué
 justificación. El registro SHALL NOT presentar una publicación más reciente de
 una superficie distinta como sustitución oficial del esquema vigente, ni cambiar
 `currentSet`, `nextSet`, el manifiesto o los bytes vendorizados por sí mismo.
-Toda autoridad no confirmada por la superficie ATV SHALL quedar registrada como
-decisión abierta, con su efecto pendiente sobre `nextSet` y sobre el set que
-embebe el build del SDK.
+La decisión de autoridad SHALL quedar cerrada en el registro: `2024/v4.4` es el
+set autoritativo y `2026/v4.4` no se adopta. El registro SHALL NOT afirmar una
+fecha de obligatoriedad para `2026/v4.4` mientras ATV no publique ese set y
+confirme la fecha, y SHALL dejar constancia de que el build del SDK embebe y usa
+el set 2024.
 
 #### Scenario: Los bytes vendorizados coinciden con la superficie ATV
 
@@ -733,7 +750,7 @@ embebe el build del SDK.
 - **WHEN** se comparan los archivos de `2026/v4.4/` con los publicados bajo
   `https://www.hacienda.go.cr/docs/`
 - **THEN** el registro atribuye esos bytes a la superficie OVi, no a ATV, y
-  declara su fecha de publicación y su rol como revisión publicada fuera de ATV
+  declara su fecha de publicación y su rol como referencia no adoptada
 
 #### Scenario: La divergencia se enumera archivo por archivo
 
@@ -744,11 +761,10 @@ embebe el build del SDK.
 
 #### Scenario: La autoridad no se transfiere en silencio
 
-- **WHEN** la documentación describe el set `2026/v4.4` y su fecha de
-  obligatoriedad
-- **THEN** declara que ATV no publica ese set y registra como decisión abierta
-  su efecto sobre `nextSet`, sobre el set embebido y sobre la fecha de
-  obligatoriedad, manteniendo `currentSet` en `2024/v4.4`
+- **WHEN** la documentación describe el set `2026/v4.4`
+- **THEN** declara que ATV no publica ese set, que la decisión es mantener
+  `2024/v4.4` como autoritativo, que el SDK embebe ese set y que `2026/v4.4`
+  queda solo como referencia, sin fecha de obligatoriedad afirmada
 
 #### Scenario: Una nueva comprobación actualiza la evidencia
 
