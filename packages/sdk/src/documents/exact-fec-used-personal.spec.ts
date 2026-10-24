@@ -71,7 +71,7 @@ describe("explicit non-subject used personal goods FEC", () => {
       /TotalGravado|TotalExento|TotalMercanciasGravadas|FactorCalculoIVA|PlazoCredito|CodigoActividadEmisor/,
     );
     expect(input.clave.slice(9, 21)).toBe(input.receptor.identificacion.numero.padStart(12, "0"));
-    for (const generation of ["2024", "2026"] as const)
+    for (const generation of ["2024"] as const)
       expect(
         validateAgainstXsd(xml, "FacturaElectronicaCompra_V4.4.xsd", {
           allowMissingSignature: true,

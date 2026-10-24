@@ -19,5 +19,3 @@
 
 - [ ] Bind current source/payment/tax policy and atomic cumulative authority with
       current capabilities, first bytes and owner marker/same-key recovery.
-- [ ] Complete isolated and actual local UI/Auth/Storage cases, then separately
-      authorized provider/oracle acceptance. No live effect is implied here.

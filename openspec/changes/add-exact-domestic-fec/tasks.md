@@ -14,6 +14,6 @@
 
 ## Separate required gates
 
-- [ ] Complete separately reviewed used-goods06/condition13 and other required FEC source cases.
-- [ ] Establish live FEC party/acceptance and trusted legal eligibility/age/tax policies in app.
-- [ ] Complete SDK85/security69 prerequisites before reviewed coherent release/app adoption.
+- [ ] Complete separately reviewed used-goods06/condition13 and other required FEC source cases. The used-goods source merged as PR #93 (`e8fa2ed`), but its independent review is still pending; other required FEC cases remain open.
+- [ ] Establish live FEC party/acceptance and trusted legal eligibility/age/tax policies.
+- [ ] Complete SDK85/security69 prerequisites before reviewed coherent release.

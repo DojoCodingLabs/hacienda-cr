@@ -10,10 +10,9 @@
 - [x] Implement strict partial-NC schema/calculation/native producer for independent review.
 - [x] Implement rejected-FE replacement schema/calculation/native producer for independent review.
 - [x] Pass native/Decimal/signing/response/legacy/fresh packed/full verification (1,507 unit and 118 script tests; four live tests skipped).
-- [ ] Obtain independent exact-head source review and merge approval.
+- [x] Obtain independent exact-head source review and merge approval. Root reviewed `b9a193086c121ff81ec2cd4477c1c2afbe0b5524` (36 focused tests, no blocker); documentation-only head `3721297`; merged as PR #89 (`7d5891a`). See `docs/testing-exact-credit-extensions.md`.
 
 ## Separate required work
 
-- [ ] Complete app immutable authority, current concurrent remaining credit, fresh replacement sequence/recovery and acceptance.
 - [ ] Resolve REP monetary oracle and remaining special FEC/recipient/security contracts.
-- [ ] Prepare one coherent linked release only after required source PRs are reviewed.
+- [ ] Prepare one coherent linked release only after required source PRs are reviewed. 0.10.0 was published (PR #94), but special-FEC PR #91 and used-goods PR #93 still lack independent review, so the gating condition is not met.

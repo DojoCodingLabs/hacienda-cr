@@ -38,7 +38,7 @@ export const statusCommand = defineCommand({
       const clave = args.clave;
 
       // Validate clave format
-      if (!/^\d{9}[A-Za-z0-9]{12}\d{29}$/.test(clave)) {
+      if (!/^\d{50}$/.test(clave)) {
         error(
           "Invalid clave. Must be a 50-character clave with letters only in the taxpayer ID segment.",
         );

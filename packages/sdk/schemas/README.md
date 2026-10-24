@@ -3,16 +3,21 @@
 Official "Anexos y Estructuras" v4.4 XSD schemas, used by the test suite as the
 conformance gate for generated XML (`src/__testing__/xsd.ts`).
 
-- `2024/v4.4/` — the base v4.4 package, downloaded 2026-08-24 from
+- `2024/v4.4/` — the base v4.4 package and the **authoritative** set, downloaded
+  2026-08-24 from
   `https://atv.hacienda.go.cr/ATV/ComprobanteElectronico/docs/esquemas/2024/v4.4/`.
-- `2026/v4.4/` — the April 22, 2026 revision (files Last-Modified 2026-04-22;
-  mandatory 2026-11-01), downloaded 2026-08-24 from
+- `2026/v4.4/` — the April 22, 2026 revision, downloaded 2026-08-24 from
   `https://www.hacienda.go.cr/docs/<File>_V4.4.xsd` — the URLs linked from the
   TRIBU-CR OVi portal (`https://ovitribucr.hacienda.go.cr/comprobantes-electronicos`
   → "Anexos y Estructuras" → "Estructuras XML y Anexos Versión 4.4"; public,
-  no login). Note: the host's WAF blocks browser-like User-Agents from CLI
-  clients — plain `curl`/`wget` default agents work.
+  no login). ATV does not publish this set and no effective date is confirmed;
+  it is kept only as **reference**, not adopted. Note: the host's WAF blocks
+  browser-like User-Agents from CLI clients — plain `curl`/`wget` default
+  agents work.
 - Files are vendored byte-for-byte as published (do not reformat).
+- The per-file evidence behind both sets — exact URLs, `Last-Modified`, SHA-256,
+  declared authority and the closed decision on `2026/v4.4` — is recorded in
+  [v4.4 schema provenance](../../../docs/specs/v4-4-schema-provenance.md).
 - `xmldsig-core-schema.xsd` — W3C XML-DSig core schema referenced by every
   Hacienda XSD via `../../xmldsig-core-schema.xsd` (hence the directory layout).
   Downloaded from `https://www.w3.org/TR/2002/REC-xmldsig-core-20020212/`.
@@ -23,8 +28,9 @@ adds 13–16 (REP also adds 17); `TipoDocReferenciaType` adds 19–20.
 See `docs/specs/v4.4-compliance.md`.
 
 These files support the conformance tests and the offline runtime validator.
-The SDK build embeds the 2026 schemas as strings; the raw XSD files are not
-copied into the published npm package.
+The SDK build embeds the **2024** schemas as strings; the raw XSD files are not
+copied into the published npm package. The 2026 set remains vendored only for
+provenance and negative tests.
 
 ## `codes.json`
 
@@ -127,18 +133,22 @@ Field semantics:
   committed to this repository. It would be `false` only for a file declared
   but intentionally not committed (none today).
 
-- `currentSet` — the set **in force today** (`2024/v4.4`; the April 2026
-  revision becomes mandatory 2026-11-01). `nextSet` — published but not yet
-  mandatory, with `effectiveFrom`; the key is omitted (never `null`) when there
-  is no upcoming set, and after the switch `2024/v4.4` stays in `sets[]` (only
-  the pointer moves).
+- `currentSet` — the set **in force today** (`2024/v4.4`, the authoritative
+  set). `nextSet` — exists only when ATV has published a set with a confirmed
+  `effectiveFrom`; the key is omitted (never `null`) when there is no confirmed
+  upcoming set. `2026/v4.4` is not represented as `nextSet`: ATV does not
+  publish it and no effective date is confirmed, so it stays in `sets[]` only
+  as a reference.
 - `downloadedAt` (per set) — date of the last download from the set's surface
   whose bytes were confirmed identical to the vendored files. Initially
   2026-10-08 for both sets: fresh downloads on that date matched the repo
   byte-for-byte.
-- `lastSyncedAt` — date of the **last `spec:update` run** (the only command
-  that writes the manifest; `spec:check` is read-only and never touches
-  `downloadedAt` or `lastSyncedAt`). The weekly drift job
+- `lastSyncedAt` — date of the **last `spec:update` run** (the only
+  schema-sync command that writes the manifest; `spec:check` is read-only and
+  never touches `downloadedAt` or `lastSyncedAt`). A reviewed authority decision
+  may remove `nextSet` manually when `spec:update` cannot express the removal
+  (it requires a confirmed `effectiveFrom`); `spec:verify` validates the result.
+  The weekly drift job
   (`.github/workflows/spec-drift.yml`) runs `spec:check` and reports through
   GitHub issues, but phase 2 — running `spec:update` from the job — does not
   exist yet, so the semantics stay "last `spec:update` run" until then.
@@ -204,7 +214,7 @@ Two assumptions are **not verified** and are recorded here on purpose:
    RAR) may be **redistributed in this public repository** without further
    restrictions. They are not covered by the repository's MIT license, and
    they are deliberately _not_ part of the published npm package (the build
-   embeds only the 2026 XSDs as strings).
+   embeds only the 2024 XSDs as strings).
 2. The official surfaces remain reachable from CI.
 
 If either fails, update this section together with the affected behavior.

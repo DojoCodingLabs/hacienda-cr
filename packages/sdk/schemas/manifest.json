@@ -2,10 +2,6 @@
   "schemaVersion": 1,
   "lastSyncedAt": "2026-10-08",
   "currentSet": "2024/v4.4",
-  "nextSet": {
-    "id": "2026/v4.4",
-    "effectiveFrom": "2026-11-01"
-  },
   "surfaces": [
     {
       "id": "atv",

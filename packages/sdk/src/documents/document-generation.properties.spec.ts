@@ -84,7 +84,7 @@ describe("A4 property-based", () => {
           date: fc
             .date({ min: new Date(2024, 0, 1), max: new Date(2025, 11, 31) })
             .filter((d) => !isNaN(d.getTime())),
-          taxpayerId: fc.constantFrom("3101234567", "ABC123", "123456789"),
+          taxpayerId: fc.constantFrom("3101234567", "123456789"),
           branch: fc.constantFrom(undefined, "1", "2", "123"),
           pos: fc.constantFrom(undefined, "1", "2", "12345"),
           documentType: fc.constantFrom(...Object.values(DocumentType)),

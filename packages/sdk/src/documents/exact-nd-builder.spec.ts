@@ -31,7 +31,7 @@ describe("exact ordinary FE-reference positive ND increment", () => {
     expect(xml).toContain(`<FechaEmisionIR>${input.original.fechaEmision}</FechaEmisionIR>`);
     expect(xml).toContain("<Codigo>02</Codigo>");
     expect(xml).not.toContain("<TotalComprobante>113.00000</TotalComprobante>");
-    for (const generation of ["2024", "2026"] as const)
+    for (const generation of ["2024"] as const)
       expect(
         validateAgainstXsd(xml, "NotaDebitoElectronica_V4.4.xsd", {
           allowMissingSignature: true,
