@@ -156,18 +156,7 @@ vendorizar.
 
 ### Requirement: Las constantes publicadas de la política de firma coinciden con el manifiesto
 
-Las constantes que el SDK publica para la política XAdES-EPES de la v4.4
-(`shared/src/constants/xades-policy.ts`: identificador/URI de la política,
-algoritmo del digest y valor del digest) SHALL coincidir con el bloque
-`policy` del manifiesto: la URI SHALL ser el identificador publicado en el
-Anexo 2, el algoritmo SHALL ser `http://www.w3.org/2001/04/xmlenc#sha256` y
-el valor SHALL ser `policy.digestValue` en Base64 con padding `=`, por
-comparación exacta de strings sin normalización. La verificación del repositorio
-(ejecutada en el gate de `pnpm verify`) SHALL comparar las constantes
-publicadas contra `manifest.policy` y terminar con código distinto de cero
-nombrando campo, valor publicado y valor esperado cuando difieran. La
-corrección que alinee las constantes SHALL venir acompañada de su Changeset
-con notas de migración: cambia el XAdES-EPES que el SDK emite.
+Las constantes que el SDK publica para la política XAdES-EPES de la v4.4 (`shared/src/constants/xades-policy.ts`: identificador/URI de la política, algoritmo del digest y valor del digest) SHALL coincidir con el bloque `policy` del manifiesto: la URI SHALL ser el identificador publicado en el Anexo 2, el algoritmo SHALL ser `http://www.w3.org/2001/04/xmlenc#sha256` y el valor SHALL ser `policy.digestValue` en Base64 con padding `=`, por comparación exacta de strings sin normalización. La verificación del repositorio (ejecutada en el gate de `pnpm verify`) SHALL comparar las constantes publicadas contra `manifest.policy` y terminar con código distinto de cero nombrando campo, valor publicado y valor esperado cuando difieran. La corrección que alinee las constantes SHALL venir acompañada de su Changeset con notas de migración: cambia el XAdES-EPES que el SDK emite.
 
 #### Scenario: constantes alineadas con el manifiesto
 
@@ -451,16 +440,7 @@ El informe de `spec:check` SHALL presentar las diferencias en este orden: **(1)*
 
 ### Requirement: Las descargas del watcher son acotadas en host, protocolo y tamaño
 
-Las descargas que `spec:check` y `spec:update` realizan contra las superficies declaradas
-en `packages/sdk/schemas/manifest.json` SHALL limitarse a hosts presentes en la allowlist
-derivada del propio manifiesto, y cada petición — incluidas las que siguen una
-redirección — SHALL usar el esquema `https:`. Una redirección que descienda a `http:` o apunte a
-otro esquema SHALL tratarse como error operativo (código de salida 2), no como contenido.
-El límite de tamaño por respuesta (`maxBytes`) SHALL aplicarse **antes** de retener el
-cuerpo completo en memoria: si el `Content-Length` declarado lo excede, la respuesta SHALL
-rechazarse sin descargarla; si el header falta o miente, la lectura SHALL cortarse en el
-máximo y la respuesta tratarse como error, de modo que ninguna superficie pueda hacer
-acumular memoria ilimitada en el proceso.
+Las descargas que `spec:check` y `spec:update` realizan contra las superficies declaradas en `packages/sdk/schemas/manifest.json` SHALL limitarse a hosts presentes en la allowlist derivada del propio manifiesto, y cada petición — incluidas las que siguen una redirección — SHALL usar el esquema `https:`. Una redirección que descienda a `http:` o apunte a otro esquema SHALL tratarse como error operativo (código de salida 2), no como contenido. El límite de tamaño por respuesta (`maxBytes`) SHALL aplicarse **antes** de retener el cuerpo completo en memoria: si el `Content-Length` declarado lo excede, la respuesta SHALL rechazarse sin descargarla; si el header falta o miente, la lectura SHALL cortarse en el máximo y la respuesta tratarse como error, de modo que ninguna superficie pueda hacer acumular memoria ilimitada en el proceso.
 
 #### Scenario: Una redirección a otro host sigue rechazada
 

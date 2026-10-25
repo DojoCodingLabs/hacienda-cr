@@ -155,7 +155,7 @@ en `shared/src/generated/**`, salvo los alias declarados como tales.
 ### Requirement: La verificación falla ante deriva entre el árbol y la regeneración (Candado 1)
 
 `scripts/verify.mjs` SHALL ejecutar `spec:generate --no-extract` y, acto
-seguido, un `git diff --exit-code` **acotado a `shared/src/generated/**`**; si
+seguido, un `git diff --exit-code` acotado a `shared/src/generated/**`; si
 esas rutas difieren de lo que el generador produce desde el `codes.json`
 commiteado, la verificación SHALL terminar con código distinto de cero. El
 candado SHALL distinguir en su mensaje "la generación falló" (el paso de
@@ -280,19 +280,7 @@ en cada corrida, nunca emparejadas a ciegas.
 
 ### Requirement: Correcciones sancionadas de paridad con cita de fuente primaria
 
-El requisito de paridad («La API pública existente se conserva; nada se
-adivina») rige por defecto y sus escenarios no cambian. Este requisito define
-la única excepción: una **corrección sancionada** es una entrada del registro
-de parejas de `scripts/codes-generate/` que declara un desvío de paridad con
-**(a)** el tipo de desvío (sustituir valor, eliminar clave o valor, renombrar
-clave), **(b)** la cita de la fuente primaria del informe de conformidad del
-repo (`docs/conformity-report.md`) y **(c)** la referencia a un Changeset
-publicado que declare el rompimiento y sus notas de migración. `pnpm
-spec:generate` SHALL aplicar las correcciones sancionadas y SHALL reportar
-cada desvío aplicado con su tabla, clave y cita; una corrección sancionada
-sin cita o sin Changeset de referencia SHALL hacer terminar el comando con
-código distinto de cero sin escribir salida parcial. Un desvío de paridad
-no declarado como corrección sancionada SHALL seguir haciendo fallar el comando bajo el requisito de paridad, nombrando tabla y clave.
+El requisito de paridad («La API pública existente se conserva; nada se adivina») rige por defecto y sus escenarios no cambian. Este requisito define la única excepción: una **corrección sancionada** es una entrada del registro de parejas de `scripts/codes-generate/` que declara un desvío de paridad con **(a)** el tipo de desvío (sustituir valor, eliminar clave o valor, renombrar clave), **(b)** la cita de la fuente primaria del informe de conformidad del repo (`docs/conformity-report.md`) y **(c)** la referencia a un Changeset publicado que declare el rompimiento y sus notas de migración. `pnpm spec:generate` SHALL aplicar las correcciones sancionadas y SHALL reportar cada desvío aplicado con su tabla, clave y cita; una corrección sancionada sin cita o sin Changeset de referencia SHALL hacer terminar el comando con código distinto de cero sin escribir salida parcial. Un desvío de paridad no declarado como corrección sancionada SHALL seguir haciendo fallar el comando bajo el requisito de paridad, nombrando tabla y clave.
 
 #### Scenario: Una corrección sancionada se aplica y se reporta
 

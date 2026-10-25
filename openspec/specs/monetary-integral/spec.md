@@ -1,4 +1,4 @@
-# monetary/integral Specification
+# monetary-integral Specification
 
 ## Purpose
 

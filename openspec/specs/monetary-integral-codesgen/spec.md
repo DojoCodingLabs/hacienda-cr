@@ -1,4 +1,4 @@
-# monetary/integral-codesgen Specification
+# monetary-integral-codesgen Specification
 
 ## Purpose
 

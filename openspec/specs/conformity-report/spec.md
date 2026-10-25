@@ -222,9 +222,7 @@ referenciar la sección correspondiente de la auditoría o declarar que no aplic
 
 ### Requirement: Lo no verificable se marca, nunca se adivina
 
-Cuando una afirmación no pueda confirmarse con las fuentes públicas disponibles, el
-informe SHALL marcarla como no verificada y nombrar la superficie consultada que faltó.
-El informe no SHALL presentar como hallazgo verificado algo no comprobado.
+Cuando una afirmación no pueda confirmarse con las fuentes públicas disponibles, el informe SHALL marcarla como no verificada y nombrar la superficie consultada que faltó. El informe no SHALL presentar como hallazgo verificado algo no comprobado.
 
 #### Scenario: Supuesto no verificable
 

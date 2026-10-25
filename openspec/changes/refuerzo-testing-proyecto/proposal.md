@@ -40,7 +40,7 @@ error cuesta pérdida de secuencia u operación incompleta.
 
 ### New Capabilities
 
-- `testing/coverage`: atribución correcta de la cobertura por paquete, umbrales
+- `testing-coverage`: atribución correcta de la cobertura por paquete, umbrales
   declarados y puerta de verificación offline que impide regresiones, con specs
   propios para módulos críticos que hoy solo se ejercitan de forma indirecta.
 

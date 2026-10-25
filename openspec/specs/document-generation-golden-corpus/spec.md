@@ -1,4 +1,4 @@
-# document-generation/golden-corpus Specification
+# document-generation-golden-corpus Specification
 
 ## Purpose
 

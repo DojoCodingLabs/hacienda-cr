@@ -386,25 +386,7 @@ cero sin escribir `codes.json`, nombrando el archivo y el motivo.
 
 ### Requirement: Reglas de autoridad entre XSD y fuentes auxiliares
 
-Para una misma clave de tabla declarada tanto en XSD como en una fuente
-auxiliar, el XSD SHALL ser la fuente primaria del **conjunto de códigos** y
-de la **estructura**: los códigos resultantes son exactamente los del XSD y
-se comparan byte a byte. Un código presente solo en el auxiliar SHALL
-descartarse con advertencia en stderr (nombre de clave, código y archivo),
-terminando con código 0. Un código del XSD ausente en el auxiliar no SHALL
-ser error: la tabla queda sin descripción auxiliar para ese código. El
-auxiliar SHALL ser la fuente primaria de las **descripciones** cuando el XSD
-no las declara para ese código (caso `CodigoMoneda`); cuando ambos declaran
-descripción para el mismo código y, tras trim y colapso de espacios,
-difieren, gana la del XSD y el extractor SHALL emitir advertencia en stderr
-que nombre el código y ambos archivos, terminando con código 0. Para claves
-que existen solo en auxiliares (tablas de ubicación y tablas de notas
-extraídas exclusivamente del ANEXOS, p. ej.
-`Nota3/TipoComprobanteDocumentoAsociado` y `Nota3/SituacionComprobante`), el
-auxiliar es fuente primaria de códigos y descripciones. Las divergencias no
-descritas aquí como
-fatales SHALL ser advertencias: la salida de solo advertencias nunca SHALL
-impedir la escritura de `codes.json`.
+Para una misma clave de tabla declarada tanto en XSD como en una fuente auxiliar, el XSD SHALL ser la fuente primaria del **conjunto de códigos** y de la **estructura**: los códigos resultantes son exactamente los del XSD y se comparan byte a byte. Un código presente solo en el auxiliar SHALL descartarse con advertencia en stderr (nombre de clave, código y archivo), terminando con código 0. Un código del XSD ausente en el auxiliar no SHALL ser error: la tabla queda sin descripción auxiliar para ese código. El auxiliar SHALL ser la fuente primaria de las **descripciones** cuando el XSD no las declara para ese código (caso `CodigoMoneda`); cuando ambos declaran descripción para el mismo código y, tras trim y colapso de espacios, difieren, gana la del XSD y el extractor SHALL emitir advertencia en stderr que nombre el código y ambos archivos, terminando con código 0. Para claves que existen solo en auxiliares (tablas de ubicación y tablas de notas extraídas exclusivamente del ANEXOS, p. ej. `Nota3/TipoComprobanteDocumentoAsociado` y `Nota3/SituacionComprobante`), el auxiliar es fuente primaria de códigos y descripciones. Las divergencias no descritas aquí como fatales SHALL ser advertencias: la salida de solo advertencias nunca SHALL impedir la escritura de `codes.json`.
 
 #### Scenario: Auxiliar con código extra es advertencia, no error
 

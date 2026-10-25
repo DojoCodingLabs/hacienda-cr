@@ -1,4 +1,4 @@
-# document-generation/xml-roundtrip Specification
+# document-generation-xml-roundtrip Specification
 
 ## Purpose
 

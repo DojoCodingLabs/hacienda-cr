@@ -128,11 +128,7 @@ explícito. Un comprobante cuyo plazo se pasó SHALL quedar en el estado
 
 ### Requirement: Un fallo ambiguo se consulta antes de reenviar
 
-Cuando un envío termine en un estado ambiguo —la respuesta no permite saber si
-el comprobante llegó a Hacienda— el SDK SHALL consultar el estado de **esa
-misma clave** antes de decidir un reenvío, y el reenvío, si lo hay, SHALL
-usar la misma clave. El SDK SHALL NOT enviar un comprobante con un consecutivo
-nuevo para resolver una ambigüedad.
+Cuando un envío termine en un estado ambiguo —la respuesta no permite saber si el comprobante llegó a Hacienda— el SDK SHALL consultar el estado de **esa misma clave** antes de decidir un reenvío, y el reenvío, si lo hay, SHALL usar la misma clave. El SDK SHALL NOT enviar un comprobante con un consecutivo nuevo para resolver una ambigüedad.
 
 #### Scenario: La ambigüedad se resuelve consultando
 

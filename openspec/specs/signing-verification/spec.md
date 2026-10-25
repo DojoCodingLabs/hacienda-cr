@@ -1,4 +1,4 @@
-# signing/verification Specification
+# signing-verification Specification
 
 ## Purpose
 
