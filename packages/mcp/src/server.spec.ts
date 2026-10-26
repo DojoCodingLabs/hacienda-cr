@@ -115,6 +115,7 @@ describe("MCP Server", () => {
       const toolNames = tools.map((t) => t.name);
 
       expect(toolNames).toContain("create_invoice");
+      expect(toolNames).toContain("create_invoice_exact");
       const createInvoice = tools.find((tool) => tool.name === "create_invoice");
       expect(createInvoice?.inputSchema.required).toContain("proveedorSistemas");
       expect(toolNames).toContain("check_status");
@@ -122,7 +123,7 @@ describe("MCP Server", () => {
       expect(toolNames).toContain("get_document");
       expect(toolNames).toContain("lookup_taxpayer");
       expect(toolNames).toContain("draft_invoice");
-      expect(tools.length).toBe(6);
+      expect(tools.length).toBe(7);
     });
 
     it("should have descriptions for all tools", async () => {
@@ -152,10 +153,11 @@ describe("MCP Server", () => {
       const uris = resources.map((r) => r.uri);
 
       expect(uris).toContain("hacienda://schemas/factura");
+      expect(uris).toContain("hacienda://schemas/factura-exact");
       expect(uris).toContain("hacienda://reference/document-types");
       expect(uris).toContain("hacienda://reference/tax-codes");
       expect(uris).toContain("hacienda://reference/id-types");
-      expect(resources.length).toBe(4);
+      expect(resources.length).toBe(5);
     });
 
     it("should have descriptions for all resources", async () => {
@@ -164,6 +166,64 @@ describe("MCP Server", () => {
         expect(resource.description).toBeDefined();
         expect(String(resource.description ?? "").length).toBeGreaterThan(10);
       }
+    });
+  });
+
+  // -------------------------------------------------------------------------
+  // Tool: create_invoice_exact
+  // -------------------------------------------------------------------------
+
+  describe("create_invoice_exact", () => {
+    const exactArgs = {
+      proveedorSistemas: "3101234567",
+      codigoActividadEmisor: "620100",
+      emisor: {
+        nombre: "Empresa Exacta S.A.",
+        identificacion: { tipo: "02", numero: "3101234567" },
+        ubicacion: { provincia: "1", canton: "01", distrito: "01", otrasSenas: "Test address" },
+        correoElectronico: "exact@empresa.com",
+      },
+      receptor: {
+        nombre: "Cliente Exacto S.R.L.",
+        identificacion: { tipo: "02", numero: "3109876543" },
+        correoElectronico: "exact@cliente.com",
+      },
+      lineItems: [
+        {
+          codigoCabys: "4321000000000",
+          cantidad: "1",
+          unidadMedida: "Sp",
+          detalle: "Servicio exacto",
+          precioUnitario: "100000",
+          esServicio: true,
+          impuesto: [{ codigo: "01", codigoTarifaIVA: "08", tarifa: "13" }],
+        },
+      ],
+    };
+
+    it("creates exact XML with five-decimal amounts", async () => {
+      const result = await client.callTool({
+        name: "create_invoice_exact",
+        arguments: exactArgs,
+      });
+      expect(result.isError, JSON.stringify(result.content)).not.toBe(true);
+      const text = (result.content as { text: string }[])[0]?.text ?? "";
+      expect(text).toContain("Factura Electronica (exact) created successfully");
+      expect(text).toContain("<MontoTotal>100000.00000</MontoTotal>");
+      expect(text).toContain("<TotalComprobante>113000.00000</TotalComprobante>");
+    });
+
+    it("rejects a monetary JSON number before calculation", async () => {
+      const result = await client.callTool({
+        name: "create_invoice_exact",
+        arguments: {
+          ...exactArgs,
+          lineItems: [{ ...exactArgs.lineItems[0], precioUnitario: 100000 }],
+        },
+      });
+      expect(result.isError).toBe(true);
+      const text = (result.content as { text: string }[])[0]?.text ?? "";
+      expect(text).toMatch(/expected string|invalid|number/i);
     });
   });
 
