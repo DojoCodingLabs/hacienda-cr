@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { createMockServer } from "./server.js";
 import type { MockServer, RecordedResponse } from "./types.js";
+import net from "node:net";
 
 const CLAVE = "50601072500031012345670010000101000000000119999999";
 
@@ -312,6 +313,198 @@ describe("mock: modo record", () => {
 });
 
 describe("mock: state", () => {
+  describe("mock: hostile HTTP inputs", () => {
+    async function newMock() {
+      return createMockServer({
+        processingDelayMs: 0,
+        acceptanceDelayMs: 0,
+        rateLimit: { limit: 100, windowMs: 60_000 },
+      });
+    }
+
+    function readRawResponse(
+      port: number,
+      write: (sock: net.Socket) => void,
+      timeoutMs = 3000,
+    ): Promise<string> {
+      return new Promise((resolve) => {
+        const sock = net.connect(port, "127.0.0.1");
+        let data = "";
+        let finished = false;
+        const finish = (): void => {
+          if (finished) return;
+          finished = true;
+          try {
+            sock.destroy();
+          } catch {
+            /* ignore */
+          }
+          resolve(data);
+        };
+        sock.on("data", (chunk: Buffer) => {
+          data += chunk.toString("latin1");
+        });
+        sock.on("end", finish);
+        sock.on("close", finish);
+        sock.on("error", finish);
+        sock.on("connect", () => write(sock));
+        setTimeout(finish, timeoutMs);
+      });
+    }
+
+    it("routes by path and survives a malformed Host header", async () => {
+      const hostile = await newMock();
+      try {
+        const hostileToken = await issueToken(hostile);
+        const { port } = new URL(hostile.url);
+        const response = await readRawResponse(Number(port), (sock) => {
+          sock.write(`GET /nope HTTP/1.1\r\nHost: bad host\r\nConnection: close\r\n\r\n`);
+        });
+        expect(response).toMatch(/^HTTP\/1\.1 404/);
+        const alive = await fetch(`${hostile.apiBaseUrl}/recepcion/${CLAVE}`, {
+          headers: { Authorization: `Bearer ${hostileToken}` },
+        });
+        expect(alive.status).toBe(404);
+      } finally {
+        await hostile.close();
+      }
+    });
+
+    it("rejects an over-limit body on the token endpoint with 400", async () => {
+      const hostile = await newMock();
+      try {
+        const { port } = new URL(hostile.url);
+        const body = "x".repeat(1_100_000);
+        const request = `POST /auth/realms/rut-stag/protocol/openid-connect/token HTTP/1.1\r\nHost: 127.0.0.1\r\nContent-Type: application/x-www-form-urlencoded\r\nContent-Length: ${body.length}\r\nConnection: close\r\n\r\n${body}`;
+        const response = await readRawResponse(Number(port), (sock) => {
+          sock.write(request);
+        });
+        expect(response).toMatch(/^HTTP\/1\.1 400/);
+        expect(response).toContain("X-Error-Cause");
+        const alive = await fetch(hostile.idpTokenUrl, {
+          method: "POST",
+          headers: { "Content-Type": "application/x-www-form-urlencoded" },
+          body: "grant_type=password",
+        });
+        expect(alive.status).toBe(200);
+      } finally {
+        await hostile.close();
+      }
+    });
+
+    it("survives a client disconnect mid-body on the token endpoint", async () => {
+      const hostile = await newMock();
+      try {
+        const { port } = new URL(hostile.url);
+        await readRawResponse(
+          Number(port),
+          (sock) => {
+            sock.write(
+              "POST /auth/realms/rut-stag/protocol/openid-connect/token HTTP/1.1\r\nHost: 127.0.0.1\r\nContent-Type: application/x-www-form-urlencoded\r\nContent-Length: 1000\r\n\r\npartial",
+            );
+            setTimeout(() => {
+              try {
+                sock.destroy();
+              } catch {
+                /* ignore */
+              }
+            }, 50);
+          },
+          500,
+        );
+        const alive = await fetch(hostile.idpTokenUrl, {
+          method: "POST",
+          headers: { "Content-Type": "application/x-www-form-urlencoded" },
+          body: "grant_type=password",
+        });
+        expect(alive.status).toBe(200);
+      } finally {
+        await hostile.close();
+      }
+    });
+
+    it("rejects a JSON null body with 400", async () => {
+      const hostile = await newMock();
+      try {
+        const hostileToken = await issueToken(hostile);
+        const headers = {
+          Authorization: `Bearer ${hostileToken}`,
+          "Content-Type": "application/json",
+        };
+        const res = await fetch(`${hostile.apiBaseUrl}/recepcion`, {
+          method: "POST",
+          headers,
+          body: "null",
+        });
+        expect(res.status).toBe(400);
+        expect(res.headers.get("X-Error-Cause")).toContain("JSON object");
+        const alive = await fetch(`${hostile.apiBaseUrl}/recepcion`, {
+          method: "POST",
+          headers,
+          body: JSON.stringify(submission()),
+        });
+        expect(alive.status).toBe(201);
+      } finally {
+        await hostile.close();
+      }
+    });
+
+    it("rejects scalar JSON bodies with 400", async () => {
+      const hostile = await newMock();
+      try {
+        const hostileToken = await issueToken(hostile);
+        const headers = {
+          Authorization: `Bearer ${hostileToken}`,
+          "Content-Type": "application/json",
+        };
+        for (const body of ["42", '"texto"', "true"]) {
+          const res = await fetch(`${hostile.apiBaseUrl}/recepcion`, {
+            method: "POST",
+            headers,
+            body,
+          });
+          expect(res.status).toBe(400);
+          expect(res.headers.get("X-Error-Cause")).toContain("JSON object");
+        }
+      } finally {
+        await hostile.close();
+      }
+    });
+
+    it("contains a throwing outcome as 500 and survives", async () => {
+      const hostile = await createMockServer({
+        processingDelayMs: 0,
+        acceptanceDelayMs: 0,
+        rateLimit: { limit: 100, windowMs: 60_000 },
+        outcome: (() => {
+          throw new Error("boom");
+        }) as unknown as "aceptado",
+      });
+      try {
+        const hostileToken = await issueToken(hostile);
+        const headers = {
+          Authorization: `Bearer ${hostileToken}`,
+          "Content-Type": "application/json",
+        };
+        const res = await fetch(`${hostile.apiBaseUrl}/recepcion`, {
+          method: "POST",
+          headers,
+          body: JSON.stringify(submission()),
+        });
+        expect(res.status).toBe(500);
+        expect(res.headers.get("X-Error-Cause")).toContain("Internal server error");
+        const alive = await fetch(hostile.idpTokenUrl, {
+          method: "POST",
+          headers: { "Content-Type": "application/x-www-form-urlencoded" },
+          body: "grant_type=password",
+        });
+        expect(alive.status).toBe(200);
+      } finally {
+        await hostile.close();
+      }
+    });
+  });
+
   it("reset clears documents, tokens and counters", async () => {
     await fetch(`${mock.apiBaseUrl}/recepcion`, {
       method: "POST",
