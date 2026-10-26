@@ -4,6 +4,6 @@
 - [x] Propose separate foreign/used-goods source shapes and independent tax-case gates.
 - [x] Obtain root primary/tax-case review before production source changes: explicit ordinary IVA13 foreign services only.
 - [x] Implement the explicitly approved foreign-service ordinary IVA13 source/math/XML with independent Decimal/native/sign/packed evidence (full verify 1,520 unit/118 script; four live skips).
-- [ ] Obtain independent exact-head source review before merge.
-- [ ] Complete broader FEC special tax/response/eligibility matrix and app lifecycle; do not mark SDK #85 complete.
-- [ ] Review coherent linked release separately; no versions/publication/activation in this checkpoint.
+- [ ] Obtain independent exact-head source review before merge. Source was merged as PR #91 (`6297a5b`), but `docs/exact-foreign-service-fec.md` still records exact-head independent review as required; merge did not satisfy this task.
+- [ ] Complete broader FEC special tax/response/eligibility matrix; do not mark SDK #85 complete.
+- [ ] Review coherent linked release separately; no versions/publication/activation in this checkpoint. 0.10.0 was published (PR #94), but the separate source review above remains pending; do not treat the release as review approval.

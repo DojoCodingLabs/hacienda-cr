@@ -1,25 +1,16 @@
 /**
  * InformacionReferencia codes for electronic documents (v4.4).
  *
- * Values vendored verbatim from the official v4.4 XSD enumerations
- * (TipoDocReferenciaType and CodigoReferenciaType), April 2026 revision
- * (mandatory 2026-11-01). See the ANEXOS Y ESTRUCTURAS v4.4 document
- * (Notas 9 and 10) for the authoritative meaning of each code.
+ * Values vendored verbatim from the authoritative 2024/v4.4 XSD
+ * enumerations (TipoDocReferenciaType and CodigoReferenciaType). See the
+ * ANEXOS Y ESTRUCTURAS v4.4 document (Notas 9 and 10) for the authoritative
+ * meaning of each code.
  *
- * Sin pareja deliberada con `codes.json`: el XSD vendorizado aún no trae
- * los códigos 19-20 (TipoDoc) ni 13-16 (Codigo) de la revisión abril 2026
- * — ver table-map.mjs; el candado de generación los reporta hasta que se
- * vendorice el XSD nuevo. `DISCOUNT_CODES`, `OTHER_CHARGE_TYPES` y
- * `EXONERATION_INSTITUTIONS` sí migraron a `shared/src/generated/`.
+ * The April 2026 revision (19-20 for TipoDoc, 13-17 for Codigo) is not
+ * adopted; those values are rejected because the authoritative 2024 XSD
+ * does not admit them. `DISCOUNT_CODES`, `OTHER_CHARGE_TYPES` and
+ * `EXONERATION_INSTITUTIONS` migrated to `shared/src/generated/`.
  */
-
-/**
- * Código de referencia "Pago de comprobante" (`CodigoReferenciaType` 17).
- *
- * Admitido sólo por el Recibo Electrónico de Pago: la curaduría lo nombra
- * para que el validador no escriba el literal del catálogo a mano.
- */
-export const CODIGO_REFERENCIA_PAGO_COMPROBANTE = "17";
 
 /** Referenced document type codes (TipoDocIR / TipoDocReferenciaType). */
 export const REFERENCE_DOC_TYPES = [
@@ -41,19 +32,12 @@ export const REFERENCE_DOC_TYPES = [
   "16", // Comprobante de proveedor no domiciliado
   "17", // Nota de credito a factura electronica de compra
   "18", // Nota de debito a factura electronica de compra
-  "19", // Factura electronica de exportacion (April 2026 revision)
-  "20", // Recibo electronico de pago (April 2026 revision)
   "99", // Otros (requiere TipoDocRefOTRO)
 ] as const;
 
 export type ReferenceDocType = (typeof REFERENCE_DOC_TYPES)[number];
 
-/**
- * Reference reason codes (Codigo / CodigoReferenciaType).
- *
- * Codes 13-16 are new in the April 2026 revision; code 17 exists only in
- * the Recibo Electronico de Pago schema (see REP_REFERENCE_CODES).
- */
+/** Reference reason codes (Codigo / CodigoReferenciaType). */
 export const REFERENCE_CODES = [
   "01", // Anula documento de referencia
   "02", // Corrige texto de documento de referencia
@@ -65,23 +49,17 @@ export const REFERENCE_CODES = [
   "09",
   "10",
   "11",
-  "12", // Nota de credito financiera por exoneracion posterior (redefined April 2026)
-  "13", // Anula comprobante por error material (April 2026 revision)
-  "14", // Corrige monto por error material (April 2026 revision)
-  "15", // Sustituye comprobante por error material (April 2026 revision)
-  "16", // Sustituye comprobante rechazado (April 2026 revision)
+  "12", // Nota de credito financiera por exoneracion posterior
   "99", // Otros (requiere CodigoReferenciaOTRO)
 ] as const;
 
 export type ReferenceCode = (typeof REFERENCE_CODES)[number];
 
 /**
- * Reference reason codes accepted by the Recibo Electronico de Pago XSD —
- * the REP enumeration additionally admits code 17 (pago de comprobante).
+ * Reference reason codes accepted by the Recibo Electronico de Pago XSD.
+ * The authoritative 2024 REP schema uses the same enumeration; code 17 is
+ * exclusive to the non-adopted 2026 revision and is not accepted.
  */
-export const REP_REFERENCE_CODES = [
-  ...REFERENCE_CODES,
-  "17", // Pago de comprobante (REP only, April 2026 revision)
-] as const;
+export const REP_REFERENCE_CODES = REFERENCE_CODES;
 
 export type RepReferenceCode = (typeof REP_REFERENCE_CODES)[number];

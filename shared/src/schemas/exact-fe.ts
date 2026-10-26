@@ -1,5 +1,5 @@
 /** Additive ordinary FE decimal-text contract. Legacy number APIs are unchanged.
- * Bounds derive from vendored 2026/v4.4 FacturaElectronica XSD: money18/5,
+ * Bounds derive from vendored 2024/v4.4 FacturaElectronica XSD: money18/5,
  * max9999999999999.99999; quantity16/3. No coercion or silent unknown-key loss. */
 import { z } from "zod";
 import { FacturaElectronicaSchema, MedioPagoSchema } from "./factura.js";

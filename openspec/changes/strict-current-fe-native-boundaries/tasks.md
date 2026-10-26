@@ -4,5 +4,5 @@
 - [x] Implement strict current names/payments without changing retained source/math/output decoding.
 - [x] Prove genuine registry 0.9 byte/schema/math compatibility and current native/business edge matrix (32 focused cases).
 - [x] Pass independent Decimal, full verify (1,513 unit/118 script tests; four live skips), fresh all-four packed consumers and strict OpenSpec.
-- [ ] Obtain independent exact-head source review before merge.
-- [ ] Separately review coherent linked release and app current/retained adoption; no activation implied.
+- [x] Obtain independent exact-head source review before merge. Root reviewed runtime `3e40b2f`: 52 focused SDK/shared tests passed, including genuine 0.9 registry captures; documentation-only head `fa4dfea`; merged as PR #90 (`a1e0e1c`). See `docs/current-fe-native-boundaries.md`.
+- [ ] Separately review coherent linked release; no activation implied. 0.10.0 published this source (PR #94).
