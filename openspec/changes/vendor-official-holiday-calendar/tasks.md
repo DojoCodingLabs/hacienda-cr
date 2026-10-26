@@ -45,4 +45,4 @@
 - [x] 6.2 Ejecutar `pnpm verify` completo y confirmar que el calendario nuevo no rompe build, tipos ni consumidores empaquetados.
 - [x] 6.3 Agregar un changeset minor para el SDK por la ampliación de cobertura 2025–2026 y el cambio de contrato documentado.
 - [x] 6.4 Formatear sólo los archivos tocados y revisar `git status` para no arrastrar cambios ajenos.
-- [ ] 6.5 Comentar en la issue #105 el hallazgo de la Ley 9875 (transitorio vencido) y cerrar la issue cuando el cambio esté fusionado. Comentario publicado: https://github.com/DojoCodingLabs/hacienda-cr/issues/105#issuecomment-6387003052 — el cierre queda pendiente del merge.
+- [x] 6.5 Comentar en la issue #105 el hallazgo de la Ley 9875 (transitorio vencido) y cerrar la issue. Comentario publicado: https://github.com/DojoCodingLabs/hacienda-cr/issues/105#issuecomment-6387003052 — issue cerrada el 2026-10-26; el merge del PR #121 queda como seguimiento separado del PR.
