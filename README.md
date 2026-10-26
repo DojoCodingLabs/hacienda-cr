@@ -18,9 +18,7 @@ Toolkit open-source en TypeScript para trabajar con comprobantes electrónicos v
 
 [Casos de uso](#qué-podés-construir) · [Empezar](#empezá-acá) · [Documentación](#documentación) · [Contribuir](#desarrollo-y-contribuciones) · [Reportar un problema](https://github.com/DojoCodingLabs/hacienda-cr/issues/new)
 
-Las versiones publicadas de los cuatro paquetes y sus archivos verificados se consultan en [GitHub Releases](https://github.com/DojoCodingLabs/hacienda-cr/releases/latest). El [registro histórico de 0.11.0](https://github.com/DojoCodingLabs/hacienda-cr/releases/tag/v0.11.0) conserva los bytes verificados y su procedencia. La [preparación revisada](docs/release-0100-readiness.md) detalla sus APIs exactas y límites: REP exacto, transporte y correlación de mensajes del receptor, adopción en aplicaciones y aceptación fiscal siguen siendo trabajos separados. El [registro histórico 0.7.0](docs/release-070-published.md) conserva su verificación y recuperación de publicación.
-
-El checkpoint del 18 de octubre de 2026 conserva el estado histórico anterior a la reanudación autorizada del trabajo. El [contexto de continuación](docs/pause-context-2026-10-18.md) reúne el estado de los ocho issues, los límites pendientes y los criterios para retomar; la publicación 0.10.0 conserva su identidad y evidencia originales.
+Consultá las versiones publicadas y sus archivos verificados en [GitHub Releases](https://github.com/DojoCodingLabs/hacienda-cr/releases/latest).
 
 ## La visión: facturación dentro de tu producto
 
@@ -228,7 +226,7 @@ Los perfiles se guardan en `~/.hacienda-cr/config.toml`. Las contraseñas y PINs
 
 El contador suma las descargas de **SDK, CLI, MCP y shared**, desde la creación de cada paquete hasta el último día disponible en npm. Son descargas del registro, incluyendo CI y dependencias transitivas; no representan instalaciones únicas ni personas.
 
-[Ver totales por paquete y fecha de corte](docs/npm-downloads.json). El [workflow de actualización](.github/workflows/npm-downloads.yml) recalcula el total diariamente y también puede ejecutarse manualmente. Consulta el historial en bloques de hasta 365 días para respetar los límites de la API de npm. Si una consulta falla, conserva el último contador publicado.
+[Ver totales por paquete y fecha de corte](docs/npm-downloads.json). El [workflow de actualización](.github/workflows/npm-downloads.yml) actualiza el contador diariamente y también puede ejecutarse manualmente.
 
 ## Desarrollo y contribuciones
 

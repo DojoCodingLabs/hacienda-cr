@@ -1,4 +1,4 @@
-# document-generation/property-based Specification
+# document-generation-property-based Specification
 
 ## Purpose
 

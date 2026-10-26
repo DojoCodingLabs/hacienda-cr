@@ -25,7 +25,7 @@ El mock SHALL implementar `POST /recepcion` y `GET /recepcion/{clave}` con los c
 - **WHEN** el token de autenticación ha expirado
 - **THEN** responde 401 y el SDK puede re-autenticar
 
-#### Scenario: Un presupuesto agotado devuelve 429 con X-Ratelimit-*
+#### Scenario: Un presupuesto agotado devuelve 429 con X-Ratelimit-\*
 
 - **WHEN** se supera el presupuesto de rate limit
 - **THEN** responde 429 con headers `X-Ratelimit-Limit`, `X-Ratelimit-Remaining`, `X-Ratelimit-Reset`
