@@ -264,3 +264,12 @@ See [source, primary rules and independent gates](../../docs/exact-foreign-servi
 Exact recipient source contract and remaining transport/outcome gates: [recipient confirmation](../../docs/exact-recipient-message.md).
 
 - Source-only explicit [non-subject personal-used-goods FEC](../../docs/exact-used-personal-goods-fec.md): actual supplier 06/buyer 08, ordinary discounts, exact non-subject amounts; qualification, resale and acceptance remain independent.
+
+## Unreleased additive exact decimal document DTOs
+
+`DecimalDocument*` schemas, `calculateDecimalDocument`, and `buildDecimalDocumentXml`
+provide an opt-in decimal-text path for all seven v4.4 documents and `MensajeReceptor`.
+Monetary, quantity, rate, factor, percentage, proportion and exchange-rate fields are
+bounded decimal text; calculation uses the shared BigInt kernel with one 5-decimal
+HALF_UP rule. Existing `Number` APIs and builders remain unchanged. Schema/XSD
+validation is not Hacienda acceptance. See `MIGRATION.md`.

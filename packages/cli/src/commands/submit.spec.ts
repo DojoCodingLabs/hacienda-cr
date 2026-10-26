@@ -44,7 +44,7 @@ function exactDraftFixture(): DraftFactura {
         precioUnitario: line.precioUnitario,
         montoTotal: line.montoTotal,
         subTotal: line.subTotal,
-        impuesto: [{ ...sourceTax, monto: line.impuestoMonto }],
+        impuesto: [{ ...sourceTax, tarifa: "13", monto: line.impuestoMonto }],
         impuestoNeto: line.impuestoNeto,
         montoTotalLinea: line.montoTotalLinea,
       },
@@ -142,7 +142,7 @@ describe("CLI submission and XML validation", () => {
       xml?: string;
     };
     expect(output).toMatchObject({ success: true, dryRun: true });
-    expect(output.xml).toContain("<MontoTotal>100</MontoTotal>");
-    expect(output.xml).toContain("<TotalComprobante>113</TotalComprobante>");
+    expect(output.xml).toContain("<MontoTotal>100.00000</MontoTotal>");
+    expect(output.xml).toContain("<TotalComprobante>113.00000</TotalComprobante>");
   });
 });

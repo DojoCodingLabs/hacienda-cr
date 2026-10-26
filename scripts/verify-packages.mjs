@@ -314,7 +314,7 @@ try {
   await client.connect(transport);
   const mcpManifest=JSON.parse(await readFile("./node_modules/@dojocoding/hacienda-mcp/package.json","utf8"));
   assert.equal(client.getServerVersion().version,mcpManifest.version);
-  const tools=await client.listTools(); assert.equal(tools.tools.length,6);
+  const tools=await client.listTools(); assert.equal(tools.tools.length,7);
   const historyTool=tools.tools.find(tool=>tool.name==="list_documents");assert.equal(historyTool.inputSchema.additionalProperties,false);assert.ok(historyTool.inputSchema.properties.emisor);assert.equal(historyTool.inputSchema.properties.fechaDesde,undefined);
   const invalidHistoryTool=await client.callTool({name:"list_documents",arguments:{fechaDesde:"2026-01-01"}});assert.equal(invalidHistoryTool.isError,true);assert.match(JSON.stringify(invalidHistoryTool.content),/Unrecognized|unrecognized/);
 

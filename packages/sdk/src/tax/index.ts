@@ -24,3 +24,13 @@ export {
   sum as sumExactDecimal,
   MONEY_SCALE as EXACT_MONEY_SCALE,
 } from "./exact-decimal.js";
+
+export {
+  calculateDecimalDocument,
+  calculateDecimalLineItemTotals,
+  calculateDecimalInvoiceSummary,
+  calculateDecimalRepLine,
+  calculateDecimalTaxAmount,
+  type DecimalLineSource,
+  type DecimalCalculatedLine,
+} from "./decimal-document.js";
