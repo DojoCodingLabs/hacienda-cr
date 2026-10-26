@@ -133,6 +133,11 @@ export {
   round5,
   calculateLineItemTotals,
   calculateInvoiceSummary,
+  calculateDecimalDocument,
+  calculateDecimalLineItemTotals,
+  calculateDecimalInvoiceSummary,
+  calculateDecimalRepLine,
+  calculateDecimalTaxAmount,
   multiplyExactDecimal,
   percentExactDecimal,
   sumExactDecimal,
@@ -141,6 +146,8 @@ export {
   type LineItemInput,
   type CalculatedLineItem,
   type InvoiceSummary,
+  type DecimalLineSource,
+  type DecimalCalculatedLine,
 } from "./tax/index.js";
 
 // Document builders
@@ -153,6 +160,16 @@ export {
   buildFacturaExportacionXml,
   buildReciboPagoXml,
   buildMensajeReceptorXml,
+  buildDecimalDocumentXml,
+  buildDecimalFacturaXml,
+  buildDecimalTiqueteXml,
+  buildDecimalNotaCreditoXml,
+  buildDecimalNotaDebitoXml,
+  buildDecimalFacturaCompraXml,
+  buildDecimalFacturaExportacionXml,
+  buildDecimalReciboPagoXml,
+  buildDecimalMensajeReceptorXml,
+  assertRecipientMessageIdentity,
   parseDocumentXml,
 } from "./documents/index.js";
 export type { ParsedDocument, ParseDocumentResult } from "./documents/index.js";

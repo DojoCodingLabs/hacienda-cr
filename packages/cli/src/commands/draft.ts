@@ -26,6 +26,7 @@ import {
   REFERENCE_DOC_TYPES,
   TaxCode,
   UnitOfMeasure,
+  parseMonetaryText,
 } from "@dojocoding/hacienda-shared";
 import { success, error, detail, info, outputJson, bold, cyan, dim } from "../utils/format.js";
 import {
@@ -174,7 +175,7 @@ interface DraftLineItem {
   impuesto?: {
     codigo: string;
     codigoTarifaIVA: string;
-    tarifa: number;
+    tarifa: string;
     monto: string;
   }[];
   impuestoNeto?: string;
@@ -270,7 +271,7 @@ async function collectLineItem(lineNumber: number): Promise<DraftLineItem> {
     {
       codigo: TaxCode.IVA,
       codigoTarifaIVA: ivaCode,
-      tarifa,
+      tarifa: String(tarifa),
       monto: calculated.impuestoMonto,
     },
   ];
@@ -295,7 +296,7 @@ function buildResumenFactura(lineItems: DraftLineItem[], medioPago: string): Dra
     lineItems.map((item) => ({
       subTotal: item.subTotal,
       impuestoNeto: item.impuestoNeto ?? "0",
-      taxable: (item.impuesto?.[0]?.tarifa ?? 0) > 0,
+      taxable: item.impuesto?.[0] !== undefined && parseMonetaryText(item.impuesto[0].tarifa) > 0n,
     })),
     medioPago,
   );
@@ -493,7 +494,7 @@ function generateBlankTemplate(templateType: string): Record<string, unknown> {
           {
             codigo: TaxCode.IVA,
             codigoTarifaIVA: IvaRateCode.GENERAL_13,
-            tarifa: 13,
+            tarifa: "13",
             monto: "0",
           },
         ],

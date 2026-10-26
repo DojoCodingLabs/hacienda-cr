@@ -12,8 +12,10 @@ import { resolve } from "node:path";
 import { defineCommand } from "citty";
 import { FacturaElectronicaSchema } from "@dojocoding/hacienda-shared";
 import type { FacturaElectronica } from "@dojocoding/hacienda-shared";
+import type { DecimalDocumentInput, Identificacion } from "@dojocoding/hacienda-shared";
 import type { SubmissionRequest } from "@dojocoding/hacienda-shared";
 import {
+  buildDecimalDocumentXml,
   buildFacturaXml,
   validateFacturaInput,
   validateDocumentXml,
@@ -24,7 +26,7 @@ import { success, error, detail, info, outputJson } from "../utils/format.js";
 import { createAuthenticatedClient } from "../utils/api-client.js";
 import {
   DraftFacturaSchema,
-  draftForXml,
+  draftToSource,
   hasDecimalTextMoney,
   validateDraftFactura,
   type DraftFactura,
@@ -116,7 +118,15 @@ export const submitCommand = defineCommand({
         return;
       }
 
-      let invoiceDoc: FacturaElectronica;
+      let xml: string;
+      let document: {
+        clave: string;
+        numeroConsecutivo: string;
+        fechaEmision: string;
+        emisor: { identificacion: Identificacion };
+        receptor?: { identificacion?: Identificacion };
+      };
+      let exactSource: DecimalDocumentInput | undefined;
       if (exactDraft) {
         const exact = validation.data as DraftFactura;
         const exactErrors = validateDraftFactura(exact);
@@ -136,7 +146,9 @@ export const submitCommand = defineCommand({
           process.exitCode = 1;
           return;
         }
-        invoiceDoc = draftForXml(exact);
+        exactSource = draftToSource(exact);
+        xml = buildDecimalDocumentXml(exactSource);
+        document = exactSource;
       } else {
         // Legacy Number contract: keep the published SDK validator unchanged.
         const sdkValidation = validateFacturaInput(validation.data);
@@ -157,12 +169,10 @@ export const submitCommand = defineCommand({
           return;
         }
         // Zod infers strings for enums while the type uses branded enums.
-        invoiceDoc = validation.data as unknown as FacturaElectronica;
+        const invoiceDoc = validation.data as unknown as FacturaElectronica;
+        xml = buildFacturaXml(invoiceDoc);
+        document = invoiceDoc;
       }
-
-      // Build XML. The XML mapper serializes decimal text unchanged; it never
-      // performs arithmetic on amounts.
-      const xml = buildFacturaXml(invoiceDoc);
 
       const xmlValidation = await validateDocumentXml(xml);
       if (!xmlValidation.valid)
@@ -173,13 +183,13 @@ export const submitCommand = defineCommand({
           outputJson({
             success: true,
             dryRun: true,
-            clave: invoiceDoc.clave,
+            clave: document.clave,
             xml,
           });
         } else {
           success("Validation passed (dry run)");
-          detail("Clave", invoiceDoc.clave);
-          detail("Consecutivo", invoiceDoc.numeroConsecutivo);
+          detail("Clave", document.clave);
+          detail("Consecutivo", document.numeroConsecutivo);
           detail("XML Length", `${xml.length} bytes`);
           console.log("\n--- Generated XML ---");
           console.log(xml);
@@ -237,19 +247,19 @@ export const submitCommand = defineCommand({
         );
 
       // Build submission request
-      const receptor = invoiceDoc.receptor?.identificacion
+      const receptor = document.receptor?.identificacion
         ? {
-            tipoIdentificacion: invoiceDoc.receptor.identificacion.tipo,
-            numeroIdentificacion: invoiceDoc.receptor.identificacion.numero,
+            tipoIdentificacion: document.receptor.identificacion.tipo,
+            numeroIdentificacion: document.receptor.identificacion.numero,
           }
         : undefined;
 
       const request: SubmissionRequest = {
-        clave: invoiceDoc.clave,
-        fecha: invoiceDoc.fechaEmision,
+        clave: document.clave,
+        fecha: document.fechaEmision,
         emisor: {
-          tipoIdentificacion: invoiceDoc.emisor.identificacion.tipo,
-          numeroIdentificacion: invoiceDoc.emisor.identificacion.numero,
+          tipoIdentificacion: document.emisor.identificacion.tipo,
+          numeroIdentificacion: document.emisor.identificacion.numero,
         },
         receptor,
         comprobanteXml: signedXmlBase64,

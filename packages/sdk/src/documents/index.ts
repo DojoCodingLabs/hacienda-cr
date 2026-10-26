@@ -10,5 +10,17 @@ export { buildFacturaCompraXml } from "./factura-compra-builder.js";
 export { buildFacturaExportacionXml } from "./factura-exportacion-builder.js";
 export { buildReciboPagoXml } from "./recibo-pago-builder.js";
 export { buildMensajeReceptorXml } from "./mensaje-receptor-builder.js";
+export {
+  buildDecimalDocumentXml,
+  buildDecimalFacturaXml,
+  buildDecimalTiqueteXml,
+  buildDecimalNotaCreditoXml,
+  buildDecimalNotaDebitoXml,
+  buildDecimalFacturaCompraXml,
+  buildDecimalFacturaExportacionXml,
+  buildDecimalReciboPagoXml,
+  buildDecimalMensajeReceptorXml,
+  assertRecipientMessageIdentity,
+} from "./decimal-document-builder.js";
 export { parseDocumentXml } from "./parser.js";
 export type { ParsedDocument, ParseDocumentResult } from "./parser.js";
