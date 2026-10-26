@@ -1,26 +1,26 @@
 /**
- * Exact monetary arithmetic for `hacienda draft`.
+ * Presentation wrappers for `hacienda draft`.
  *
- * The interactive draft keeps money and quantities as bounded decimal text.
- * It never parses them with `Number`, `parseFloat` or `toFixed`, and it never
- * applies a local rounding rule: multiplication and the IVA percentage are
- * delegated to the SDK's exact decimal kernel. The one rounding rule — five
- * decimals, HALF_UP — lives in the shared decimal-text boundary and the kernel,
- * cited from the Hacienda v4.4 annex (pp. 13-14).
+ * The CLI no longer owns a monetary arithmetic or rounding rule. Line and
+ * summary calculations are delegated to the SDK's exact decimal calculator;
+ * this module only normalizes user text and maps SDK results into the small
+ * shape the interactive prompts use.
  */
 
 import {
+  DecimalQuantitySchema,
   MAX_MONEY_SCALED,
   MONEY_SCALE,
   formatScaledDecimal,
   normalizeMonetaryInput,
   parseMonetaryText,
   scaledFromPlainDecimal,
+  type DecimalCurrency,
+  type DecimalTaxInput,
 } from "@dojocoding/hacienda-shared";
 import {
-  EXACT_MONEY_SCALE,
-  multiplyExactDecimal,
-  percentExactDecimal,
+  calculateDecimalInvoiceSummary,
+  calculateDecimalLineItemTotals,
 } from "@dojocoding/hacienda-sdk";
 
 /** Quantity scale required by the v4.4 XSD (`fractionDigits: 3`). */
@@ -66,47 +66,24 @@ interface ParsedMoney {
   text: string;
 }
 
-/**
- * Validate and canonicalize a draft quantity.
- *
- * Quantities are positive, unsigned, plain decimal text with at most three
- * fractional digits and at most sixteen significant digits. Precision beyond
- * three decimals is rejected, not rounded.
- */
+/** Validate and canonicalize a draft quantity with the shared quantity schema. */
 export function normalizeDraftQuantity(value: string): ParsedQuantity {
   const text = value.trim();
-  if (text === "") throw new Error("Quantity is required.");
-
-  // totalDigits=16, fractionDigits=3 for the official quantity type.
-  if (!/^(?:0|[1-9]\d{0,15})(?:\.\d{1,3})?$/.test(text)) {
+  const parsed = DecimalQuantitySchema.safeParse(text);
+  if (!parsed.success) {
     throw new Error(
-      `Quantity "${text}" must be unsigned plain decimal text with at most 3 decimals.`,
+      parsed.error.issues[0]?.message ??
+        `Quantity "${text}" must be positive unsigned decimal text with at most 3 decimals.`,
     );
   }
-
-  const [whole = "", fraction = ""] = text.split(".");
-  const significant = (whole + fraction).replace(/^0+/, "").replace(/0+$/, "");
-  if (significant.length > 16) {
-    throw new Error(`Quantity "${text}" exceeds 16 significant digits.`);
-  }
-
   const scaled = scaledFromPlainDecimal(text, DRAFT_QUANTITY_SCALE);
-  if (scaled <= 0n) throw new Error("Quantity must be greater than zero.");
-
   return { scaled, text: formatScaledDecimal(scaled, DRAFT_QUANTITY_SCALE) };
 }
 
-/**
- * Validate and canonicalize a monetary amount entered by the user.
- *
- * This uses the shared bounded-decimal boundary. A value with more than five
- * decimals is rejected; it is never silently rounded at this input boundary.
- */
+/** Validate and canonicalize a monetary amount with the shared boundary. */
 export function normalizeDraftMoney(value: string): ParsedMoney {
   const text = value.trim();
   if (text === "") throw new Error("A monetary amount is required.");
-
-  // `normalizeMonetaryInput` handles only text here; no Number branch is used.
   const canonical = normalizeMonetaryInput(text);
   return { text: canonical, scaled: parseMonetaryText(canonical) };
 }
@@ -119,54 +96,51 @@ export function formatDraftMoney(value: bigint): string {
   return formatScaledDecimal(value, MONEY_SCALE);
 }
 
-/** Scale an IVA percentage to the exact kernel's percentage representation. */
-function scalePercentage(tarifa: number): bigint {
+function percentageText(tarifa: number): string {
   if (!Number.isFinite(tarifa) || tarifa < 0 || tarifa > 100) {
     throw new Error(`Invalid IVA percentage: ${String(tarifa)}.`);
   }
-  // A percentage is not a monetary amount; its constant is a short decimal
-  // literal. Convert its decimal spelling, never its binary representation.
-  return scaledFromPlainDecimal(String(tarifa), EXACT_MONEY_SCALE);
+  return String(tarifa);
 }
 
 /**
- * Calculate one draft line using the exact decimal kernel.
+ * Calculate one draft line through the shared exact line calculator.
  *
- * Steps:
- * 1. quantity × unit price, rounded HALF_UP at five decimals;
- * 2. IVA = subtotal × percentage / 100, rounded HALF_UP at five decimals;
- * 3. line total = subtotal + IVA, exact integer addition.
+ * The synthetic CABYS/detail/unit values are only schema placeholders; the
+ * amounts and quantity are the caller's values. The returned tax code is not
+ * used for policy, only to let the shared schema run the same path as a
+ * document line.
  */
 export function calculateDraftLineMoney(input: DraftLineMoneyInput): DraftLineMoneyResult {
   const cantidad = normalizeDraftQuantity(input.cantidad);
   const precio = normalizeDraftMoney(input.precioUnitario);
-
-  const gross = multiplyExactDecimal(
-    cantidad.scaled,
-    precio.scaled,
-    DRAFT_QUANTITY_SCALE,
-    MONEY_SCALE,
-    MONEY_SCALE,
-  );
-  const subTotal = formatDraftMoney(gross);
-
-  const tarifa = scalePercentage(input.tarifa);
-  const tax =
-    input.tarifa > 0
-      ? percentExactDecimal(gross, tarifa, MONEY_SCALE, EXACT_MONEY_SCALE, MONEY_SCALE)
-      : 0n;
-  const impuestoNeto = formatDraftMoney(tax);
-  const total = gross + tax;
-
-  return {
+  const tarifa = percentageText(input.tarifa);
+  const payable = parseMonetaryText(tarifa) > 0n;
+  const tax: DecimalTaxInput = {
+    codigo: "01",
+    codigoTarifaIVA: payable ? "08" : "01",
+    tarifa,
+  };
+  const calculated = calculateDecimalLineItemTotals({
+    numeroLinea: 1,
+    codigoCabys: "0000000000000",
     cantidad: cantidad.text,
+    unidadMedida: "Unid",
+    detalle: "Draft line",
     precioUnitario: precio.text,
-    montoTotal: subTotal,
-    subTotal,
-    impuestoMonto: impuestoNeto,
-    impuestoNeto,
-    montoTotalLinea: formatDraftMoney(total),
-    taxable: input.tarifa > 0,
+    impuesto: [tax],
+    esServicio: false,
+  });
+  const calculatedTax = calculated.impuesto[0];
+  return {
+    cantidad: calculated.cantidad,
+    precioUnitario: calculated.precioUnitario,
+    montoTotal: calculated.montoTotal,
+    subTotal: calculated.subTotal,
+    impuestoMonto: calculatedTax?.monto ?? "0",
+    impuestoNeto: calculated.impuestoNeto ?? "0",
+    montoTotalLinea: calculated.montoTotalLinea,
+    taxable: payable,
   };
 }
 
@@ -193,43 +167,48 @@ export interface DraftSummary {
   totalComprobante: string;
 }
 
+const CRC: DecimalCurrency = { codigoMoneda: "CRC", tipoCambio: "1" };
+
 /**
- * Aggregate already-quantized line amounts without another rounding step.
+ * Aggregate draft lines through the shared exact summary calculator.
  *
- * Each line's subtotal and tax are exact five-decimal integers, so the summary
- * is an integer sum. Re-rounding here would be a second, weaker money rule.
+ * The interactive draft has no service/merchandise classifier, so every line
+ * is merchandise. The synthetic tax carries the line's already-quantized net
+ * amount; the calculator only classifies and sums, it does not re-round.
  */
 export function buildDraftSummary(
   lines: readonly DraftSummaryLine[],
   medioPago: string,
 ): DraftSummary {
-  let totalGravado = 0n;
-  let totalExento = 0n;
-  let totalImpuesto = 0n;
-
-  for (const line of lines) {
-    const subTotal = parseMonetaryText(line.subTotal);
-    const tax = parseMonetaryText(line.impuestoNeto);
-    if (line.taxable) totalGravado += subTotal;
-    else totalExento += subTotal;
-    totalImpuesto += tax;
-  }
-
-  const totalVenta = totalGravado + totalExento;
-  const totalComprobante = totalVenta + totalImpuesto;
-
+  const summary = calculateDecimalInvoiceSummary(
+    lines.map((line) => ({
+      montoTotal: line.subTotal,
+      subTotal: line.subTotal,
+      impuesto: [
+        {
+          codigo: "01" as const,
+          codigoTarifaIVA: line.taxable ? ("08" as const) : ("01" as const),
+          tarifa: line.taxable ? "13" : "0",
+          monto: line.impuestoNeto,
+        },
+      ],
+      impuestoNeto: line.impuestoNeto,
+      esServicio: false,
+    })),
+    CRC,
+  );
   return {
-    totalServGravados: "0",
-    totalServExentos: "0",
-    totalMercanciasGravadas: formatDraftMoney(totalGravado),
-    totalMercanciasExentas: formatDraftMoney(totalExento),
-    totalGravado: formatDraftMoney(totalGravado),
-    totalExento: formatDraftMoney(totalExento),
-    totalVenta: formatDraftMoney(totalVenta),
-    totalDescuentos: "0",
-    totalVentaNeta: formatDraftMoney(totalVenta),
-    totalImpuesto: formatDraftMoney(totalImpuesto),
-    medioPago: [{ tipoMedioPago: medioPago, totalMedioPago: formatDraftMoney(totalComprobante) }],
-    totalComprobante: formatDraftMoney(totalComprobante),
+    totalServGravados: summary.totalServGravados ?? "0",
+    totalServExentos: summary.totalServExentos ?? "0",
+    totalMercanciasGravadas: summary.totalMercanciasGravadas ?? "0",
+    totalMercanciasExentas: summary.totalMercanciasExentas ?? "0",
+    totalGravado: summary.totalGravado ?? "0",
+    totalExento: summary.totalExento ?? "0",
+    totalVenta: summary.totalVenta,
+    totalDescuentos: summary.totalDescuentos ?? "0",
+    totalVentaNeta: summary.totalVentaNeta,
+    totalImpuesto: summary.totalImpuesto ?? "0",
+    medioPago: [{ tipoMedioPago: medioPago, totalMedioPago: summary.totalComprobante }],
+    totalComprobante: summary.totalComprobante,
   };
 }
