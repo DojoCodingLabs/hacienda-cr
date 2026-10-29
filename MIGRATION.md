@@ -1,5 +1,32 @@
 # Migration guide
 
+## Next: endurecimiento de `InformacionReferencia` (referencias)
+
+Los paquetes `@dojocoding/hacienda-shared` y `@dojocoding/hacienda-sdk` endurecen la entrada aceptada para `InformacionReferencia`. Esta es una corrección de validación que rompe consumidores que dependían de la permisividad anterior (paquetes pre-1.0: cambio `minor`).
+
+Condiciones que ahora se rechazan:
+
+1. `tipoDoc === "99"` sin `tipoDocOtros` (5-100 caracteres), o `tipoDocOtros` con `tipoDoc !== "99"`.
+2. `codigo === "99"` sin `codigoOtros` (5-100 caracteres), o `codigoOtros` con `codigo !== "99"`.
+3. En un documento que no sea `ReciboElectronicoPago`, referencia con `codigo === "17"` (motivo exclusivo del REP).
+
+Además, IVA `"07"` (cálculo especial) exige `codigoTarifaIVA`; IVA `"08"` (bienes usados) exige `factorCalculoIVA`. La correspondencia numérica `tarifa` ↔ `codigoTarifaIVA` solo aplica a `"01"`.
+
+Corrección típica para cada referencia:
+
+```ts
+// Antes (ya rechazado):
+{ tipoDoc: "01", fechaEmision: "2025-07-27T10:30:00-06:00" }
+
+// Después:
+{ tipoDoc: "01", codigo: "04", fechaEmision: "2025-07-27T10:30:00-06:00", razon: "Referencia a otro documento" }
+
+// tipoDoc 13 sigue permitiendo omitir codigo:
+{ tipoDoc: "13", fechaEmision: "2025-07-27T10:30:00-06:00" }
+```
+
+Consulta el change `fix-reference-catalog-semantics` y `sdk-robustness-audit.md` (Ítem 1) para el contexto completo.
+
 ## Next: reviewed additive SDK contracts
 
 - Legacy Number inputs/calculators remain unchanged. New shared monetary schemas accept bounded decimal text or explicit rounding of an already binary Number. SDK kernel helpers remain internal.
@@ -170,3 +197,28 @@ calculator/XML builder select only the independently qualified non-subject case.
 They do not replace ordinary/foreign FEC, infer zero tax from supplier 06, or
 produce later resale margin/factor effects. Existing current/retained/Number
 outputs remain unchanged. See [case limits](docs/exact-used-personal-goods-fec.md).
+
+## Unreleased: additive exact decimal document DTOs
+
+New `DecimalDocument*` schemas/types, `calculateDecimalDocument`, and
+`buildDecimalDocumentXml` provide an opt-in decimal-text path for all seven v4.4
+documents and `MensajeReceptor`. Existing `Number` APIs remain unchanged and this
+does not promote 1.0.
+
+### `number` to text
+
+| Legacy Number field    | Exact decimal field    | Limit                                                 |
+| ---------------------- | ---------------------- | ----------------------------------------------------- |
+| `number` amount        | `string` money         | 13 integer digits, 5 decimals, 0..9999999999999.99999 |
+| quantity `number`      | `string` quantity      | 16 significant digits, 3 decimals                     |
+| tariff `number`        | `string` rate          | 2 decimals, 0..99.99                                  |
+| factor `number`        | `string` factor        | 4 decimals, 0..9.9999                                 |
+| percentage `number`    | `string` percentage    | 2 decimals, 0..100                                    |
+| exchange rate `number` | `string` exchange rate | positive money scale                                  |
+
+Source DTOs contain only facts; calculated DTOs expose derived totals. The builder
+recalculates all totals and rejects supplied totals. Calculated JSON is canonical
+trimmed text; XML money uses exactly 5 decimals. CLI `draft`, `validate`, and
+`submit` use the shared exact path; MCP gains `create_invoice_exact`. Legacy
+`Number` bytes and calculations are unchanged. Schema/XSD validity is not fiscal
+acceptance.

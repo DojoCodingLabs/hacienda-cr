@@ -27,6 +27,7 @@
     "test:packages": "node scripts/verify-packages.mjs",
     "verify": "node scripts/verify.mjs",
     "spec:verify": "node scripts/spec-verify.mjs",
+    "holidays:watch": "node scripts/holidays-watch.mjs",
     "spec:check": "node scripts/spec-watch/check.mjs",
     "spec:update": "node scripts/spec-watch/update.mjs",
     "test:scripts": "node scripts/run-script-tests.mjs",

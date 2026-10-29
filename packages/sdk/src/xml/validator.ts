@@ -92,9 +92,36 @@ function validateBusinessRules(input: FacturaElectronicaInput): FacturaValidatio
       message: "Factura Receptor requires identificacion when the Receptor node is present",
     });
   for (const [index, reference] of (input.informacionReferencia ?? []).entries()) {
-    if ((reference.codigo as string | undefined) === CODIGO_REFERENCIA_PAGO_COMPROBANTE)
+    const refPrefix = `informacionReferencia.${index}`;
+    const tipoDoc = reference.tipoDoc as string | undefined;
+    const codigo = reference.codigo as string | undefined;
+    const tipoDocOtros = reference.tipoDocOtros as string | undefined;
+    const codigoOtros = reference.codigoOtros as string | undefined;
+
+    if (tipoDoc === "99" && tipoDocOtros === undefined)
       errors.push({
-        path: `informacionReferencia.${index}.codigo`,
+        path: `${refPrefix}.tipoDocOtros`,
+        message: "tipoDocOtros is required when tipoDoc is 99",
+      });
+    if (tipoDocOtros !== undefined && tipoDoc !== "99")
+      errors.push({
+        path: `${refPrefix}.tipoDocOtros`,
+        message: "tipoDocOtros is only allowed when tipoDoc is 99",
+      });
+    if (codigo === "99" && codigoOtros === undefined)
+      errors.push({
+        path: `${refPrefix}.codigoOtros`,
+        message: "codigoOtros is required when codigo is 99",
+      });
+    if (codigoOtros !== undefined && codigo !== "99")
+      errors.push({
+        path: `${refPrefix}.codigoOtros`,
+        message: "codigoOtros is only allowed when codigo is 99",
+      });
+
+    if (codigo === CODIGO_REFERENCIA_PAGO_COMPROBANTE)
+      errors.push({
+        path: `${refPrefix}.codigo`,
         message: "Reference reason 17 is valid only for ReciboElectronicoPago",
       });
   }
@@ -201,7 +228,8 @@ function validateBusinessRules(input: FacturaElectronicaInput): FacturaValidatio
           });
         }
 
-        // Calculate net IVA for this tax
+        // Calculate net IVA for this tax (tarifa↔rate correspondence applies to codigo 01 only;
+        // codigo 07 exige presencia de codigoTarifaIVA, pero su tarifa es editable)
         if (tax.codigo === TaxCode.IVA && tax.codigoTarifaIVA) {
           const expectedRate = IVA_RATE_PERCENTAGES[tax.codigoTarifaIVA];
           if (expectedRate !== tax.tarifa)
@@ -216,6 +244,13 @@ function validateBusinessRules(input: FacturaElectronicaInput): FacturaValidatio
                 "Transitional IVA rate codes 05, 06 and 07 are not valid for a new FacturaElectronica",
             });
         }
+
+        // IVA bienes usados requires factor de calculo (XSD: obligatorio para bienes usados)
+        if (tax.codigo === TaxCode.IVA_BIENES_USADOS && tax.factorCalculoIVA === undefined)
+          errors.push({
+            path: `${prefix}.impuesto.${taxIndex}.factorCalculoIVA`,
+            message: "IVA bienes usados (codigo 08) requires factorCalculoIVA",
+          });
         {
           let netAmount = tax.monto;
           if (tax.exoneracion) {
