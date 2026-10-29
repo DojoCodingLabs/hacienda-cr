@@ -192,6 +192,202 @@ describe("validateFacturaInput — resumenFactura.medioPago", () => {
     expect(result.errors.some((e) => e.path.includes("resumenFactura.medioPago"))).toBe(true);
   });
 
+  // ---------------------------------------------------------------------------
+  // informacionReferencia (v4.4: condiciones 99/Otros, codigo 13, motivo 17)
+  // ---------------------------------------------------------------------------
+
+  describe("validateFacturaInput — informacionReferencia", () => {
+    const baseRef = {
+      tipoDoc: "01",
+      numero: "50601072500012345678900100001010000000001199999998",
+      fechaEmision: "2025-07-20T10:30:00-06:00",
+      codigo: "01",
+      razon: "Correccion",
+    };
+
+    it("should accept referencia sin codigo para cualquier tipoDoc (XSD allows Codigo to be absent)", () => {
+      const result = validateFacturaInput({
+        ...SIMPLE_INVOICE,
+        informacionReferencia: [{ ...baseRef, tipoDoc: "01", codigo: undefined }],
+      });
+      expect(result.valid).toBe(true);
+    });
+
+    it("should rechazar tipoDoc 99 sin tipoDocOtros", () => {
+      const result = validateFacturaInput({
+        ...SIMPLE_INVOICE,
+        informacionReferencia: [{ ...baseRef, tipoDoc: "99", tipoDocOtros: undefined }],
+      });
+      expect(result.valid).toBe(false);
+      expect(result.errors.some((e) => e.path.includes("tipoDocOtros"))).toBe(true);
+    });
+
+    it("should rechazar tipoDocOtros sin tipoDoc 99", () => {
+      const result = validateFacturaInput({
+        ...SIMPLE_INVOICE,
+        informacionReferencia: [{ ...baseRef, tipoDoc: "01", tipoDocOtros: "Documento interno" }],
+      });
+      expect(result.valid).toBe(false);
+      expect(result.errors.some((e) => e.path.includes("tipoDocOtros"))).toBe(true);
+    });
+
+    it("should rechazar codigo 99 sin codigoOtros", () => {
+      const result = validateFacturaInput({
+        ...SIMPLE_INVOICE,
+        informacionReferencia: [{ ...baseRef, codigo: "99", codigoOtros: undefined }],
+      });
+      expect(result.valid).toBe(false);
+      expect(result.errors.some((e) => e.path.includes("codigoOtros"))).toBe(true);
+    });
+
+    it("should rechazar codigoOtros sin codigo 99", () => {
+      const result = validateFacturaInput({
+        ...SIMPLE_INVOICE,
+        informacionReferencia: [{ ...baseRef, codigo: "01", codigoOtros: "Razon especial" }],
+      });
+      expect(result.valid).toBe(false);
+      expect(result.errors.some((e) => e.path.includes("codigoOtros"))).toBe(true);
+    });
+
+    it("should rechazar motivo 17 fuera de REP", () => {
+      const result = validateFacturaInput({
+        ...SIMPLE_INVOICE,
+        informacionReferencia: [{ ...baseRef, codigo: "17" }],
+      });
+      expect(result.valid).toBe(false);
+      expect(result.errors.some((e) => e.path.includes("informacionReferencia.0.codigo"))).toBe(
+        true,
+      );
+    });
+  });
+
+  // ---------------------------------------------------------------------------
+  // correspondencia tarifa / codigo de impuesto IVA
+  // ---------------------------------------------------------------------------
+
+  describe("validateFacturaInput — IVA tarifa y factor", () => {
+    const baseLine = firstLineItem(SIMPLE_INVOICE);
+
+    it("should accept IVA 01 con codigoTarifaIVA y tarifa coherente", () => {
+      const result = validateFacturaInput({
+        ...SIMPLE_INVOICE,
+        detalleServicio: [
+          {
+            ...baseLine,
+            impuesto: [
+              { ...baseLine.impuesto?.at(0), codigo: "01", codigoTarifaIVA: "08", tarifa: 13 },
+            ],
+          },
+        ],
+      });
+      expect(result.valid).toBe(true);
+    });
+
+    it("should rechazar IVA 01 con tarifa incoherente respecto a codigoTarifaIVA", () => {
+      const result = validateFacturaInput({
+        ...SIMPLE_INVOICE,
+        detalleServicio: [
+          {
+            ...baseLine,
+            impuesto: [
+              { ...baseLine.impuesto?.at(0), codigo: "01", codigoTarifaIVA: "08", tarifa: 99 },
+            ],
+          },
+        ],
+      });
+      expect(result.valid).toBe(false);
+      expect(result.errors.some((e) => e.path.includes("tarifa"))).toBe(true);
+    });
+
+    it("should rechazar IVA 07 sin codigoTarifaIVA", () => {
+      const result = validateFacturaInput({
+        ...SIMPLE_INVOICE,
+        detalleServicio: [{ ...baseLine, impuesto: [{ codigo: "07", tarifa: 13, monto: 13000 }] }],
+      });
+      expect(result.valid).toBe(false);
+      expect(result.errors.some((e) => e.path.includes("codigoTarifaIVA"))).toBe(true);
+    });
+
+    it("should accept IVA 07 con codigoTarifaIVA y tarifa distinta (tarifa editable)", () => {
+      const result = validateFacturaInput({
+        ...SIMPLE_INVOICE,
+        detalleServicio: [
+          {
+            ...baseLine,
+            impuesto: [{ codigo: "07", codigoTarifaIVA: "08", tarifa: 99, monto: 99000 }],
+            impuestoNeto: 99000,
+            montoTotalLinea: 199000,
+          },
+        ],
+        resumenFactura: {
+          ...SIMPLE_INVOICE.resumenFactura,
+          totalImpuesto: 99000,
+          totalComprobante: 199000,
+        },
+      });
+      expect(result.valid).toBe(true);
+    });
+
+    it("should rechazar IVA 08 sin factorCalculoIVA", () => {
+      const result = validateFacturaInput({
+        ...SIMPLE_INVOICE,
+        detalleServicio: [
+          {
+            ...baseLine,
+            impuesto: [{ codigo: "08", codigoTarifaIVA: "08", tarifa: 13, monto: 13000 }],
+          },
+        ],
+      });
+      expect(result.valid).toBe(false);
+      expect(result.errors.some((e) => e.path.includes("factorCalculoIVA"))).toBe(true);
+    });
+
+    it("should accept IVA 08 con factorCalculoIVA", () => {
+      const result = validateFacturaInput({
+        ...SIMPLE_INVOICE,
+        detalleServicio: [
+          {
+            ...baseLine,
+            impuesto: [
+              {
+                codigo: "08",
+                codigoTarifaIVA: "08",
+                tarifa: 13,
+                monto: 13000,
+                factorCalculoIVA: 0.95,
+              },
+            ],
+          },
+        ],
+      });
+      expect(result.valid).toBe(true);
+    });
+
+    it.each([["05"], ["06"], ["07"]] as const)(
+      "should reject transitional IVA rate code %s for a new FE",
+      (rateCode) => {
+        const result = validateFacturaInput({
+          ...SIMPLE_INVOICE,
+          detalleServicio: [
+            {
+              ...baseLine,
+              impuesto: [
+                {
+                  codigo: "01",
+                  codigoTarifaIVA: rateCode,
+                  tarifa: 0,
+                  monto: 0,
+                },
+              ],
+            },
+          ],
+        });
+        expect(result.valid).toBe(false);
+        expect(result.errors.some((e) => e.path.includes("codigoTarifaIVA"))).toBe(true);
+      },
+    );
+  });
+
   it("should reject more than 4 medioPago entries", () => {
     const entry = { tipoMedioPago: "01" as const, totalMedioPago: 22600 };
     const result = validateFacturaInput({

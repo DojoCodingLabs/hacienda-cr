@@ -15,7 +15,7 @@ import type {
   CodigoComercial,
   ResumenFactura,
   OtroCargo,
-  InformacionReferencia,
+  RepInformacionReferencia,
   OtroContenido,
   MedioPago,
   Identificacion,
@@ -629,9 +629,9 @@ export function buildOtrosCargosXml(otrosCargos: XmlOtroCargo[]): Record<string,
  * Razon?).
  */
 export function buildInformacionReferenciaXml(
-  refs: InformacionReferencia[],
+  refs: RepInformacionReferencia[],
 ): Record<string, unknown>[] {
-  return refs.map((ref: InformacionReferencia) => ({
+  return refs.map((ref: RepInformacionReferencia) => ({
     TipoDocIR: ref.tipoDoc,
     ...(ref.tipoDocOtros ? { TipoDocRefOTRO: ref.tipoDocOtros } : {}),
     ...(ref.numero ? { Numero: ref.numero } : {}),
@@ -673,7 +673,10 @@ export interface CommonDocumentFields {
   detalleServicio: XmlLineaDetalle[];
   otrosCargos?: XmlOtroCargo[];
   resumenFactura: XmlResumenFactura;
-  informacionReferencia?: InformacionReferencia[];
+  // RepInformacionReferencia admite el motivo "17" (solo REP); los schemas de
+  // entrada de los demas documentos lo rechazan en runtime. Se tipa de forma
+  // laxa aqui y se valida estrictamente en el schema/validador de cada documento.
+  informacionReferencia?: RepInformacionReferencia[];
   otros?: OtroContenido[];
 }
 

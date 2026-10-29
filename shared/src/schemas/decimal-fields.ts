@@ -22,7 +22,7 @@ import {
 } from "../generated/index.js";
 import { IvaRateCodeSchema, PaymentMethodSchema, TaxCodeSchema } from "./common.js";
 import { IdentificacionSchema } from "./identification.js";
-import { InformacionReferenciaSchema } from "./factura.js";
+import { InformacionReferenciaSchema, RepInformacionReferenciaSchema } from "./factura.js";
 import { OtroContenidoSchema } from "./factura.js";
 
 interface DecimalBounds {
@@ -461,7 +461,11 @@ export const DecimalSummarySchema = z
   .strict();
 
 /** Reference information uses no monetary fields; keep the legacy bounds and strict keys. */
-export const DecimalReferenceSchema = InformacionReferenciaSchema.strict();
+export const DecimalReferenceSchema = InformacionReferenciaSchema;
+
+/** Reference information for Recibo Electronico de Pago (REP). Same shape as the base,
+ * with the REP reason catalog ("17" admitted) and the same conditional rules. */
+export const DecimalRepReferenceSchema = RepInformacionReferenciaSchema;
 
 /** Additional content is non-monetary; keep the legacy bounds and strict keys. */
 export const DecimalOtherContenidoSchema = OtroContenidoSchema.strict();

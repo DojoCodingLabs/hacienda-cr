@@ -46,6 +46,18 @@ try {
   process.exit(1);
 }
 
+// Guarda anti-regresión: sin casos esperados a fallar sin exceptuar.
+try {
+  execFileSync("node", ["scripts/check-no-expected-failures.mjs"], {
+    cwd: root,
+    env,
+    stdio: "inherit",
+  });
+} catch {
+  console.error("verify: guarda anti-`it.fails` falló.");
+  process.exit(1);
+}
+
 for (const args of [
   ["exec", "turbo", "run", "lint", "typecheck", "build", "test"],
   // The exhaustive property pass: thousands of generated documents checked

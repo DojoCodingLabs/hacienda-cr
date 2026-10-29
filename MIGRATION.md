@@ -1,5 +1,32 @@
 # Migration guide
 
+## Next: endurecimiento de `InformacionReferencia` (referencias)
+
+Los paquetes `@dojocoding/hacienda-shared` y `@dojocoding/hacienda-sdk` endurecen la entrada aceptada para `InformacionReferencia`. Esta es una corrección de validación que rompe consumidores que dependían de la permisividad anterior (paquetes pre-1.0: cambio `minor`).
+
+Condiciones que ahora se rechazan:
+
+1. `tipoDoc === "99"` sin `tipoDocOtros` (5-100 caracteres), o `tipoDocOtros` con `tipoDoc !== "99"`.
+2. `codigo === "99"` sin `codigoOtros` (5-100 caracteres), o `codigoOtros` con `codigo !== "99"`.
+3. En un documento que no sea `ReciboElectronicoPago`, referencia con `codigo === "17"` (motivo exclusivo del REP).
+
+Además, IVA `"07"` (cálculo especial) exige `codigoTarifaIVA`; IVA `"08"` (bienes usados) exige `factorCalculoIVA`. La correspondencia numérica `tarifa` ↔ `codigoTarifaIVA` solo aplica a `"01"`.
+
+Corrección típica para cada referencia:
+
+```ts
+// Antes (ya rechazado):
+{ tipoDoc: "01", fechaEmision: "2025-07-27T10:30:00-06:00" }
+
+// Después:
+{ tipoDoc: "01", codigo: "04", fechaEmision: "2025-07-27T10:30:00-06:00", razon: "Referencia a otro documento" }
+
+// tipoDoc 13 sigue permitiendo omitir codigo:
+{ tipoDoc: "13", fechaEmision: "2025-07-27T10:30:00-06:00" }
+```
+
+Consulta el change `fix-reference-catalog-semantics` y `sdk-robustness-audit.md` (Ítem 1) para el contexto completo.
+
 ## Next: reviewed additive SDK contracts
 
 - Legacy Number inputs/calculators remain unchanged. New shared monetary schemas accept bounded decimal text or explicit rounding of an already binary Number. SDK kernel helpers remain internal.
