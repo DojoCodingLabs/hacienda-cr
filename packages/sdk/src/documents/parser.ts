@@ -35,6 +35,7 @@ import type {
   ResumenFactura,
   OtroCargo,
   InformacionReferencia,
+  RepInformacionReferencia,
   MedioPago,
   TotalDesgloseImpuesto,
   CodigoTipoMoneda,
@@ -313,14 +314,23 @@ function decodeOtroCargo(o: Record<string, unknown>): OtroCargo {
   };
 }
 
-function decodeInfoRef(o: Record<string, unknown>): InformacionReferencia {
+function decodeInfoRef(o: Record<string, unknown>, rep?: false): InformacionReferencia;
+function decodeInfoRef(o: Record<string, unknown>, rep: true): RepInformacionReferencia;
+function decodeInfoRef(
+  o: Record<string, unknown>,
+  rep = false,
+): InformacionReferencia | RepInformacionReferencia {
   return {
     tipoDoc: String(o.TipoDocIR) as InformacionReferencia["tipoDoc"],
     tipoDocOtros: o.TipoDocRefOTRO !== undefined ? String(o.TipoDocRefOTRO) : undefined,
     numero: o.Numero !== undefined ? String(o.Numero) : undefined,
     fechaEmision: String(o.FechaEmisionIR),
     codigo:
-      o.Codigo !== undefined ? (String(o.Codigo) as InformacionReferencia["codigo"]) : undefined,
+      o.Codigo !== undefined
+        ? rep
+          ? (String(o.Codigo) as RepInformacionReferencia["codigo"])
+          : (String(o.Codigo) as InformacionReferencia["codigo"])
+        : undefined,
     codigoOtros: o.CodigoReferenciaOTRO !== undefined ? String(o.CodigoReferenciaOTRO) : undefined,
     razon: o.Razon !== undefined ? String(o.Razon) : undefined,
   };
@@ -388,7 +398,7 @@ function decodeResumen(o: Record<string, unknown>): ResumenFactura {
   return r as unknown as ResumenFactura;
 }
 
-function decodeComnum(body: Record<string, unknown>): CommonDocumentFields {
+function decodeComnum(body: Record<string, unknown>, rep = false): CommonDocumentFields {
   const common: Record<string, unknown> = {
     clave: strReq(body.Clave, "Clave"),
     proveedorSistemas: strReq(body.ProveedorSistemas, "ProveedorSistemas"),
@@ -416,9 +426,15 @@ function decodeComnum(body: Record<string, unknown>): CommonDocumentFields {
     );
   }
   if (body.InformacionReferencia !== undefined) {
-    common.informacionReferencia = asArray(body.InformacionReferencia).map((x) =>
-      decodeInfoRef(x as Record<string, unknown>),
-    );
+    if (rep) {
+      common.informacionReferencia = asArray(body.InformacionReferencia).map((x) =>
+        decodeInfoRef(x as Record<string, unknown>, true),
+      );
+    } else {
+      common.informacionReferencia = asArray(body.InformacionReferencia).map((x) =>
+        decodeInfoRef(x as Record<string, unknown>, false),
+      );
+    }
   }
   if (body.Otros !== undefined) {
     const otrosRaw = (body.Otros as Record<string, unknown>).OtroContenido;
@@ -430,7 +446,7 @@ function decodeComnum(body: Record<string, unknown>): CommonDocumentFields {
 }
 
 function wrap(root: string, body: Record<string, unknown>): ParseDocumentResult {
-  const common = decodeComnum(body);
+  const common = decodeComnum(body, root === "ReciboElectronicoPago");
   let document: any;
   switch (root) {
     case "FacturaElectronica":

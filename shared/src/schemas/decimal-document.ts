@@ -28,6 +28,7 @@ import {
   DecimalPositiveMoneySchema,
   DecimalQuantitySchema,
   DecimalReferenceSchema,
+  DecimalRepReferenceSchema,
   DecimalSummarySchema,
   DecimalTaxCalculatedSchema,
   DecimalTaxInputSchema,
@@ -317,7 +318,7 @@ const decimalRepSourceSchema = z
     detalleServicio: z.array(DecimalRepLineInputSchema).min(1).max(1000),
     codigoTipoMoneda: DecimalCurrencySchema,
     medioPago: z.array(DecimalPaymentSchema).min(1).max(4).optional(),
-    informacionReferencia: z.array(DecimalReferenceSchema).min(1).max(10),
+    informacionReferencia: z.array(DecimalRepReferenceSchema).min(1).max(10),
   })
   .strict()
   .superRefine((input, ctx) => {
@@ -398,7 +399,7 @@ const decimalRepCalculatedSchema = z
     condicionVenta: z.union([SaleConditionSchema, z.enum(REP_SALE_CONDITIONS)]),
     detalleServicio: z.array(DecimalRepLineCalculatedSchema).min(1).max(1000),
     resumenFactura: DecimalSummarySchema,
-    informacionReferencia: z.array(DecimalReferenceSchema).min(1).max(10),
+    informacionReferencia: z.array(DecimalRepReferenceSchema).min(1).max(10),
   })
   .strict();
 
