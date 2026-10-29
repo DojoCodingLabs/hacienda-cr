@@ -1,5 +1,32 @@
 # Migration guide
 
+## Next: redondeo de `round5` a `HALF_UP` (monetario)
+
+Los paquetes `@dojocoding/hacienda-sdk` corrigen el redondeo de `round5` (path legacy de montos): deja de usar `Number.toFixed(5)` (representación binaria, que no coincide consistentemente con ninguna regla decimal exacta) y pasa a `HALF_UP` a 5 decimales, vía el kernel exacto (`shared/src/monetary/decimal-text.ts`), como exige el Anexo v4.4, p. 13–14 (`20.203518 ≈ 20.20352`).
+
+Es un cambio de ruptura a nivel de bytes para casos exact-half (paquetes pre-1.0: cambio `minor`).
+
+**Casos exact-half que cambian de valor:**
+
+| input       | antes (binario, `toFixed`) | ahora (`HALF_UP`) |
+| ----------- | -------------------------- | ----------------- |
+| `20.203515` | `20.20351`                 | `20.20352`        |
+| `0.123455`  | `0.12345`                  | `0.12346`         |
+| `1.234565`  | `1.23456`                  | `1.23457`         |
+| `8.686375`  | `8.68637`                  | `8.68638`         |
+
+(y sus espejos negativos). El golden corpus no contenía casos exact-half divergentes (14/14 sin regeneración). `decimal-document-parity.spec.ts` (19/19) y `validator.spec.ts` (72/72) pasan; el delta de expecteds del validador queda absorbido por la tolerancia `0.001` (|Δ| = 0.00001).
+
+**No cambia:**
+
+- La tolerancia de `amountsEqual` (0.001) se mantiene; se documenta como deuda sin respaldo oficial directo (el Anexo v4.1, p. 12, habla de márgenes para sistemas de 2 decimales, no para 5). Apretarla (p. ej. a 1e-5) requiere un change aparte con evidencia.
+- `round5` sigue devolviendo `number` (contrato preservado). La exactitud bit-a-bit solo la garantiza el path exacto (`DecimalDocument*` / `exact-decimal.ts`); el kernel no puede curar el colapso inherente del contrato `number` en magnitudes ≥ ~6.87e10 (ULP > 1e-5).
+- `round5` no valida dominio `DecimalDineroType` (no clippea ni lanza); el dominio se impone en schema/normalización. La frontera en esa capa queda como deuda declarada (sin candado de test en este change).
+
+**Corrección típica:** no requiere cambio de código del consumidor; si un test verificaba un valor exact-half con `toEqual`, actualízalo al valor HALF_UP de la tabla. Consulta el change `fix-monetary-rounding-half-up` y `sdk-robustness-audit.md` (Ítem 2).
+
+---
+
 ## Next: endurecimiento de `InformacionReferencia` (referencias)
 
 Los paquetes `@dojocoding/hacienda-shared` y `@dojocoding/hacienda-sdk` endurecen la entrada aceptada para `InformacionReferencia`. Esta es una corrección de validación que rompe consumidores que dependían de la permisividad anterior (paquetes pre-1.0: cambio `minor`).

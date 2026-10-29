@@ -53,6 +53,14 @@ export interface FacturaValidationResult {
 /**
  * Check whether two numbers are equal within a small tolerance.
  * Accounts for floating-point precision issues.
+ *
+ * Tolerance is 0.001 (3 decimals) and has NO direct official backing for a
+ * 5-decimal monetary comparison: the Hacienda Anexo v4.1 (p. 12) mentions
+ * error margins only for systems working with 2 decimals (legacy concession),
+ * not for 5. The value is kept unchanged because the audit rule is "do not
+ * change tolerances without backing" — there is no backing to tighten (e.g.
+ * to 1e-5) nor to loosen. Documented as explicit debt; tightening requires a
+ * separate change with evidence.
  */
 function amountsEqual(a: number, b: number): boolean {
   return Math.abs(a - b) < 0.001;
