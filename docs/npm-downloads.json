@@ -1,37 +1,37 @@
 {
   "schemaVersion": 1,
   "label": "npm · descargas históricas",
-  "message": "15,649",
+  "message": "16,316",
   "color": "FF7151",
   "labelColor": "201E3D",
   "cacheSeconds": 3600,
-  "total": 15649,
-  "updatedAt": "2026-10-29T08:26:24.675Z",
+  "total": 16316,
+  "updatedAt": "2026-10-30T08:26:05.528Z",
   "source": "https://github.com/npm/registry/blob/main/docs/download-counts.md",
   "packages": [
     {
       "package": "@dojocoding/hacienda-sdk",
       "start": "2026-02-22",
-      "through": "2026-10-27",
-      "downloads": 5608
+      "through": "2026-10-28",
+      "downloads": 5917
     },
     {
       "package": "@dojocoding/hacienda-cli",
       "start": "2026-02-22",
-      "through": "2026-10-27",
-      "downloads": 2035
+      "through": "2026-10-28",
+      "downloads": 2054
     },
     {
       "package": "@dojocoding/hacienda-mcp",
       "start": "2026-02-22",
-      "through": "2026-10-27",
-      "downloads": 2194
+      "through": "2026-10-28",
+      "downloads": 2217
     },
     {
       "package": "@dojocoding/hacienda-shared",
       "start": "2026-02-22",
-      "through": "2026-10-27",
-      "downloads": 5812
+      "through": "2026-10-28",
+      "downloads": 6128
     }
   ]
 }
