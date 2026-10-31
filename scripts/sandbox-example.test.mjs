@@ -39,7 +39,7 @@ if (process.env.MOCK_MODE === "timeout") {
 }
 let polls = 0;
 globalThis.fetch = async (url, options) => {
-  assert.match(String(url), /rut-stag|recepcion-sandbox/);
+  assert.match(String(url), /rut-stag|api-sandbox/);
   appendFileSync(process.env.NETWORK_LOG, options.method + " " + String(url) + "\\n");
   if (String(url).includes("/token")) {
     assert.equal(new URLSearchParams(options.body).get("username"), "cpj-02-3101-234567@stag.comprobanteselectronicos.go.cr");
@@ -153,7 +153,7 @@ for (const mode of ["accepted", "rejected", "error", "network", "duplicate", "ti
     assert.equal(
       networkLog()
         .slice(previousLog.length)
-        .match(/^POST .*recepcion-sandbox/gm)?.length,
+        .match(/^POST .*api-sandbox/gm)?.length,
       1,
     );
     const snapshot = JSON.parse(readFileSync(join(directory, "request.json"), "utf8"));
@@ -183,7 +183,7 @@ for (const mode of ["accepted", "rejected", "error", "network", "duplicate", "ti
     assert.equal(
       networkLog()
         .slice(beforeReplay.length)
-        .match(/^POST .*recepcion-sandbox/gm),
+        .match(/^POST .*api-sandbox/gm),
       null,
     );
   });
@@ -315,7 +315,7 @@ test("a status for another clave cannot be recorded as this invoice's result", (
   assert.equal(
     networkLog()
       .slice(previousLog.length)
-      .match(/^POST .*recepcion-sandbox/gm)?.length,
+      .match(/^POST .*api-sandbox/gm)?.length,
     1,
   );
   const status = run(["status", directory], "wrong-clave", directory);
@@ -335,7 +335,7 @@ test("indexing delay and processing continue on the same submitted identity", ()
   assert.equal(terminal.pollAttempts, 3);
   assert.equal(terminal.accepted, true);
   const log = networkLog().slice(previousLog.length);
-  assert.equal(log.match(/^POST .*recepcion-sandbox/gm)?.length, 1);
+  assert.equal(log.match(/^POST .*api-sandbox/gm)?.length, 1);
   assert.equal(log.match(new RegExp(`^GET .*${invoice.clave}$`, "gm"))?.length, 3);
 });
 
@@ -350,7 +350,7 @@ test("two submitters that both pass the initial guard send only once", async () 
   assert.equal(
     networkLog()
       .slice(previousLog.length)
-      .match(/^POST .*recepcion-sandbox/gm)?.length,
+      .match(/^POST .*api-sandbox/gm)?.length,
     1,
   );
   assert.equal(JSON.parse(readFileSync(join(directory, "result.json"), "utf8")).accepted, true);

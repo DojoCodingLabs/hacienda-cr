@@ -14,7 +14,9 @@ export type Environment = (typeof Environment)[keyof typeof Environment];
 
 /** API base URLs for each environment. */
 export const API_BASE_URLS = {
-  [Environment.SANDBOX]: "https://api.comprobanteselectronicos.go.cr/recepcion-sandbox/v1",
+  // Not the `api.comprobanteselectronicos.go.cr/recepcion-sandbox/v1` URL of the v4.4 annex: that route
+  // answers 403 IncompleteSignatureException at the API gateway to any bearer token.
+  [Environment.SANDBOX]: "https://api-sandbox.comprobanteselectronicos.go.cr/recepcion/v1",
   [Environment.PRODUCTION]: "https://api.comprobanteselectronicos.go.cr/recepcion/v1",
 } as const;
 

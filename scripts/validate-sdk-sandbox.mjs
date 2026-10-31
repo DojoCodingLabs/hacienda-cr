@@ -42,7 +42,7 @@ function requireSandbox() {
   }
   required("HACIENDA_PASSWORD");
   if (
-    environment.apiBaseUrl !== "https://api.comprobanteselectronicos.go.cr/recepcion-sandbox/v1" ||
+    environment.apiBaseUrl !== "https://api-sandbox.comprobanteselectronicos.go.cr/recepcion/v1" ||
     environment.idpTokenUrl !==
       "https://idp.comprobanteselectronicos.go.cr/auth/realms/rut-stag/protocol/openid-connect/token" ||
     environment.clientId !== "api-stag"
@@ -54,8 +54,8 @@ const sdkFetch = async (input, init) => {
   const url = new URL(typeof input === "string" || input instanceof URL ? input : input.url);
   const token = url.href === environment.idpTokenUrl;
   const receipt =
-    url.origin === "https://api.comprobanteselectronicos.go.cr" &&
-    /^\/recepcion-sandbox\/v1\/recepcion(?:\/\d{50})?$/.test(url.pathname) &&
+    url.origin === "https://api-sandbox.comprobanteselectronicos.go.cr" &&
+    /^\/recepcion\/v1\/recepcion(?:\/\d{50})?$/.test(url.pathname) &&
     !url.search &&
     !url.hash;
   if ((!token && !receipt) || url.username || url.password) throw new Error("BLOCKED_ENDPOINT");

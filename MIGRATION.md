@@ -86,7 +86,7 @@ Offline verification does not establish live Hacienda acceptance.
 - **Clave format:** current 0.4.2+ requires 50 numeric digits and a correctly zero-padded 12-digit taxpayer segment. The earlier alphanumeric claim in this historical guide was incorrect; do not use it as current input guidance.
 - **XML namespaces** are now the official lowerCamelCase fragments (e.g. `…/v4.4/facturaElectronica`). Anything comparing namespaces against the old PascalCase values must be updated.
 - **Legacy inputs fail fast:** passing the old `codigoActividad`, root `medioPago`, or `porcentajeExoneracion` shapes now throws a descriptive error instead of silently emitting wrong XML.
-- Sandbox base URL constant corrected to `https://api.comprobanteselectronicos.go.cr/recepcion-sandbox/v1`.
+- Sandbox base URL constant corrected to `https://api.comprobanteselectronicos.go.cr/recepcion-sandbox/v1`. Superseded: that route fails at the API gateway, the constant is now `https://api-sandbox.comprobanteselectronicos.go.cr/recepcion/v1`.
 
 ## Recommended migration path
 
