@@ -15,7 +15,7 @@ import { ApiError } from "../errors.js";
 
 const MOCK_ENV_CONFIG: EnvironmentConfig = {
   name: "Sandbox",
-  apiBaseUrl: "https://api.test.example.com/recepcion-sandbox/v1",
+  apiBaseUrl: "https://api-sandbox.test.example.com/recepcion/v1",
   idpTokenUrl: "https://idp.test.example.com/token",
   clientId: "api-stag",
 };
@@ -74,7 +74,7 @@ describe("HttpClient", () => {
         string,
         RequestInit,
       ];
-      expect(url).toBe("https://api.test.example.com/recepcion-sandbox/v1/recepcion/12345");
+      expect(url).toBe("https://api-sandbox.test.example.com/recepcion/v1/recepcion/12345");
       expect((options.headers as Record<string, string>)["Authorization"]).toBe(
         `Bearer ${MOCK_TOKEN}`,
       );

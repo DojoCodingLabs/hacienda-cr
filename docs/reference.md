@@ -339,6 +339,8 @@ import {
 } from "@dojocoding/hacienda-sdk";
 
 const envConfig = getEnvironmentConfig(Environment.Sandbox);
+// If Hacienda moves the sandbox host again, pass your own config instead:
+// const envConfig = { ...getEnvironmentConfig(Environment.Sandbox), apiBaseUrl: "https://<new-host>/recepcion/v1" };
 const tokenManager = new TokenManager({ envConfig });
 await tokenManager.authenticate(
   loadCredentials({
