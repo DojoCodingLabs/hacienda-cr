@@ -27,7 +27,7 @@ function envConfigFor(mock: MockServer): EnvironmentConfig {
   if (EXTERNAL_URL) {
     return {
       name: "Mock",
-      apiBaseUrl: `${EXTERNAL_URL}/recepcion-sandbox/v1`,
+      apiBaseUrl: `${EXTERNAL_URL}/recepcion/v1`,
       idpTokenUrl: `${EXTERNAL_URL}/auth/realms/rut-stag/protocol/openid-connect/token`,
       clientId: "mock-client",
     };

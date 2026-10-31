@@ -581,7 +581,7 @@ export async function createMockServer(options: MockServerOptions = {}): Promise
 
   return {
     url,
-    apiBaseUrl: `${url}/recepcion-sandbox/v1`,
+    apiBaseUrl: `${url}/recepcion/v1`,
     idpTokenUrl: `${url}/auth/realms/rut-stag/protocol/openid-connect/token`,
     submissions: () => submissions,
     callbackAttempts: () => callbackAttempts,
