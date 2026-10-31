@@ -60,7 +60,7 @@ The [403 investigation](sandbox-403-debug.md) reproduces the failure with native
 
 ## Release gates still open
 
-- Restore documented sandbox reception access and obtain a signed terminal acceptance for FE.
+- Obtain a signed terminal acceptance for FE. The 403 was the sandbox URL, see `sandbox-403-debug.md`; acceptances observed with the corrected URL are recorded there and are not a release gate on their own.
 - Obtain individual live evidence for TE, NC, ND, FEC, FEE, REP and receiver messages with coherent references. Offline coverage is not a substitute.
 - Add receiver-message semantic cross-checks beyond XSD and finish special IVA 07/08 and conditional reference rules; current ordinary IVA validation does not cover every tax regime.
 - Independently verify XML signatures with a separate verifier, including tampering.

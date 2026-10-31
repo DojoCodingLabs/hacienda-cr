@@ -8,7 +8,7 @@ describe("getEnvironmentConfig", () => {
 
     expect(config.name).toBe("Sandbox");
     expect(config.apiBaseUrl).toBe(
-      "https://api.comprobanteselectronicos.go.cr/recepcion-sandbox/v1",
+      "https://api-sandbox.comprobanteselectronicos.go.cr/recepcion/v1",
     );
     expect(config.idpTokenUrl).toBe(
       "https://idp.comprobanteselectronicos.go.cr/auth/realms/rut-stag/protocol/openid-connect/token",

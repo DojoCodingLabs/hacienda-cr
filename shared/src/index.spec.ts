@@ -45,7 +45,9 @@ describe("@dojocoding/hacienda-shared", () => {
     });
 
     it("should have API base URLs for both environments", () => {
-      expect(API_BASE_URLS.sandbox).toContain("recepcion-sandbox");
+      expect(API_BASE_URLS.sandbox).toBe(
+        "https://api-sandbox.comprobanteselectronicos.go.cr/recepcion/v1",
+      );
       expect(API_BASE_URLS.production).toContain("api.comprobanteselectronicos");
       expect(API_BASE_URLS.production).not.toContain("sandbox");
     });

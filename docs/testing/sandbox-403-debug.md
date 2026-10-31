@@ -2,6 +2,18 @@
 
 Observed 2026-10-15 Costa Rica / 2026-10-16 UTC. No production requests and no additional invoice POSTs were made during this investigation.
 
+## Resolution (2026-10-31)
+
+The route was the cause: the sandbox answers on a different host than the v4.4 annex documents.
+
+| Request with one valid `rut-stag` bearer token                                                  | Result                                                              |
+| ----------------------------------------------------------------------------------------------- | ------------------------------------------------------------------- |
+| GET `https://api.comprobanteselectronicos.go.cr/recepcion-sandbox/v1/recepcion/<clave>`         | 403 `IncompleteSignatureException`, from the API gateway            |
+| GET `https://api-sandbox.comprobanteselectronicos.go.cr/recepcion-sandbox/v1/recepcion/<clave>` | 403 `IncompleteSignatureException`, from the API gateway            |
+| GET `https://api-sandbox.comprobanteselectronicos.go.cr/recepcion/v1/recepcion/<clave>`         | 400 with `x-error-cause: El comprobante [...] no ha sido recibido.` |
+
+With that base URL, a factura and a tiquete built and signed with SDK 0.12.1 reached a terminal `aceptado` status. The finding below is kept as the record of the original investigation.
+
 ## Finding
 
 The documented sandbox reception URL currently returns an **AWS API Gateway authorization-format response**, before any observable Hacienda receipt validation. This reproduces outside the SDK using `/usr/bin/curl` with the same freshly issued bearer token.

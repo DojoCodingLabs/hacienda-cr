@@ -71,7 +71,7 @@ await client.authenticate();
 
 | Ambiente     | URL base de la API                                         | IDP Realm  | Client ID  |
 | ------------ | ---------------------------------------------------------- | ---------- | ---------- |
-| `sandbox`    | `api.comprobanteselectronicos.go.cr/recepcion-sandbox/v1/` | `rut-stag` | `api-stag` |
+| `sandbox`    | `api-sandbox.comprobanteselectronicos.go.cr/recepcion/v1/` | `rut-stag` | `api-stag` |
 | `production` | `api.comprobanteselectronicos.go.cr/recepcion/v1/`         | `rut`      | `api-prod` |
 
 ### Creación de documentos
