@@ -221,4 +221,57 @@ describe("submitAndWait", () => {
     expect(result.accepted).toBe(false);
     expect(result.status).toBe("error");
   });
+
+  describe("400 on resend without a document store (#127)", () => {
+    const rejectPost = (client: HttpClient) => {
+      vi.mocked(client.post).mockRejectedValue(
+        new ApiError("Bad request", 400, { message: "comprobante ya existe" }),
+      );
+    };
+
+    it("returns accepted when the clave is already accepted", async () => {
+      const client = createMockHttpClient({}, [
+        {
+          clave: MOCK_REQUEST.clave,
+          "ind-estado": HaciendaStatus.ACEPTADO,
+          fecha: "2025-07-27T10:35:00-06:00",
+        },
+      ]);
+      rejectPost(client);
+
+      const result = await submitAndWait(client, MOCK_REQUEST, {
+        pollIntervalMs: 10,
+        timeoutMs: 5000,
+      });
+
+      expect(result.accepted).toBe(true);
+      expect(result.status).toBe("aceptado");
+      expect(result.submissionStatus).toBe(400);
+      expect(client.get).toHaveBeenCalledWith(
+        `/recepcion/${MOCK_REQUEST.clave}`,
+        expect.anything(),
+      );
+    });
+
+    it("rethrows the original 400 when the clave is unknown", async () => {
+      const client = createMockHttpClient({}, []);
+      rejectPost(client);
+      vi.mocked(client.get).mockRejectedValue(new ApiError("Not found", 404));
+
+      await expect(
+        submitAndWait(client, MOCK_REQUEST, { pollIntervalMs: 10, timeoutMs: 5000 }),
+      ).rejects.toMatchObject({ statusCode: 400, message: "Bad request" });
+    });
+
+    it("rethrows the original 400 when the clave was rejected", async () => {
+      const client = createMockHttpClient({}, [
+        { clave: MOCK_REQUEST.clave, "ind-estado": HaciendaStatus.RECHAZADO },
+      ]);
+      rejectPost(client);
+
+      await expect(
+        submitAndWait(client, MOCK_REQUEST, { pollIntervalMs: 10, timeoutMs: 5000 }),
+      ).rejects.toMatchObject({ statusCode: 400, message: "Bad request" });
+    });
+  });
 });

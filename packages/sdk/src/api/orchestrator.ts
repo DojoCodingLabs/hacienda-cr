@@ -149,10 +149,36 @@ async function submitAndWaitLegacy(
   const timer = setTimeout(expire, timeoutMs);
   try {
     checkDeadline();
-    const submissionResponse = await withSignal(
-      () => submitDocument(httpClient, request, { signal }),
-      signal,
-    );
+    let submissionResponse: { status: number };
+    try {
+      submissionResponse = await withSignal(
+        () => submitDocument(httpClient, request, { signal }),
+        signal,
+      );
+    } catch (error) {
+      // Without a store, a resend of a clave Hacienda already accepted can come
+      // back as 400 instead of 409. Query by clave before reporting failure (#127).
+      if (!(error instanceof ApiError) || error.statusCode !== 400) throw error;
+      checkDeadline();
+      let existing: ParsedStatusResponse;
+      try {
+        existing = await withSignal(() => getStatus(httpClient, request.clave, { signal }), signal);
+      } catch {
+        signal.throwIfAborted();
+        throw error;
+      }
+      checkDeadline();
+      if (existing.status !== HaciendaStatus.ACEPTADO) throw error;
+      return {
+        accepted: true,
+        status: existing.status,
+        clave: existing.clave,
+        date: existing.date,
+        responseXml: existing.responseXml,
+        submissionStatus: 400,
+        pollAttempts: 1,
+      };
+    }
     while (true) {
       checkDeadline();
       // Wait before polling (except on the first attempt, give Hacienda a moment)
