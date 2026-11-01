@@ -1,5 +1,21 @@
 # @dojocoding/hacienda-shared
 
+## 0.13.0
+
+### Patch Changes
+
+- 884f6b8: Document how to override the sandbox reception host.
+
+  Hacienda has not confirmed the `api-sandbox` host and the v4.4 annex still lists the
+  old route. If the host changes again, pass your own `envConfig` with a custom
+  `apiBaseUrl` (for example `{ ...getEnvironmentConfig(Environment.Sandbox), apiBaseUrl }`)
+  to `TokenManager` and `HttpClient` instead of waiting for a release.
+
+- a97627e: Point the sandbox at `api-sandbox.comprobanteselectronicos.go.cr/recepcion/v1`.
+
+  The previous URL fails at the API gateway with 403 `IncompleteSignatureException`
+  for any bearer token, so no document could reach the sandbox.
+
 ## 0.12.1
 
 ### Patch Changes
