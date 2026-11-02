@@ -14,6 +14,14 @@ export const PACKAGE_NAME = "@dojocoding/hacienda-sdk" as const;
 export { HaciendaClient, HaciendaClientOptionsSchema } from "./client.js";
 export type { HaciendaClientOptions } from "./client.js";
 
+export {
+  ScopeSchema,
+  ScopeEnvironmentSchema,
+  ScopeIssuerSchema,
+  fingerprintScope,
+} from "./scope.js";
+export type { Scope } from "./scope.js";
+
 // ---------------------------------------------------------------------------
 // Bootstrap — convenience auth helper for CLI / MCP consumers
 // ---------------------------------------------------------------------------
@@ -216,6 +224,7 @@ export {
   transitionDocument,
   evaluateDeadline,
   classifySendResult,
+  classifyOutcome,
   situationFromClave,
   assertClaveSituationMatch,
   createObligation,
@@ -275,12 +284,16 @@ export {
   getStatus,
   isTerminalStatus,
   extractRejectionReason,
+  reconcileByClave,
   submitAndWait,
   withRetry,
   listComprobantes,
   getComprobante,
   lookupTaxpayer,
+  parseCallbackPayload,
+  validateCallbackPayload,
 } from "./api/index.js";
+export type { ParsedCallbackPayload, CallbackEnvelope } from "./api/index.js";
 export type {
   HistoryRequestOptions,
   HttpClientOptions,

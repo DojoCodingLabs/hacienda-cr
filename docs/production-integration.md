@@ -135,6 +135,16 @@ En un ERP, almacená compras y mensajes de receptor como documentos relacionados
 
 En un asistente, completá los placeholders de `draft_invoice` y revisá proveedor, emisor, receptor, líneas y pagos antes de `create_invoice`. Esta herramienta genera XML sin firmar y consume un consecutivo local. Guardá el resultado antes del handoff y evitá llamar otra vez a `create_invoice` como reintento de envío. Integrá la firma y el POST en el backend con la identidad ya generada. La [guía MCP](../packages/mcp/README.md) explica qué consultas necesitan credenciales.
 
+## Scope multiempresa y recuperación durable
+
+El SDK expone un `Scope` explícito con `tenantId`, `environment` e `issuer`. El `tenantId` sirve para autorización y auditoría; la numeración y la autenticación se acotan por **emisor + ambiente**. Si dos tenants representan el mismo emisor, comparten contador. El caché de clientes se invalida cuando cambia el scope, la configuración o los secretos.
+
+Para recuperación durable:
+
+- Reconciliá siempre por la clave original con `reconcileByClave()`; no generes un nuevo documento ni un nuevo consecutivo.
+- Clasificá resultados con `classifyOutcome()`; un timeout o respuesta perdida es `ambiguous`, no rechazo.
+- El callback llega como JSON con `clave`, `fecha`, `indEstado` y `respuestaXml` (Base64). El SDK lo parsea con `parseCallbackPayload()`. El endpoint debe responder HTTP 200; Hacienda reintenta 3 veces y, si falla, el resultado queda disponible solo por consulta.
+
 ## Verificar la integración antes de desplegar
 
 Ejecutá el [recorrido sandbox](sandbox-guide.md) con tus datos y confirmá en tu producto la relación entre pedido, documento y respuesta. Probá eventos repetidos, dos workers concurrentes, reinicio después del POST, respuesta perdida, procesamiento pendiente, rechazo y una devolución referenciada. Verificá que cada recuperación conserva la clave y que los documentos se siguen consultando después de reiniciar el worker.
