@@ -21,6 +21,7 @@ export {
   getStatus,
   isTerminalStatus,
   extractRejectionReason,
+  reconcileByClave,
 } from "./submission.js";
 export type { ParsedStatusResponse } from "./submission.js";
 
@@ -38,6 +39,14 @@ export type { HistoryRequestOptions } from "./comprobantes.js";
 
 // Taxpayer lookup
 export { lookupTaxpayer } from "./taxpayer.js";
+
+// Callback parsing
+export {
+  parseCallbackPayload,
+  validateCallbackPayload,
+  CallbackEnvelopeSchema,
+} from "./callback.js";
+export type { ParsedCallbackPayload, CallbackEnvelope } from "./callback.js";
 export type { TaxpayerInfo, LookupTaxpayerOptions } from "./taxpayer.js";
 
 // Error codes

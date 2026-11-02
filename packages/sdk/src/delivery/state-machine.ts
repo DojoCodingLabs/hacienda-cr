@@ -219,6 +219,14 @@ function makeAmbiguous(error: Error): SendResult {
   return { type: "ambiguous", state: "PENDIENTE", error };
 }
 
+export function classifyOutcome(
+  error: Error | null,
+  httpStatus?: number,
+  haciendaResponse?: { estado?: string; detalle?: string } | null,
+): SendResult {
+  return classifySendResult(error, httpStatus, haciendaResponse);
+}
+
 export function classifySendResult(
   error: Error | null,
   httpStatus?: number,
