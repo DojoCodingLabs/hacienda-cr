@@ -5,6 +5,7 @@
  */
 
 import { z } from "zod";
+import { sanitizeLogString } from "../logging/redaction.js";
 
 // ---------------------------------------------------------------------------
 // Environment
@@ -153,7 +154,7 @@ export class AuthError extends Error {
   readonly code: AuthErrorCode;
 
   constructor(code: AuthErrorCode, message: string, cause?: unknown) {
-    super(message, { cause });
+    super(sanitizeLogString(message), { cause });
     this.name = "AuthError";
     this.code = code;
   }
