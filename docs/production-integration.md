@@ -135,6 +135,53 @@ En un ERP, almacená compras y mensajes de receptor como documentos relacionados
 
 En un asistente, completá los placeholders de `draft_invoice` y revisá proveedor, emisor, receptor, líneas y pagos antes de `create_invoice`. Esta herramienta genera XML sin firmar y consume un consecutivo local. Guardá el resultado antes del handoff y evitá llamar otra vez a `create_invoice` como reintento de envío. Integrá la firma y el POST en el backend con la identidad ya generada. La [guía MCP](../packages/mcp/README.md) explica qué consultas necesitan credenciales.
 
+## Gates contables y de producción
+
+### Revisión contable (solo asientos)
+
+- Alcance: asientos, mapeo de IVA y reconciliación. No incluye transporte, XSD ni firma.
+- Insumos: facturas sintéticas, sin datos comerciales reales.
+- Artefactos: XML y asientos derivados (sin PDF ni representación gráfica).
+- Evidencia: bundle por intento con XML, respuesta y asientos.
+
+### Fixtures sintéticos para revisión contable
+
+- Facturas con IVA 13 %, exoneraciones y notas de crédito/débito referenciadas.
+- Casos de servicios extranjeros y bienes usados si aplican.
+- Datos de prueba con cédulas/actividades sintéticas.
+
+### Extracción de asientos desde XML
+
+- Leer clave, consecutivo, fecha, emisor, receptor, totales e impuestos.
+- Derivar asientos de venta, IVA, exoneraciones y otros cargos.
+- Conservar la relación con la factura original para notas.
+
+### Evidencia para el gate contable
+
+- XML firmado y respuesta de Hacienda.
+- Asientos generados y su justificación.
+- Conciliación de totales.
+
+### Checklist de producción
+
+- Credenciales y certificado de producción.
+- Ambiente y URLs de producción.
+- Retención 5 años y respaldo.
+- Bitácoras y control de clientes.
+- Monitoreo de vencidos, rechazos y errores.
+- Runbook de recuperación.
+
+### Evidencia para el gate de producción
+
+- Configuración de producción verificada.
+- Prueba de retención y respaldo.
+- Alertas y métricas operativas.
+
+### Aprobación de salida a producción
+
+- Requiere checklist completo y evidencia.
+- La revisión contable no bloquea el gate técnico, pero sí la salida a producción si hay observaciones.
+
 ## Verificar la integración antes de desplegar
 
 Ejecutá el [recorrido sandbox](sandbox-guide.md) con tus datos y confirmá en tu producto la relación entre pedido, documento y respuesta. Probá eventos repetidos, dos workers concurrentes, reinicio después del POST, respuesta perdida, procesamiento pendiente, rechazo y una devolución referenciada. Verificá que cada recuperación conserva la clave y que los documentos se siguen consultando después de reiniciar el worker.
