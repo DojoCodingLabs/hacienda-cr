@@ -8,6 +8,7 @@ import assert from "node:assert/strict";
 import { readFile, mkdtemp, mkdir, writeFile } from "node:fs/promises";
 import { existsSync } from "node:fs";
 import { join } from "node:path";
+import { tmpdir } from "node:os";
 
 import {
   generateScenario,
@@ -131,8 +132,15 @@ function dependientesCompletos() {
   };
 }
 
-function tempDir() {
-  return mkdtemp("/tmp/opencode/rehearsal-test-");
+async function tempDir() {
+  const preferred = "/tmp/opencode";
+  let base = preferred;
+  try {
+    await mkdir(preferred, { recursive: true });
+  } catch {
+    base = tmpdir();
+  }
+  return mkdtemp(join(base, "hacienda-rehearsal-"));
 }
 
 /** Registro válido del grafo (FE + NC), para mutar por caso. */
