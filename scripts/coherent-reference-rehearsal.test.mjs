@@ -282,7 +282,10 @@ test("5.2 valida grafo coherente sin violaciones", () => {
 
 test("5.2 rechaza numero de referencia inexistente en el escenario", () => {
   const registros = registrosBase();
-  registros[1].referencias[0].numero = `${FE_CLAVE.slice(0, 49)}9`;
+  // Usar una clave sintética que garantiza no existir en el escenario,
+  // independiente del código de seguridad aleatorio de FE_CLAVE (que podría
+  // terminar en "9" y hacer la mutación un no-op).
+  registros[1].referencias[0].numero = "9".repeat(50);
   const { violaciones } = validateScenario({ documentos: registros });
   assert.ok(violaciones.some((v) => /no existe en el escenario/.test(v.mensaje)));
 });
