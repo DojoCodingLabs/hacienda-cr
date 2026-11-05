@@ -1,11 +1,11 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "description": "Derived civil holiday dates, reviewed against MTSS CARTA-MTSS-DAJ-AER-1076-2025, page 1. No inferred transfers or future years.",
-  "version": "2026",
-  "yearRange": [2026, 2026],
+  "description": "Derived civil holiday dates for 2025-2026, reviewed against MTSS OFP-MTSS-DAJ-AER-956-2024 (22 November 2024) and OFP-MTSS-DAJ-AER-1076-2025 (4 December 2025), page 1. No inferred transfers or future years.",
+  "version": "2025-2026",
+  "yearRange": [2025, 2026],
   "source": {
     "name": "MTSS",
-    "url": "https://www.mtss.go.cr/temas-laborales/feriados/feriados_calendario_2026.pdf",
+    "url": "https://www.mtss.go.cr/temas-laborales/feriados/feriados_calendario_{year}.pdf",
     "type": "official",
     "disclaimer": "Labor calendar only; exceptional administrative closures and the applicable fiscal deadline must be reviewed independently."
   },
@@ -13,72 +13,84 @@
     {
       "name": "Año Nuevo",
       "dates": {
+        "2025": "2025-01-01",
         "2026": "2026-01-01"
       }
     },
     {
       "name": "Jueves Santo",
       "dates": {
+        "2025": "2025-04-17",
         "2026": "2026-04-02"
       }
     },
     {
       "name": "Viernes Santo",
       "dates": {
+        "2025": "2025-04-18",
         "2026": "2026-04-03"
       }
     },
     {
       "name": "Día de Juan Santamaría",
       "dates": {
+        "2025": "2025-04-11",
         "2026": "2026-04-11"
       }
     },
     {
       "name": "Día del Trabajo",
       "dates": {
+        "2025": "2025-05-01",
         "2026": "2026-05-01"
       }
     },
     {
       "name": "Anexión del Partido de Nicoya",
       "dates": {
+        "2025": "2025-07-25",
         "2026": "2026-07-25"
       }
     },
     {
       "name": "Día de la Virgen de los Ángeles",
       "dates": {
+        "2025": "2025-08-02",
         "2026": "2026-08-02"
       }
     },
     {
       "name": "Día de la Madre",
       "dates": {
+        "2025": "2025-08-15",
         "2026": "2026-08-15"
       }
     },
     {
       "name": "Día de la Independencia",
       "dates": {
+        "2025": "2025-09-15",
         "2026": "2026-09-15"
       }
     },
     {
       "name": "Navidad",
       "dates": {
+        "2025": "2025-12-25",
         "2026": "2026-12-25"
       }
     },
     {
       "name": "Día de la Persona Negra y la Cultura Afrocostarricense",
       "dates": {
+        "2025": "2025-08-31",
         "2026": "2026-08-31"
       }
     },
     {
       "name": "Abolición del Ejército",
       "dates": {
+        "2025": "2025-12-01",
         "2026": "2026-12-01"
       }
     }

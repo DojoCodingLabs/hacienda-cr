@@ -1,0 +1,65 @@
+name: Holiday calendar watch
+
+on:
+  schedule:
+    # Mondays in November, December and January. The guard below narrows the
+    # window to 15 November – 15 January.
+    - cron: "0 12 * 11,12,1 1"
+  workflow_dispatch:
+
+concurrency:
+  group: holidays-watch
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  watch:
+    name: Probe the next MTSS holiday letter
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: ".nvmrc"
+          cache: "pnpm"
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Install poppler-utils (pdftotext for the date diff)
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq poppler-utils
+
+      - name: Check the refresh window
+        id: window
+        shell: bash
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "run=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          month=$(date -u +%m)
+          day=$(date -u +%d)
+          if { [ "$month" = "11" ] && [ "$day" -ge 15 ]; } || \
+             [ "$month" = "12" ] || \
+             { [ "$month" = "01" ] && [ "$day" -le 15 ]; }; then
+            echo "run=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "run=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      # Exit 0 = nothing to do, 1 = new/changed PDF needs review, 2 = the
+      # control probe failed. A failing step is the alert; the workflow never
+      # edits the calendar.
+      - name: Probe next year
+        if: steps.window.outputs.run == 'true'
+        run: pnpm holidays:watch

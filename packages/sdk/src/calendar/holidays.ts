@@ -2,7 +2,7 @@
  * Carga y procesa el calendario de feriados vendorizado.
  */
 
-import data from "../../schemas/feriados/feriados-2026.json";
+import data from "../../schemas/feriados/feriados.json";
 import type { HolidaysData, HolidayEntry, ObservedHoliday, CalendarRange } from "./types.js";
 
 /** Returns a copy: callers cannot mutate the SDK's calendar. */
@@ -52,27 +52,31 @@ export function getDayOfWeek(date: Date): number {
 }
 
 /**
- * Calcula la fecha observada a partir de la fecha nominal según la regla de traslado:
- * - Lunes: se queda
- * - Martes/Miércoles: lunes anterior
- * - Jueves/Viernes/Sábado/Domingo: lunes siguiente
+ * Calcula la fecha observada de un feriado.
+ *
+ * La fecha observada es la nominal salvo que una fuente oficial enumere un
+ * traslado para ese feriado y ese año; en ese caso el calendario vendorizado
+ * declara un override explícito. No se infiere ningún traslado de la letra del
+ * día de la semana.
  */
-/** 2026 official dates are observed on their listed date; no inferred transfer. */
-export function calculateObservedDate(nominalDate: string): string {
+export function calculateObservedDate(nominalDate: string, override?: string): string {
+  if (override !== undefined) return formatDateLocal(parseDateLocal(override));
   return formatDateLocal(parseDateLocal(nominalDate));
 }
 
 export function getObservedHolidaysForYear(year: number): ObservedHoliday[] {
   const range = getCalendarRange();
   if (!Number.isInteger(year) || year < range.minYear || year > range.maxYear)
-    throw new RangeError("Calendar year is not covered by reviewed data");
+    throw new RangeError(
+      `Calendar year ${year} is outside the reviewed coverage ${range.minYear}–${range.maxYear}`,
+    );
   const entries = getHolidayEntries();
   const result: ObservedHoliday[] = [];
 
   for (const entry of entries) {
     const nominal = entry.dates[String(year)];
     if (nominal) {
-      const observed = calculateObservedDate(nominal);
+      const observed = calculateObservedDate(nominal, entry.observed?.[String(year)]);
       result.push({
         name: entry.name,
         nominal,
@@ -100,7 +104,9 @@ export function isObservedHoliday(date: string): boolean {
   const year = parseDateLocal(date).getUTCFullYear();
   const range = getCalendarRange();
   if (year < range.minYear || year > range.maxYear)
-    throw new RangeError("Calendar year is not covered");
+    throw new RangeError(
+      `Calendar year ${year} is outside the reviewed coverage ${range.minYear}–${range.maxYear}`,
+    );
   const observedHolidays = getAllObservedHolidays();
   return observedHolidays.some((h) => h.observed === date);
 }

@@ -2,9 +2,13 @@
  * Tipos para el calendario de feriados y aritmética de días hábiles.
  */
 
+import holidaysData from "../../schemas/feriados/feriados.json";
+
 export interface HolidayEntry {
   name: string;
   dates: Record<string, string>; // year -> YYYY-MM-DD (nominal)
+  /** Explicit per-year transfer enumerated by an official source; absent means nominal. */
+  observed?: Record<string, string>;
 }
 
 export interface HolidaysData {
@@ -51,9 +55,11 @@ export interface CalendarRange {
   maxYear: number;
 }
 
+const reviewedYearRange = holidaysData.yearRange as [number, number];
+
 export const CALENDAR_RANGE: CalendarRange = {
-  minYear: 2026,
-  maxYear: 2026,
+  minYear: reviewedYearRange[0],
+  maxYear: reviewedYearRange[1],
 };
 
 export const TIMEZONE = "America/Costa_Rica" as const;

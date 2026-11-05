@@ -217,15 +217,15 @@
     {
       "path": "feriados/README.md",
       "set": null,
-      "sha256": "f2297fb9772e02d50c6a17b3b305e0d1f10977c3f10d2fc8b1757f1cd268d96d",
-      "bytes": 897,
+      "sha256": "44097d72230a5ce018a66b39ad5f12444d7b13cf5dc9740b4dcf743bf1c80884",
+      "bytes": 2533,
       "vendored": true
     },
     {
-      "path": "feriados/feriados-2026.json",
+      "path": "feriados/feriados-calendario-2025.pdf",
       "set": null,
-      "sha256": "e0236e9f7d2457605f7049b104f862b8540b24ad79d296ea3a7ab4f66f0ebb21",
-      "bytes": 1864,
+      "sha256": "983a65a32f3b7a02f843dc3b218c3f587bdf0432e37e94c2b1b8765d9c2e74cf",
+      "bytes": 579875,
       "vendored": true
     },
     {
@@ -233,6 +233,13 @@
       "set": null,
       "sha256": "6f80b0b758770360013fa922a532f6446ff3dee2240e63f84c310a776f55eb59",
       "bytes": 512176,
+      "vendored": true
+    },
+    {
+      "path": "feriados/feriados.json",
+      "set": null,
+      "sha256": "397493f802f3e882718797ba85ac6168f43ef474be16c4fa127b45929202473a",
+      "bytes": 2310,
       "vendored": true
     },
     {
