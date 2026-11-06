@@ -9,9 +9,14 @@
 // Sin pareja deliberada — se reporta en cada spec:generate, no se adivina:
 // - UnidadMedidaType / UNITS_OF_MEASURE — curado; ambos conservan U+2126.
 // - TipoExoneracionType / ExonerationType — catálogo curado y aliases históricos.
-// - TipoDocReferenciaType / REFERENCE_DOC_TYPES — el XSD vendorizado no
-//   contiene los 19-20 (revisión abril 2026 pendiente de vendorizar).
-// - CodigoReferenciaType / REFERENCE_CODES — ídem, faltan 13-16.
+// - TipoDocReferenciaType / REFERENCE_DOC_TYPES — el XSD vendorizado bajo
+//   2026/v4.4 SÍ contiene los 19-20 (revisión abril 2026); codes.json
+//   permanece en el set 2024/v4.4 porque faltan los auxiliares de ese set.
+//   La paridad queda bloqueada por
+//   packages/sdk/src/xml/reference-catalog.spec.ts mientras codes.json no se
+//   regenera.
+// - CodigoReferenciaType / REFERENCE_CODES — ídem (13-16 presentes en el
+//   XSD 2026 vendorizado).
 // - DocumentTypeCode — catálogo de la clave, no una enumeración del XSD.
 // Alias deprecados de la API publicada: nombres heredados de un código
 // canónico que el XSD no enumera. No son códigos del catálogo y por eso no

@@ -6,18 +6,20 @@
  * (mandatory 2026-11-01). See the ANEXOS Y ESTRUCTURAS v4.4 document
  * (Notas 9 and 10) for the authoritative meaning of each code.
  *
- * Sin pareja deliberada con `codes.json`: el XSD vendorizado aún no trae
- * los códigos 19-20 (TipoDoc) ni 13-16 (Codigo) de la revisión abril 2026
- * — ver table-map.mjs; el candado de generación los reporta hasta que se
- * vendorice el XSD nuevo. `DISCOUNT_CODES`, `OTHER_CHARGE_TYPES` y
- * `EXONERATION_INSTITUTIONS` sí migraron a `shared/src/generated/`.
+ * El XSD vendorizado bajo `packages/sdk/schemas/2026/v4.4/` SÍ contiene los
+ * códigos 19-20 (TipoDocReferenciaType) y 13-16 (CodigoReferenciaType); el
+ * set vendorizado de `codes.json` permanece en `2024/v4.4` porque faltan
+ * los auxiliares de ese set (ANEXOS, Codigodemoneda, Codificacionubicacion).
+ * Las constantes de referencia se curan a mano sobre el XSD 2026 y quedan
+ * bloqueadas por paridad en `packages/sdk/src/xml/reference-catalog.spec.ts`.
+ * `DISCOUNT_CODES`, `OTHER_CHARGE_TYPES` y `EXONERATION_INSTITUTIONS`
+ * sí migraron a `shared/src/generated/`.
  */
 
 /**
  * Código de referencia "Pago de comprobante" (`CodigoReferenciaType` 17).
  *
- * Admitido sólo por el Recibo Electrónico de Pago: la curaduría lo nombra
- * para que el validador no escriba el literal del catálogo a mano.
+ * Admitido por el Recibo Electrónico de Pago (ver REP_REFERENCE_CODES).
  */
 export const CODIGO_REFERENCIA_PAGO_COMPROBANTE = "17";
 
@@ -65,7 +67,7 @@ export const REFERENCE_CODES = [
   "09",
   "10",
   "11",
-  "12", // Nota de credito financiera por exoneracion posterior (redefined April 2026)
+  "12", // Credito por exoneracion posterior a la facturacion (redefined April 2026)
   "13", // Anula comprobante por error material (April 2026 revision)
   "14", // Corrige monto por error material (April 2026 revision)
   "15", // Sustituye comprobante por error material (April 2026 revision)

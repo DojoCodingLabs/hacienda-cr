@@ -7,6 +7,7 @@
 
 import { describe, it, expect } from "vitest";
 import { buildReciboPagoXml } from "./recibo-pago-builder.js";
+import { validateDocumentXml } from "../xml/schema-validator.js";
 import { SIMPLE_RECIBO_PAGO } from "../__fixtures__/document-fixtures.js";
 
 const NAMESPACE =
@@ -174,6 +175,42 @@ describe("buildReciboPagoXml", () => {
       const medioPagoIndex = xml.indexOf("<MedioPago>");
       expect(medioPagoIndex).toBeGreaterThan(xml.indexOf("<ResumenFactura>"));
       expect(medioPagoIndex).toBeLessThan(xml.indexOf("</ResumenFactura>"));
+    });
+  });
+
+  describe("informacionReferencia (REP: motivo 17 y codigo 99)", () => {
+    const baseRef = {
+      tipoDoc: SIMPLE_RECIBO_PAGO.informacionReferencia[0].tipoDoc,
+      numero: SIMPLE_RECIBO_PAGO.informacionReferencia[0].numero,
+      fechaEmision: SIMPLE_RECIBO_PAGO.informacionReferencia[0].fechaEmision,
+      razon: SIMPLE_RECIBO_PAGO.informacionReferencia[0].razon,
+    };
+
+    it("should accept codigo 17 (pago de comprobante) and pass XSD 2026", async () => {
+      const input = {
+        ...SIMPLE_RECIBO_PAGO,
+        informacionReferencia: [{ ...baseRef, codigo: "17" }],
+      };
+      const xml = buildReciboPagoXml(input);
+      expect(xml).toContain("<Codigo>17</Codigo>");
+      const result = await validateDocumentXml(xml);
+      expect(result.valid).toBe(true, result.issues.join(", "));
+    });
+
+    it("should emit CodigoReferenciaOTRO when codigo 99 with codigoOtors", async () => {
+      const input = {
+        ...SIMPLE_RECIBO_PAGO,
+        informacionReferencia: [
+          { ...baseRef, codigo: "99", codigoOtros: "Pago de comprobante especial" },
+        ],
+      };
+      const xml = buildReciboPagoXml(input);
+      expect(xml).toContain("<Codigo>99</Codigo>");
+      expect(xml).toContain(
+        "<CodigoReferenciaOTRO>Pago de comprobante especial</CodigoReferenciaOTRO>",
+      );
+      const result = await validateDocumentXml(xml);
+      expect(result.valid).toBe(true, result.issues.join(", "));
     });
   });
 });
