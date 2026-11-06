@@ -5,6 +5,7 @@ import {
   ExactFeInputSchema,
   ExactFeLineInputSchema,
   ExactFePaymentSchema,
+  requirePaymentPresence,
   type ExactFeCalculated,
 } from "./exact-fe.js";
 import { ExactNcTotalReferenceSchema } from "./exact-nc.js";
@@ -44,11 +45,12 @@ export const ExactNcPartialInputSchema = z
       )
       .min(1)
       .max(1000),
-    medioPago: z.array(ExactFePaymentSchema).min(1).max(4),
+    medioPago: z.array(ExactFePaymentSchema).max(4).optional(),
     informacionReferencia: z.tuple([ExactNcPartialReferenceSchema]),
   })
   .strict()
   .superRefine((input, ctx) => {
+    requirePaymentPresence(input.original.condicionVenta, input.medioPago, ctx);
     const reference = input.informacionReferencia[0];
     if (reference.numero !== input.original.clave)
       ctx.addIssue({
@@ -101,7 +103,7 @@ export const ExactNcPartialInputSchema = z
     // No unrelated original-total cap: caller proves fresh cumulative credit authority.
     // Current annex p. 56 requires each supplied payment amount greater than zero.
     // This is an allocation invariant, never evidence of a cash receipt.
-    input.medioPago.forEach((payment, index) => {
+    (input.medioPago ?? []).forEach((payment, index) => {
       if (!/[1-9]/.test(payment.totalMedioPago))
         ctx.addIssue({
           code: "custom",

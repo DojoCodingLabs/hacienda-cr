@@ -5,15 +5,24 @@ import {
   type ExactFeInput,
   type ExactFeCalculated,
 } from "@dojocoding/hacienda-shared";
-export type ExactOrdinaryMonetarySource = Pick<
-  ExactFeInput,
-  "detalleServicio" | "codigoTipoMoneda" | "medioPago"
->;
-import { scaled, round, money, sum } from "./exact-decimal.js";
-const SCALE = 100000n;
+export interface ExactOrdinaryMonetarySource {
+  detalleServicio: ExactFeInput["detalleServicio"];
+  codigoTipoMoneda: ExactFeInput["codigoTipoMoneda"];
+  medioPago?: ExactFeInput["medioPago"];
+}
+import {
+  scaled,
+  round,
+  money,
+  sum,
+  applyDiscounts,
+  applyFrozenGrossDiscounts,
+} from "./exact-decimal.js";
+
 export function calculateExactOrdinaryMoney(
   input: ExactOrdinaryMonetarySource,
   family: "FE" | "TE" | "ND" | "FEC" | "NC" = "FE",
+  basis: "sequential" | "frozen-gross" = "sequential",
 ): ExactFeCalculated {
   const moneyForCase = (value: bigint) => money(value, family);
   let services = 0n,
@@ -24,22 +33,25 @@ export function calculateExactOrdinaryMoney(
     const gross = round(scaled(line.cantidad, 3) * scaled(line.precioUnitario, 5), 1000n);
     moneyForCase(gross);
     if (gross <= 0n) throw new RangeError(`Zero-gross line is outside ordinary exact ${family}`);
-    const discount = line.descuento?.map((d) => {
-      const amount =
-        "porcentaje" in d
-          ? round(gross * scaled(d.porcentaje, 5), 100n * SCALE)
-          : scaled(d.montoDescuento, 5);
-      const { codigoDescuento, codigoDescuentoOtros, naturalezaDescuento } = d;
-      return {
-        codigoDescuento,
-        ...(codigoDescuentoOtros ? { codigoDescuentoOtros } : {}),
-        ...(naturalezaDescuento ? { naturalezaDescuento } : {}),
-        montoDescuento: moneyForCase(amount),
-      };
-    });
-    const deduction = sum((discount ?? []).map((d) => scaled(d.montoDescuento, 5)));
-    if (deduction >= gross)
-      throw new RangeError(`Zero or negative net line is outside ordinary exact ${family}`);
+    const discountEntries = line.descuento ?? [];
+    const guardMessage = `Zero or negative net line is outside ordinary exact ${family}`;
+    const applied =
+      basis === "frozen-gross"
+        ? applyFrozenGrossDiscounts(gross, discountEntries, guardMessage)
+        : applyDiscounts(gross, discountEntries, guardMessage);
+    const discount = discountEntries.length
+      ? discountEntries.map((d, i) => {
+          const amount = applied.amounts[i] as bigint;
+          const { codigoDescuento, codigoDescuentoOtros, naturalezaDescuento } = d;
+          return {
+            codigoDescuento,
+            ...(codigoDescuentoOtros ? { codigoDescuentoOtros } : {}),
+            ...(naturalezaDescuento ? { naturalezaDescuento } : {}),
+            montoDescuento: moneyForCase(amount),
+          };
+        })
+      : undefined;
+    const deduction = sum(applied.amounts);
     const net = gross - deduction,
       tax = round(net * 13n, 100n);
     if (line.esServicio) services += gross;
@@ -68,9 +80,12 @@ export function calculateExactOrdinaryMoney(
   const venta = services + goods,
     net = venta - discounts,
     total = net + taxes;
-  const paid = sum(input.medioPago.map((p) => scaled(p.totalMedioPago, 5)));
-  if (paid !== total)
-    throw new RangeError(`Exact ordinary ${family} payment allocation must equal invoice total`);
+  const payments = input.medioPago ?? [];
+  if (payments.length > 0) {
+    const paid = sum(payments.map((p) => scaled(p.totalMedioPago, 5)));
+    if (paid !== total)
+      throw new RangeError(`Exact ordinary ${family} payment allocation must equal invoice total`);
+  }
   return ExactFeCalculatedSchema.parse({
     detalleServicio,
     resumenFactura: {
@@ -89,10 +104,14 @@ export function calculateExactOrdinaryMoney(
       totalDesgloseImpuesto: [
         { codigo: "01", codigoTarifaIVA: "08", totalMontoImpuesto: moneyForCase(taxes) },
       ],
-      medioPago: input.medioPago.map((p) => ({
-        ...p,
-        totalMedioPago: moneyForCase(scaled(p.totalMedioPago, 5)),
-      })),
+      ...(payments.length > 0
+        ? {
+            medioPago: payments.map((p) => ({
+              ...p,
+              totalMedioPago: moneyForCase(scaled(p.totalMedioPago, 5)),
+            })),
+          }
+        : {}),
     },
   });
 }

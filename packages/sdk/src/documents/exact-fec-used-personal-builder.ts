@@ -68,11 +68,15 @@ export function buildExactFacturaCompraUsedPersonalGoodsNonSubjectXml(
         TotalMontoImpuesto: t.totalMontoImpuesto,
       })),
       TotalImpuesto: summary.totalImpuesto,
-      MedioPago: summary.medioPago.map((p) => ({
-        TipoMedioPago: p.tipoMedioPago,
-        ...(p.medioPagoOtros ? { MedioPagoOtros: p.medioPagoOtros } : {}),
-        TotalMedioPago: p.totalMedioPago,
-      })),
+      ...(summary.medioPago && summary.medioPago.length > 0
+        ? {
+            MedioPago: summary.medioPago.map((p) => ({
+              TipoMedioPago: p.tipoMedioPago,
+              ...(p.medioPagoOtros ? { MedioPagoOtros: p.medioPagoOtros } : {}),
+              TotalMedioPago: p.totalMedioPago,
+            })),
+          }
+        : {}),
       TotalComprobante: summary.totalComprobante,
     },
     InformacionReferencia: input.informacionReferencia.map((r) => ({
