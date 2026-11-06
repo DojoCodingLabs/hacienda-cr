@@ -19,7 +19,10 @@ export function buildExactFacturaXml(source: ExactFeInput): string {
 }
 
 /** Internal exact projection shared with full NC; not a public calculated-input API. */
-type ExactOrdinaryXmlSource = Omit<ExactFeInput, "caseCode" | "receptor"> & { receptor?: Receptor };
+type ExactOrdinaryXmlSource = Omit<ExactFeInput, "caseCode" | "receptor"> & {
+  receptor?: Receptor;
+  medioPago?: ExactFeInput["medioPago"];
+};
 export function buildExactOrdinaryFields(
   input: ExactOrdinaryXmlSource,
   calculated: ExactFeCalculated,
@@ -100,11 +103,15 @@ export function buildExactOrdinaryFields(
         TotalMontoImpuesto: t.totalMontoImpuesto,
       })),
       TotalImpuesto: summary.totalImpuesto,
-      MedioPago: summary.medioPago.map((p) => ({
-        TipoMedioPago: p.tipoMedioPago,
-        ...(p.medioPagoOtros ? { MedioPagoOtros: p.medioPagoOtros } : {}),
-        TotalMedioPago: p.totalMedioPago,
-      })),
+      ...(summary.medioPago && summary.medioPago.length > 0
+        ? {
+            MedioPago: summary.medioPago.map((p) => ({
+              TipoMedioPago: p.tipoMedioPago,
+              ...(p.medioPagoOtros ? { MedioPagoOtros: p.medioPagoOtros } : {}),
+              TotalMedioPago: p.totalMedioPago,
+            })),
+          }
+        : {}),
       TotalComprobante: summary.totalComprobante,
     },
   };

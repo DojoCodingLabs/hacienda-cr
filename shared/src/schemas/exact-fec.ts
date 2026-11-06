@@ -11,6 +11,7 @@ import {
   ExactMoneySchema,
   ExactFeLineInputSchema,
   ExactFePaymentSchema,
+  requirePaymentPresence,
   type ExactFeCalculated,
 } from "./exact-fe.js";
 const identity = IdentificacionSchema.safeExtend({
@@ -85,7 +86,7 @@ export const ExactFecInputSchema = FacturaElectronicaSchema.pick({
         ),
       })
       .strict(),
-    medioPago: z.array(ExactFePaymentSchema).min(1).max(4),
+    medioPago: z.array(ExactFePaymentSchema).max(4).optional(),
     informacionReferencia: z.array(ExactFecReferenceSchema).min(1).max(10),
   })
   .strict()
@@ -101,10 +102,11 @@ interface FecSourceFacts {
   fechaEmision: string;
   codigoTipoMoneda: { codigoMoneda: string; tipoCambio: string };
   detalleServicio: readonly { numeroLinea: number }[];
-  medioPago: readonly { totalMedioPago: string }[];
+  medioPago?: readonly { totalMedioPago: string }[];
   informacionReferencia: readonly { tipoDoc: string; numero: string; fechaEmision: string }[];
 }
 export function refineExactFecSource(input: FecSourceFacts, ctx: z.RefinementCtx): void {
+  requirePaymentPresence(input.condicionVenta, input.medioPago, ctx);
   if (input.condicionVenta === "02" && input.plazoCredito === undefined)
     ctx.addIssue({
       code: "custom",
@@ -134,7 +136,7 @@ export function refineExactFecSource(input: FecSourceFacts, ctx: z.RefinementCtx
         message: "Line numbers must be sequential",
       });
   });
-  input.medioPago.forEach((payment, i) => {
+  (input.medioPago ?? []).forEach((payment, i) => {
     if (!/[1-9]/.test(payment.totalMedioPago))
       ctx.addIssue({
         code: "custom",
