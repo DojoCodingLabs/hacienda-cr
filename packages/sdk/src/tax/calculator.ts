@@ -16,7 +16,13 @@ import type {
   TotalDesgloseImpuesto,
   DatosImpuestoEspecifico,
 } from "@dojocoding/hacienda-shared";
-import { ImpuestoSchema, IvaRateCode, TaxCode } from "@dojocoding/hacienda-shared";
+import {
+  ImpuestoSchema,
+  IvaRateCode,
+  TaxCode,
+  scaledFromNumber,
+  formatScaledDecimal,
+} from "@dojocoding/hacienda-shared";
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -32,15 +38,27 @@ const DECIMAL_PLACES = 5;
 /**
  * Round a number to 5 decimal places (Hacienda requirement).
  *
- * Uses JavaScript `Number.toFixed(5)` over binary floating-point values.
- * This is not an exact decimal or banker's-rounding implementation;
- * fiscal edge cases require separate decimal-oracle validation.
+ * Uses the shared exact-decimal kernel (`scaledFromNumber` + `formatScaledDecimal`)
+ * so the rounding follows the official `HALF_UP` rule from the Hacienda Anexo
+ * (p. 13-14), instead of `Number.toFixed(5)`, which operates on the binary
+ * float representation and does not consistently match any exact decimal rule
+ * (its result depends on the float's last bit).
+ *
+ * The kernel reads the input through its shortest decimal round-trip
+ * representation (`String(value)`), so binary artifacts such as `0.1 + 0.2`
+ * do not survive the conversion. The sign is preserved (negative intermediate
+ * amounts, e.g. `montoTotal - totalDescuento`, round symmetrically).
+ *
+ * Returns `number`: this aligns the *decimal value* with `HALF_UP`, but the
+ * final `Number(...)` re-introduces the nearest binary representation, so
+ * bit-for-bit exactness is only guaranteed by the exact path
+ * (`DecimalDocument*` / `exact-decimal.ts`). See design.md D1.
  *
  * @param value - The numeric value to round.
  * @returns The value rounded to 5 decimal places.
  */
 export function round5(value: number): number {
-  return Number(value.toFixed(DECIMAL_PLACES));
+  return Number(formatScaledDecimal(scaledFromNumber(value, DECIMAL_PLACES), DECIMAL_PLACES));
 }
 
 /** Compute a tax amount without prematurely rounding the specific-tax factors. */

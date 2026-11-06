@@ -14,6 +14,14 @@ export const PACKAGE_NAME = "@dojocoding/hacienda-sdk" as const;
 export { HaciendaClient, HaciendaClientOptionsSchema } from "./client.js";
 export type { HaciendaClientOptions } from "./client.js";
 
+export {
+  ScopeSchema,
+  ScopeEnvironmentSchema,
+  ScopeIssuerSchema,
+  fingerprintScope,
+} from "./scope.js";
+export type { Scope } from "./scope.js";
+
 // ---------------------------------------------------------------------------
 // Bootstrap — convenience auth helper for CLI / MCP consumers
 // ---------------------------------------------------------------------------
@@ -133,6 +141,11 @@ export {
   round5,
   calculateLineItemTotals,
   calculateInvoiceSummary,
+  calculateDecimalDocument,
+  calculateDecimalLineItemTotals,
+  calculateDecimalInvoiceSummary,
+  calculateDecimalRepLine,
+  calculateDecimalTaxAmount,
   multiplyExactDecimal,
   percentExactDecimal,
   sumExactDecimal,
@@ -141,6 +154,8 @@ export {
   type LineItemInput,
   type CalculatedLineItem,
   type InvoiceSummary,
+  type DecimalLineSource,
+  type DecimalCalculatedLine,
 } from "./tax/index.js";
 
 // Document builders
@@ -153,6 +168,16 @@ export {
   buildFacturaExportacionXml,
   buildReciboPagoXml,
   buildMensajeReceptorXml,
+  buildDecimalDocumentXml,
+  buildDecimalFacturaXml,
+  buildDecimalTiqueteXml,
+  buildDecimalNotaCreditoXml,
+  buildDecimalNotaDebitoXml,
+  buildDecimalFacturaCompraXml,
+  buildDecimalFacturaExportacionXml,
+  buildDecimalReciboPagoXml,
+  buildDecimalMensajeReceptorXml,
+  assertRecipientMessageIdentity,
   parseDocumentXml,
 } from "./documents/index.js";
 export type { ParsedDocument, ParseDocumentResult } from "./documents/index.js";
@@ -199,6 +224,7 @@ export {
   transitionDocument,
   evaluateDeadline,
   classifySendResult,
+  classifyOutcome,
   situationFromClave,
   assertClaveSituationMatch,
   createObligation,
@@ -258,12 +284,16 @@ export {
   getStatus,
   isTerminalStatus,
   extractRejectionReason,
+  reconcileByClave,
   submitAndWait,
   withRetry,
   listComprobantes,
   getComprobante,
   lookupTaxpayer,
+  parseCallbackPayload,
+  validateCallbackPayload,
 } from "./api/index.js";
+export type { ParsedCallbackPayload, CallbackEnvelope } from "./api/index.js";
 export type {
   HistoryRequestOptions,
   HttpClientOptions,

@@ -6,6 +6,8 @@
  */
 
 // HTTP client
+export { fetchWithTimeout } from "./fetch-with-timeout.js";
+export type { FetchWithTimeoutOptions } from "./fetch-with-timeout.js";
 export { HttpClient } from "./http-client.js";
 export type { HttpClientOptions, RequestOptions, HttpResponse } from "./http-client.js";
 
@@ -19,6 +21,7 @@ export {
   getStatus,
   isTerminalStatus,
   extractRejectionReason,
+  reconcileByClave,
 } from "./submission.js";
 export type { ParsedStatusResponse } from "./submission.js";
 
@@ -36,6 +39,14 @@ export type { HistoryRequestOptions } from "./comprobantes.js";
 
 // Taxpayer lookup
 export { lookupTaxpayer } from "./taxpayer.js";
+
+// Callback parsing
+export {
+  parseCallbackPayload,
+  validateCallbackPayload,
+  CallbackEnvelopeSchema,
+} from "./callback.js";
+export type { ParsedCallbackPayload, CallbackEnvelope } from "./callback.js";
 export type { TaxpayerInfo, LookupTaxpayerOptions } from "./taxpayer.js";
 
 // Error codes
