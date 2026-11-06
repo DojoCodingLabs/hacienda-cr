@@ -1,6 +1,6 @@
 /** New current FE source plus retained rejected identity; never a cancellation NC. */
 import { z } from "zod";
-import { ExactFeInputSchema, type ExactFeCalculated } from "./exact-fe.js";
+import { ExactFeInputSchema, paymentOptionalFor, type ExactFeCalculated } from "./exact-fe.js";
 import { exactPartyName } from "./exact-party-name.js";
 import { IdentificacionSchema } from "./identification.js";
 import { compareNcInstants } from "./exact-nc-instant.js";
@@ -75,7 +75,15 @@ export const ExactFeReplacementInputSchema = z
       );
     // New named source API only: annex p. 56 requires positive supplied allocations.
     // Keep the older current FE and retained contracts unchanged.
-    next.medioPago.forEach((payment, index) => {
+    if (
+      !paymentOptionalFor(next.condicionVenta) &&
+      (!next.medioPago || next.medioPago.length === 0)
+    )
+      error(
+        ["replacement", "medioPago"],
+        "Payment allocation is required unless the sale condition is 02, 08 or 10",
+      );
+    (next.medioPago ?? []).forEach((payment: { totalMedioPago: string }, index: number) => {
       if (!/[1-9]/.test(payment.totalMedioPago))
         error(
           ["replacement", "medioPago", index, "totalMedioPago"],
