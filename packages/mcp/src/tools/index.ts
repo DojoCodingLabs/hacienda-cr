@@ -7,6 +7,7 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 
 import { registerCreateInvoiceTool } from "./create-invoice.js";
+import { registerCreateInvoiceExactTool } from "./create-invoice-exact.js";
 import {
   registerCheckStatusTool,
   registerListDocumentsTool,
@@ -19,6 +20,7 @@ import { registerLookupTaxpayerTool, registerDraftInvoiceTool } from "./lookup-t
  */
 export function registerTools(server: McpServer): void {
   registerCreateInvoiceTool(server);
+  registerCreateInvoiceExactTool(server);
   registerCheckStatusTool(server);
   registerListDocumentsTool(server);
   registerGetDocumentTool(server);

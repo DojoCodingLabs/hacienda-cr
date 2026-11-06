@@ -1,10 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { buildFacturaXml, validateDocumentXml } from "@dojocoding/hacienda-sdk";
+import { buildDecimalFacturaXml, validateDocumentXml } from "@dojocoding/hacienda-sdk";
 import { SIMPLE_INVOICE } from "../../../sdk/src/__fixtures__/invoices.js";
 import {
   DraftFacturaSchema,
   DraftMoneyTextSchema,
-  draftForXml,
+  draftToSource,
   hasDecimalTextMoney,
   validateDraftFactura,
   type DraftFactura,
@@ -30,7 +30,7 @@ function exactDraftFixture(): DraftFactura {
         precioUnitario: line.precioUnitario,
         montoTotal: line.montoTotal,
         subTotal: line.subTotal,
-        impuesto: [{ ...sourceTax, monto: line.impuestoMonto }],
+        impuesto: [{ ...sourceTax, tarifa: "13", monto: line.impuestoMonto }],
         impuestoNeto: line.impuestoNeto,
         montoTotalLinea: line.montoTotalLinea,
       },
@@ -79,12 +79,12 @@ describe("draft decimal-text document", () => {
 
   it("builds XML with the text amounts unchanged and passes the XSD", async () => {
     const draft = exactDraftFixture();
-    const xml = buildFacturaXml(draftForXml(draft));
+    const xml = buildDecimalFacturaXml(draftToSource(draft));
     const validation = await validateDocumentXml(xml);
 
-    expect(xml).toContain("<MontoTotal>100</MontoTotal>");
-    expect(xml).toContain("<MontoTotalLinea>113</MontoTotalLinea>");
-    expect(xml).toContain("<TotalComprobante>113</TotalComprobante>");
+    expect(xml).toContain("<MontoTotal>100.00000</MontoTotal>");
+    expect(xml).toContain("<MontoTotalLinea>113.00000</MontoTotalLinea>");
+    expect(xml).toContain("<TotalComprobante>113.00000</TotalComprobante>");
     expect(validation.valid).toBe(true);
   });
 
