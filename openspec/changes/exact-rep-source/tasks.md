@@ -4,7 +4,8 @@
 - [x] Record official reduced structure, tax-first recovery versus proportional
       hypothesis, chronology/eligibility/credit distinctions and retrieval limits.
 - [ ] Independently review the proposed full source contract and the current
-      official partial-payment XML/summary oracle; preserve unknowns explicitly.
+      official partial-payment XML/summary oracle; preserve unknowns explicitly,
+      including artifact URL/date/hash, expected fields and independent review.
 
 ## 2. Complete SDK producer
 
@@ -19,3 +20,5 @@
 
 - [ ] Bind current source/payment/tax policy and atomic cumulative authority with
       current capabilities, first bytes and owner marker/same-key recovery.
+- [ ] Complete isolated and actual local UI/Auth/Storage cases, then separately
+      authorized provider/oracle acceptance.
