@@ -9,3 +9,4 @@
 ## Separate gates
 
 - [ ] Integrate remaining #85 features before one reviewed cohesive linked release. 0.10.0 published this source (PR #94), but #85 (exact REP, recipient transport/correlation and broader cases) remains open.
+- [ ] Prove app original authority, reviewed age policy, concurrency/account effects and full ND journeys before activation; tracked in SDK #85 and facturador-dojo app issues, not implemented by this source change.
