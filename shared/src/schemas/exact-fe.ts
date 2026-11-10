@@ -113,7 +113,7 @@ export function classification(
 }
 export const ExactFeLineInputSchema = ExactFeLineBaseSchema.superRefine(classification);
 // Frozen read/output structure: historical allocations may contain zero.
-const RetainedExactFePaymentSchema = MedioPagoSchema.omit({ totalMedioPago: true })
+export const RetainedExactFePaymentSchema = MedioPagoSchema.omit({ totalMedioPago: true })
   .extend({ totalMedioPago: ExactMoneySchema })
   .strict()
   .superRefine((p, ctx) => {
@@ -132,7 +132,25 @@ export const ExactFePaymentSchema = RetainedExactFePaymentSchema.safeExtend({
     "Supplied payment allocation must be positive",
   ),
 });
-const ExactFeStructureSchema = FacturaElectronicaSchema.omit({
+/** Sale conditions that exempt a document from carrying MedioPago (Anexos v4.4:194). */
+export function paymentOptionalFor(condicionVenta: string): boolean {
+  return condicionVenta === "02" || condicionVenta === "08" || condicionVenta === "10";
+}
+/** Shared presence rule: at least one allocation unless the condition is exempt. */
+export function requirePaymentPresence(
+  condicionVenta: string,
+  medioPago: readonly unknown[] | undefined,
+  ctx: z.RefinementCtx,
+): void {
+  if (!paymentOptionalFor(condicionVenta) && (!medioPago || medioPago.length === 0)) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["medioPago"],
+      message: "Payment allocation is required unless the sale condition is 02, 08 or 10",
+    });
+  }
+}
+const ExactFeStructureBaseSchema = FacturaElectronicaSchema.omit({
   detalleServicio: true,
   resumenFactura: true,
   otrosCargos: true,
@@ -167,38 +185,50 @@ const ExactFeStructureSchema = FacturaElectronicaSchema.omit({
       .strict(),
     medioPago: z.array(RetainedExactFePaymentSchema).min(1).max(4),
   })
-  .strict()
-  .superRefine((input, ctx) => {
-    if (input.condicionVenta === "99" && !input.condicionVentaOtros)
-      ctx.addIssue({
-        code: "custom",
-        path: ["condicionVentaOtros"],
-        message: "Explicit other-sale text required",
-      });
-    if (
-      input.emisor.identificacion.tipo === "05" ||
-      input.receptor.identificacion?.tipo === "05" ||
-      input.receptor.otrasSenasExtranjero
-    )
-      ctx.addIssue({ code: "custom", message: "Foreign parties are outside ordinary domestic FE" });
-    if (
-      input.codigoTipoMoneda.codigoMoneda === "CRC" &&
-      !/^1(?:\.0{1,5})?$/.test(input.codigoTipoMoneda.tipoCambio)
-    )
-      ctx.addIssue({
-        code: "custom",
-        path: ["codigoTipoMoneda", "tipoCambio"],
-        message: "CRC exchange rate must equal1",
-      });
-    input.detalleServicio.forEach((line, index) => {
-      if (line.numeroLinea !== index + 1)
-        ctx.addIssue({
-          code: "custom",
-          path: ["detalleServicio", index, "numeroLinea"],
-          message: "Line numbers must be sequential",
-        });
+  .strict();
+export function refineExactFeStructure(
+  input: {
+    condicionVenta: string;
+    condicionVentaOtros?: string;
+    emisor: { identificacion: { tipo: string }; otrasSenasExtranjero?: unknown };
+    receptor: { identificacion?: { tipo: string }; otrasSenasExtranjero?: unknown };
+    codigoTipoMoneda: { codigoMoneda: string; tipoCambio: string };
+    detalleServicio: { numeroLinea: number }[];
+  },
+  ctx: z.RefinementCtx,
+): void {
+  if (input.condicionVenta === "99" && !input.condicionVentaOtros)
+    ctx.addIssue({
+      code: "custom",
+      path: ["condicionVentaOtros"],
+      message: "Explicit other-sale text required",
     });
+  if (
+    input.emisor.identificacion.tipo === "05" ||
+    input.receptor.identificacion?.tipo === "05" ||
+    input.receptor.otrasSenasExtranjero
+  )
+    ctx.addIssue({ code: "custom", message: "Foreign parties are outside ordinary domestic FE" });
+  if (
+    input.codigoTipoMoneda.codigoMoneda === "CRC" &&
+    !/^1(?:\.0{1,5})?$/.test(input.codigoTipoMoneda.tipoCambio)
+  )
+    ctx.addIssue({
+      code: "custom",
+      path: ["codigoTipoMoneda", "tipoCambio"],
+      message: "CRC exchange rate must equal1",
+    });
+  input.detalleServicio.forEach((line: { numeroLinea: number }, index: number) => {
+    if (line.numeroLinea !== index + 1)
+      ctx.addIssue({
+        code: "custom",
+        path: ["detalleServicio", index, "numeroLinea"],
+        message: "Line numbers must be sequential",
+      });
   });
+}
+export const ExactFeStructureSchema =
+  ExactFeStructureBaseSchema.superRefine(refineExactFeStructure);
 /** Read-only historical decimal-source shape for immutable 0.6–0.9 FE custody.
  * This preserves the former term acceptance, not current issuance readiness.
  * Callers must independently bind the exact reviewed producer and retained bytes.
@@ -213,37 +243,41 @@ export const RetainedExactFeInputSchema = ExactFeStructureSchema.superRefine((in
 });
 /** Official current annex p25: 02/10 require positive 1–5 digit days. Any present
  * term must also be positive. Preserve valid leading-zero lexemes verbatim. */
-export const ExactFeInputSchema = ExactFeStructureSchema.safeExtend({
-  emisor: ExactFeStructureSchema.shape.emisor.safeExtend({
-    nombre: exactPartyName(5, 100),
-    nombreComercial: exactPartyName(3, 80).optional(),
-  }),
-  receptor: ExactFeStructureSchema.shape.receptor.safeExtend({
-    nombre: exactPartyName(3, 100),
-    nombreComercial: exactPartyName(3, 80).optional(),
-  }),
-  medioPago: z.array(ExactFePaymentSchema).min(1).max(4),
-}).superRefine((input, ctx) => {
-  // Current official annex p70, Nota 5 footnotes 20/22/24: 09/11 are REP-only; 13 is FEC-only.
-  if (["09", "11", "13"].includes(input.condicionVenta))
-    ctx.addIssue({
-      code: "custom",
-      path: ["condicionVenta"],
-      message: "Sale condition belongs to another document family, not FE",
-    });
-  if (["02", "10"].includes(input.condicionVenta) && input.plazoCredito === undefined)
-    ctx.addIssue({
-      code: "custom",
-      path: ["plazoCredito"],
-      message: "Explicit positive credit days required for 02/10",
-    });
-  if (input.plazoCredito !== undefined && !/[1-9]/.test(input.plazoCredito))
-    ctx.addIssue({
-      code: "custom",
-      path: ["plazoCredito"],
-      message: "Credit days must be positive",
-    });
-});
+export const ExactFeInputSchema = ExactFeStructureBaseSchema.omit({ medioPago: true })
+  .safeExtend({
+    emisor: ExactFeStructureBaseSchema.shape.emisor.safeExtend({
+      nombre: exactPartyName(5, 100),
+      nombreComercial: exactPartyName(3, 80).optional(),
+    }),
+    receptor: ExactFeStructureBaseSchema.shape.receptor.safeExtend({
+      nombre: exactPartyName(3, 100),
+      nombreComercial: exactPartyName(3, 80).optional(),
+    }),
+    medioPago: z.array(ExactFePaymentSchema).max(4).optional(),
+  })
+  .superRefine(refineExactFeStructure)
+  .superRefine((input, ctx) => {
+    requirePaymentPresence(input.condicionVenta, input.medioPago, ctx);
+    // Current official annex p70, Nota 5 footnotes 20/22/24: 09/11 are REP-only; 13 is FEC-only.
+    if (["09", "11", "13"].includes(input.condicionVenta))
+      ctx.addIssue({
+        code: "custom",
+        path: ["condicionVenta"],
+        message: "Sale condition belongs to another document family, not FE",
+      });
+    if (["02", "10"].includes(input.condicionVenta) && input.plazoCredito === undefined)
+      ctx.addIssue({
+        code: "custom",
+        path: ["plazoCredito"],
+        message: "Explicit positive credit days required for 02/10",
+      });
+    if (input.plazoCredito !== undefined && !/[1-9]/.test(input.plazoCredito))
+      ctx.addIssue({
+        code: "custom",
+        path: ["plazoCredito"],
+        message: "Credit days must be positive",
+      });
+  });
 export const ExactFeCalculatedLineSchema = ExactFeLineBaseSchema.omit({
   descuento: true,
   impuesto: true,
@@ -290,7 +324,7 @@ export const ExactFeSummarySchema = z
         })
         .strict(),
     ]),
-    medioPago: z.array(RetainedExactFePaymentSchema).min(1).max(4),
+    medioPago: z.array(RetainedExactFePaymentSchema).max(4).optional(),
   })
   .strict();
 export const ExactFeCalculatedSchema = z
@@ -299,6 +333,17 @@ export const ExactFeCalculatedSchema = z
     resumenFactura: ExactFeSummarySchema,
   })
   .strict();
+/** Retained calculated summary re-asserts the historical non-empty allocation. */
+export const RetainedExactFeCalculatedSchema = ExactFeCalculatedSchema.superRefine((value, ctx) => {
+  if (!value.resumenFactura.medioPago || value.resumenFactura.medioPago.length === 0) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["resumenFactura", "medioPago"],
+      message: "Retained payment allocation is required",
+    });
+  }
+});
 export type RetainedExactFeInput = z.infer<typeof RetainedExactFeInputSchema>;
 export type ExactFeInput = z.infer<typeof ExactFeInputSchema>;
 export type ExactFeCalculated = z.infer<typeof ExactFeCalculatedSchema>;
+export type RetainedExactFeCalculated = z.infer<typeof RetainedExactFeCalculatedSchema>;

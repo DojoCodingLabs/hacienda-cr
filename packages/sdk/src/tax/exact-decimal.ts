@@ -152,3 +152,52 @@ export function ratio(
   if (factor >= 0) return round(product * 10n ** BigInt(factor), denominator);
   return round(product, denominator * 10n ** BigInt(-factor));
 }
+
+/** Internal sequential discount application for current exact APIs. Returns the
+ * rounded per-discount amounts and the remaining base. Throws when an amount
+ * is negative or consumes the whole remaining base (amount >= base). Not
+ * re-exported by tax/index.ts. */
+export interface ExactDiscountEntry {
+  porcentaje?: string;
+  montoDescuento?: string;
+}
+export function applyDiscounts(
+  gross: bigint,
+  descuentos: readonly ExactDiscountEntry[],
+  guardMessage = "Discount amount must be strictly less than the remaining base",
+): { amounts: bigint[]; remaining: bigint } {
+  let base = gross;
+  const amounts: bigint[] = [];
+  for (const d of descuentos) {
+    const amount =
+      d.porcentaje !== undefined
+        ? round(base * scaled(d.porcentaje, 5), 100n * SCALE)
+        : scaled(d.montoDescuento ?? "0", 5);
+    if (amount < 0n || amount >= base) throw new RangeError(guardMessage);
+    amounts.push(amount);
+    base -= amount;
+  }
+  return { amounts, remaining: base };
+}
+
+/** Frozen historical discount rule for the read-only retained calculator:
+ * every percentage is computed against the constant gross base. Kept separate
+ * so historical retained math does not change with the current cascade. */
+export function applyFrozenGrossDiscounts(
+  gross: bigint,
+  descuentos: readonly ExactDiscountEntry[],
+  guardMessage = "Discount amount must be strictly less than the remaining base",
+): { amounts: bigint[]; remaining: bigint } {
+  let base = gross;
+  const amounts: bigint[] = [];
+  for (const d of descuentos) {
+    const amount =
+      d.porcentaje !== undefined
+        ? round(gross * scaled(d.porcentaje, 5), 100n * SCALE)
+        : scaled(d.montoDescuento ?? "0", 5);
+    if (amount < 0n || amount >= gross) throw new RangeError(guardMessage);
+    amounts.push(amount);
+    base -= amount;
+  }
+  return { amounts, remaining: base };
+}
