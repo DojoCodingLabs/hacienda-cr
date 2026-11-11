@@ -13,6 +13,7 @@ import type {
   ExonerationType,
   ReferenceCode,
   ReferenceDocType,
+  RepReferenceCode,
   UnitOfMeasure,
 } from "../constants/index.js";
 import type {
@@ -305,6 +306,15 @@ export interface InformacionReferencia {
 
   /** Description of the reason (max 180 chars). Optional in v4.4. */
   razon?: string;
+}
+
+/** Reference to another document for Recibo Electronico de Pago.
+ *
+ * Same shape as InformacionReferencia but admits reason code "17" (pago de comprobante)
+ * via RepReferenceCode. `codigo` is optional (XSD: `Codigo minOccurs="0"`).
+ */
+export interface RepInformacionReferencia extends Omit<InformacionReferencia, "codigo"> {
+  codigo?: RepReferenceCode;
 }
 
 /** Other charges not tied to line items (OtrosCargos, v4.4 structure). */
