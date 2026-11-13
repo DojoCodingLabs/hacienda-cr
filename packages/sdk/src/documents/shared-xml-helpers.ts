@@ -12,7 +12,6 @@ import type {
   Receptor,
   Impuesto,
   Descuento,
-  LineaDetalle,
   CodigoComercial,
   ResumenFactura,
   OtroCargo,
@@ -20,7 +19,139 @@ import type {
   OtroContenido,
   MedioPago,
   Identificacion,
+  Exoneracion,
+  DatosImpuestoEspecifico,
+  TotalDesgloseImpuesto,
 } from "@dojocoding/hacienda-shared";
+
+/** XML money is either the legacy number or canonical decimal text. */
+export type XmlMoney = number | string;
+
+/** Tax calculation data in either representation. */
+export type XmlDatosImpuestoEspecifico = Omit<
+  DatosImpuestoEspecifico,
+  "cantidadUnidadMedida" | "porcentaje" | "proporcion" | "volumenUnidadConsumo" | "impuestoUnidad"
+> & {
+  cantidadUnidadMedida: XmlMoney;
+  porcentaje?: XmlMoney;
+  proporcion?: XmlMoney;
+  volumenUnidadConsumo?: XmlMoney;
+  impuestoUnidad: XmlMoney;
+};
+
+/** Exoneration in either representation. */
+export type XmlExoneracion = Omit<Exoneracion, "tarifaExonerada" | "montoExoneracion"> & {
+  tarifaExonerada: XmlMoney;
+  montoExoneracion: XmlMoney;
+};
+
+/** Tax in either representation. */
+export type XmlImpuesto = Omit<
+  Impuesto,
+  "tarifa" | "factorCalculoIVA" | "monto" | "datosImpuestoEspecifico" | "exoneracion"
+> & {
+  tarifa?: XmlMoney;
+  factorCalculoIVA?: XmlMoney;
+  monto: XmlMoney;
+  datosImpuestoEspecifico?: XmlDatosImpuestoEspecifico;
+  exoneracion?: XmlExoneracion;
+};
+
+/** Discount in either representation. */
+export type XmlDescuento = Omit<Descuento, "montoDescuento"> & {
+  montoDescuento: XmlMoney;
+};
+
+/** Line item in either representation; quantity fields are absent in REP. */
+export interface XmlLineaDetalle {
+  numeroLinea: number;
+  partidaArancelaria?: string;
+  codigoCabys?: string;
+  codigoComercial?: CodigoComercial[];
+  cantidad?: XmlMoney;
+  unidadMedida?: string;
+  tipoTransaccion?: string;
+  unidadMedidaComercial?: string;
+  detalle: string;
+  numeroVINoSerie?: string[];
+  precioUnitario?: XmlMoney;
+  montoTotal: XmlMoney;
+  descuento?: XmlDescuento[];
+  subTotal: XmlMoney;
+  baseImponible?: XmlMoney;
+  impuesto?: XmlImpuesto[];
+  impuestoAsumidoEmisorFabrica?: XmlMoney;
+  impuestoNeto?: XmlMoney;
+  montoTotalLinea: XmlMoney;
+}
+
+/** Payment allocation in either representation. */
+export type XmlMedioPago = Omit<MedioPago, "totalMedioPago"> & {
+  totalMedioPago: XmlMoney;
+};
+
+/** Tax breakdown in either representation. */
+export type XmlTotalDesgloseImpuesto = Omit<TotalDesgloseImpuesto, "totalMontoImpuesto"> & {
+  totalMontoImpuesto: XmlMoney;
+};
+
+/** Invoice summary in either representation. */
+export type XmlResumenFactura = Omit<
+  ResumenFactura,
+  | "codigoTipoMoneda"
+  | "totalServGravados"
+  | "totalServExentos"
+  | "totalServExonerado"
+  | "totalServNoSujeto"
+  | "totalMercanciasGravadas"
+  | "totalMercanciasExentas"
+  | "totalMercExonerada"
+  | "totalMercNoSujeta"
+  | "totalGravado"
+  | "totalExento"
+  | "totalExonerado"
+  | "totalNoSujeto"
+  | "totalVenta"
+  | "totalDescuentos"
+  | "totalVentaNeta"
+  | "totalDesgloseImpuesto"
+  | "totalImpuesto"
+  | "totalImpAsumEmisorFabrica"
+  | "totalIVADevuelto"
+  | "totalOtrosCargos"
+  | "medioPago"
+  | "totalComprobante"
+> & {
+  codigoTipoMoneda?: { codigoMoneda: string; tipoCambio: XmlMoney };
+  totalServGravados?: XmlMoney;
+  totalServExentos?: XmlMoney;
+  totalServExonerado?: XmlMoney;
+  totalServNoSujeto?: XmlMoney;
+  totalMercanciasGravadas?: XmlMoney;
+  totalMercanciasExentas?: XmlMoney;
+  totalMercExonerada?: XmlMoney;
+  totalMercNoSujeta?: XmlMoney;
+  totalGravado?: XmlMoney;
+  totalExento?: XmlMoney;
+  totalExonerado?: XmlMoney;
+  totalNoSujeto?: XmlMoney;
+  totalVenta: XmlMoney;
+  totalDescuentos?: XmlMoney;
+  totalVentaNeta: XmlMoney;
+  totalDesgloseImpuesto?: XmlTotalDesgloseImpuesto[];
+  totalImpuesto?: XmlMoney;
+  totalImpAsumEmisorFabrica?: XmlMoney;
+  totalIVADevuelto?: XmlMoney;
+  totalOtrosCargos?: XmlMoney;
+  medioPago?: XmlMedioPago[];
+  totalComprobante: XmlMoney;
+};
+
+/** Other charge in either representation. */
+export type XmlOtroCargo = Omit<OtroCargo, "porcentaje" | "montoCargo"> & {
+  porcentaje?: XmlMoney;
+  montoCargo: XmlMoney;
+};
 
 // ---------------------------------------------------------------------------
 // Per-document structural variants (from the v4.4 XSDs)
@@ -256,7 +387,7 @@ export function buildReceptorXml(receptor: Receptor, minimal = false): Record<st
  * Codigo, CodigoImpuestoOTRO?, CodigoTarifaIVA?, Tarifa?,
  * FactorCalculoIVA?, Monto, Exoneracion?).
  */
-export function buildImpuestoXml(impuesto: Impuesto): Record<string, unknown> {
+export function buildImpuestoXml(impuesto: XmlImpuesto): Record<string, unknown> {
   const result: Record<string, unknown> = {
     Codigo: impuesto.codigo,
   };
@@ -314,7 +445,7 @@ export function buildImpuestoXml(impuesto: Impuesto): Record<string, unknown> {
  * Build the Descuento (discount) XML structure (v4.4 order:
  * MontoDescuento, CodigoDescuento, CodigoDescuentoOTRO?, NaturalezaDescuento?).
  */
-export function buildDescuentoXml(descuento: Descuento): Record<string, unknown> {
+export function buildDescuentoXml(descuento: XmlDescuento): Record<string, unknown> {
   return {
     MontoDescuento: descuento.montoDescuento,
     CodigoDescuento: descuento.codigoDescuento,
@@ -331,7 +462,7 @@ export function buildDescuentoXml(descuento: Descuento): Record<string, unknown>
  * Build a single LineaDetalle XML structure per the v4.4 element order.
  */
 export function buildLineaDetalleXml(
-  linea: LineaDetalle,
+  linea: XmlLineaDetalle,
   variant: DocumentVariant = DOCUMENT_VARIANTS.FacturaElectronica,
 ): Record<string, unknown> {
   const result: Record<string, unknown> = {
@@ -379,7 +510,7 @@ export function buildLineaDetalleXml(
   result.MontoTotal = linea.montoTotal;
 
   if (variant.lineaCompleta && linea.descuento && linea.descuento.length > 0) {
-    result.Descuento = linea.descuento.map((d: Descuento) => buildDescuentoXml(d));
+    result.Descuento = linea.descuento.map((d) => buildDescuentoXml(d));
   }
 
   result.SubTotal = linea.subTotal;
@@ -389,7 +520,7 @@ export function buildLineaDetalleXml(
   }
 
   if (linea.impuesto && linea.impuesto.length > 0) {
-    result.Impuesto = linea.impuesto.map((t: Impuesto) => buildImpuestoXml(t));
+    result.Impuesto = linea.impuesto.map((t) => buildImpuestoXml(t));
   }
 
   if (variant.lineaConImpuestoAsumido === "required") {
@@ -416,7 +547,7 @@ export function buildLineaDetalleXml(
  * CodigoTipoMoneda is required by the XSD; defaults to CRC / 1 when the
  * input omits it.
  */
-export function buildResumenFacturaXml(resumen: ResumenFactura): Record<string, unknown> {
+export function buildResumenFacturaXml(resumen: XmlResumenFactura): Record<string, unknown> {
   const result: Record<string, unknown> = {
     CodigoTipoMoneda: {
       CodigoMoneda: resumen.codigoTipoMoneda?.codigoMoneda ?? "CRC",
@@ -424,7 +555,7 @@ export function buildResumenFacturaXml(resumen: ResumenFactura): Record<string, 
     },
   };
 
-  const optionalTotal = (key: string, value: number | undefined): void => {
+  const optionalTotal = (key: string, value: XmlMoney | undefined): void => {
     if (value !== undefined) {
       result[key] = value;
     }
@@ -461,7 +592,7 @@ export function buildResumenFacturaXml(resumen: ResumenFactura): Record<string, 
   optionalTotal("TotalOtrosCargos", resumen.totalOtrosCargos);
 
   if (resumen.medioPago && resumen.medioPago.length > 0) {
-    result.MedioPago = resumen.medioPago.map((m: MedioPago) => ({
+    result.MedioPago = resumen.medioPago.map((m) => ({
       TipoMedioPago: m.tipoMedioPago,
       ...(m.medioPagoOtros ? { MedioPagoOtros: m.medioPagoOtros } : {}),
       TotalMedioPago: m.totalMedioPago,
@@ -478,8 +609,8 @@ export function buildResumenFacturaXml(resumen: ResumenFactura): Record<string, 
  * with no inner wrapper; order: TipoDocumentoOC, TipoDocumentoOTROS?,
  * IdentificacionTercero?, NombreTercero?, Detalle, PorcentajeOC?, MontoCargo).
  */
-export function buildOtrosCargosXml(otrosCargos: OtroCargo[]): Record<string, unknown>[] {
-  return otrosCargos.map((c: OtroCargo) => ({
+export function buildOtrosCargosXml(otrosCargos: XmlOtroCargo[]): Record<string, unknown>[] {
+  return otrosCargos.map((c) => ({
     TipoDocumentoOC: c.tipoDocumento,
     ...(c.tipoDocumentoOtros ? { TipoDocumentoOTROS: c.tipoDocumentoOtros } : {}),
     ...(c.identificacionTercero
@@ -539,9 +670,9 @@ export interface CommonDocumentFields {
   condicionVenta: string;
   condicionVentaOtros?: string;
   plazoCredito?: string;
-  detalleServicio: LineaDetalle[];
-  otrosCargos?: OtroCargo[];
-  resumenFactura: ResumenFactura;
+  detalleServicio: XmlLineaDetalle[];
+  otrosCargos?: XmlOtroCargo[];
+  resumenFactura: XmlResumenFactura;
   informacionReferencia?: InformacionReferencia[];
   otros?: OtroContenido[];
 }
@@ -615,9 +746,7 @@ export function buildStandardDocumentBody(
   }
 
   data.DetalleServicio = {
-    LineaDetalle: input.detalleServicio.map((line: LineaDetalle) =>
-      buildLineaDetalleXml(line, variant),
-    ),
+    LineaDetalle: input.detalleServicio.map((line) => buildLineaDetalleXml(line, variant)),
   };
 
   if (variant.cuerpoCompleto && input.otrosCargos && input.otrosCargos.length > 0) {
