@@ -12,6 +12,20 @@ npm install @dojocoding/hacienda-sdk
 
 Requires **Node.js 22+** (uses native `fetch` and `crypto.subtle`).
 
+### PKCS#12 credentials
+
+`loadP12` and `signXml` need a PKCS#12 parser, which is an **optional peer
+dependency**. Install it only if you load `.p12` files:
+
+```bash
+npm install node-forge
+```
+
+Without it, the package installs, imports and serves every other API; only
+`.p12` loading fails, with a `SigningError` that names the missing package and
+the install command. This keeps the parser and its open advisory out of
+consumers that never sign.
+
 ## Quick Start
 
 ```ts
