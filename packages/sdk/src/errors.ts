@@ -11,6 +11,8 @@
  * @module errors
  */
 
+import { sanitizeLogString, redactSecrets } from "./logging/redaction.js";
+
 // ---------------------------------------------------------------------------
 // Error codes
 // ---------------------------------------------------------------------------
@@ -60,7 +62,7 @@ export class HaciendaError extends Error {
   readonly code: HaciendaErrorCode;
 
   constructor(code: HaciendaErrorCode, message: string, cause?: unknown) {
-    super(message, { cause });
+    super(sanitizeLogString(message), { cause });
     this.name = "HaciendaError";
     this.code = code;
   }
@@ -82,7 +84,7 @@ export class ValidationError extends HaciendaError {
   constructor(message: string, details?: unknown, cause?: unknown) {
     super(HaciendaErrorCode.VALIDATION_FAILED, message, cause);
     this.name = "ValidationError";
-    this.details = details;
+    this.details = redactSecrets(details);
   }
 }
 
@@ -102,7 +104,7 @@ export class ApiError extends HaciendaError {
     super(HaciendaErrorCode.API_ERROR, message, cause);
     this.name = "ApiError";
     this.statusCode = statusCode;
-    this.responseBody = responseBody;
+    this.responseBody = redactSecrets(responseBody);
   }
 }
 

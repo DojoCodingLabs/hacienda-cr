@@ -4,7 +4,7 @@
  */
 
 import { z } from "zod";
-import { REFERENCE_CODES, REFERENCE_DOC_TYPES } from "../constants/index.js";
+import { REFERENCE_CODES, REFERENCE_DOC_TYPES, REP_REFERENCE_CODES } from "../constants/index.js";
 import { CURRENCY_CODES, OTHER_CHARGE_TYPES } from "../generated/index.js";
 import {
   TaxCodeSchema,
@@ -27,28 +27,122 @@ export const CodigoTipoMonedaSchema = z.object({
 });
 
 /** Schema for reference to another document (InformacionReferencia), v4.4. */
-export const InformacionReferenciaSchema = z.object({
-  /** Referenced document type code (TipoDocIR). */
-  tipoDoc: z.enum(REFERENCE_DOC_TYPES),
+export const InformacionReferenciaObject = z
+  .object({
+    /** Referenced document type code (TipoDocIR). */
+    tipoDoc: z.enum(REFERENCE_DOC_TYPES),
 
-  /** Free-text document type. Required when tipoDoc is "99" (5-100 chars). */
-  tipoDocOtros: z.string().min(5).max(100).optional(),
+    /** Free-text document type. Required when tipoDoc is "99" (5-100 chars). */
+    tipoDocOtros: z.string().min(5).max(100).optional(),
 
-  /** Referenced document clave or number. Optional, max 50 chars. */
-  numero: z.string().min(1).max(50).optional(),
+    /** Referenced document clave or number. Optional, max 50 chars. */
+    numero: z.string().min(1).max(50).optional(),
 
-  /** Date of the referenced document (ISO 8601) — emitted as FechaEmisionIR. */
-  fechaEmision: z.string().min(1),
+    /** Date of the referenced document (ISO 8601) — emitted as FechaEmisionIR. */
+    fechaEmision: z.string().min(1),
 
-  /** Reference reason code. Optional in v4.4. */
-  codigo: z.enum(REFERENCE_CODES).optional(),
+    /** Reference reason code. Optional in v4.4. */
+    codigo: z.enum(REFERENCE_CODES).optional(),
 
-  /** Free-text reason code. Required when codigo is "99" (5-100 chars). */
-  codigoOtros: z.string().min(5).max(100).optional(),
+    /** Free-text reason code. Required when codigo is "99" (5-100 chars). */
+    codigoOtros: z.string().min(5).max(100).optional(),
 
-  /** Description of the reason. Optional, max 180 chars. */
-  razon: z.string().min(1).max(180).optional(),
-});
+    /** Description of the reason. Optional, max 180 chars. */
+    razon: z.string().min(1).max(180).optional(),
+  })
+  .strict();
+
+/**
+ * Conditional reference rules (v4.4 XSD):
+ * - tipoDoc === "99"  ⇔  tipoDocOtros required (5-100 chars).
+ * - codigo === "99"   ⇔  codigoOtros required (5-100 chars).
+ *
+ * `codigo` is optional for every `tipoDoc` (XSD: `Codigo minOccurs="0"`).
+ * The Anexos 2026 and the vendored XSD do not document a conditional
+ * obligation for `codigo`; the rule that made it mandatory except for
+ * `tipoDoc === "13"` (facturación mes vencido) was removed because it
+ * over-restricted documents valid under the XSD oracle.
+ *
+ * The parameter type is intentionally wide (`codigo?: string`) so the same
+ * refinement can be shared by the base schema (`ReferenceCode`, no "17")
+ * and the REP variant (`RepReferenceCode`, includes "17").
+ */
+interface RefineReferenceInput {
+  tipoDoc?: string;
+  tipoDocOtros?: string | undefined;
+  numero?: string | undefined;
+  fechaEmision: string;
+  codigo?: string | undefined;
+  codigoOtros?: string | undefined;
+  razon?: string | undefined;
+}
+
+function refineReferenceConditions(ref: RefineReferenceInput, ctx: z.RefinementCtx): void {
+  if (ref.tipoDoc === "99" && ref.tipoDocOtros === undefined) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["tipoDocOtros"],
+      message: "tipoDocOtros is required when tipoDoc is 99",
+    });
+  }
+  if (ref.tipoDocOtros !== undefined && ref.tipoDoc !== "99") {
+    ctx.addIssue({
+      code: "custom",
+      path: ["tipoDocOtros"],
+      message: "tipoDocOtros is only allowed when tipoDoc is 99",
+    });
+  }
+  if (ref.codigo === "99" && ref.codigoOtros === undefined) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["codigoOtros"],
+      message: "codigoOtros is required when codigo is 99",
+    });
+  }
+  if (ref.codigoOtros !== undefined && ref.codigo !== "99") {
+    ctx.addIssue({
+      code: "custom",
+      path: ["codigoOtros"],
+      message: "codigoOtros is only allowed when codigo is 99",
+    });
+  }
+}
+
+/** Schema for reference to another document (InformacionReferencia), v4.4. */
+export const InformacionReferenciaSchema =
+  InformacionReferenciaObject.superRefine(refineReferenceConditions);
+
+/** Variant of the reference schema accepted by the Recibo Electronico de Pago XSD.
+ *
+ * The REP XSD admits all `TipoDocReferenciaType` values (shared with the base)
+ * and its `CodigoReferenciaType` additionally admits code "17" (pago de comprobante).
+ * `codigo` is optional here as in the base (XSD: `Codigo minOccurs="0"`).
+ */
+export const RepInformacionReferenciaSchema = z
+  .object({
+    /** Referenced document type code (TipoDocIR). */
+    tipoDoc: z.enum(REFERENCE_DOC_TYPES),
+
+    /** Free-text document type. Required when tipoDoc is "99" (5-100 chars). */
+    tipoDocOtros: z.string().min(5).max(100).optional(),
+
+    /** Referenced document clave or number. Optional, max 50 chars. */
+    numero: z.string().min(1).max(50).optional(),
+
+    /** Date of the referenced document (ISO 8601) — emitted as FechaEmisionIR. */
+    fechaEmision: z.string().min(1),
+
+    /** Reference reason code. Optional in v4.4; "17" only valid for REP. */
+    codigo: z.enum(REP_REFERENCE_CODES).optional(),
+
+    /** Free-text reason code. Required when codigo is "99" (5-100 chars). */
+    codigoOtros: z.string().min(5).max(100).optional(),
+
+    /** Description of the reason. Optional, max 180 chars. */
+    razon: z.string().min(1).max(180).optional(),
+  })
+  .strict()
+  .superRefine(refineReferenceConditions);
 
 /** Schema for other charges (OtrosCargos), v4.4. */
 export const OtroCargoSchema = z.object({

@@ -7,6 +7,7 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 
 import { registerFacturaSchemaResource } from "./factura-schema.js";
+import { registerFacturaExactSchemaResource } from "./factura-exact-schema.js";
 import { registerDocumentTypesResource } from "./document-types.js";
 import { registerTaxCodesResource } from "./tax-codes.js";
 import { registerIdTypesResource } from "./id-types.js";
@@ -16,6 +17,7 @@ import { registerIdTypesResource } from "./id-types.js";
  */
 export function registerResources(server: McpServer): void {
   registerFacturaSchemaResource(server);
+  registerFacturaExactSchemaResource(server);
   registerDocumentTypesResource(server);
   registerTaxCodesResource(server);
   registerIdTypesResource(server);

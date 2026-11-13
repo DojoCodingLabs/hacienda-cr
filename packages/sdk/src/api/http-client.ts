@@ -20,6 +20,7 @@ import { getHttpStatusDescription } from "./error-codes.js";
 import { RateLimiter } from "./rate-limiter.js";
 import type { RateLimiterOptions } from "./rate-limiter.js";
 import { withRetry } from "./retry.js";
+import { fetchWithTimeout } from "./fetch-with-timeout.js";
 import type { RetryOptions } from "./retry.js";
 
 // ---------------------------------------------------------------------------
@@ -209,13 +210,20 @@ export class HttpClient {
       let response: Response;
       try {
         const doFetch = () =>
-          this.fetchFn(url, {
-            method: options.method,
-            signal: options.signal,
-            redirect: "error",
-            headers,
-            body: options.body !== undefined ? JSON.stringify(options.body) : undefined,
-          });
+          fetchWithTimeout(
+            url,
+            {
+              method: options.method,
+              signal: options.signal,
+              headers,
+              body: options.body !== undefined ? JSON.stringify(options.body) : undefined,
+            },
+            {
+              timeoutMs: this.requestTimeoutMs,
+              fetchFn: this.fetchFn,
+              redirect: "error",
+            },
+          );
 
         response = this.rateLimiter
           ? await this.rateLimiter.execute(doFetch, options.signal)
