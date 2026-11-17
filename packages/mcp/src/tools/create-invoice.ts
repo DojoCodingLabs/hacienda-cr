@@ -129,7 +129,7 @@ const UbicacionInputSchema = z.object({
     .describe("Address details (5-250 chars, required in v4.4)"),
 });
 
-const EmisorInputSchema = z.object({
+export const EmisorInputSchema = z.object({
   telefono: TelefonoSchema.optional(),
   nombre: z.string().describe("Issuer name (max 100 chars)"),
   identificacion: IdentificacionInputSchema.describe("Taxpayer identification"),
@@ -138,7 +138,7 @@ const EmisorInputSchema = z.object({
   correoElectronico: z.string().describe("Email address"),
 });
 
-const ReceptorInputSchema = z.object({
+export const ReceptorInputSchema = z.object({
   telefono: TelefonoSchema.optional(),
   nombre: z.string().describe("Receiver name (max 100 chars)"),
   identificacion: IdentificacionInputSchema.optional().describe("Taxpayer identification"),
