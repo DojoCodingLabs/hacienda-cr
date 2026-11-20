@@ -15,7 +15,23 @@ import {
   signXml,
   submitAndWait,
   getStatus,
+  buildExactFacturaXml,
+  buildExactTiqueteXml,
+  buildExactNotaCreditoTotalXml,
+  buildExactNotaCreditoPartialXml,
+  buildExactNotaDebitoXml,
+  buildExactFacturaCompraXml,
+  buildExactMensajeReceptorXml,
 } from "../packages/sdk/dist/index.js";
+import {
+  ExactFeInputSchema,
+  ExactTeInputSchema,
+  ExactNcTotalInputSchema,
+  ExactNcPartialInputSchema,
+  ExactNdInputSchema,
+  ExactFecInputSchema,
+  ExactRecipientMessageInputSchema,
+} from "../shared/dist/index.js";
 
 const [command, runPath, ...extra] = process.argv.slice(2);
 const environment = getEnvironmentConfig(Environment.Sandbox);
@@ -112,25 +128,121 @@ async function authenticatedClient() {
   });
 }
 
-async function invoiceRun() {
+const FAMILY_SPECS = {
+  FE: {
+    schema: ExactFeInputSchema,
+    builder: buildExactFacturaXml,
+    emisor: (input) => input.emisor,
+    receptor: (input) => input.receptor,
+    fecha: (input) => input.fechaEmision,
+    clave: (input) => input.clave,
+  },
+  TE: {
+    schema: ExactTeInputSchema,
+    builder: buildExactTiqueteXml,
+    emisor: (input) => input.emisor,
+    receptor: (input) => input.receptor,
+    fecha: (input) => input.fechaEmision,
+    clave: (input) => input.clave,
+  },
+  NC: {
+    schema: ExactNcTotalInputSchema,
+    builder: buildExactNotaCreditoTotalXml,
+    emisor: (input) => input.original.emisor,
+    receptor: (input) => input.original.receptor,
+    fecha: (input) => input.fechaEmision,
+    clave: (input) => input.clave,
+  },
+  NCP: {
+    schema: ExactNcPartialInputSchema,
+    builder: buildExactNotaCreditoPartialXml,
+    emisor: (input) => input.original.emisor,
+    receptor: (input) => input.original.receptor,
+    fecha: (input) => input.fechaEmision,
+    clave: (input) => input.clave,
+  },
+  ND: {
+    schema: ExactNdInputSchema,
+    builder: buildExactNotaDebitoXml,
+    emisor: (input) => input.original.emisor,
+    receptor: (input) => input.original.receptor,
+    fecha: (input) => input.fechaEmision,
+    clave: (input) => input.clave,
+  },
+  FEC: {
+    schema: ExactFecInputSchema,
+    builder: buildExactFacturaCompraXml,
+    emisor: (input) => input.emisor,
+    receptor: (input) => input.receptor,
+    fecha: (input) => input.fechaEmision,
+    clave: (input) => input.clave,
+  },
+};
+
+async function documentRun() {
   if (!runPath) throw new Error("RUN_DIRECTORY_REQUIRED");
   const directory = await realpath(resolve(runPath));
   const local = relative(repository, directory);
   if (!local.startsWith("..") && local !== "..")
     throw new Error("ARTIFACTS_MUST_BE_OUTSIDE_REPOSITORY");
   activeDirectory = directory;
-  const serialized = await readFile(join(directory, "invoice.json"), "utf8");
-  const invoice = JSON.parse(serialized);
-  const result = validateFacturaInput(invoice);
-  if (!result.valid) throw new Error("INVALID_INVOICE_INPUT");
-  if (
-    invoice.clave.slice(9, 21) !== invoice.emisor.identificacion.numero.padStart(12, "0") ||
-    invoice.clave.slice(21, 41) !== invoice.numeroConsecutivo
-  )
-    throw new Error("IDENTITY_MISMATCH");
-  const xml = buildFacturaXml(invoice);
+
+  // Prefer document.json (multi-family); fall back to legacy invoice.json (FE).
+  let serialized;
+  let family;
+  let input;
+  let legacy = false;
+  try {
+    serialized = await readFile(join(directory, "document.json"), "utf8");
+    const doc = JSON.parse(serialized);
+    family = String(doc.family || doc.documentFamily || doc.type || "").toUpperCase();
+    input = doc.input !== undefined ? doc.input : doc;
+    if (!family) throw new Error("MISSING_FAMILY");
+  } catch (error) {
+    if (error && error.code !== "ENOENT") throw error;
+    serialized = await readFile(join(directory, "invoice.json"), "utf8");
+    const invoice = JSON.parse(serialized);
+    const result = validateFacturaInput(invoice);
+    if (!result.valid) throw new Error("INVALID_INVOICE_INPUT");
+    if (
+      invoice.clave.slice(9, 21) !== invoice.emisor.identificacion.numero.padStart(12, "0") ||
+      invoice.clave.slice(21, 41) !== invoice.numeroConsecutivo
+    )
+      throw new Error("IDENTITY_MISMATCH");
+    const xml = buildFacturaXml(invoice);
+    if (!(await validateDocumentXml(xml)).valid) throw new Error("INVALID_UNSIGNED_XSD");
+    return {
+      directory,
+      family: "FE",
+      legacy: true,
+      invoice,
+      xml,
+      invoiceHash: digest(serialized),
+    };
+  }
+
+  const spec = FAMILY_SPECS[family];
+  if (!spec) throw new Error("UNKNOWN_FAMILY");
+  const parsed = spec.schema.safeParse(input);
+  if (!parsed.success) throw new Error("INVALID_DOCUMENT_INPUT");
+  const validated = parsed.data;
+  const xml = spec.builder(validated);
   if (!(await validateDocumentXml(xml)).valid) throw new Error("INVALID_UNSIGNED_XSD");
-  return { directory, invoice, xml, invoiceHash: digest(serialized) };
+  const clave = spec.clave(validated);
+  const normalizedInvoice = {
+    clave,
+    fechaEmision: spec.fecha(validated),
+    emisor: spec.emisor(validated),
+    receptor: spec.receptor(validated),
+  };
+  return {
+    directory,
+    family,
+    legacy: false,
+    invoice: normalizedInvoice,
+    xml,
+    invoiceHash: digest(serialized),
+  };
 }
 
 async function main() {
@@ -150,7 +262,7 @@ async function main() {
     }
     return;
   }
-  const { directory, invoice, xml, invoiceHash } = await invoiceRun();
+  const { directory, family, invoice, xml, invoiceHash } = await documentRun();
   const identityHash = digest(invoice.clave);
   if (command === "sign") {
     const signed = await signXml(

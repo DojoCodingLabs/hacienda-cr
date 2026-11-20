@@ -12,6 +12,8 @@ XML projection before adding a complete named contract.
   chronology, arithmetic, compatibility and acceptance requirements.
 - Require reviewed current monetary evidence before implementing a public producer.
   This change is research/design only; no source, package or fiscal activation.
+- Declare that this change blocks any real sandbox REP submission until the
+  partial-payment XML oracle is independently reviewed.
 
 ## Capabilities
 
@@ -27,3 +29,11 @@ None in this research checkpoint.
 
 SDK #85, Facturador Dojo fiscal/payment/tax-register boundaries and eventual coherent
 linked release. Legacy REP and published current/retained FE/NC are unchanged.
+
+Archive gate: this change must not be archived as implemented behavior. It is a
+research/design checkpoint; archiving it would create a main spec describing a
+producer that does not exist.
+
+Cross-change impact: `real-sandbox-acceptance-nc-nd-fec-rep` must not run a REP
+POST until the oracle in this change is resolved. Its design claim that the SDK
+already has exact source contracts for REP is incorrect and must be corrected.
