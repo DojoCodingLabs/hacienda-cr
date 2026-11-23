@@ -6,6 +6,8 @@
  */
 
 // HTTP client
+export { fetchWithTimeout } from "./fetch-with-timeout.js";
+export type { FetchWithTimeoutOptions } from "./fetch-with-timeout.js";
 export { HttpClient } from "./http-client.js";
 export type { HttpClientOptions, RequestOptions, HttpResponse } from "./http-client.js";
 
