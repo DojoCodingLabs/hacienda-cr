@@ -3,7 +3,14 @@ import { bootstrapClient, loadConfig } from "@dojocoding/hacienda-sdk";
 import type { BootstrapResult, ResolvedConfig } from "@dojocoding/hacienda-sdk";
 import { clearClientCache, createMcpApiClient } from "./api-client.js";
 
-vi.mock("@dojocoding/hacienda-sdk", () => ({ bootstrapClient: vi.fn(), loadConfig: vi.fn() }));
+vi.mock("@dojocoding/hacienda-sdk", async (importOriginal) => {
+  const actual = await importOriginal();
+  return {
+    ...actual,
+    bootstrapClient: vi.fn(),
+    loadConfig: vi.fn(),
+  };
+});
 const bootstrap = vi.mocked(bootstrapClient);
 const load = vi.mocked(loadConfig);
 let profile: ResolvedConfig["profile"];

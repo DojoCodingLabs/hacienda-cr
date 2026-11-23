@@ -145,6 +145,8 @@ export enum AuthErrorCode {
   REFRESH_TOKEN_EXPIRED = "REFRESH_TOKEN_EXPIRED",
   /** Token refresh failed. */
   TOKEN_REFRESH_FAILED = "TOKEN_REFRESH_FAILED",
+  /** Scope identity does not match configured credentials. */
+  SCOPE_IDENTITY_MISMATCH = "SCOPE_IDENTITY_MISMATCH",
   /** The .p12 file was not found at the specified path. */
   P12_FILE_NOT_FOUND = "P12_FILE_NOT_FOUND",
 }
