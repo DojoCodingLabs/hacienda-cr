@@ -183,6 +183,20 @@ export function extractRejectionReason(responseXml: string): string | undefined 
  * @param status - The Hacienda processing status.
  * @returns True if the status is terminal (aceptado, rechazado, or error).
  */
+/**
+ * Reconciles a document by querying its status by clave.
+ *
+ * This helper never creates a new document or consecutive; it only reads
+ * the current server-side state for an existing clave.
+ */
+export async function reconcileByClave(
+  httpClient: HttpClient,
+  clave: string,
+  options?: { signal?: AbortSignal },
+): Promise<ParsedStatusResponse> {
+  return getStatus(httpClient, clave, options);
+}
+
 export function isTerminalStatus(status: HaciendaStatus): boolean {
   return (
     status === HaciendaStatus.ACEPTADO ||
