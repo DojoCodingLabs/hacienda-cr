@@ -39,6 +39,14 @@ export type { HistoryRequestOptions } from "./comprobantes.js";
 export { lookupTaxpayer } from "./taxpayer.js";
 export type { TaxpayerInfo, LookupTaxpayerOptions } from "./taxpayer.js";
 
+// Callback parsing
+export {
+  parseCallbackPayload,
+  validateCallbackPayload,
+  CallbackEnvelopeSchema,
+} from "./callback.js";
+export type { ParsedCallbackPayload, CallbackEnvelope } from "./callback.js";
+
 // Error codes
 export {
   HaciendaRejectionCode,

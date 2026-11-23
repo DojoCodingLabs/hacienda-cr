@@ -284,6 +284,8 @@ export {
   listComprobantes,
   getComprobante,
   lookupTaxpayer,
+  parseCallbackPayload,
+  validateCallbackPayload,
 } from "./api/index.js";
 export type {
   HistoryRequestOptions,
@@ -293,6 +295,8 @@ export type {
   RateLimiterOptions,
   ParsedStatusResponse,
   ReconcileResult,
+  ParsedCallbackPayload,
+  CallbackEnvelope,
   SubmitAndWaitOptions,
   SubmitAndWaitResult,
   RetryOptions,
