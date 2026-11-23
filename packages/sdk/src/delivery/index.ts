@@ -9,6 +9,7 @@ export {
   transitionDocument,
   evaluateDeadline,
   classifySendResult,
+  classifyOutcome,
   situationFromClave,
   assertClaveSituationMatch,
   createObligation,
