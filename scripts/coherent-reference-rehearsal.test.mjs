@@ -1,13 +1,14 @@
 /**
  * Tests de `coherent-reference-rehearsal.mjs` (change add-coherent-reference-rehearsal).
  * Todo offline: sin red, sin firma, sin credenciales; archivos únicamente en
- * directorios temporales bajo /tmp/opencode.
+ * directorios temporales bajo el directorio temporal del sistema.
  */
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFile, mkdtemp, mkdir, writeFile } from "node:fs/promises";
 import { existsSync } from "node:fs";
 import { join } from "node:path";
+import os from "node:os";
 
 import {
   generateScenario,
@@ -132,7 +133,7 @@ function dependientesCompletos() {
 }
 
 function tempDir() {
-  return mkdtemp("/tmp/opencode/rehearsal-test-");
+  return mkdtemp(join(os.tmpdir(), "rehearsal-test-"));
 }
 
 /** Registro válido del grafo (FE + NC), para mutar por caso. */
