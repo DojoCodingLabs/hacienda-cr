@@ -261,6 +261,7 @@ export {
   getStatus,
   isTerminalStatus,
   extractRejectionReason,
+  reconcileByClave,
   submitAndWait,
   withRetry,
   listComprobantes,

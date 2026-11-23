@@ -19,6 +19,7 @@ export {
   getStatus,
   isTerminalStatus,
   extractRejectionReason,
+  reconcileByClave,
 } from "./submission.js";
 export type { ParsedStatusResponse } from "./submission.js";
 
