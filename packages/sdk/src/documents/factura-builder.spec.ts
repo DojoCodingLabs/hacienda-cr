@@ -4,6 +4,7 @@
 
 import { describe, it, expect } from "vitest";
 import { buildFacturaXml } from "./factura-builder.js";
+import { validateDocumentXml } from "../xml/schema-validator.js";
 import {
   SIMPLE_INVOICE,
   MULTI_ITEM_INVOICE,
@@ -332,6 +333,21 @@ describe("buildFacturaXml", () => {
     it("should not include InformacionReferencia when absent", () => {
       const xml = buildFacturaXml(SIMPLE_INVOICE);
       expectNotContains(xml, "<InformacionReferencia>");
+    });
+
+    it("should emit TipoDocRefOTRO when tipoDoc is 99", async () => {
+      const ref = REFERENCE_INVOICE.informacionReferencia[0];
+      const input = {
+        ...REFERENCE_INVOICE,
+        informacionReferencia: [
+          { ...ref, tipoDoc: "99", tipoDocOtros: "Documento interno de prueba" },
+        ],
+      };
+      const xml = buildFacturaXml(input);
+      expectContains(xml, "<TipoDocIR>99</TipoDocIR>");
+      expectContains(xml, "<TipoDocRefOTRO>Documento interno de prueba</TipoDocRefOTRO>");
+      const result = await validateDocumentXml(xml);
+      expect(result.valid).toBe(true, result.issues.join(", "));
     });
   });
 
