@@ -295,7 +295,7 @@ test("render: stable bytes, sorted tables, path convention", () => {
     },
   ]);
   const doc = renderCodesJson({
-    currentSet: "2024/v4.4",
+    codesSet: "2024/v4.4",
     generatedFrom: ["2024/v4.4/FacturaElectronica_V4.4.xsd"],
     tables: merged.tables,
   });
@@ -333,6 +333,24 @@ test("CLI: invalid currentSet directory is fatal", () => {
     const result = spawnExtract(dir);
     assert.notEqual(result.status, 0);
     assert.match(result.stderr, /directorio del set/);
+    assert.ok(!existsSync(join(dir, "codes.json")));
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test("CLI: codesSet takes precedence over currentSet", () => {
+  const dir = mkdtempSync(join(tmpdir(), "codes-extract-"));
+  try {
+    writeFileSync(
+      join(dir, "manifest.json"),
+      JSON.stringify({ schemaVersion: 1, currentSet: "2026/v4.4", codesSet: "2024/v4.4" }),
+    );
+    // Only the current set exists; the extractor must look for codesSet.
+    mkdirSync(join(dir, "2026", "v4.4"), { recursive: true });
+    const result = spawnExtract(dir);
+    assert.notEqual(result.status, 0);
+    assert.match(result.stderr, /directorio del set vigente inexistente: .*2024\/v4\.4/);
     assert.ok(!existsSync(join(dir, "codes.json")));
   } finally {
     rmSync(dir, { recursive: true, force: true });
@@ -799,7 +817,7 @@ test("extract: pipeline con seams stubeados es idempotente y estructuralmente co
 
     const doc = JSON.parse(bytesFirst.toString("utf8"));
     assert.equal(doc.schemaVersion, 1);
-    assert.equal(doc.currentSet, "2024/v4.4");
+    assert.equal(doc.codesSet, "2024/v4.4");
     assert.deepEqual(doc.generatedFrom.slice(-3), [
       "2024/v4.4/ANEXOS Y ESTRUCTURAS_V4.4.pdf",
       "2024/v4.4/Codigodemoneda_V4.4.pdf",

@@ -20,7 +20,7 @@ export const getCommand = defineCommand({
   args: {
     clave: {
       type: "positional",
-      description: "50-digit clave numerica",
+      description: "50-character clave (letters allowed only in the taxpayer ID segment)",
       required: true,
     },
     profile: {

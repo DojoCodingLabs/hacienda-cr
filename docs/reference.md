@@ -496,6 +496,8 @@ await saveConfig(
     cedula_type: "02",
     cedula: "3101234567",
     p12_path: "/ruta/al/certificado.p12",
+    // Opcional: identificación del proveedor del sistema (ProveedorSistemas).
+    provider_id: "3101999999",
   },
   "miempresa",
 );
@@ -631,14 +633,21 @@ export HACIENDA_PASSWORD="tu-contraseña"
 hacienda auth login --cedula-type 01 --cedula 112345678
 ```
 
-| Argumento       | Descripción                                                          |
-| --------------- | -------------------------------------------------------------------- |
-| `--cedula-type` | `01` (Física), `02` (Jurídica), `03` (DIMEX), `04` (NITE)            |
-| `--cedula`      | Número de identificación                                             |
-| `--username`    | Usuario IDP completo (o `HACIENDA_USERNAME`); se guarda en el perfil |
-| `--password`    | Contraseña del IDP (o usar `HACIENDA_PASSWORD`)                      |
-| `--environment` | `sandbox` (default) o `production`                                   |
-| `--profile`     | Nombre del perfil (default: `default`)                               |
+| Argumento       | Descripción                                                            |
+| --------------- | ---------------------------------------------------------------------- |
+| `--cedula-type` | `01` (Física), `02` (Jurídica), `03` (DIMEX), `04` (NITE)              |
+| `--cedula`      | Número de identificación                                               |
+| `--username`    | Usuario IDP completo (o `HACIENDA_USERNAME`); se guarda en el perfil   |
+| `--password`    | Contraseña del IDP (o usar `HACIENDA_PASSWORD`)                        |
+| `--environment` | `sandbox` (default) o `production`                                     |
+| `--profile`     | Nombre del perfil (default: `default`)                                 |
+| `--provider-id` | Identificación del proveedor del sistema; se guarda como `provider_id` |
+
+`provider_id` se emite como `ProveedorSistemas`. Según Anexos y Estructuras
+v4.4 es la identificación del proveedor del sistema de emisión; solo un
+desarrollo propio o a la medida usa la identificación del mismo obligado
+tributario. Acepta 9–20 letras o dígitos. Repetir `auth login` sin
+`--provider-id` conserva el valor guardado.
 
 ### `hacienda auth status`
 
@@ -770,6 +779,11 @@ hacienda draft --template nota-credito --output nc.json
 ```
 
 **Plantillas:** `factura` (default), `nota-credito`, `nota-debito`, `tiquete`
+
+El modo interactivo toma `proveedorSistemas` del `provider_id` del perfil
+(`--profile`, default `default`). Sin él, usa la identificación del emisor y
+muestra una advertencia en stderr (con `--json`, también en `warnings`): ese
+valor solo es correcto para un sistema propio o hecho a la medida.
 
 El modo interactivo escribe `cantidad` y todos los campos monetarios como texto
 decimal acotado (máximo 3 y 5 decimales respectivamente). Los cálculos usan el

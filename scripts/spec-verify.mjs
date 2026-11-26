@@ -61,6 +61,47 @@ if (manifest !== null) {
         "un id presente en sets[]",
       ),
     );
+  else if (sets.find((s) => isObject(s) && s.id === manifest.currentSet)?.policyOnly === true)
+    violations.push(
+      manifestError(
+        `currentSet=${JSON.stringify(manifest.currentSet)} es policyOnly`,
+        "un set con esquemas, no solo política",
+      ),
+    );
+
+  // `nextSet` is omitted when no published set becomes mandatory later; when
+  // present it names another declared set and an ISO effective date.
+  if ("nextSet" in manifest) {
+    const next = manifest.nextSet;
+    if (!isObject(next) || typeof next.id !== "string" || !setIds.has(next.id))
+      violations.push(
+        manifestError(
+          `nextSet=${JSON.stringify(next)} sin correspondencia en sets[]`,
+          "nextSet omitido, o { id presente en sets[], effectiveFrom }",
+        ),
+      );
+    else if (next.id === manifest.currentSet)
+      violations.push(
+        manifestError(`nextSet.id=${JSON.stringify(next.id)} igual a currentSet`, "otro set"),
+      );
+    if (isObject(next) && !/^\d{4}-\d{2}-\d{2}$/.test(String(next.effectiveFrom)))
+      violations.push(
+        manifestError(
+          `nextSet.effectiveFrom=${JSON.stringify(next.effectiveFrom)} inválido`,
+          "fecha AAAA-MM-DD",
+        ),
+      );
+  }
+
+  // `codesSet` (optional, defaults to currentSet) is the set `codes:extract`
+  // reads, because it needs that set's vendored auxiliaries.
+  if ("codesSet" in manifest && !setIds.has(manifest.codesSet))
+    violations.push(
+      manifestError(
+        `codesSet=${JSON.stringify(manifest.codesSet)} sin correspondencia en sets[]`,
+        "codesSet omitido o un id presente en sets[]",
+      ),
+    );
 
   const checkSurface = (value, label) => {
     if (typeof value !== "string" || !surfaceIds.has(value))

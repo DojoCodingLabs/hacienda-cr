@@ -1,11 +1,8 @@
 {
   "schemaVersion": 1,
-  "lastSyncedAt": "2026-10-08",
-  "currentSet": "2024/v4.4",
-  "nextSet": {
-    "id": "2026/v4.4",
-    "effectiveFrom": "2026-11-01"
-  },
+  "lastSyncedAt": "2026-11-26",
+  "currentSet": "2026/v4.4",
+  "codesSet": "2024/v4.4",
   "surfaces": [
     {
       "id": "atv",
@@ -46,8 +43,17 @@
       "id": "2026/v4.4",
       "year": 2026,
       "version": "4.4",
-      "downloadedAt": "2026-10-08",
-      "sourceSurface": "ovi"
+      "downloadedAt": "2026-11-26",
+      "sourceSurface": "ovi",
+      "effectiveFrom": "2026-11-01",
+      "authority": {
+        "communication": "https://www.hacienda.go.cr/docs/ActualizacionAnexosyEstructurasVersion4.4CEv2.pdf",
+        "communicationSha256": "f6b8b2272507966bda88b7e88016fdd06919740d7693288daebe24c5f03b5c66",
+        "annex": "https://www.hacienda.go.cr/docs/ANEXOS_Y_ESTRUCTURAS_V4.4.pdf",
+        "annexSha256": "6e093226b29b38c5c8de825f70c1b1cb8ed81e2f4a6eb0b3ff52708fc1eb2769",
+        "annexBitacora": "2026-04-22",
+        "checkedAt": "2026-11-26"
+      }
     }
   ],
   "policy": {
@@ -156,63 +162,72 @@
       "set": "2026/v4.4",
       "sha256": "57e4cedb12d5045884670ff2e4795d2027e69b96d45752f60cd1a1930e2768a3",
       "bytes": 97300,
-      "vendored": true
+      "vendored": true,
+      "lastModified": "Wed, 22 Apr 2026 17:14:37 GMT"
     },
     {
       "path": "2026/v4.4/FacturaElectronicaExportacion_V4.4.xsd",
       "set": "2026/v4.4",
       "sha256": "e571d8296bb74e86cb9ef7889601844c61ac50bedca90aa8d52badf15198242e",
       "bytes": 101881,
-      "vendored": true
+      "vendored": true,
+      "lastModified": "Wed, 22 Apr 2026 17:14:36 GMT"
     },
     {
       "path": "2026/v4.4/FacturaElectronica_V4.4.xsd",
       "set": "2026/v4.4",
       "sha256": "926ba81325bc21102755bd8e4e570a63caaca086e680a877c3a6d15d6ee8a62f",
       "bytes": 119689,
-      "vendored": true
+      "vendored": true,
+      "lastModified": "Wed, 22 Apr 2026 21:01:06 GMT"
     },
     {
       "path": "2026/v4.4/MensajeHacienda_V4.4.xsd",
       "set": "2026/v4.4",
       "sha256": "b2606156042b7aa7b7f7f61945f0ff1323661b43b5a1489ad5eafad1c52fd25e",
       "bytes": 7799,
-      "vendored": true
+      "vendored": true,
+      "lastModified": "Wed, 22 Apr 2026 17:10:43 GMT"
     },
     {
       "path": "2026/v4.4/MensajeReceptor_V4.4.xsd",
       "set": "2026/v4.4",
       "sha256": "b883e3a9321eadf2ccc1a9dc853d9e3bd483918dcd6e2152d902ddf2f244365f",
       "bytes": 6564,
-      "vendored": true
+      "vendored": true,
+      "lastModified": "Wed, 22 Apr 2026 17:15:30 GMT"
     },
     {
       "path": "2026/v4.4/NotaCreditoElectronica_V4.4.xsd",
       "set": "2026/v4.4",
       "sha256": "b7ed3347c5599e78e5683d9ae83842695ab9497e173df9cd3be8d77c0851f556",
       "bytes": 123011,
-      "vendored": true
+      "vendored": true,
+      "lastModified": "Wed, 22 Apr 2026 17:15:30 GMT"
     },
     {
       "path": "2026/v4.4/NotaDebitoElectronica_V4.4.xsd",
       "set": "2026/v4.4",
       "sha256": "3709389ccc434fb1ef4571079b1a628654fa04f07c1f3f1044b2416ba12eb7ff",
       "bytes": 123029,
-      "vendored": true
+      "vendored": true,
+      "lastModified": "Wed, 22 Apr 2026 17:11:58 GMT"
     },
     {
       "path": "2026/v4.4/ReciboElectronicoPago_V4.4.xsd",
       "set": "2026/v4.4",
       "sha256": "86e3aa5f0615b757a3b2e9c300973d573ac321f76adba7b4b05e59d854da82b7",
       "bytes": 41655,
-      "vendored": true
+      "vendored": true,
+      "lastModified": "Wed, 22 Apr 2026 17:14:36 GMT"
     },
     {
       "path": "2026/v4.4/TiqueteElectronico_V4.4.xsd",
       "set": "2026/v4.4",
       "sha256": "d7783baf818f316596d0b58b17481be689595982a248d98102d707f72967ae6e",
       "bytes": 117940,
-      "vendored": true
+      "vendored": true,
+      "lastModified": "Wed, 22 Apr 2026 17:11:58 GMT"
     },
     {
       "path": "feriados/README.md",

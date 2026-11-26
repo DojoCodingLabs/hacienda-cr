@@ -2,7 +2,12 @@ import type * as HaciendaSdk from "@dojocoding/hacienda-sdk";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { loginCommand } from "./login.js";
 
-const mocks = vi.hoisted(() => ({ authenticate: vi.fn(), saveConfig: vi.fn() }));
+const mocks = vi.hoisted(() => ({
+  authenticate: vi.fn(),
+  saveConfig: vi.fn(),
+  listProfiles: vi.fn(),
+  loadConfig: vi.fn(),
+}));
 vi.mock("@dojocoding/hacienda-sdk", async (original) => {
   const sdk = await original<typeof HaciendaSdk>();
   return {
@@ -11,6 +16,9 @@ vi.mock("@dojocoding/hacienda-sdk", async (original) => {
       authenticate = mocks.authenticate;
     },
     ensureConfigDir: vi.fn(),
+    // Never read the user's real ~/.hacienda-cr from a test.
+    listProfiles: mocks.listProfiles,
+    loadConfig: mocks.loadConfig,
     saveConfig: mocks.saveConfig.mockImplementation(async (profile) => {
       sdk.ProfileSchema.parse(profile);
     }),
@@ -33,6 +41,7 @@ describe("auth login issued usernames", () => {
     originalExitCode = process.exitCode;
     process.exitCode = undefined;
     vi.clearAllMocks();
+    mocks.listProfiles.mockResolvedValue([]);
     vi.stubEnv("HACIENDA_USERNAME", username);
     vi.spyOn(console, "log").mockImplementation(() => undefined);
   });
@@ -65,6 +74,42 @@ describe("auth login issued usernames", () => {
       expect(process.exitCode).toBeUndefined();
     },
   );
+
+  it("saves --provider-id as the profile's provider_id", async () => {
+    await loginCommand.run?.({
+      args: { ...args, "provider-id": "310ABC1234" },
+      rawArgs: [],
+      cmd: loginCommand,
+    });
+    expect(mocks.saveConfig).toHaveBeenCalledWith(
+      expect.objectContaining({ provider_id: "310ABC1234" }),
+      "test",
+    );
+    expect(process.exitCode).toBeUndefined();
+  });
+
+  it("keeps the existing profile's provider_id when --provider-id is omitted", async () => {
+    mocks.listProfiles.mockResolvedValue(["test"]);
+    mocks.loadConfig.mockResolvedValue({ profile: { provider_id: "3101999999" } });
+    await loginCommand.run?.({ args, rawArgs: [], cmd: loginCommand });
+    expect(mocks.loadConfig).toHaveBeenCalledWith("test");
+    expect(mocks.saveConfig).toHaveBeenCalledWith(
+      expect.objectContaining({ provider_id: "3101999999" }),
+      "test",
+    );
+  });
+
+  it("rejects a malformed --provider-id before authenticating", async () => {
+    vi.spyOn(console, "error").mockImplementation(() => undefined);
+    await loginCommand.run?.({
+      args: { ...args, "provider-id": "31-01" },
+      rawArgs: [],
+      cmd: loginCommand,
+    });
+    expect(mocks.authenticate).not.toHaveBeenCalled();
+    expect(mocks.saveConfig).not.toHaveBeenCalled();
+    expect(process.exitCode).toBe(1);
+  });
 
   it("fails invalid explicit username before authentication or saving", async () => {
     await loginCommand.run?.({ args: { ...args, username: "" }, rawArgs: [], cmd: loginCommand });

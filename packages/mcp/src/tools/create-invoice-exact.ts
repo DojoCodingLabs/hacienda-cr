@@ -37,6 +37,7 @@ import {
   SaleConditionSchema,
   UNITS_OF_MEASURE,
 } from "@dojocoding/hacienda-shared";
+import { ProveedorSistemasInputSchema } from "./create-invoice.js";
 import { nextIssuerSequence } from "./issuer-sequence.js";
 
 const ExactLineItemInputSchema = z
@@ -71,10 +72,7 @@ export const CreateInvoiceExactInputSchema = z
     receptor: DecimalReceptorSchema.extend({
       identificacion: IdentificacionSchema.strict(),
     }).describe("Invoice receiver with identification"),
-    proveedorSistemas: z
-      .string()
-      .regex(/^\d{9,12}$/)
-      .describe("Invoicing-system provider identification number"),
+    proveedorSistemas: ProveedorSistemasInputSchema,
     codigoActividadEmisor: z
       .string()
       .regex(/^\d{6}$/)

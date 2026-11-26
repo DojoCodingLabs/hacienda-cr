@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "currentSet": "2024/v4.4",
+  "codesSet": "2024/v4.4",
   "generatedFrom": [
     "2024/v4.4/FacturaElectronicaCompra_V4.4.xsd",
     "2024/v4.4/FacturaElectronicaExportacion_V4.4.xsd",

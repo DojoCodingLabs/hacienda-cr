@@ -118,6 +118,14 @@ describe("MCP Server", () => {
       expect(toolNames).toContain("create_invoice_exact");
       const createInvoice = tools.find((tool) => tool.name === "create_invoice");
       expect(createInvoice?.inputSchema.required).toContain("proveedorSistemas");
+      const provider = (
+        createInvoice?.inputSchema.properties as Record<string, { description?: string }>
+      ).proveedorSistemas;
+      // The Anexo asks for the software provider's ID, which may be an
+      // alphanumeric cédula jurídica; the text must not say "number" only.
+      expect(provider?.description).toMatch(/invoicing-system provider/);
+      expect(provider?.description).toMatch(/letters or digits/);
+      expect(provider?.description).toMatch(/self-developed or custom-built/);
       expect(toolNames).toContain("check_status");
       expect(toolNames).toContain("list_documents");
       expect(toolNames).toContain("get_document");
@@ -291,6 +299,49 @@ describe("MCP Server", () => {
       expect(text).toContain("<NumTelefono>911</NumTelefono>");
       if (tax.codigo === "04") expect(text).toContain("<Proporcion>41.13292</Proporcion>");
       else expect(text).toContain("<BaseImponible>2100</BaseImponible>");
+    });
+
+    it.each([
+      ["an alphanumeric cédula jurídica", "310ABC1234", false],
+      ["a 20-character identification", "12345678901234567890", false],
+      ["a separator", "3101-234567", true],
+      ["a too-short value", "31012345", true],
+    ])("proveedorSistemas with %s (%s) is rejected=%s", async (_label, value, rejected) => {
+      const result = await client.callTool({
+        name: "create_invoice",
+        arguments: {
+          proveedorSistemas: value,
+          codigoActividadEmisor: "620100",
+          emisor: {
+            nombre: "Empresa de Prueba",
+            identificacion: { tipo: "02", numero: "3101234567" },
+            correoElectronico: "test@empresa.com",
+            ubicacion: { provincia: "1", canton: "01", distrito: "01", otrasSenas: "Test address" },
+          },
+          receptor: {
+            nombre: "Cliente de Prueba",
+            identificacion: { tipo: "02", numero: "3109876543" },
+          },
+          lineItems: [
+            {
+              codigoCabys: "2111100000000",
+              cantidad: 1,
+              unidadMedida: "Unid",
+              detalle: "Producto",
+              precioUnitario: 1000,
+              impuesto: [{ codigo: "01", codigoTarifaIVA: "08", tarifa: 13 }],
+            },
+          ],
+        },
+      });
+      const text = (result.content as { text: string }[])[0]?.text ?? "";
+      if (rejected) {
+        expect(result.isError).toBe(true);
+        expect(text).toMatch(/proveedorSistemas/);
+      } else {
+        expect(result.isError, text).not.toBe(true);
+        expect(text).toContain(`<ProveedorSistemas>${value}</ProveedorSistemas>`);
+      }
     });
 
     it("rejects invalid line items before allocating a sequence", async () => {

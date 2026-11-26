@@ -3,7 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { getComprobante, getStatus, lookupTaxpayer } from "@dojocoding/hacienda-sdk";
 import { createAuthenticatedClient } from "../utils/api-client.js";
 import { getCommand } from "./get.js";
-import { statusCommand } from "./status.js";
+import { CLAVE_FORMAT_ERROR, statusCommand } from "./status.js";
 import { lookupCommand } from "./lookup.js";
 
 vi.mock("@dojocoding/hacienda-sdk", async (importOriginal) => ({
@@ -56,6 +56,25 @@ describe("2026 alphanumeric CLI queries", () => {
     });
     expect(createAuthenticatedClient).not.toHaveBeenCalled();
     expect(process.exitCode).toBe(1);
+  });
+  it.each([
+    ["a letter outside the taxpayer segment", "A" + clave.slice(1)],
+    ["49 characters", clave.slice(1)],
+  ])("status rejects %s with the current clave format message", async (_label, bad) => {
+    await statusCommand.run?.({
+      args: { clave: bad, profile: "test", json: true },
+      rawArgs: [],
+      cmd: statusCommand,
+    });
+    expect(createAuthenticatedClient).not.toHaveBeenCalled();
+    expect(process.exitCode).toBe(1);
+    const printed = vi
+      .mocked(console.error)
+      .mock.calls.map((call) => String(call[0]))
+      .join("\n");
+    expect(printed).toContain(CLAVE_FORMAT_ERROR);
+    expect(CLAVE_FORMAT_ERROR).toMatch(/taxpayer ID segment \(characters 10-21\)/);
+    expect(CLAVE_FORMAT_ERROR).not.toMatch(/letters only/);
   });
   it("looks up an alphanumeric legal entity ID", async () => {
     await lookupCommand.run?.({

@@ -342,6 +342,35 @@ describe("TOML roundtrip", () => {
     expect(loaded.profile).toEqual(profile);
   });
 
+  it("preserves an optional provider_id through save/load", async () => {
+    const profile: Profile = { ...PRODUCTION_PROFILE, provider_id: "310ABC1234" };
+
+    await saveConfig(profile, "with-provider", { configDir: temp.dir });
+    const raw = await readFile(join(temp.dir, "config.toml"), "utf-8");
+    expect(raw).toContain('provider_id = "310ABC1234"');
+    const loaded = await loadConfig("with-provider", { configDir: temp.dir });
+
+    expect(loaded.profile.provider_id).toBe("310ABC1234");
+  });
+
+  it("loads a profile without provider_id as undefined", async () => {
+    await saveConfig(PRODUCTION_PROFILE, "without-provider", { configDir: temp.dir });
+    const loaded = await loadConfig("without-provider", { configDir: temp.dir });
+
+    expect(loaded.profile.provider_id).toBeUndefined();
+  });
+
+  it.each(["", "12345678", "3101-234567", "1".repeat(21)])(
+    "rejects a malformed provider_id %j",
+    async (providerId) => {
+      await expect(
+        saveConfig({ ...PRODUCTION_PROFILE, provider_id: providerId }, "bad", {
+          configDir: temp.dir,
+        }),
+      ).rejects.toThrow(/provider_id/);
+    },
+  );
+
   it("handles all cedula types", async () => {
     const types = ["01", "02", "03", "04"] as const;
 

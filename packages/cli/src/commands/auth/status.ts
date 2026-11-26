@@ -56,6 +56,7 @@ export const statusCommand = defineCommand({
           cedula_type: config.profile.cedula_type,
           cedula: config.profile.cedula,
           p12_path: config.profile.p12_path,
+          provider_id: config.profile.provider_id ?? null,
           hasPassword: config.password !== undefined,
           hasP12Pin: config.p12Pin !== undefined,
           configPath: getConfigPath(),
@@ -68,6 +69,10 @@ export const statusCommand = defineCommand({
         detail("Cedula Type", config.profile.cedula_type);
         detail("Cedula", config.profile.cedula);
         detail("P12 Path", config.profile.p12_path || "(not set)");
+        detail(
+          "Provider ID",
+          config.profile.provider_id ?? "(not set; drafts fall back to the issuer's cédula)",
+        );
         detail("Password", config.password ? "(set via HACIENDA_PASSWORD)" : "(not set)");
         detail("P12 PIN", config.p12Pin ? "(set via HACIENDA_P12_PIN)" : "(not set)");
         detail("Config File", getConfigPath());

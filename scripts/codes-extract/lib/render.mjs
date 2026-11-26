@@ -79,10 +79,10 @@ export function mergeTables(fileResults) {
  * renderer only stringifies, so those fields pass through untouched and
  * two runs over the same vendored tree produce identical bytes.
  */
-export function renderCodesJson({ currentSet, generatedFrom, tables }) {
+export function renderCodesJson({ codesSet, generatedFrom, tables }) {
   const doc = {
     schemaVersion: 1,
-    currentSet,
+    codesSet,
     generatedFrom,
     tables,
   };
