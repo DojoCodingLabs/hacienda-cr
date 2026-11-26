@@ -39,17 +39,39 @@ export function redactSecrets(value: unknown): unknown {
   return createRedactor().value(value);
 }
 
+/**
+ * Environment variables known to hold Hacienda credentials. Their values are
+ * redacted from a lower minimum length because P12 PINs are commonly 4 digits.
+ */
+const KNOWN_SECRET_ENV_NAMES = new Set([
+  "HACIENDA_PASSWORD",
+  "HACIENDA_P12_PIN",
+  "HACIENDA_USERNAME",
+]);
+const KNOWN_SECRET_MIN_LENGTH = 4;
+/**
+ * Other variables whose names look secret (e.g. `COREPACK_ENABLE_AUTO_PIN=0`)
+ * are only treated as secrets when the value is long enough to be one;
+ * redacting every "0" or "true" would corrupt diagnostics without protecting
+ * anything.
+ */
+const GENERIC_SECRET_ENV_NAME =
+  /(?:^|_)(?:PASSWORD|PASSWD|TOKEN|SECRET|PIN|PRIVATE_KEY|API_KEY)(?:$|_)/i;
+const GENERIC_SECRET_MIN_LENGTH = 8;
+const BOOLEAN_LIKE = /^(?:0|1|true|false|yes|no|on|off)$/i;
+
 function environmentSecrets(): string[] {
-  return Object.entries(process.env)
-    .filter(
-      ([key, value]) =>
-        Boolean(value) &&
-        (/(?:^|_)(?:PASSWORD|PASSWD|TOKEN|SECRET|PIN|PRIVATE_KEY|API_KEY)(?:$|_)/i.test(key) ||
-          key === "HACIENDA_USERNAME"),
-    )
-    .map(([, value]) => value ?? "")
-    .filter(Boolean)
-    .sort((a, b) => b.length - a.length);
+  const secrets = new Set<string>();
+  for (const [key, value] of Object.entries(process.env)) {
+    if (!value || BOOLEAN_LIKE.test(value.trim())) continue;
+    const minLength = KNOWN_SECRET_ENV_NAMES.has(key)
+      ? KNOWN_SECRET_MIN_LENGTH
+      : GENERIC_SECRET_ENV_NAME.test(key)
+        ? GENERIC_SECRET_MIN_LENGTH
+        : undefined;
+    if (minLength !== undefined && value.length >= minLength) secrets.add(value);
+  }
+  return [...secrets].sort((a, b) => b.length - a.length);
 }
 
 export function createRedactor(): {
