@@ -83,6 +83,7 @@ ambiguous submission failure, query the same clave before deciding to resubmit.
 - [Published 0.7.0 release](docs/release-070-published.md): exact artifact/provenance verification, indexing recovery and advisory limits.
 - [0.8.0 source-only readiness](docs/release-080-readiness.md): version preparation, history migration and remaining publication/adoption gates.
 
+- [Roadmap](docs/roadmap.md): readiness scorecard and prioritized P0/P1/P2 work toward 1.0.
 - [Architecture](docs/architecture.md): ownership and document lifecycle.
 - [Testing](docs/testing.md): local checks, isolation, and live-test boundaries.
 - [Contributing](CONTRIBUTING.md): PR workflow and Changesets.
