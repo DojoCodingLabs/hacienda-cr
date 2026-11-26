@@ -1,6 +1,7 @@
 import type * as HaciendaSdk from "@dojocoding/hacienda-sdk";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { loginCommand } from "./login.js";
+import { runCommand } from "../../__fixtures__/run-command.js";
 
 const mocks = vi.hoisted(() => ({
   authenticate: vi.fn(),
@@ -54,11 +55,7 @@ describe("auth login issued usernames", () => {
   it.each([undefined, "explicit-user@stag.comprobanteselectronicos.go.cr"])(
     "authenticates and saves the issued username with --username=%s",
     async (explicit) => {
-      await loginCommand.run?.({
-        args: { ...args, username: explicit },
-        rawArgs: [],
-        cmd: loginCommand,
-      });
+      await runCommand(loginCommand, { ...args, username: explicit });
       const expected = explicit ?? username;
       expect(mocks.authenticate).toHaveBeenCalledWith({ username: expected, password: "secret" });
       expect(mocks.saveConfig).toHaveBeenCalledWith(
@@ -76,11 +73,7 @@ describe("auth login issued usernames", () => {
   );
 
   it("saves --provider-id as the profile's provider_id", async () => {
-    await loginCommand.run?.({
-      args: { ...args, "provider-id": "310ABC1234" },
-      rawArgs: [],
-      cmd: loginCommand,
-    });
+    await runCommand(loginCommand, { ...args, "provider-id": "310ABC1234" });
     expect(mocks.saveConfig).toHaveBeenCalledWith(
       expect.objectContaining({ provider_id: "310ABC1234" }),
       "test",
@@ -91,7 +84,7 @@ describe("auth login issued usernames", () => {
   it("keeps the existing profile's provider_id when --provider-id is omitted", async () => {
     mocks.listProfiles.mockResolvedValue(["test"]);
     mocks.loadConfig.mockResolvedValue({ profile: { provider_id: "3101999999" } });
-    await loginCommand.run?.({ args, rawArgs: [], cmd: loginCommand });
+    await runCommand(loginCommand, args);
     expect(mocks.loadConfig).toHaveBeenCalledWith("test");
     expect(mocks.saveConfig).toHaveBeenCalledWith(
       expect.objectContaining({ provider_id: "3101999999" }),
@@ -101,18 +94,14 @@ describe("auth login issued usernames", () => {
 
   it("rejects a malformed --provider-id before authenticating", async () => {
     vi.spyOn(console, "error").mockImplementation(() => undefined);
-    await loginCommand.run?.({
-      args: { ...args, "provider-id": "31-01" },
-      rawArgs: [],
-      cmd: loginCommand,
-    });
+    await runCommand(loginCommand, { ...args, "provider-id": "31-01" });
     expect(mocks.authenticate).not.toHaveBeenCalled();
     expect(mocks.saveConfig).not.toHaveBeenCalled();
     expect(process.exitCode).toBe(1);
   });
 
   it("fails invalid explicit username before authentication or saving", async () => {
-    await loginCommand.run?.({ args: { ...args, username: "" }, rawArgs: [], cmd: loginCommand });
+    await runCommand(loginCommand, { ...args, username: "" });
     expect(mocks.authenticate).not.toHaveBeenCalled();
     expect(mocks.saveConfig).not.toHaveBeenCalled();
     expect(process.exitCode).toBe(1);

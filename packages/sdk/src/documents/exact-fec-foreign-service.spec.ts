@@ -1,7 +1,10 @@
 import { describe, it, expect } from "vitest";
 import { createHash } from "node:crypto";
 import { execFileSync } from "node:child_process";
-import { ExactFecForeignServiceIva13InputSchema } from "@dojocoding/hacienda-shared";
+import {
+  ExactFecForeignServiceIva13InputSchema,
+  type ExactFecInput,
+} from "@dojocoding/hacienda-shared";
 import { exactFecForeignServiceIva13Fixture } from "../__fixtures__/exact-fec-foreign-service.js";
 import { exactFecFixture } from "../__fixtures__/exact-fec.js";
 import { fixtureClave } from "../__fixtures__/identity.js";
@@ -96,7 +99,9 @@ describe("explicit foreign-service ordinary IVA13 purchase source", () => {
         numeroConsecutivo: wrong.slice(21, 41),
       }),
     ).toThrow("identity");
-    expect(() => buildExactFacturaCompraXml(input)).toThrow(); // No old API silently changes family/case.
+    // Deliberately invalid: a foreign-service case passed to the domestic FEC builder.
+    // No old API silently changes family/case.
+    expect(() => buildExactFacturaCompraXml(input as unknown as ExactFecInput)).toThrow();
   });
   it("requires explicit positive credit days and preserves actual optional fields and Unicode text without normalization", () => {
     const input = exactFecForeignServiceIva13Fixture();

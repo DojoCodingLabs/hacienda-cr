@@ -9,6 +9,7 @@ import { describe, it, expect } from "vitest";
 import { buildReciboPagoXml } from "./recibo-pago-builder.js";
 import { validateDocumentXml } from "../xml/schema-validator.js";
 import { SIMPLE_RECIBO_PAGO } from "../__fixtures__/document-fixtures.js";
+import type { ReciboElectronicoPago } from "@dojocoding/hacienda-shared";
 
 const NAMESPACE =
   "https://cdn.comprobanteselectronicos.go.cr/xml-schemas/v4.4/reciboElectronicoPago";
@@ -179,29 +180,34 @@ describe("buildReciboPagoXml", () => {
   });
 
   describe("informacionReferencia (REP: motivo 17 y codigo 99)", () => {
+    const [firstRef] = SIMPLE_RECIBO_PAGO.informacionReferencia ?? [];
+    if (!firstRef) throw new Error("SIMPLE_RECIBO_PAGO must carry an informacionReferencia");
     const baseRef = {
-      tipoDoc: SIMPLE_RECIBO_PAGO.informacionReferencia[0].tipoDoc,
-      numero: SIMPLE_RECIBO_PAGO.informacionReferencia[0].numero,
-      fechaEmision: SIMPLE_RECIBO_PAGO.informacionReferencia[0].fechaEmision,
-      razon: SIMPLE_RECIBO_PAGO.informacionReferencia[0].razon,
+      tipoDoc: firstRef.tipoDoc,
+      numero: firstRef.numero,
+      fechaEmision: firstRef.fechaEmision,
+      razon: firstRef.razon,
     };
 
     it("should accept codigo 17 (pago de comprobante) and pass XSD 2026", async () => {
+      // Type gap, not invalid input: the REP XSD and this builder accept codigo 17
+      // (RepReferenceCode), but the legacy ReciboElectronicoPago type still reuses
+      // InformacionReferencia, whose ReferenceCode has no "17".
       const input = {
         ...SIMPLE_RECIBO_PAGO,
-        informacionReferencia: [{ ...baseRef, codigo: "17" }],
-      };
+        informacionReferencia: [{ ...baseRef, codigo: "17" as const }],
+      } as unknown as ReciboElectronicoPago;
       const xml = buildReciboPagoXml(input);
       expect(xml).toContain("<Codigo>17</Codigo>");
       const result = await validateDocumentXml(xml);
-      expect(result.valid).toBe(true, result.issues.join(", "));
+      expect(result.valid, result.issues.join(", ")).toBe(true);
     });
 
     it("should emit CodigoReferenciaOTRO when codigo 99 with codigoOtors", async () => {
       const input = {
         ...SIMPLE_RECIBO_PAGO,
         informacionReferencia: [
-          { ...baseRef, codigo: "99", codigoOtros: "Pago de comprobante especial" },
+          { ...baseRef, codigo: "99" as const, codigoOtros: "Pago de comprobante especial" },
         ],
       };
       const xml = buildReciboPagoXml(input);
@@ -210,7 +216,7 @@ describe("buildReciboPagoXml", () => {
         "<CodigoReferenciaOTRO>Pago de comprobante especial</CodigoReferenciaOTRO>",
       );
       const result = await validateDocumentXml(xml);
-      expect(result.valid).toBe(true, result.issues.join(", "));
+      expect(result.valid, result.issues.join(", ")).toBe(true);
     });
   });
 });

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import fc from "fast-check";
-import { calculateExactOrdinaryMoney } from "./exact-ordinary.js";
+import { calculateExactOrdinaryMoney, type ExactOrdinaryMonetarySource } from "./exact-ordinary.js";
 import { fromNumber, multiply, parse, percent, ratio, round, text } from "./exact-decimal.js";
 import * as oracle from "../__testing__/decimal-oracle.js";
 
@@ -236,7 +236,7 @@ describe("camino exacto ordinary", () => {
     () => {
       fc.assert(
         fc.property(fc.array(lineArbitrary, { minLength: 1, maxLength: 4 }), (lines) => {
-          const source = {
+          const source: ExactOrdinaryMonetarySource = {
             detalleServicio: lines.map((line, index) => ({
               numeroLinea: index + 1,
               codigoCabys: line.esServicio ? "8310100000000" : "1210100000000",

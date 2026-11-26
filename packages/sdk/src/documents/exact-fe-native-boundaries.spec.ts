@@ -82,17 +82,16 @@ describe("strict current FE without tightening retained 0.9 custody", () => {
       { tipoMedioPago: "01", totalMedioPago: "0.00001" },
       { tipoMedioPago: "04", totalMedioPago: "112.99999" },
     ];
-    expect(ExactFePaymentSchema.parse(source.medioPago[0]).totalMedioPago).toBe("0.00001");
+    expect(ExactFePaymentSchema.parse(source.medioPago?.[0]).totalMedioPago).toBe("0.00001");
     const expected = execFileSync(
       "python3",
       ["-c", "from decimal import Decimal;print(Decimal('0.00001')+Decimal('112.99999'))"],
       { encoding: "utf8" },
     ).trim();
     expect(calculateExactFe(source).resumenFactura.totalComprobante).toBe(expected);
-    expect(calculateExactFe(source).resumenFactura.medioPago.map((p) => p.totalMedioPago)).toEqual([
-      "0.00001",
-      "112.99999",
-    ]);
+    expect(calculateExactFe(source).resumenFactura.medioPago?.map((p) => p.totalMedioPago)).toEqual(
+      ["0.00001", "112.99999"],
+    );
     const te = exactTeFixture();
     te.medioPago = structuredClone(source.medioPago);
     expect(ExactTeInputSchema.safeParse(te).success).toBe(true);

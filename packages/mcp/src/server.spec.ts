@@ -69,7 +69,8 @@ async function readJsonResource(client: Client, uri: string): Promise<unknown> {
   const content = result.contents[0];
   expect(content).toBeDefined();
   expect(content?.mimeType).toBe("application/json");
-  return JSON.parse(content?.text as string);
+  if (!content || !("text" in content)) throw new Error(`Expected a text resource for ${uri}`);
+  return JSON.parse(content.text);
 }
 
 describe("MCP Server", () => {

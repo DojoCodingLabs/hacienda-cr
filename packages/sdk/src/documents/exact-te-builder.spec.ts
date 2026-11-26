@@ -133,7 +133,7 @@ describe("exact ordinary TE", () => {
         required(source.detalleServicio[0]).descuento = [
           { porcentaje: v.discount, codigoDescuento: "07" },
         ];
-      required(source.medioPago[0]).totalMedioPago = required(expected[4]);
+      required(source.medioPago?.[0]).totalMedioPago = required(expected[4]);
       const result = calculateExactTe(source),
         line = required(result.detalleServicio[0]);
       expect([
@@ -164,7 +164,7 @@ describe("exact ordinary TE", () => {
   it("retains maximum exact text through JSON/XML and rejects allocation/overflow/zero-net", () => {
     const source = exactTeFixture();
     required(source.detalleServicio[0]).precioUnitario = "8849557522123.89380";
-    required(source.medioPago[0]).totalMedioPago = "9999999999999.99999";
+    required(source.medioPago?.[0]).totalMedioPago = "9999999999999.99999";
     const xml = buildExactTiqueteXml(JSON.parse(JSON.stringify(source)));
     expect(xml).toContain("<TotalComprobante>9999999999999.99999</TotalComprobante>");
     expect(calculateExactTe(source).resumenFactura.totalComprobante).toBe("9999999999999.99999");

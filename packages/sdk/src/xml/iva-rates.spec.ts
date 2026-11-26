@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { SIMPLE_INVOICE } from "../__fixtures__/invoices.js";
+import { toLineaDetalle } from "../__fixtures__/linea-detalle.js";
 import { calculateInvoiceSummary, calculateLineItemTotals } from "../tax/calculator.js";
 import { validateFacturaInput } from "./validator.js";
 
@@ -27,14 +28,14 @@ describe("IVA tariff code/percentage cross-validation", () => {
         esServicio: true,
         impuesto: [{ codigo: "01", codigoTarifaIVA: code, tarifa: rate }],
       });
-      invoice.detalleServicio = [line];
+      invoice.detalleServicio = [toLineaDetalle(line)];
       invoice.resumenFactura = calculateInvoiceSummary([line]);
       expect(validateFacturaInput(invoice).valid).toBe(true);
       const mismatched = calculateLineItemTotals({
         ...line,
         impuesto: [{ codigo: "01", codigoTarifaIVA: code, tarifa: rate === 13 ? 0 : 13 }],
       });
-      invoice.detalleServicio = [mismatched];
+      invoice.detalleServicio = [toLineaDetalle(mismatched)];
       invoice.resumenFactura = calculateInvoiceSummary([mismatched]);
       const result = validateFacturaInput(invoice);
       expect(result.valid).toBe(false);
@@ -59,7 +60,7 @@ describe("IVA tariff code/percentage cross-validation", () => {
       esServicio: true,
       impuesto: [{ codigo: "01", codigoTarifaIVA: code, tarifa: rate }],
     });
-    invoice.detalleServicio = [line];
+    invoice.detalleServicio = [toLineaDetalle(line)];
     invoice.resumenFactura = calculateInvoiceSummary([line]);
     expect(
       validateFacturaInput(invoice).errors.some(

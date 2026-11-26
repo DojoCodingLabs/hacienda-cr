@@ -125,10 +125,8 @@ describe("decimal document schemas", () => {
   });
 
   it("requires medioPago unless the sale condition is 02, 08 or 10", () => {
-    const { medioPago: _payments, ...withoutPayment } = {
-      ...base("01"),
-      codigoActividadEmisor: "620100",
-    };
+    const input: Record<string, unknown> = { ...base("01"), codigoActividadEmisor: "620100" };
+    const { medioPago: _payments, ...withoutPayment } = input;
     expect(DecimalDocumentInputSchema.safeParse(withoutPayment).success).toBe(false);
     expect(DecimalDocumentInputSchema.safeParse({ ...withoutPayment, medioPago: [] }).success).toBe(
       false,
@@ -145,7 +143,7 @@ describe("decimal document schemas", () => {
   });
 
   it("rejects missing or unknown document types", () => {
-    const input = { ...base("01"), codigoActividadEmisor: "620100" };
+    const input: Record<string, unknown> = { ...base("01"), codigoActividadEmisor: "620100" };
     const { tipoDocumento: _ignored, ...without } = input;
     expect(DecimalDocumentInputSchema.safeParse(without).success).toBe(false);
     expect(DecimalDocumentInputSchema.safeParse({ ...input, tipoDocumento: "99" }).success).toBe(

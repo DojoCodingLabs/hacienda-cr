@@ -5,11 +5,12 @@ import {
   bootstrapClient,
   loadConfig,
 } from "@dojocoding/hacienda-sdk";
+import type * as HaciendaSdk from "@dojocoding/hacienda-sdk";
 import type { BootstrapResult, ResolvedConfig } from "@dojocoding/hacienda-sdk";
 import { MAX_CACHED_CLIENTS, clearClientCache, createMcpApiClient } from "./api-client.js";
 
 vi.mock("@dojocoding/hacienda-sdk", async (importOriginal) => {
-  const actual = await importOriginal();
+  const actual = await importOriginal<typeof HaciendaSdk>();
   return {
     ...actual,
     bootstrapClient: vi.fn(),

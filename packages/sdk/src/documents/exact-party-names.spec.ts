@@ -19,7 +19,11 @@ for (const family of ["TE", "ND"] as const) {
     function fixture() {
       const nd = exactNdFixture();
       const te = exactTeFixture();
-      te.receptor = structuredClone(nd.original.receptor);
+      const receptor = structuredClone(nd.original.receptor);
+      const { tipo } = receptor.identificacion;
+      // TE receivers admit identification types 01-04 only; the ND fixture must stay within them.
+      if (tipo === "05" || tipo === "06") throw new Error(`Unexpected TE receptor type ${tipo}`);
+      te.receptor = { ...receptor, identificacion: { ...receptor.identificacion, tipo } };
       return {
         original: family === "ND" ? nd.original : te,
         parse: () =>

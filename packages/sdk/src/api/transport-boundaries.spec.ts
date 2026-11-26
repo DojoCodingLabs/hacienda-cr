@@ -1,4 +1,4 @@
-import { createServer, type Server } from "node:http";
+import { createServer, type RequestListener, type Server } from "node:http";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { HttpClient } from "./http-client.js";
 import { TokenManager } from "../auth/token-manager.js";
@@ -6,7 +6,7 @@ import { Environment } from "../auth/types.js";
 import { getEnvironmentConfig } from "../auth/environment.js";
 
 const servers: Server[] = [];
-async function listen(handler: Parameters<typeof createServer>[0]) {
+async function listen(handler: RequestListener) {
   const server = createServer(handler);
   servers.push(server);
   await new Promise<void>((resolve, reject) => {

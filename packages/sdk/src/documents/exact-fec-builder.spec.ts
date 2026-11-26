@@ -99,7 +99,10 @@ describe("exact ordinary domestic FEC", () => {
     ])
       expect(ExactFecInputSchema.safeParse({ ...input, ...patch }).success).toBe(false);
     const special = structuredClone(input);
-    required(special.detalleServicio[0]).tipoTransaccion = "02";
+    // Deliberately invalid: the exact FEC line type only admits tipoTransaccion "01".
+    (
+      required(special.detalleServicio[0]) as unknown as { tipoTransaccion: string }
+    ).tipoTransaccion = "02";
     expect(() => calculateExactFec(special)).toThrow();
   });
   it("requires explicit supporting evidence companions and exact chronology without inventing a legal clock", () => {
@@ -209,7 +212,7 @@ describe("exact ordinary domestic FEC", () => {
         e = required(expected[i]);
       line.cantidad = v.q;
       line.precioUnitario = v.p;
-      required(input.medioPago[0]).totalMedioPago = required(e[2]);
+      required(input.medioPago?.[0]).totalMedioPago = required(e[2]);
       const actual = required(calculateExactFec(input).detalleServicio[0]);
       expect([actual.subTotal, actual.impuestoNeto, actual.montoTotalLinea]).toEqual(e);
     });

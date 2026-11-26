@@ -45,7 +45,7 @@ const VALID_OPTIONS = {
   },
 } as const;
 
-function createClient(fetchFn?: ReturnType<typeof vi.fn>, overrides: Record<string, unknown> = {}) {
+function createClient(fetchFn?: typeof fetch, overrides: Record<string, unknown> = {}) {
   return new HaciendaClient({
     ...VALID_OPTIONS,
     fetchFn: fetchFn ?? mockFetch(makeTokenResponse()),

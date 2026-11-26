@@ -31,7 +31,7 @@
     "prepublishOnly": "pnpm run build",
     "test": "vitest run",
     "lint": "eslint src/",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "tsc --noEmit && tsc -p tsconfig.spec.json",
     "clean": "rm -rf dist",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage"

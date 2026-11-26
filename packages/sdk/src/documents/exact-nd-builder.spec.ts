@@ -123,7 +123,7 @@ describe("exact ordinary FE-reference positive ND increment", () => {
     };
     expect(() => buildExactNotaDebitoXml(wrongType)).toThrow();
     const originalMath = structuredClone(input);
-    required(originalMath.original.medioPago[0]).totalMedioPago = "1";
+    required(originalMath.original.medioPago?.[0]).totalMedioPago = "1";
     expect(() => calculateExactNd(originalMath)).toThrow("payment allocation");
   });
   it("preserves full fractional instants and reference lexemes across offsets without a hidden age clock", () => {
@@ -174,7 +174,7 @@ describe("exact ordinary FE-reference positive ND increment", () => {
         row = required(expected[i]);
       required(input.adjustments[0]).line.cantidad = v.quantity;
       required(input.adjustments[0]).line.precioUnitario = v.price;
-      required(input.medioPago[0]).totalMedioPago = required(row[2]);
+      required(input.medioPago?.[0]).totalMedioPago = required(row[2]);
       const line = required(calculateExactNd(input).detalleServicio[0]);
       expect([line.subTotal, line.impuestoNeto, line.montoTotalLinea]).toEqual(row);
     });
@@ -210,7 +210,7 @@ describe("exact ordinary FE-reference positive ND increment", () => {
     required(discounted.adjustments[0]).line.descuento = [
       { porcentaje: "10", codigoDescuento: "07" },
     ];
-    required(discounted.medioPago[0]).totalMedioPago = "10.17001";
+    required(discounted.medioPago?.[0]).totalMedioPago = "10.17001";
     expect(calculateExactNd(discounted).resumenFactura).toMatchObject({
       totalDescuentos: "1.00000",
       totalVentaNeta: "9.00001",
@@ -219,7 +219,7 @@ describe("exact ordinary FE-reference positive ND increment", () => {
     });
     const maximum = exactNdFixture();
     required(maximum.adjustments[0]).line.precioUnitario = "8849557522123.89380";
-    required(maximum.medioPago[0]).totalMedioPago = "9999999999999.99999";
+    required(maximum.medioPago?.[0]).totalMedioPago = "9999999999999.99999";
     const xml = buildExactNotaDebitoXml(JSON.parse(JSON.stringify(maximum)));
     expect(xml).toContain("<TotalComprobante>9999999999999.99999</TotalComprobante>");
     expect(

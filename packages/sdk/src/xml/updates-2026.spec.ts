@@ -4,6 +4,7 @@ import { buildClave } from "../clave/build-clave.js";
 import { parseClave } from "../clave/parse-clave.js";
 import { DocumentType, Situation } from "../clave/types.js";
 import { SIMPLE_INVOICE } from "../__fixtures__/invoices.js";
+import { toLineaDetalle } from "../__fixtures__/linea-detalle.js";
 import { buildFacturaXml } from "../documents/factura-builder.js";
 import {
   calculateLineItemTotals,
@@ -24,7 +25,7 @@ function invoice(taxes: LineItemTaxInput[]) {
     precioUnitario: 1000,
     impuesto: taxes,
   });
-  result.detalleServicio = [line];
+  result.detalleServicio = [toLineaDetalle(line)];
   result.resumenFactura = calculateInvoiceSummary([line]);
   return result;
 }

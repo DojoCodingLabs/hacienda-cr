@@ -13,6 +13,7 @@ import { supportCommand } from "./support.js";
 import { DraftFacturaSchema, type DraftFactura } from "../utils/draft-document.js";
 import { buildDraftSummary, calculateDraftLineMoney } from "../utils/draft-money.js";
 import { useTemporaryConfigHome } from "../__testing__/config-home.js";
+import { runCommand } from "../__fixtures__/run-command.js";
 
 const mocks = vi.hoisted(() => ({
   submitAndWait: vi.fn(),
@@ -153,11 +154,7 @@ describe("CLI submission and XML validation", () => {
       clave: SIMPLE_INVOICE.clave,
       pollAttempts: 1,
     });
-    await submitCommand.run?.({
-      args: { file, p12, json, profile: "default", "dry-run": false },
-      rawArgs: [],
-      cmd: submitCommand,
-    });
+    await runCommand(submitCommand, { file, p12, json, profile: "default", "dry-run": false });
     expect(mocks.submitAndWait).toHaveBeenCalledOnce();
     expect(process.exitCode).toBe(1);
     if (json)
@@ -174,10 +171,12 @@ describe("CLI submission and XML validation", () => {
     await writeFile(p12, "mock-certificate");
     const { buildReciboPagoXml } = await import("@dojocoding/hacienda-sdk");
     mocks.xmlOverride = buildReciboPagoXml(SIMPLE_RECIBO_PAGO);
-    await submitCommand.run?.({
-      args: { file, p12, json: true, profile: "default", "dry-run": false },
-      rawArgs: [],
-      cmd: submitCommand,
+    await runCommand(submitCommand, {
+      file,
+      p12,
+      json: true,
+      profile: "default",
+      "dry-run": false,
     });
     expect(mocks.signAndEncode).not.toHaveBeenCalled();
     expect(mocks.submitAndWait).not.toHaveBeenCalled();
@@ -192,7 +191,7 @@ describe("CLI submission and XML validation", () => {
   it("rejects malformed XML with the actual validate command", async () => {
     const file = join(dir, "malformed.xml");
     await writeFile(file, "<FacturaElectronica><Clave><NumeroConsecutivo><FechaEmision><Emisor>");
-    await validateCommand.run?.({ args: { file, json: true }, rawArgs: [], cmd: validateCommand });
+    await runCommand(validateCommand, { file, json: true });
     expect(process.exitCode).toBe(1);
     expect(JSON.parse(String(vi.mocked(console.log).mock.calls.at(-1)?.[0]))).toMatchObject({
       valid: false,
@@ -204,18 +203,14 @@ describe("CLI submission and XML validation", () => {
     const draft = exactDraftFixture();
     await writeFile(file, JSON.stringify(draft));
 
-    await validateCommand.run?.({ args: { file, json: true }, rawArgs: [], cmd: validateCommand });
+    await runCommand(validateCommand, { file, json: true });
     expect(process.exitCode).toBeUndefined();
     expect(JSON.parse(String(vi.mocked(console.log).mock.calls.at(-1)?.[0]))).toMatchObject({
       valid: true,
       money: "decimal-text",
     });
 
-    await submitCommand.run?.({
-      args: { file, json: true, profile: "default", "dry-run": true },
-      rawArgs: [],
-      cmd: submitCommand,
-    });
+    await runCommand(submitCommand, { file, json: true, profile: "default", "dry-run": true });
     expect(process.exitCode).toBeUndefined();
     const output = JSON.parse(String(vi.mocked(console.log).mock.calls.at(-1)?.[0])) as {
       success?: boolean;
@@ -232,18 +227,14 @@ describe("CLI submission and XML validation", () => {
     const legacy = draft0130Fixture();
     await writeFile(file, JSON.stringify(legacy));
 
-    await validateCommand.run?.({ args: { file, json: true }, rawArgs: [], cmd: validateCommand });
+    await runCommand(validateCommand, { file, json: true });
     expect(process.exitCode).toBeUndefined();
     expect(JSON.parse(String(vi.mocked(console.log).mock.calls.at(-1)?.[0]))).toMatchObject({
       valid: true,
       money: "decimal-text",
     });
 
-    await submitCommand.run?.({
-      args: { file, json: true, profile: "default", "dry-run": true },
-      rawArgs: [],
-      cmd: submitCommand,
-    });
+    await runCommand(submitCommand, { file, json: true, profile: "default", "dry-run": true });
     expect(process.exitCode).toBeUndefined();
     const output = JSON.parse(String(vi.mocked(console.log).mock.calls.at(-1)?.[0])) as {
       success?: boolean;
@@ -265,11 +256,7 @@ describe("CLI submission and XML validation", () => {
   ])("rejects a 0.13.0 draft with %s", async (_label, tarifa) => {
     const file = join(dir, "draft-0.13.0-bad.json");
     await writeFile(file, JSON.stringify(draft0130Fixture(tarifa)));
-    await submitCommand.run?.({
-      args: { file, json: true, profile: "default", "dry-run": true },
-      rawArgs: [],
-      cmd: submitCommand,
-    });
+    await runCommand(submitCommand, { file, json: true, profile: "default", "dry-run": true });
     expect(process.exitCode).toBe(1);
     expect(JSON.parse(String(vi.mocked(console.log).mock.calls.at(-1)?.[0]))).toMatchObject({
       success: false,
@@ -282,11 +269,7 @@ describe("hacienda support", () => {
     const { getFamilySupport } = await import("@dojocoding/hacienda-sdk");
     const log = vi.spyOn(console, "log").mockImplementation(() => undefined);
     try {
-      await supportCommand.run?.({
-        args: { json: true, _: [] },
-        rawArgs: [],
-        cmd: supportCommand,
-      });
+      await runCommand(supportCommand, { json: true });
       const output = JSON.parse(String(log.mock.calls.at(-1)?.[0])) as {
         families: { family: string; submit: string }[];
       };

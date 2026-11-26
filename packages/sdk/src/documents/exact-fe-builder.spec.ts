@@ -49,7 +49,10 @@ function input(): ExactFeInput {
     numeroConsecutivo: SIMPLE_INVOICE.numeroConsecutivo,
     fechaEmision: SIMPLE_INVOICE.fechaEmision,
     emisor: structuredClone(SIMPLE_INVOICE.emisor),
-    receptor: structuredClone(SIMPLE_INVOICE.receptor),
+    receptor: {
+      ...structuredClone(SIMPLE_INVOICE.receptor),
+      identificacion: structuredClone(required(SIMPLE_INVOICE.receptor.identificacion)),
+    },
     condicionVenta: "01",
     detalleServicio: [
       {
@@ -111,7 +114,7 @@ with localcontext() as ctx:
   }[];
 }
 function allocate(source: ExactFeInput) {
-  required(source.medioPago[0]).totalMedioPago = required(oracle([source])[0]).total;
+  required(source.medioPago?.[0]).totalMedioPago = required(oracle([source])[0]).total;
   return source;
 }
 describe("additive exact ordinary FE strings → BigInt → XML", () => {
@@ -203,7 +206,7 @@ describe("additive exact ordinary FE strings → BigInt → XML", () => {
     }
     const expected = oracle(cases);
     cases.forEach((source, i) => {
-      required(source.medioPago[0]).totalMedioPago = required(expected[i]).total;
+      required(source.medioPago?.[0]).totalMedioPago = required(expected[i]).total;
       const result = calculateExactFe(source);
       expect(result.resumenFactura.totalComprobante).toBe(required(expected[i]).total);
       result.detalleServicio.forEach((line, j) => {
@@ -373,7 +376,7 @@ describe("additive exact ordinary FE strings → BigInt → XML", () => {
     ];
     expect(() => calculateExactFe(excessive)).toThrow();
     const badPayment = input();
-    required(badPayment.medioPago[0]).totalMedioPago = "113.00001";
+    required(badPayment.medioPago?.[0]).totalMedioPago = "113.00001";
     expect(() => calculateExactFe(badPayment)).toThrow();
   });
 });
@@ -464,10 +467,12 @@ describe("current FE document-family sale conditions", () => {
   it("refuses REP-only 09/11 and FEC-only 13 before calculation/XML, retaining read-only historical math", () => {
     for (const condicionVenta of ["09", "11", "13"] as const) {
       const source = { ...input(), condicionVenta };
+      // Deliberately invalid: these sale conditions are outside the current FE input type.
+      const invalid = source as unknown as ExactFeInput;
       const before = JSON.stringify(source);
       expect(ExactFeInputSchema.safeParse(source).success).toBe(false);
-      expect(() => calculateExactFe(source)).toThrow();
-      expect(() => buildExactFacturaXml(source)).toThrow();
+      expect(() => calculateExactFe(invalid)).toThrow();
+      expect(() => buildExactFacturaXml(invalid)).toThrow();
       if (condicionVenta === "13") {
         const retained = RetainedExactFeInputSchema.parse(source);
         expect(calculateRetainedExactFe(retained).resumenFactura.totalComprobante).toBe(

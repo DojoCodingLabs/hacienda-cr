@@ -14,7 +14,7 @@ import { arbitraryDocumentWithType } from "../__fixtures__/document-generator.js
 import * as D from "../documents/index.js";
 import "../documents/parser.js";
 
-const BUILD_BY_INDEX = [
+const BUILD_BY_INDEX: Readonly<Record<number, (doc: any) => string>> = [
   D.buildFacturaXml,
   D.buildTiqueteXml,
   D.buildNotaCreditoXml,
@@ -33,6 +33,16 @@ const BUILD_BY_ROOT: Record<string, (doc: any) => string> = {
   FacturaElectronicaExportacion: D.buildFacturaExportacionXml,
   ReciboElectronicoPago: D.buildReciboPagoXml,
 };
+
+/** Look up a builder; an unknown type index or root fails the property loudly. */
+function builderFor<K extends string | number, B>(
+  table: Readonly<Record<K, B | undefined>>,
+  key: K,
+): B {
+  const build = table[key];
+  if (!build) throw new Error(`No builder for ${String(key)}`);
+  return build;
+}
 
 const PROPERTY_RUNS = Number(process.env.PROPERTY_RUNS ?? 100);
 const XSD_RUNS = Number(process.env.XSD_RUNS ?? 25);
@@ -55,7 +65,7 @@ describe("A4 property-based", () => {
   it("todo documento generado valida contra el XSD", async () => {
     await fc.assert(
       fc.asyncProperty(arbitraryDocumentWithType(), async ({ typeIdx, document }) => {
-        const xml = BUILD_BY_INDEX[typeIdx](document as any);
+        const xml = builderFor(BUILD_BY_INDEX, typeIdx)(document as any);
         const res = await validateDocumentXml(xml);
         if (!res.valid) console.error("XSD FAIL", res.issues, xml.slice(0, 300));
         expect(res.valid).toBe(true);
@@ -67,10 +77,10 @@ describe("A4 property-based", () => {
   it("construir → parsear → construir es un punto fijo", () => {
     fc.assert(
       fc.property(arbitraryDocumentWithType(), ({ typeIdx, document }) => {
-        const build = BUILD_BY_INDEX[typeIdx];
+        const build = builderFor(BUILD_BY_INDEX, typeIdx);
         const xml = build(document as any);
         const parsed = parseDocumentXml(xml);
-        const rexml = BUILD_BY_ROOT[parsed.rootElement](parsed.document as any);
+        const rexml = builderFor(BUILD_BY_ROOT, parsed.rootElement)(parsed.document as any);
         expect(rexml).toBe(xml);
       }),
       { numRuns: PROPERTY_RUNS },

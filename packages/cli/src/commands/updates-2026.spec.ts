@@ -5,6 +5,7 @@ import { createAuthenticatedClient } from "../utils/api-client.js";
 import { getCommand } from "./get.js";
 import { CLAVE_FORMAT_ERROR, statusCommand } from "./status.js";
 import { lookupCommand } from "./lookup.js";
+import { runCommand } from "../__fixtures__/run-command.js";
 
 vi.mock("@dojocoding/hacienda-sdk", async (importOriginal) => ({
   ...(await importOriginal<typeof HaciendaSdk>()),
@@ -31,29 +32,17 @@ describe("2026 alphanumeric CLI queries", () => {
   });
   it("retrieves a document with a legal entity clave", async () => {
     expect(clave.length).toBe(50);
-    await getCommand.run?.({
-      args: { clave, profile: "test", json: true },
-      rawArgs: [],
-      cmd: getCommand,
-    });
+    await runCommand(getCommand, { clave, profile: "test", json: true });
     expect(getComprobante).toHaveBeenCalledWith({}, clave);
     expect(process.exitCode).toBeUndefined();
   });
   it("checks status with a legal entity clave", async () => {
-    await statusCommand.run?.({
-      args: { clave, profile: "test", json: true },
-      rawArgs: [],
-      cmd: statusCommand,
-    });
+    await runCommand(statusCommand, { clave, profile: "test", json: true });
     expect(getStatus).toHaveBeenCalledWith({}, clave);
     expect(process.exitCode).toBeUndefined();
   });
   it("rejects letters outside the taxpayer segment before authenticating", async () => {
-    await getCommand.run?.({
-      args: { clave: "A" + clave.slice(1), profile: "test", json: true },
-      rawArgs: [],
-      cmd: getCommand,
-    });
+    await runCommand(getCommand, { clave: "A" + clave.slice(1), profile: "test", json: true });
     expect(createAuthenticatedClient).not.toHaveBeenCalled();
     expect(process.exitCode).toBe(1);
   });
@@ -61,11 +50,7 @@ describe("2026 alphanumeric CLI queries", () => {
     ["a letter outside the taxpayer segment", "A" + clave.slice(1)],
     ["49 characters", clave.slice(1)],
   ])("status rejects %s with the current clave format message", async (_label, bad) => {
-    await statusCommand.run?.({
-      args: { clave: bad, profile: "test", json: true },
-      rawArgs: [],
-      cmd: statusCommand,
-    });
+    await runCommand(statusCommand, { clave: bad, profile: "test", json: true });
     expect(createAuthenticatedClient).not.toHaveBeenCalled();
     expect(process.exitCode).toBe(1);
     const printed = vi
@@ -77,11 +62,7 @@ describe("2026 alphanumeric CLI queries", () => {
     expect(CLAVE_FORMAT_ERROR).not.toMatch(/letters only/);
   });
   it("looks up an alphanumeric legal entity ID", async () => {
-    await lookupCommand.run?.({
-      args: { cedula: "310ABC1234", json: true },
-      rawArgs: [],
-      cmd: lookupCommand,
-    });
+    await runCommand(lookupCommand, { cedula: "310ABC1234", json: true });
     expect(lookupTaxpayer).toHaveBeenCalledWith("310ABC1234");
     expect(process.exitCode).toBeUndefined();
   });
