@@ -1,5 +1,83 @@
 # @dojocoding/hacienda-shared
 
+## 0.14.0
+
+### Minor Changes
+
+- 4d12b71: Add additive exact decimal-text document DTOs, calculation and XML builders for all seven v4.4 documents and `MensajeReceptor` in the shared/SDK API. The CLI (draft validation/submission) and MCP (`create_invoice_exact`) exact inputs are Factura Electrónica (01) only. Decimal bounds follow the official XSD (`TarifaExonerada` and the alcohol `Porcentaje` allow 4 digits with 2 decimals) and an IVA `tarifa` must match its `codigoTarifaIVA`. Like the current exact family, line discounts cascade on the remaining base (each strictly smaller than it) and `medioPago` is required unless the sale condition is 02, 08 or 10. CLI drafts saved by 0.13.0 with a numeric `tarifa` keep loading and keep their verbatim XML bytes. Existing `Number` APIs and published bytes remain unchanged; this change does not promote 1.0.
+- eb28cd7: Correct two exact-family rules against Anexos v4.4.
+
+  **Discounts cascade on the remaining base.** In every current exact
+  calculator (FE, TE, total and partial NC, ND, FEC, FEC foreign service, FE
+  replacement and FEC used-personal goods), each line discount now applies to the
+  base that remains after the previous discount. Percentages are rounded HALF_UP
+  to five decimals; absolute amounts are carried unchanged. Only lines where a
+  percentage discount follows another discount change; for them `montoDescuento`,
+  `subTotal`, `baseImponible`, tax and totals differ. Example: a line
+  of 100 with two 10% discounts was 10.00000 + 10.00000 (subtotal 80.00000,
+  total 90.40000) and is now 10.00000 + 9.00000 (subtotal 81.00000, total
+  91.53000). Callers that computed `medioPago` from the old rule must recompute
+  it, or the payment reconciliation rejects the document. A discount that
+  consumes the whole remaining base still throws the same `RangeError`.
+
+  `calculateRetainedExactFe` keeps its frozen historical rule: every percentage
+  is computed on the line gross, and the line is rejected with the same
+  `RangeError` as before when the sum of the discounts reaches the gross.
+
+  **`medioPago` is conditional.** It is required unless the governing sale
+  condition is 02, 08 or 10. When present it still holds 1–4 allocations that
+  must equal the invoice total. When it is absent or empty, the calculated summary
+  has no `medioPago` and the XML has no `MedioPago` node. The governing condition
+  is the document's own for FE, TE, FEC, FEC foreign service and FE replacement,
+  the original's for total NC, partial NC and ND, and the literal 13 (never
+  exempt) for FEC used-personal goods.
+
+  This is a type-level change. `medioPago` is now optional in `ExactFeInput`,
+  `ExactTeInput`, `ExactFecInput`, `ExactFecForeignServiceIva13Input`,
+  `ExactNcPartialInput` and `ExactNdInput`, and in the FE they carry (`original`
+  of `ExactNcTotalInput`, `ExactNcPartialInput` and `ExactNdInput`; `replacement`
+  of `ExactFeReplacementInput`). It is also optional in
+  `ExactFeSummarySchema`, so `ExactFeCalculated["resumenFactura"]["medioPago"]`
+  and the calculated types derived from it may be `undefined`. Code that reads
+  `resumenFactura.medioPago` must handle that case. The FEC used-personal goods
+  calculated summary still requires at least one allocation.
+
+  New shared export: `RetainedExactFeCalculatedSchema` (and the
+  `RetainedExactFeCalculated` type), which requires the non-empty historical
+  allocation of the retained calculator's output. The broad
+  `ExactFeCalculatedSchema` decoder still reads historical zero allocations.
+
+- 0b034cc: Refuerza la validación semántica de `InformacionReferencia` (Ítem 1 de `docs/testing/sdk-robustness-audit.md`):
+
+  - `tipoDoc === "99"` requiere `tipoDocOtros` (y viceversa); `codigo === "99"` requiere `codigoOtros` (y viceversa).
+  - `ReciboElectronicoPago` admite el motivo de referencia `"17"` (pago de comprobante); otros documentos lo rechazan.
+  - La referencia del REP exacto exige `numero` (el XSD del REP exige `Numero`); `RepInformacionReferenciaSchema` y `DecimalRepReferenceSchema` se exportan.
+  - IVA `"07"` (cálculo especial) exige `codigoTarifaIVA`; la correspondencia `tarifa` ↔ `codigoTarifaIVA` solo aplica a `"01"`.
+  - IVA `"08"` (bienes usados) exige `factorCalculoIVA`.
+
+  Es un endurecimiento de entrada: documentos que antes se aceptaban con `tipoDoc`/`codigo` `"99"` sin su texto `*Otros` (o con `*Otros` sin `"99"`), con `codigo` `"17"` fuera del REP, o con una referencia REP exacta sin `numero`, ahora se rechazan. `codigo` sigue siendo opcional para cualquier `tipoDoc`, y el esquema legado sigue descartando claves desconocidas. En paquetes pre-1.0 esto es un cambio de ruptura (`minor`). Consulta `MIGRATION.md` para los patrones de corrección.
+
+### Patch Changes
+
+- 39dfb47: Raise dependency floors past published security advisories.
+
+  - `node-forge` `^1.4.4` (SDK optional peer, CLI dependency). Forge 1.4.1–1.4.4
+    fix the advisories reported against 1.4.0–1.4.2, including GHSA-jc66-7q78-782g
+    (PKCS#12 MAC forgery and constant-key PBE with a zero iteration count, which is
+    reachable through `loadP12`), GHSA-6qrw-m8cv-hcxf and GHSA-86w9-cpqp-85rv (RSA
+    PKCS#1 v1.5 DigestInfo forgery), GHSA-7wch-p9px-956x (PEM decoding ReDoS) and
+    GHSA-rhr8-3pm8-cq29 (ASN.1 BIT STRING resource exhaustion). Consumers that call
+    `loadP12` or `signXml` must have `node-forge` 1.4.4 or later.
+  - `zod` `^4.6.7` in every package (GHSA-mrhx-c7xc-m3w5, memory exhaustion
+    while validating oversized constrained collections).
+  - `fast-xml-parser` `^5.12.0` in the SDK (GHSA-474x-hrwr-fgx4, quadratic scan of
+    unterminated stop-node tags).
+  - `@modelcontextprotocol/sdk` `^1.32.2` in the MCP server. The lockfile now resolves
+    patched `body-parser`, `hono`, `@hono/node-server`, `qs`, `fast-uri` and
+    `ip-address` within the existing transitive ranges; no runtime override is added.
+
+  No API, signing behavior or XML output changes.
+
 ## 0.13.0
 
 ### Patch Changes
