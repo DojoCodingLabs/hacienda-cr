@@ -191,7 +191,7 @@ try {
       await readFile(join(consumer, "node_modules", pkg.name, "package.json"), "utf8"),
     );
     assert.equal(installed.version, pkg.version);
-    assert.equal(installed.engines.node, ">=22");
+    assert.equal(installed.engines.node, ">=22.12");
     assert.equal(installed.publishConfig.access, "public");
     assert.equal(Object.keys(installed.exports["."])[0], "types");
     for (const [name, version] of Object.entries(installed.dependencies ?? {})) {

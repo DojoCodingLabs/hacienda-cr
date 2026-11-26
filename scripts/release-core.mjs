@@ -11,7 +11,7 @@ export function validateRelease(tag, packages, changesets) {
   for (const pkg of packages) {
     if (pkg.version !== tag.slice(1))
       throw new Error(`Tag does not match ${pkg.name}@${pkg.version}.`);
-    if (pkg.engines?.node !== ">=22" || pkg.publishConfig?.access !== "public")
+    if (pkg.engines?.node !== ">=22.12" || pkg.publishConfig?.access !== "public")
       throw new Error(`Invalid release metadata: ${pkg.name}.`);
   }
 }
