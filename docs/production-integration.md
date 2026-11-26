@@ -140,9 +140,10 @@ En un asistente, completá los placeholders de `draft_invoice` y revisá proveed
 ### Revisión contable (solo asientos)
 
 - Alcance: asientos, mapeo de IVA y reconciliación. No incluye transporte, XSD ni firma.
+- Los chequeos offline de `pnpm verify` y la revisión contable no equivalen a aceptación de Hacienda; ver [testing](testing.md) y la [guía sandbox](sandbox-guide.md).
 - Insumos: facturas sintéticas, sin datos comerciales reales.
 - Artefactos: XML y asientos derivados (sin PDF ni representación gráfica).
-- Evidencia: bundle por intento con XML, respuesta y asientos.
+- Evidencia: bundle por intento con XML sintético y asientos derivados.
 
 ### Fixtures sintéticos para revisión contable
 
@@ -158,15 +159,17 @@ En un asistente, completá los placeholders de `draft_invoice` y revisá proveed
 
 ### Evidencia para el gate contable
 
-- XML firmado y respuesta de Hacienda.
+- XML sintético usado como insumo.
 - Asientos generados y su justificación.
 - Conciliación de totales.
+
+El XML firmado y la respuesta del ambiente de pruebas (sandbox) pertenecen a un gate posterior y separado: se obtienen con el [recorrido sandbox](sandbox-guide.md) y forman parte de la evidencia de producción, no de la revisión contable.
 
 ### Checklist de producción
 
 - Credenciales y certificado de producción.
 - Ambiente y URLs de producción.
-- Retención 5 años y respaldo.
+- Conservación de comprobantes durante el plazo legal de conservación vigente (verificar en el Reglamento de Comprobantes Electrónicos, Decreto N.º 44739-H, y la resolución MH-DGT-RES-0027-2024) y respaldo.
 - Bitácoras y control de clientes.
 - Monitoreo de vencidos, rechazos y errores.
 - Runbook de recuperación.
@@ -174,6 +177,7 @@ En un asistente, completá los placeholders de `draft_invoice` y revisá proveed
 ### Evidencia para el gate de producción
 
 - Configuración de producción verificada.
+- XML firmado y respuesta del ambiente de pruebas (sandbox) para los casos del gate contable.
 - Prueba de retención y respaldo.
 - Alertas y métricas operativas.
 
