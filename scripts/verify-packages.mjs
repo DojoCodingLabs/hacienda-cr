@@ -291,7 +291,7 @@ import {ExactFecUsedPersonalGoodsNonSubjectInputSchema,ExactRecipientMessageInpu
 import {createServer} from "@dojocoding/hacienda-mcp";
 import {Client} from "@modelcontextprotocol/sdk/client/index.js";
 import {StdioClientTransport} from "@modelcontextprotocol/sdk/client/stdio.js";
-import {isBusinessDay,addBusinessDays,verifySignedDocumentXml,parseDocumentXml,FileDocumentStore} from "@dojocoding/hacienda-sdk";
+import {isBusinessDay,addBusinessDays,verifySignedDocumentXml,parseDocumentXml,FileDocumentStore,classifyOutcome} from "@dojocoding/hacienda-sdk";
 import {MoneyInputSchema,MonetaryTextSchema,DecimalDocumentInputSchema,DecimalDocumentCalculatedSchema,DecimalMoneySchema,DecimalExoneratedRateSchema,DecimalSpecificPercentageSchema,DecimalTaxInputSchema} from "@dojocoding/hacienda-shared";
 import {calculateDecimalDocument,calculateDecimalLineItemTotals,calculateDecimalInvoiceSummary,buildDecimalDocumentXml,buildDecimalFacturaXml} from "@dojocoding/hacienda-sdk";
 assert.equal(isBusinessDay("2026-01-01"),false);
@@ -302,6 +302,7 @@ assert.throws(()=>addBusinessDays("2031-01-01",0));
 assert.equal(MoneyInputSchema.parse("0.10000"),"0.1");
 assert.equal(MonetaryTextSchema.safeParse("1e2").success,false);
 assert.equal(typeof FileDocumentStore,"function");
+assert.deepEqual([classifyOutcome({status:"procesando"}).kind,classifyOutcome({"ind-estado":"aceptado"}).kind,classifyOutcome(null,new Error("timeout")).kind,classifyOutcome({status:"error"}).kind],["pending","success","transport_error","unknown"]);
 const issuedUsername="cpf-01-1234-5678@stag.comprobanteselectronicos.go.cr";
 assert.deepEqual(loadCredentials({username:issuedUsername,password:"synthetic"}),{username:issuedUsername,password:"synthetic"});
 let tokenRequests=0;

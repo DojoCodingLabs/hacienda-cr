@@ -33,6 +33,8 @@ export type {
   DocumentStore,
   DeadlineEvaluation,
   SendResult,
+  DeliveryOutcome,
+  StatusObservation,
   DeliverySubmitAndWaitOptions,
   CreateStoredDocumentOptions,
   FileStoreOptions,
