@@ -69,7 +69,7 @@ jobs:
           fi
       - name: Restore exact verified artifacts
         if: inputs.prepared_run_id != ''
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: release-${{ env.RELEASE_TAG }}
           path: .release
