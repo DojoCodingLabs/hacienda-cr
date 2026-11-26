@@ -292,6 +292,7 @@ export type {
   HttpResponse,
   RateLimiterOptions,
   ParsedStatusResponse,
+  ReconcileResult,
   SubmitAndWaitOptions,
   SubmitAndWaitResult,
   RetryOptions,

@@ -12,9 +12,9 @@ import type {
   SubmissionResponse,
   StatusResponse,
 } from "@dojocoding/hacienda-shared";
-import { HaciendaStatus } from "@dojocoding/hacienda-shared";
+import { ClaveNumericaSchema, HaciendaStatus } from "@dojocoding/hacienda-shared";
 
-import { ApiError } from "../errors.js";
+import { ApiError, ValidationError } from "../errors.js";
 import type { HttpClient, HttpResponse } from "./http-client.js";
 import { getRejectionDescription } from "./error-codes.js";
 
@@ -183,24 +183,72 @@ export function extractRejectionReason(responseXml: string): string | undefined 
  * @param status - The Hacienda processing status.
  * @returns True if the status is terminal (aceptado, rechazado, or error).
  */
-/**
- * Reconciles a document by querying its status by clave.
- *
- * This helper never creates a new document or consecutive; it only reads
- * the current server-side state for an existing clave.
- */
-export async function reconcileByClave(
-  httpClient: HttpClient,
-  clave: string,
-  options?: { signal?: AbortSignal },
-): Promise<ParsedStatusResponse> {
-  return getStatus(httpClient, clave, options);
-}
-
 export function isTerminalStatus(status: HaciendaStatus): boolean {
   return (
     status === HaciendaStatus.ACEPTADO ||
     status === HaciendaStatus.RECHAZADO ||
     status === HaciendaStatus.ERROR
   );
+}
+
+// ---------------------------------------------------------------------------
+// Durable delivery recovery
+// ---------------------------------------------------------------------------
+
+/**
+ * Result of {@link reconcileByClave}.
+ *
+ * - `found`: Hacienda knows the clave; `status` is its current state.
+ * - `not_found`: Hacienda answered 404, so it never received the document.
+ *   It is safe to resubmit the SAME signed document with the SAME clave;
+ *   never allocate a new consecutive for it.
+ * - `unknown`: the query failed (5xx, network error or timeout) or the
+ *   response did not belong to the clave. Nothing is established; query
+ *   again later and do not resubmit.
+ */
+export type ReconcileResult =
+  | { readonly kind: "found"; readonly status: ParsedStatusResponse }
+  | { readonly kind: "not_found" }
+  | { readonly kind: "unknown"; readonly error: Error };
+
+/**
+ * Reconciles a document after an ambiguous submission by querying its
+ * status by clave (GET /recepcion/{clave}).
+ *
+ * This helper never submits a document or allocates a consecutive; it only
+ * reads the server-side state of an existing clave. The clave is validated
+ * before any network access. Cancellation through `options.signal` is
+ * propagated rather than reported as `unknown`.
+ *
+ * @param httpClient - The authenticated HTTP client.
+ * @param clave - The 50-character clave (taxpayer segment may be alphanumeric).
+ * @returns A discriminated {@link ReconcileResult}.
+ * @throws {ValidationError} If the clave is malformed.
+ */
+export async function reconcileByClave(
+  httpClient: HttpClient,
+  clave: string,
+  options?: { signal?: AbortSignal },
+): Promise<ReconcileResult> {
+  if (typeof clave !== "string" || !ClaveNumericaSchema.safeParse(clave).success) {
+    throw new ValidationError("Invalid clave for reconciliation.");
+  }
+  options?.signal?.throwIfAborted();
+  try {
+    const status = await getStatus(httpClient, clave, options);
+    if (status.clave !== clave) {
+      return {
+        kind: "unknown",
+        error: new ApiError("Status response clave does not match the requested clave.", 200),
+      };
+    }
+    return { kind: "found", status };
+  } catch (error) {
+    if (options?.signal?.aborted) throw error;
+    if (error instanceof ApiError && error.statusCode === 404) return { kind: "not_found" };
+    return {
+      kind: "unknown",
+      error: error instanceof Error ? error : new Error("Status query failed."),
+    };
+  }
 }

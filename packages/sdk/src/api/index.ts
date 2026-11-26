@@ -21,7 +21,7 @@ export {
   extractRejectionReason,
   reconcileByClave,
 } from "./submission.js";
-export type { ParsedStatusResponse } from "./submission.js";
+export type { ParsedStatusResponse, ReconcileResult } from "./submission.js";
 
 // Orchestrator
 export { submitAndWait } from "./orchestrator.js";
