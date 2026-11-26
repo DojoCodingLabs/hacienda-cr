@@ -40,8 +40,8 @@
     "@dojocoding/hacienda-sdk": "workspace:*",
     "@dojocoding/hacienda-shared": "workspace:*",
     "citty": "^0.2.2",
-    "node-forge": "^1.4.0",
-    "zod": "^4.6.5"
+    "node-forge": "^1.4.4",
+    "zod": "^4.6.7"
   },
   "license": "MIT",
   "author": "Dojo Coding Labs <dev@dojocoding.io> (https://dojocoding.io)",

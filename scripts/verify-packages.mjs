@@ -181,7 +181,7 @@ try {
       ...tarballs,
       "typescript@5.9.3",
       "@types/node@22",
-      "node-forge@^1.4.0",
+      "node-forge@^1.4.4",
     ],
     consumer,
   );

@@ -54,7 +54,7 @@ incorrect catalog inputs; review these changes before upgrading.
   automatically acquire a production trust store or validate a CA chain.
 - Public monetary Number DTOs are unchanged. Full exact-decimal DTO/calculation
   migration remains separate; never coerce unsupported values to Number merely
-  to pass validation. SDK issue 69 still tracks the unpatched node-forge advisory.
+  to pass validation. SDK issue 69 tracked the node-forge advisory; it is fixed in 1.4.1 and SDK 0.14.0 requires `node-forge` `^1.4.4`.
 
 For the complete verifier contract and source provenance, see
 [response verification](https://github.com/DojoCodingLabs/hacienda-cr/blob/main/docs/specs/hacienda-response-verification.md)
@@ -103,7 +103,7 @@ currently valid RSA certificate of at least 2048 bits with a matching private ke
 PKCS#12 input is capped at 1 MiB.
 
 See the [security scope and remaining boundaries](https://github.com/DojoCodingLabs/hacienda-cr/blob/main/docs/security-hardening.md),
-including the unpatched Forge verification advisory. These checks do not establish
+including the Forge advisory history (fixed in 1.4.1; SDK 0.14.0 requires `^1.4.4`). These checks do not establish
 certificate-chain trust or real Hacienda acceptance.
 
 ## Additive exact ordinary FE API (0.6.0)

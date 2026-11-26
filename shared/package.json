@@ -33,7 +33,7 @@
     "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
-    "zod": "^4.6.5"
+    "zod": "^4.6.7"
   },
   "license": "MIT",
   "author": "Dojo Coding Labs <dev@dojocoding.io> (https://dojocoding.io)",
