@@ -46,7 +46,7 @@ Consulta el change `fix-reference-catalog-semantics` y `docs/testing/sdk-robustn
 
 `node-forge` is no longer a required runtime dependency of the SDK: it is an
 optional peer resolved lazily inside `loadP12`. Consumers that never load a
-`.p12` do not install it and do not inherit its open advisory.
+`.p12` do not install it. Signing consumers need `node-forge` 1.4.4 or later.
 
 **Action required** if you call `loadP12` or `signXml` directly: add
 `node-forge` to your project's dependencies.
@@ -61,8 +61,9 @@ The CLI declares `node-forge` as its own dependency, so `hacienda sign` and
 Without the parser, the SDK installs and imports normally, but `loadP12`
 rejects with an actionable `SigningError` before reading the file. Parsing, the
 validations (1 MiB, RSA >= 2048, validity period, key/certificate match) and
-signing are unchanged when the parser is present. Issue #69 remains open: this
-reduces exposure; it does not replace the library or close the finding.
+signing are unchanged when the parser is present. Since 0.14.0 the peer and CLI
+ranges require `node-forge` `^1.4.4`, which fixes the advisories reported against
+1.4.0–1.4.2 (including GHSA-86w9-cpqp-85rv and GHSA-jc66-7q78-782g).
 
 ### `hacienda draft` en texto decimal exacto
 
@@ -108,7 +109,7 @@ incorrect catalog inputs; review these changes before upgrading.
   automatically acquire a production trust store or validate a CA chain.
 - Public monetary Number DTOs are unchanged. Full exact-decimal DTO/calculation
   migration remains separate; never coerce unsupported values to Number merely
-  to pass validation. SDK issue 69 still tracks the unpatched node-forge advisory.
+  to pass validation. SDK issue 69 tracked the node-forge advisory; it is fixed in 1.4.1 and SDK 0.14.0 requires `node-forge` `^1.4.4`.
 
 For the complete verifier contract and source provenance, see
 [response verification](https://github.com/DojoCodingLabs/hacienda-cr/blob/main/docs/specs/hacienda-response-verification.md)

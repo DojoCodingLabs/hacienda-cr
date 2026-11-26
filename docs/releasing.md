@@ -7,8 +7,8 @@
 2. Run `pnpm version-packages`, then `pnpm install --lockfile-only`. Review package
    manifests, internal dependencies, changelogs and consumed changesets together.
 3. Run `pnpm verify` and `pnpm test:coverage`. Review the packaged migration guide.
-   Re-run `pnpm audit`; preserve the documented unpatched Forge advisory rather
-   than suppressing it. Offline suites do not establish live Hacienda acceptance.
+   Re-run `pnpm audit` and record every finding with its path; never suppress an
+   advisory. Offline suites do not establish live Hacienda acceptance.
 4. Commit and open the version PR; merge only after review and green CI.
 
 ## Prepare and publish the approved commit

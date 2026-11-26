@@ -150,17 +150,18 @@ it("rejects advisory-shaped extra nested DigestAlgorithm children through the ex
       expect(
         publicDecrypt({ key: publicKey, padding: constants.RSA_NO_PADDING }, malformedSignature),
       ).toEqual(encoded);
-      // Actual affected Forge verifier accepts this malformed nested structure,
-      // with its default full-DER and PKCS#1 padding checks enabled.
-      expect(
+      // Forge 1.4.0 (GHSA-86w9-cpqp-85rv) accepted this malformed nested structure.
+      // The required Forge (>=1.4.4) rejects its DigestInfo for any digest, which
+      // proves the installed parser is patched; the SDK must still reject natively.
+      expect(() =>
         forgeKey.verify(digest.toString("binary"), malformedSignature.toString("binary")),
-      ).toBe(true);
-      expect(
+      ).toThrow(/DigestInfo/);
+      expect(() =>
         forgeKey.verify(
           createHash("sha256").update("different message").digest("binary"),
           malformedSignature.toString("binary"),
         ),
-      ).toBe(false);
+      ).toThrow(/DigestInfo/);
       expect(verify("RSA-SHA256", signedInfo, publicKey, malformedSignature)).toBe(false);
       const native = vi.spyOn(globalThis.crypto.subtle, "verify"),
         forgeParser = vi.spyOn(forge.asn1, "fromDer");

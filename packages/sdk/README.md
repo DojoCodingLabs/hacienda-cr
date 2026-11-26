@@ -23,7 +23,7 @@ npm install node-forge
 
 Without it, the package installs, imports and serves every other API; only
 `.p12` loading fails, with a `SigningError` that names the missing package and
-the install command. This keeps the parser and its open advisory out of
+the install command. Install `node-forge` 1.4.4 or later. This keeps the parser out of
 consumers that never sign.
 
 ## Quick Start

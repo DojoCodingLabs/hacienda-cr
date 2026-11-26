@@ -60,7 +60,8 @@ security or replace a production penetration test.
 ## Dependency audit, 2026-10-03
 
 Compatible dependencies and the test/build tooling were updated. The audit now
-reports one high-severity advisory, with no patched release:
+reported one high-severity advisory, then with no patched release (fixed in
+Forge 1.4.1 on 2026-10-27; see the dependency floors section below):
 [GHSA-86w9-cpqp-85rv](https://github.com/advisories/GHSA-86w9-cpqp-85rv), affecting
 node-forge RSA PKCS#1 v1.5 **signature verification** through 1.4.0.
 
@@ -134,5 +135,23 @@ before WebCrypto imports the key.
 A missing parser is a configuration error, not a fallback: `loadP12` rejects with
 a `SigningError` that names the package and install command, and never echoes the
 PIN. The packed-consumer check covers both the opt-in signing path and the
-no-parser path. Issue #69 remains open; no advisory is suppressed and no
-replacement parser is claimed.
+no-parser path. No advisory is suppressed and no replacement parser is claimed.
+
+### Dependency floors, 2026-11-26
+
+Forge 1.4.1 (2026-10-27) fixed upstream issue #1149 and the SDK now requires `node-forge` `^1.4.4`. Forge 1.4.1–1.4.4 also fix the later advisories
+reported against 1.4.0–1.4.2, including GHSA-jc66-7q78-782g (PKCS#12 MAC forgery
+and constant-key PBE, reachable through `loadP12`) and GHSA-6qrw-m8cv-hcxf (RSA
+PKCS#1 v1.5 DigestInfo forgery). The published floors are now `node-forge` `^1.4.4`
+(SDK optional peer, CLI dependency), `zod` `^4.6.7` (GHSA-mrhx-c7xc-m3w5),
+`fast-xml-parser` `^5.12.0` (GHSA-474x-hrwr-fgx4) and `@modelcontextprotocol/sdk`
+`^1.32.2`, with patched transitive `body-parser`, `hono`, `@hono/node-server`,
+`qs`, `fast-uri` and `ip-address` resolved within their existing ranges.
+
+`pnpm audit --prod` reports no findings. Full `pnpm audit` keeps four
+moderate **development-only** findings: ExcelJS → uuid (GHSA-w5hq-g745-h8pq, call
+path assessed above), vitest → @vitest/mocker (GHSA-qxg6-89mg-rqv8,
+GHSA-xp26-3454-mjgp; test runner only) and typescript-eslint → minimatch
+(GHSA-g3hv-75wg-m249; lint only). None ships in a published tarball. The
+pre-existing scoped `typed-rest-client>qs` override (Stryker, dev-only) moved to
+6.16.1 for GHSA-6pq8-jhm2-2vcw.

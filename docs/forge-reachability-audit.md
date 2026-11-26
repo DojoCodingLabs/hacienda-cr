@@ -5,7 +5,9 @@ Read-only source assessment on 17 October 2026 against released commit
 current call paths and existing regression evidence. It changes no published
 behavior, dependency, trust policy or release version.
 
-## Unresolved dependency finding
+> **Status 2026-11-26:** Forge 1.4.1 (2026-10-27) fixed upstream issue #1149 and the SDK now requires `node-forge` `^1.4.4`. See the final section.
+
+## Dependency finding at 0.6.0 (historical)
 
 Runtime `pnpm audit --prod --json` still reports one high finding and no
 critical/moderate/low findings: node-forge 1.4.0,
@@ -177,3 +179,17 @@ Evidence added by this change:
 - `scripts/verify-packages.mjs` installs the packed tarballs twice: one consumer
   opts in and signs, another omits the parser, asserts the actionable failure,
   and checks that the installed tree and production audit exclude `node-forge`.
+
+## Update 2026-11-26: fixed upstream, floor raised
+
+[Upstream issue #1149](https://github.com/digitalbazaar/forge/issues/1149) closed
+on 2026-10-27 with Forge 1.4.1. The npm audit database now reports
+GHSA-86w9-cpqp-85rv as patched in 1.4.1; the GitHub advisory record still lists no
+first patched version. Forge 1.4.1–1.4.4 also fix further advisories against
+1.4.0–1.4.2, including GHSA-jc66-7q78-782g (PKCS#12 MAC forgery, on the `loadP12`
+path) and GHSA-6qrw-m8cv-hcxf. The SDK optional peer and the CLI dependency now
+require `^1.4.4`; the lockfile resolves 1.4.4 and `pnpm audit --prod` reports no
+findings. `response-verifier-adversarial.spec.ts` now asserts that the installed Forge
+rejects the advisory-shaped DigestInfo (1.4.0 accepted it) while the SDK native
+verifier still rejects it. The call-path assessment above remains historical evidence. Issue #69 can be
+closed once 0.14.0 is published with this floor.

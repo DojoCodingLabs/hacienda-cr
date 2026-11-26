@@ -71,7 +71,7 @@ ambiguous submission failure, query the same clave before deciding to resubmit.
 
 ## Documentation map
 
-- [Forge reachability and nested-DER regression](docs/forge-reachability-audit.md): historical source trace and current native response-verifier boundary; advisory remains open.
+- [Forge reachability and nested-DER regression](docs/forge-reachability-audit.md): historical source trace and native response-verifier boundary; fixed in Forge 1.4.1, floor `^1.4.4` since 0.14.0.
 
 - [Pause and continuation checkpoint](docs/pause-context-2026-10-18.md): all eight issue dispositions, published versus source-only identity and explicit resume criteria.
 - [Published 0.10.0](docs/release-0100-published.md): exact registry bytes, provenance, single indexing recovery and remaining fiscal/application gates.
