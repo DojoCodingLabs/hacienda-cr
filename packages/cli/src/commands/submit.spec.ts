@@ -5,6 +5,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { createTestP12 } from "../../../sdk/src/__fixtures__/signing.js";
 import { SIMPLE_INVOICE } from "../../../sdk/src/__fixtures__/invoices.js";
+import type { FacturaElectronica } from "@dojocoding/hacienda-shared";
 import { submitCommand } from "./submit.js";
 import { validateCommand } from "./validate.js";
 import { DraftFacturaSchema, type DraftFactura } from "../utils/draft-document.js";
@@ -44,7 +45,7 @@ function exactDraftFixture(): DraftFactura {
         precioUnitario: line.precioUnitario,
         montoTotal: line.montoTotal,
         subTotal: line.subTotal,
-        impuesto: [{ ...sourceTax, monto: line.impuestoMonto }],
+        impuesto: [{ ...sourceTax, tarifa: "13", monto: line.impuestoMonto }],
         impuestoNeto: line.impuestoNeto,
         montoTotalLinea: line.montoTotalLinea,
       },
@@ -54,6 +55,47 @@ function exactDraftFixture(): DraftFactura {
       "01",
     ),
   });
+}
+
+/**
+ * A draft exactly as 0.13.0 saved it: decimal-text money, a JSON-number IVA
+ * `tarifa`, and the 0.13.0 `buildDraftSummary` totals. Values are literal so
+ * later helper changes cannot silently reshape the fixture.
+ */
+function draft0130Fixture(tarifa: unknown = 13): Record<string, unknown> {
+  const { detalleServicio: _lines, resumenFactura: _summary, ...header } = SIMPLE_INVOICE;
+  return {
+    ...header,
+    detalleServicio: [
+      {
+        numeroLinea: 1,
+        codigoCabys: "4321000000000",
+        cantidad: "1",
+        unidadMedida: "Sp",
+        detalle: "Servicio de consultoria en TI",
+        precioUnitario: "100",
+        montoTotal: "100",
+        subTotal: "100",
+        impuesto: [{ codigo: "01", codigoTarifaIVA: "08", tarifa, monto: "13" }],
+        impuestoNeto: "13",
+        montoTotalLinea: "113",
+      },
+    ],
+    resumenFactura: {
+      totalServGravados: "0",
+      totalServExentos: "0",
+      totalMercanciasGravadas: "100",
+      totalMercanciasExentas: "0",
+      totalGravado: "100",
+      totalExento: "0",
+      totalVenta: "100",
+      totalDescuentos: "0",
+      totalVentaNeta: "100",
+      totalImpuesto: "13",
+      medioPago: [{ tipoMedioPago: "01", totalMedioPago: "113" }],
+      totalComprobante: "113",
+    },
+  };
 }
 
 describe("CLI submission and XML validation", () => {
@@ -142,7 +184,56 @@ describe("CLI submission and XML validation", () => {
       xml?: string;
     };
     expect(output).toMatchObject({ success: true, dryRun: true });
+    expect(output.xml).toContain("<MontoTotal>100.00000</MontoTotal>");
+    expect(output.xml).toContain("<TotalComprobante>113.00000</TotalComprobante>");
+  });
+
+  it("keeps loading a 0.13.0 draft with a numeric tarifa and its verbatim XML bytes", async () => {
+    const file = join(dir, "draft-0.13.0.json");
+    const legacy = draft0130Fixture();
+    await writeFile(file, JSON.stringify(legacy));
+
+    await validateCommand.run?.({ args: { file, json: true }, rawArgs: [], cmd: validateCommand });
+    expect(process.exitCode).toBeUndefined();
+    expect(JSON.parse(String(vi.mocked(console.log).mock.calls.at(-1)?.[0]))).toMatchObject({
+      valid: true,
+      money: "decimal-text",
+    });
+
+    await submitCommand.run?.({
+      args: { file, json: true, profile: "default", "dry-run": true },
+      rawArgs: [],
+      cmd: submitCommand,
+    });
+    expect(process.exitCode).toBeUndefined();
+    const output = JSON.parse(String(vi.mocked(console.log).mock.calls.at(-1)?.[0])) as {
+      success?: boolean;
+      xml?: string;
+    };
+    expect(output.success).toBe(true);
+    // 0.13.0 serialized the validated draft verbatim through buildFacturaXml.
+    const { buildFacturaXml } = await import("@dojocoding/hacienda-sdk");
+    expect(output.xml).toBe(buildFacturaXml(legacy as unknown as FacturaElectronica));
+    expect(output.xml).toContain("<Tarifa>13</Tarifa>");
     expect(output.xml).toContain("<MontoTotal>100</MontoTotal>");
     expect(output.xml).toContain("<TotalComprobante>113</TotalComprobante>");
+  });
+
+  it.each([
+    ["an inconsistent rate", 12],
+    ["an exponent rate", 1e-7],
+    ["a negative rate", -13],
+  ])("rejects a 0.13.0 draft with %s", async (_label, tarifa) => {
+    const file = join(dir, "draft-0.13.0-bad.json");
+    await writeFile(file, JSON.stringify(draft0130Fixture(tarifa)));
+    await submitCommand.run?.({
+      args: { file, json: true, profile: "default", "dry-run": true },
+      rawArgs: [],
+      cmd: submitCommand,
+    });
+    expect(process.exitCode).toBe(1);
+    expect(JSON.parse(String(vi.mocked(console.log).mock.calls.at(-1)?.[0]))).toMatchObject({
+      success: false,
+    });
   });
 });
