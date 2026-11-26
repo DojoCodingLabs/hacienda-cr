@@ -15,6 +15,7 @@ import type {
   CodigoComercial,
   ResumenFactura,
   OtroCargo,
+  InformacionReferencia,
   RepInformacionReferencia,
   OtroContenido,
   MedioPago,
@@ -624,14 +625,21 @@ export function buildOtrosCargosXml(otrosCargos: XmlOtroCargo[]): Record<string,
 }
 
 /**
+ * Reference in either catalog: the base (`InformacionReferencia`) or the REP
+ * variant, which admits reason "17" and requires `numero`. Each document's
+ * schema/validator enforces its own catalog at runtime.
+ */
+export type XmlInformacionReferencia = InformacionReferencia | RepInformacionReferencia;
+
+/**
  * Build InformacionReferencia XML array (v4.4 order: TipoDocIR,
  * TipoDocRefOTRO?, Numero?, FechaEmisionIR, Codigo?, CodigoReferenciaOTRO?,
  * Razon?).
  */
 export function buildInformacionReferenciaXml(
-  refs: RepInformacionReferencia[],
+  refs: XmlInformacionReferencia[],
 ): Record<string, unknown>[] {
-  return refs.map((ref: RepInformacionReferencia) => ({
+  return refs.map((ref: XmlInformacionReferencia) => ({
     TipoDocIR: ref.tipoDoc,
     ...(ref.tipoDocOtros ? { TipoDocRefOTRO: ref.tipoDocOtros } : {}),
     ...(ref.numero ? { Numero: ref.numero } : {}),
@@ -673,10 +681,10 @@ export interface CommonDocumentFields {
   detalleServicio: XmlLineaDetalle[];
   otrosCargos?: XmlOtroCargo[];
   resumenFactura: XmlResumenFactura;
-  // RepInformacionReferencia admite el motivo "17" (solo REP); los schemas de
-  // entrada de los demas documentos lo rechazan en runtime. Se tipa de forma
-  // laxa aqui y se valida estrictamente en el schema/validador de cada documento.
-  informacionReferencia?: RepInformacionReferencia[];
+  // Unión laxa: RepInformacionReferencia admite el motivo "17" (solo REP); los
+  // schemas de entrada de los demás documentos lo rechazan en runtime. Se valida
+  // estrictamente en el schema/validador de cada documento.
+  informacionReferencia?: XmlInformacionReferencia[];
   otros?: OtroContenido[];
 }
 

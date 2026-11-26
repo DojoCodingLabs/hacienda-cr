@@ -314,26 +314,26 @@ function decodeOtroCargo(o: Record<string, unknown>): OtroCargo {
   };
 }
 
-function decodeInfoRef(o: Record<string, unknown>, rep?: false): InformacionReferencia;
-function decodeInfoRef(o: Record<string, unknown>, rep: true): RepInformacionReferencia;
+/**
+ * Decode one InformacionReferencia node.
+ *
+ * The parser does not validate catalogs: a REP may carry reason "17" and its
+ * Numero is mandatory, while other documents reject "17". The per-document
+ * schemas and validator enforce those rules, so the decoded shape is cast once
+ * to the lax union both document families accept.
+ */
 function decodeInfoRef(
   o: Record<string, unknown>,
-  rep = false,
 ): InformacionReferencia | RepInformacionReferencia {
   return {
-    tipoDoc: String(o.TipoDocIR) as InformacionReferencia["tipoDoc"],
+    tipoDoc: String(o.TipoDocIR),
     tipoDocOtros: o.TipoDocRefOTRO !== undefined ? String(o.TipoDocRefOTRO) : undefined,
     numero: o.Numero !== undefined ? String(o.Numero) : undefined,
     fechaEmision: String(o.FechaEmisionIR),
-    codigo:
-      o.Codigo !== undefined
-        ? rep
-          ? (String(o.Codigo) as RepInformacionReferencia["codigo"])
-          : (String(o.Codigo) as InformacionReferencia["codigo"])
-        : undefined,
+    codigo: o.Codigo !== undefined ? String(o.Codigo) : undefined,
     codigoOtros: o.CodigoReferenciaOTRO !== undefined ? String(o.CodigoReferenciaOTRO) : undefined,
     razon: o.Razon !== undefined ? String(o.Razon) : undefined,
-  };
+  } as InformacionReferencia | RepInformacionReferencia;
 }
 
 function decodeMedioPago(o: Record<string, unknown>): MedioPago {
@@ -398,7 +398,7 @@ function decodeResumen(o: Record<string, unknown>): ResumenFactura {
   return r as unknown as ResumenFactura;
 }
 
-function decodeComnum(body: Record<string, unknown>, rep = false): CommonDocumentFields {
+function decodeComnum(body: Record<string, unknown>): CommonDocumentFields {
   const common: Record<string, unknown> = {
     clave: strReq(body.Clave, "Clave"),
     proveedorSistemas: strReq(body.ProveedorSistemas, "ProveedorSistemas"),
@@ -426,15 +426,9 @@ function decodeComnum(body: Record<string, unknown>, rep = false): CommonDocumen
     );
   }
   if (body.InformacionReferencia !== undefined) {
-    if (rep) {
-      common.informacionReferencia = asArray(body.InformacionReferencia).map((x) =>
-        decodeInfoRef(x as Record<string, unknown>, true),
-      );
-    } else {
-      common.informacionReferencia = asArray(body.InformacionReferencia).map((x) =>
-        decodeInfoRef(x as Record<string, unknown>, false),
-      );
-    }
+    common.informacionReferencia = asArray(body.InformacionReferencia).map((x) =>
+      decodeInfoRef(x as Record<string, unknown>),
+    );
   }
   if (body.Otros !== undefined) {
     const otrosRaw = (body.Otros as Record<string, unknown>).OtroContenido;
@@ -446,7 +440,7 @@ function decodeComnum(body: Record<string, unknown>, rep = false): CommonDocumen
 }
 
 function wrap(root: string, body: Record<string, unknown>): ParseDocumentResult {
-  const common = decodeComnum(body, root === "ReciboElectronicoPago");
+  const common = decodeComnum(body);
   let document: any;
   switch (root) {
     case "FacturaElectronica":
