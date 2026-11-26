@@ -121,3 +121,18 @@ The [SDK 0.6.0 call-path audit](forge-reachability-audit.md) records exact P12,
 native signing and pinned response-verification paths, 39 existing passing
 regressions and the unchanged runtime audit finding. Issue #69 remains open;
 the specific adversarial regression criterion is explicitly uncompleted.
+
+### Optional PKCS#12 parser boundary
+
+Since 2026-10-23 the PKCS#12 parser is an optional peer dependency resolved on
+first use. The default install has no parser, so the Forge advisory does not
+appear in a non-signing consumer's production audit. The trust boundary is
+unchanged: PKCS#12 input remains capped at 1 MiB, RSA keys must be at least 2048
+bits, the certificate must be currently valid, and key/certificate must match
+before WebCrypto imports the key.
+
+A missing parser is a configuration error, not a fallback: `loadP12` rejects with
+a `SigningError` that names the package and install command, and never echoes the
+PIN. The packed-consumer check covers both the opt-in signing path and the
+no-parser path. Issue #69 remains open; no advisory is suppressed and no
+replacement parser is claimed.

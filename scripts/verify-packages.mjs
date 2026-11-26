@@ -1,7 +1,8 @@
 /** Test published artifacts in an isolated consumer with native ESM and stdio. */
 import assert from "node:assert/strict";
 import { execFileSync } from "node:child_process";
-import { mkdtemp, mkdir, writeFile, readFile, readdir, rm } from "node:fs/promises";
+import { existsSync } from "node:fs";
+import { copyFile, mkdtemp, mkdir, writeFile, readFile, readdir, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import ts from "typescript";
@@ -23,6 +24,139 @@ function run(command, args, cwd) {
     });
   }
 }
+
+/** Default SDK install (without the CLI) must not carry the optional PKCS#12
+ * parser, and the loader must fail closed with an actionable error when a
+ * consumer did not opt in. */
+async function assertOptionalForgeAbsent(tarballs, stage) {
+  const consumer = join(stage, "consumer-without-forge");
+  await mkdir(consumer);
+  await writeFile(
+    join(consumer, "package.json"),
+    JSON.stringify({ private: true, type: "module" }),
+  );
+  const withoutCli = tarballs.filter((file) => !/hacienda-cli-[^/]*\.tgz$/.test(file));
+  assert.equal(withoutCli.length, tarballs.length - 1);
+  run("npm", ["install", "--ignore-scripts", "--no-audit", "--no-fund", ...withoutCli], consumer);
+  assert.equal(
+    existsSync(join(consumer, "node_modules", "node-forge")),
+    false,
+    "the default install must not include node-forge",
+  );
+  await writeFile(
+    join(consumer, "no-forge.mjs"),
+    `
+import assert from "node:assert/strict";
+import { readFile } from "node:fs/promises";
+import { spawnSync } from "node:child_process";
+import { loadP12 } from "@dojocoding/hacienda-sdk";
+const pin = "secret-pin-1234";
+const failure = await loadP12(Buffer.from("not a valid p12"), pin).then(() => null, (error) => error);
+assert.ok(failure, "loadP12 must reject when the optional parser is absent");
+assert.equal(failure.name, "SigningError");
+assert.equal(failure.code, "SIGNING_FAILED");
+assert.match(failure.message, /node-forge/);
+assert.match(failure.message, /npm install/);
+assert.equal(failure.message.includes(pin), false, "the error must not echo the PIN");
+const lock = JSON.parse(await readFile("package-lock.json", "utf8"));
+assert.equal(
+  Object.keys(lock.packages ?? {}).some((key) => key.endsWith("node_modules/node-forge")),
+  false,
+  "node-forge must not be installed",
+);
+const auditRun = spawnSync("npm", ["audit", "--omit=dev", "--json"], { encoding: "utf8", timeout: 120000 });
+assert.ok(auditRun.stdout, "npm audit must return JSON: " + auditRun.stderr);
+const audit = JSON.parse(auditRun.stdout);
+assert.equal(audit.vulnerabilities?.["node-forge"], undefined, "node-forge must not be audited");
+assert.equal(JSON.stringify(audit).includes("GHSA-86w9-cpqp-85rv"), false, "the node-forge advisory must not appear");
+console.log("Optional node-forge boundary passed: default install has no parser, fails closed, and audits clean.");
+`,
+  );
+  process.stdout.write(run(process.execPath, ["no-forge.mjs"], consumer));
+}
+
+/** A default CLI install (shared, SDK and CLI, with no direct node-forge) must
+ * still sign: the CLI owns the PKCS#12 parser dependency for `sign`/`submit`. */
+async function assertCliSignsWithoutDirectForge(tarballs, stage, unsignedXml) {
+  const consumer = join(stage, "consumer-cli-default");
+  await mkdir(consumer);
+  await writeFile(
+    join(consumer, "package.json"),
+    JSON.stringify({ private: true, type: "module" }),
+  );
+  const selected = tarballs.filter((file) => /hacienda-(shared|sdk|cli)-[^/]*\.tgz$/.test(file));
+  assert.equal(selected.length, 3);
+  run("npm", ["install", "--ignore-scripts", "--no-audit", "--no-fund", ...selected], consumer);
+  const manifest = JSON.parse(await readFile(join(consumer, "package.json"), "utf8"));
+  assert.equal(
+    manifest.dependencies?.["node-forge"],
+    undefined,
+    "consumer must not depend on node-forge directly",
+  );
+  await copyFile(unsignedXml, join(consumer, "invoice.xml"));
+  run(
+    "openssl",
+    [
+      "req",
+      "-x509",
+      "-newkey",
+      "rsa:2048",
+      "-nodes",
+      "-keyout",
+      "synthetic.key",
+      "-out",
+      "synthetic.crt",
+      "-days",
+      "1",
+      "-subj",
+      "/CN=Offline packed CLI consumer",
+      "-addext",
+      "basicConstraints=critical,CA:FALSE",
+    ],
+    consumer,
+  );
+  run(
+    "openssl",
+    [
+      "pkcs12",
+      "-export",
+      "-legacy",
+      "-inkey",
+      "synthetic.key",
+      "-in",
+      "synthetic.crt",
+      "-out",
+      "synthetic.p12",
+      "-passout",
+      "pass:synthetic",
+    ],
+    consumer,
+  );
+  const output = run(
+    join(consumer, "node_modules", ".bin", "hacienda"),
+    [
+      "sign",
+      "invoice.xml",
+      "--p12",
+      "synthetic.p12",
+      "--pin",
+      "synthetic",
+      "--output",
+      "signed.xml",
+      "--json",
+    ],
+    consumer,
+  );
+  const result = JSON.parse(output);
+  assert.equal(result.success, true, output);
+  const signed = await readFile(join(consumer, "signed.xml"), "utf8");
+  assert.match(signed, /<(?:\w+:)?Signature\b/);
+  assert.match(signed, /<(?:\w+:)?QualifyingProperties\b/);
+  console.log(
+    "Default CLI install signs with the generated test P12 without a direct node-forge dependency.",
+  );
+}
+
 try {
   const packIndex = process.argv.indexOf("--pack-dir");
   const packed = packIndex < 0 ? join(stage, "packed") : resolve(process.argv[packIndex + 1]);
@@ -47,6 +181,7 @@ try {
       ...tarballs,
       "typescript@5.9.3",
       "@types/node@22",
+      "node-forge@^1.4.0",
     ],
     consumer,
   );
@@ -328,6 +463,8 @@ console.log("Installed metadata, strict TypeScript examples, packaged sandbox pr
 `,
   );
   process.stdout.write(run(process.execPath, ["smoke.mjs"], consumer));
+  await assertOptionalForgeAbsent(tarballs, stage);
+  await assertCliSignsWithoutDirectForge(tarballs, stage, join(consumer, "invoice.xml"));
 } finally {
   await rm(stage, { recursive: true, force: true });
 }
