@@ -89,20 +89,51 @@ hacienda submit invoice.json              # Submit to Hacienda
 hacienda submit invoice.json --profile sandbox --p12 cert.p12 --json
 ```
 
-| Argument    | Description                                                     | Default                                       |
-| ----------- | --------------------------------------------------------------- | --------------------------------------------- |
-| `file`      | Path to JSON invoice file                                       | (required)                                    |
-| `--dry-run` | Validate and build XML without submitting                       | `false`                                       |
-| `--profile` | Saved authentication profile                                    | `default`                                     |
-| `--p12`     | Certificate path                                                | `$HACIENDA_P12_PATH`, then profile `p12_path` |
-| `--pin`     | Certificate PIN (prefer env var to avoid process-list exposure) | `$HACIENDA_P12_PIN`                           |
-| `--json`    | Machine-readable output                                         | `false`                                       |
+| Argument             | Description                                                     | Default                                       |
+| -------------------- | --------------------------------------------------------------- | --------------------------------------------- |
+| `file`               | Path to JSON invoice file                                       | (required)                                    |
+| `--dry-run`          | Validate and build XML without submitting                       | `false`                                       |
+| `--profile`          | Saved authentication profile                                    | `default`                                     |
+| `--p12`              | Certificate path                                                | `$HACIENDA_P12_PATH`, then profile `p12_path` |
+| `--pin`              | Certificate PIN (prefer env var to avoid process-list exposure) | `$HACIENDA_P12_PIN`                           |
+| `--json`             | Machine-readable output                                         | `false`                                       |
+| `--retry-same-bytes` | Resend the signed bytes stored for an already-attempted clave   | `false`                                       |
 
-The dry run needs no credentials or certificate. Real submission requires the
+The dry run needs no credentials or certificate and writes no state. Real submission requires the
 selected profile, `HACIENDA_PASSWORD`, certificate, and PIN. The package's HTTP
 client does not automatically retry POST in SDK 0.4.0; GET retains bounded network/5xx retries. After a timeout, network
 failure, or duplicate-clave response, query the original clave with
 `hacienda status <clave> --profile sandbox --json` before deciding another send.
+
+#### One clave, one set of signed bytes
+
+XAdES embeds a signing time, so signing the same draft twice produces different
+bytes under the same clave. `submit` therefore signs a clave only once. The
+first run stores the signed XML and its delivery state before the POST, and
+records the attempt with the SDK submission-identity guard. Both live under
+`~/.hacienda-cr/submissions/<environment>/` (`delivery/` and
+`submission-identity/`), so sandbox and production never block each other.
+Later runs for the same clave never sign again, and they check local state
+before authenticating or making any network call:
+
+| Local state for the clave                       | What `submit` does                                                  | `--json` `code`                |
+| ----------------------------------------------- | ------------------------------------------------------------------- | ------------------------------ |
+| None                                            | Signs and submits, as before.                                       |                                |
+| Signed and stored, no POST recorded             | Sends the stored bytes without signing.                             |                                |
+| POST attempted (timeout, lost response, crash)  | Refuses. With `--retry-same-bytes`, resends the exact stored bytes. | `SUBMISSION_ALREADY_ATTEMPTED` |
+| The input no longer matches the stored document | Refuses, even with `--retry-same-bytes`.                            | `SUBMISSION_DRAFT_CHANGED`     |
+| Accepted, rejected or expired locally           | Refuses.                                                            | `SUBMISSION_FINAL`             |
+| POST recorded but signed bytes missing          | Refuses: resending would need new bytes.                            | `SUBMISSION_BYTES_MISSING`     |
+
+Every refusal exits 1 and names the next step: run `hacienda status <clave>`
+first. Use `--retry-same-bytes` only when Hacienda has no record of the clave
+and you decide to resend; the certificate and PIN are not needed for it. A
+correction never reuses the clave: issue a new document with its own
+consecutive. A clave with situation digit 2 (contingencia) must carry an
+`informacionReferencia` with `codigo` `05` and the provisional comprobante
+`numero` (Anexos y Estructuras v4.4, Información de Referencia). Claves
+submitted by CLI versions before this guard have no local record, so the guard
+cannot protect them.
 See the [sandbox walkthrough](https://github.com/DojoCodingLabs/hacienda-cr/blob/main/docs/sandbox-guide.md) for a complete sample.
 
 Before reading the certificate or signing, the command refuses a REP or

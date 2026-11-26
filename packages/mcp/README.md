@@ -206,7 +206,9 @@ accepted by CLI `submit`.
 | `hacienda://reference/id-types`       | Identification types and validation rules   |
 | `hacienda://reference/family-support` | Per-family build/sign/submit support matrix |
 
-This server has no signing or submission tool. The SDK refuses REP and
+This server has no signing or submission tool, so the SDK submission-identity
+guard does not apply to it; the backend that signs and POSTs must use it (see
+[production integration](https://github.com/DojoCodingLabs/hacienda-cr/blob/main/docs/production-integration.md)). The SDK refuses REP and
 MensajeReceptor submission; see the
 [support matrix](https://github.com/DojoCodingLabs/hacienda-cr/blob/main/docs/support-matrix.md).
 

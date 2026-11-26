@@ -4,6 +4,11 @@
  * Reads a JSON invoice file, validates it, builds XML, signs it,
  * and submits to the Hacienda API.
  *
+ * The first run persists the signed bytes per clave (see
+ * utils/submission-state). Later runs for the same clave never sign again:
+ * they refuse a changed draft or an already-attempted clave before any
+ * network call, and resend the stored bytes only with `--retry-same-bytes`.
+ *
  * @module commands/submit
  */
 
@@ -23,9 +28,18 @@ import {
   submitAndWait,
   assertSubmittableDocument,
   UnsupportedDocumentFamilyError,
+  SubmissionIdentityError,
+  loadConfig,
 } from "@dojocoding/hacienda-sdk";
 import { success, error, detail, info, outputJson } from "../utils/format.js";
 import { createAuthenticatedClient } from "../utils/api-client.js";
+import {
+  inspectSubmission,
+  openSubmissionStores,
+  recordTerminalState,
+  submissionSituation,
+  type SubmissionDecision,
+} from "../utils/submission-state.js";
 import {
   DraftFacturaSchema,
   draftForXml,
@@ -35,6 +49,47 @@ import {
   validateDraftFactura,
   type DraftFactura,
 } from "../utils/draft-document.js";
+
+/** A local refusal, decided before any network call. */
+interface SubmissionRefusal {
+  readonly code: string;
+  readonly message: string;
+}
+
+/** Maps local submission state to a refusal, or `null` when the run may proceed. */
+function submissionRefusal(
+  decision: SubmissionDecision,
+  clave: string,
+  retrySameBytes: boolean,
+): SubmissionRefusal | null {
+  const status = `hacienda status ${clave}`;
+  switch (decision.kind) {
+    case "changed":
+      return {
+        code: "SUBMISSION_DRAFT_CHANGED",
+        message: `Clave ${clave} is already bound to a different signed document (state ${decision.state}); this input no longer matches it, so nothing was signed or sent. Query \`${status}\` first. A correction needs a new document with its own consecutive and clave.`,
+      };
+    case "final":
+      return {
+        code: "SUBMISSION_FINAL",
+        message: `Clave ${clave} already reached a final local state (${decision.state}); nothing was sent. Query \`${status}\` for the Hacienda answer.`,
+      };
+    case "bytes_missing":
+      return {
+        code: "SUBMISSION_BYTES_MISSING",
+        message: `A POST was already recorded for clave ${clave}, but its signed bytes are not stored, so it cannot be resent without signing different bytes. Nothing was sent. Query \`${status}\` first.`,
+      };
+    case "attempted":
+      return retrySameBytes
+        ? null
+        : {
+            code: "SUBMISSION_ALREADY_ATTEMPTED",
+            message: `A submission of clave ${clave} was already attempted (state ${decision.document.state}) and may have reached Hacienda. Nothing was sent. Query \`${status}\` first; only if Hacienda has no record and you decide to resend, run again with --retry-same-bytes to resend the exact signed bytes stored by the first run.`,
+          };
+    default:
+      return null;
+  }
+}
 
 export const submitCommand = defineCommand({
   meta: {
@@ -69,6 +124,12 @@ export const submitCommand = defineCommand({
     json: {
       type: "boolean",
       description: "Output as JSON",
+      default: false,
+    },
+    "retry-same-bytes": {
+      type: "boolean",
+      description:
+        "Resend the signed bytes stored for an already-attempted clave (query `hacienda status <clave>` first)",
       default: false,
     },
   },
@@ -129,6 +190,7 @@ export const submitCommand = defineCommand({
         fechaEmision: string;
         emisor: { identificacion: Identificacion };
         receptor?: { identificacion?: Identificacion };
+        informacionReferencia?: readonly { codigo?: string; numero?: string }[];
       };
       if (exactDraft) {
         const exact = validation.data as DraftFactura;
@@ -212,45 +274,76 @@ export const submitCommand = defineCommand({
         return;
       }
 
+      // Local submission state is checked before authentication or any other
+      // network call: a retry reuses the first run's signed bytes, and a
+      // changed draft or an already-attempted clave is refused here.
+      const clave = document.clave;
+      const localConfig = await loadConfig(args.profile as string);
+      const stores = openSubmissionStores(localConfig.profile.environment);
+      const decision = await inspectSubmission(stores, clave, xml);
+      const refusal = submissionRefusal(decision, clave, args["retry-same-bytes"] === true);
+      if (refusal) {
+        if (args.json)
+          outputJson({ success: false, error: refusal.message, code: refusal.code, clave });
+        else error(refusal.message);
+        process.exitCode = 1;
+        return;
+      }
+      const situation =
+        decision.kind === "first"
+          ? submissionSituation(clave, document.informacionReferencia)
+          : undefined;
+
       // Authenticate
       const { httpClient, config } = await createAuthenticatedClient(args.profile as string);
 
-      // Resolve .p12 path and PIN
-      const p12Path =
-        (args.p12 as string | undefined) ??
-        process.env["HACIENDA_P12_PATH"] ??
-        config.profile.p12_path;
-      if (!p12Path) {
-        error(
-          "Missing .p12 certificate path. Use --p12, set HACIENDA_P12_PATH, or configure in profile.",
-        );
-        process.exitCode = 1;
-        return;
-      }
+      let signedXmlBase64: string;
+      if (decision.kind === "first") {
+        // Resolve .p12 path and PIN
+        const p12Path =
+          (args.p12 as string | undefined) ??
+          process.env["HACIENDA_P12_PATH"] ??
+          config.profile.p12_path;
+        if (!p12Path) {
+          error(
+            "Missing .p12 certificate path. Use --p12, set HACIENDA_P12_PATH, or configure in profile.",
+          );
+          process.exitCode = 1;
+          return;
+        }
 
-      const p12Pin = (args.pin as string | undefined) ?? config.p12Pin;
-      if (!p12Pin) {
-        error("Missing .p12 PIN. Use --pin or set HACIENDA_P12_PIN environment variable.");
-        process.exitCode = 1;
-        return;
-      }
+        const p12Pin = (args.pin as string | undefined) ?? config.p12Pin;
+        if (!p12Pin) {
+          error("Missing .p12 PIN. Use --pin or set HACIENDA_P12_PIN environment variable.");
+          process.exitCode = 1;
+          return;
+        }
 
-      // Read the .p12 file
-      let p12Buffer: Buffer;
-      try {
-        p12Buffer = await readFile(resolve(p12Path));
-      } catch (err) {
-        const detail = err instanceof Error ? err.message : String(err);
-        error(`Cannot read .p12 file: ${p12Path}: ${detail}`);
-        process.exitCode = 1;
-        return;
-      }
+        // Read the .p12 file
+        let p12Buffer: Buffer;
+        try {
+          p12Buffer = await readFile(resolve(p12Path));
+        } catch (err) {
+          const detail = err instanceof Error ? err.message : String(err);
+          error(`Cannot read .p12 file: ${p12Path}: ${detail}`);
+          process.exitCode = 1;
+          return;
+        }
 
-      // Sign and Base64-encode the XML
-      if (!args.json) {
-        info("Signing XML...");
+        // Sign and Base64-encode the XML
+        if (!args.json) {
+          info("Signing XML...");
+        }
+        signedXmlBase64 = await signAndEncode(xml, p12Buffer, p12Pin);
+      } else {
+        if (decision.kind !== "attempted" && decision.kind !== "unattempted")
+          throw new Error("Unexpected submission state");
+        // Never sign again: XAdES embeds a signing time, so new bytes would
+        // diverge from what Hacienda may already hold under this clave.
+        if (!args.json)
+          info("Reusing the signed bytes stored by the first run (not signing again).");
+        signedXmlBase64 = Buffer.from(decision.document.xml, "utf8").toString("base64");
       }
-      const signedXmlBase64 = await signAndEncode(xml, p12Buffer, p12Pin);
 
       const signedValidation = await validateDocumentXml(
         Buffer.from(signedXmlBase64, "base64").toString("utf-8"),
@@ -270,7 +363,7 @@ export const submitCommand = defineCommand({
         : undefined;
 
       const request: SubmissionRequest = {
-        clave: document.clave,
+        clave,
         fecha: document.fechaEmision,
         emisor: {
           tipoIdentificacion: document.emisor.identificacion.tipo,
@@ -282,16 +375,42 @@ export const submitCommand = defineCommand({
 
       // Submit and wait for response
       if (!args.json) {
-        info("Submitting to Hacienda...");
+        info(
+          decision.kind === "attempted"
+            ? "Resending the same signed bytes to Hacienda (--retry-same-bytes)..."
+            : "Submitting to Hacienda...",
+        );
       }
 
-      const result = await submitAndWait(httpClient, request, {
-        onPoll: (status, attempt) => {
-          if (!args.json) {
-            info(`Polling status (attempt ${attempt}): ${status.status}`);
-          }
-        },
-      });
+      const onPoll = (status: { status: string }, attempt: number): void => {
+        if (!args.json) {
+          info(`Polling status (attempt ${attempt}): ${status.status}`);
+        }
+      };
+
+      let result: Awaited<ReturnType<typeof submitAndWait>>;
+      if (decision.kind === "attempted") {
+        // Explicit same-bytes resend. The identity guard records the attempt
+        // and refuses any byte difference before the POST.
+        const state = decision.document.state;
+        if (state === "FIRMADO" || state === "ALMACENADO")
+          await stores.documents.transition(clave, state, "PENDIENTE", "--retry-same-bytes");
+        result = await submitAndWait(httpClient, request, {
+          identityStore: stores.identities,
+          retrySameBytes: true,
+          onPoll,
+        });
+        await recordTerminalState(stores, clave, result.status);
+      } else {
+        // Persist the signed bytes before the POST, then claim the identity.
+        result = await submitAndWait(httpClient, request, {
+          persist: true,
+          store: stores.documents,
+          identityStore: stores.identities,
+          ...situation,
+          onPoll,
+        });
+      }
 
       if (!result.accepted) process.exitCode = 1;
 
@@ -329,10 +448,14 @@ export const submitCommand = defineCommand({
                 family: err.family,
                 docsUrl: err.docsUrl,
               }
-            : { success: false, error: message },
+            : err instanceof SubmissionIdentityError
+              ? { success: false, error: message, code: err.reason, clave: err.clave }
+              : { success: false, error: message },
         );
       } else {
         error(`Submit failed: ${message}`);
+        if (err instanceof SubmissionIdentityError)
+          info(`Query the clave before anything else: hacienda status ${err.clave}`);
       }
       process.exitCode = 1;
     }
