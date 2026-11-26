@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { Logger } from "./logger.js";
+import { sanitizeLogString } from "./redaction.js";
 
 afterEach(() => vi.unstubAllEnvs());
 
@@ -75,6 +76,25 @@ describe("logger secret boundaries", () => {
     expect(writer.mock.calls.map((call) => call[0]).join("\n")).not.toMatch(
       /fixture-(?:old|new)-password/,
     );
+  });
+  it("does not treat short or boolean-like values of secret-named variables as secrets", () => {
+    vi.stubEnv("COREPACK_ENABLE_AUTO_PIN", "0");
+    vi.stubEnv("FEATURE_TOKEN_ENABLED", "true");
+    vi.stubEnv("SOME_API_KEY", "abc123");
+    vi.stubEnv("HACIENDA_P12_PIN", "1");
+    expect(sanitizeLogString("HTTP 409 after 10 attempts; true; abc123; 1")).toBe(
+      "HTTP 409 after 10 attempts; true; abc123; 1",
+    );
+  });
+  it("still redacts long secret-named values and short known Hacienda PINs", () => {
+    vi.stubEnv("COREPACK_ENABLE_AUTO_PIN", "0");
+    vi.stubEnv("UPSTREAM_API_TOKEN", "fixture-long-token-value");
+    vi.stubEnv("HACIENDA_P12_PIN", "9493");
+    const output = sanitizeLogString("HTTP 409 fixture-long-token-value pin 9493 end");
+    expect(output).not.toContain("fixture-long-token-value");
+    expect(output).not.toContain("9493");
+    expect(output).toContain("HTTP 409");
+    expect(output).toContain("[REDACTED]");
   });
   it("removes labelled secrets even if they are not configured in the environment", () => {
     const writer = vi.fn();
