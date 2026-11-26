@@ -1,5 +1,60 @@
 # @dojocoding/hacienda-mcp
 
+## 0.14.0
+
+### Minor Changes
+
+- 4d12b71: Add additive exact decimal-text document DTOs, calculation and XML builders for all seven v4.4 documents and `MensajeReceptor` in the shared/SDK API. The CLI (draft validation/submission) and MCP (`create_invoice_exact`) exact inputs are Factura Electrónica (01) only. Decimal bounds follow the official XSD (`TarifaExonerada` and the alcohol `Porcentaje` allow 4 digits with 2 decimals) and an IVA `tarifa` must match its `codigoTarifaIVA`. Like the current exact family, line discounts cascade on the remaining base (each strictly smaller than it) and `medioPago` is required unless the sale condition is 02, 08 or 10. CLI drafts saved by 0.13.0 with a numeric `tarifa` keep loading and keep their verbatim XML bytes. Existing `Number` APIs and published bytes remain unchanged; this change does not promote 1.0.
+
+### Patch Changes
+
+- 207a71f: Add an explicit `Scope` (`ScopeSchema`, `ScopeEnvironmentSchema`, `ScopeIssuerSchema`, `fingerprintScope`) for multi-tenant SDK consumers, and scope-aware MCP client caching.
+
+  `Scope` carries an optional `tenantId`, the `environment` and the issuer
+  (`idType` validated with `CedulaTypeSchema`). It is meant for services built on
+  the SDK; the CLI and MCP tools do not accept a scope and derive it from the
+  selected profile. The MCP client cache now validates the derived scope with
+  `ScopeSchema`, rejects a scope that does not match the profile with
+  `SCOPE_IDENTITY_MISMATCH`, keys clients by profile and scope, and keeps at most
+  16 authenticated clients (least recently used evicted). Numbering is unchanged:
+  `tenantId` is not part of any sequence key.
+
+- 39dfb47: Raise dependency floors past published security advisories.
+
+  - `node-forge` `^1.4.4` (SDK optional peer, CLI dependency). Forge 1.4.1–1.4.4
+    fix the advisories reported against 1.4.0–1.4.2, including GHSA-jc66-7q78-782g
+    (PKCS#12 MAC forgery and constant-key PBE with a zero iteration count, which is
+    reachable through `loadP12`), GHSA-6qrw-m8cv-hcxf and GHSA-86w9-cpqp-85rv (RSA
+    PKCS#1 v1.5 DigestInfo forgery), GHSA-7wch-p9px-956x (PEM decoding ReDoS) and
+    GHSA-rhr8-3pm8-cq29 (ASN.1 BIT STRING resource exhaustion). Consumers that call
+    `loadP12` or `signXml` must have `node-forge` 1.4.4 or later.
+  - `zod` `^4.6.7` in every package (GHSA-mrhx-c7xc-m3w5, memory exhaustion
+    while validating oversized constrained collections).
+  - `fast-xml-parser` `^5.12.0` in the SDK (GHSA-474x-hrwr-fgx4, quadratic scan of
+    unterminated stop-node tags).
+  - `@modelcontextprotocol/sdk` `^1.32.2` in the MCP server. The lockfile now resolves
+    patched `body-parser`, `hono`, `@hono/node-server`, `qs`, `fast-uri` and
+    `ip-address` within the existing transitive ranges; no runtime override is added.
+
+  No API, signing behavior or XML output changes.
+
+- Updated dependencies [4d12b71]
+- Updated dependencies [207a71f]
+- Updated dependencies [eb28cd7]
+- Updated dependencies [207a71f]
+- Updated dependencies [207a71f]
+- Updated dependencies [0b034cc]
+- Updated dependencies [207a71f]
+- Updated dependencies [8eabd30]
+- Updated dependencies [b82fd93]
+- Updated dependencies [2b38188]
+- Updated dependencies [b5a1fea]
+- Updated dependencies [39dfb47]
+- Updated dependencies [207a71f]
+- Updated dependencies [446e6a7]
+  - @dojocoding/hacienda-shared@0.14.0
+  - @dojocoding/hacienda-sdk@0.14.0
+
 ## 0.13.0
 
 ### Patch Changes
