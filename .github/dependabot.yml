@@ -10,6 +10,16 @@ updates:
         dependency-type: production
       dev-tooling:
         dependency-type: development
+    ignore:
+      # TypeScript 7 (native compiler) has no compiler API yet: tsup's
+      # rollup-plugin-dts and typescript-eslint 8 both refuse it. Revisit when
+      # both support TS 7.
+      - dependency-name: typescript
+        versions: [">=7"]
+      # Keep Node type definitions on the 22 line, matching the published
+      # packages' `node: >=22` engines and the .nvmrc runtime.
+      - dependency-name: "@types/node"
+        update-types: ["version-update:semver-major"]
   - package-ecosystem: github-actions
     directory: /
     schedule:

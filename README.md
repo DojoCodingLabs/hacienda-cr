@@ -238,7 +238,7 @@ El contador suma las descargas de **SDK, CLI, MCP y shared**, desde la creación
 
 ## Desarrollo y contribuciones
 
-Para desarrollar en este repositorio, usá Node.js 22.13+ y la versión de pnpm declarada en `package.json`. Los paquetes publicados conservan su requisito Node.js 22+.
+Para desarrollar en este repositorio, usá Node.js 22.22.1+ y la versión de pnpm declarada en `package.json`. Los paquetes publicados conservan su requisito Node.js 22+.
 
 ```bash
 git clone https://github.com/DojoCodingLabs/hacienda-cr.git
