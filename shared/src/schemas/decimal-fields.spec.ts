@@ -99,6 +99,20 @@ describe("decimal fields", () => {
     expect(tax("02", "13")).toBe(false);
   });
 
+  // Anexos y Estructuras v4.4, p. 38: CodigoTarifaIVA "Se convierte en
+  // obligatorio para los Códigos 01, 07. de la nota 8." The XSD has minOccurs="0".
+  it("requires codigoTarifaIVA for IVA codes 01 and 07 only, not for 08 (bienes usados)", () => {
+    const withoutRateCode = (codigo: string) =>
+      DecimalTaxInputSchema.safeParse({ codigo, tarifa: "13", factorCalculoIVA: "0.5" });
+    const used = withoutRateCode("08");
+    expect(used.success).toBe(true);
+    for (const codigo of ["01", "07"]) {
+      const result = withoutRateCode(codigo);
+      expect(result.success).toBe(false);
+      expect(result.error?.issues.some((i) => i.path.join(".") === "codigoTarifaIVA")).toBe(true);
+    }
+  });
+
   it("rejects JSON numbers and out-of-bound values in monetary fields", () => {
     expect(DecimalPositiveMoneySchema.safeParse(1).success).toBe(false);
     expect(DecimalPositiveMoneySchema.safeParse("0").success).toBe(false);
