@@ -193,5 +193,6 @@ describe("HaciendaErrorCode", () => {
     expect(HaciendaErrorCode.AUTHENTICATION_FAILED).toBe("AUTHENTICATION_FAILED");
     expect(HaciendaErrorCode.SIGNING_FAILED).toBe("SIGNING_FAILED");
     expect(HaciendaErrorCode.INTERNAL_ERROR).toBe("INTERNAL_ERROR");
+    expect(HaciendaErrorCode.UNSUPPORTED_FAMILY).toBe("UNSUPPORTED_FAMILY");
   });
 });

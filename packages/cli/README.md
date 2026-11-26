@@ -97,6 +97,22 @@ failure, or duplicate-clave response, query the original clave with
 `hacienda status <clave> --profile sandbox --json` before deciding another send.
 See the [sandbox walkthrough](https://github.com/DojoCodingLabs/hacienda-cr/blob/main/docs/sandbox-guide.md) for a complete sample.
 
+Before reading the certificate or signing, the command refuses a REP or
+MensajeReceptor document with `UNSUPPORTED_FAMILY` (`--json` adds `code`,
+`family` and `docsUrl`). See the
+[support matrix](https://github.com/DojoCodingLabs/hacienda-cr/blob/main/docs/support-matrix.md).
+
+### `hacienda support`
+
+Print the SDK document-family support matrix (`getFamilySupport()`): what can be
+built, validated, signed and submitted, and which real Hacienda evidence exists.
+Offline; needs no credentials.
+
+```bash
+hacienda support
+hacienda support --json
+```
+
 ### `hacienda status <clave>`
 
 Check document processing status by 50-character clave.

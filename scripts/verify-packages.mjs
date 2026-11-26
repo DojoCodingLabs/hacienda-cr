@@ -243,6 +243,9 @@ void conclusiveNotFound;
 const timeoutOptions:FetchWithTimeoutOptions={timeoutMs:1000,redirect:"error"};
 export const serviceContracts={fetchWithTimeout,timeoutOptions,reconcileByClave,classifyOutcome,parseCallbackPayload};
 export type ServiceContract={scope:Scope;reconcile:ReconcileResult;outcome:DeliveryOutcome;callback:ParsedCallbackPayload;fetched:ReturnType<typeof fetchWithTimeout>};
+import {getFamilySupport,assertSubmittableDocument,detectDocumentFamily,UnsupportedDocumentFamilyError,type FamilySupport,type DocumentFamily} from "@dojocoding/hacienda-sdk";
+export const familyGate={getFamilySupport,assertSubmittableDocument,detectDocumentFamily,UnsupportedDocumentFamilyError};
+export type FamilyContract={row:FamilySupport;family:DocumentFamily;refused:UnsupportedDocumentFamilyError["family"]};
 `,
   );
   for (const resolution of ["NodeNext", "Bundler"]) {
@@ -305,6 +308,15 @@ import {StdioClientTransport} from "@modelcontextprotocol/sdk/client/stdio.js";
 import {isBusinessDay,addBusinessDays,verifySignedDocumentXml,parseDocumentXml,FileDocumentStore,classifyOutcome,reconcileByClave,parseCallbackPayload,validateCallbackPayload,CallbackEnvelopeSchema,ValidationError,fetchWithTimeout,ScopeSchema,fingerprintScope,AuthErrorCode} from "@dojocoding/hacienda-sdk";
 import {MoneyInputSchema,MonetaryTextSchema,DecimalDocumentInputSchema,DecimalDocumentCalculatedSchema,DecimalMoneySchema,DecimalExoneratedRateSchema,DecimalSpecificPercentageSchema,DecimalTaxInputSchema} from "@dojocoding/hacienda-shared";
 import {calculateDecimalDocument,calculateDecimalLineItemTotals,calculateDecimalInvoiceSummary,buildDecimalDocumentXml,buildDecimalFacturaXml} from "@dojocoding/hacienda-sdk";
+import {getFamilySupport,assertSubmittableDocument,UnsupportedDocumentFamilyError,submitDocument as gatedSubmit,HaciendaErrorCode} from "@dojocoding/hacienda-sdk";
+{
+  const submitStatus=Object.fromEntries(getFamilySupport().map(row=>[row.family,row.submit]));
+  assert.equal(submitStatus.REP,"refused");assert.equal(submitStatus.MR,"refused");assert.equal(submitStatus.FEC,"unverified");
+  assert.throws(()=>assertSubmittableDocument({xml:"<ReciboElectronicoPago/>"}),(e)=>e instanceof UnsupportedDocumentFamilyError&&e.code===HaciendaErrorCode.UNSUPPORTED_FAMILY&&e.family==="REP");
+  let gatedPosts=0;
+  await assert.rejects(gatedSubmit({post:async()=>{gatedPosts++;return {status:201,headers:new Headers(),data:{}};}},{clave:"5".repeat(50),fecha:"2026-01-01T00:00:00-06:00",emisor:{tipoIdentificacion:"02",numeroIdentificacion:"3101234567"},comprobanteXml:Buffer.from("<MensajeReceptor/>").toString("base64")}),(e)=>e instanceof UnsupportedDocumentFamilyError&&e.family==="MR");
+  assert.equal(gatedPosts,0);
+}
 assert.equal(isBusinessDay("2026-01-01"),false);
 assert.equal(isBusinessDay("2026-04-02"),false);
 assert.equal(isBusinessDay("2026-08-31"),false);
@@ -499,6 +511,7 @@ for (const file of ["invoice.json","invoice.xml"]) {
   assert.equal(JSON.parse(output).valid,true);
 }
 execFileSync(process.execPath,[cli,"submit","invoice.json","--dry-run","--json"],{timeout:15000});
+{const support=JSON.parse(execFileSync(process.execPath,[cli,"support","--json"],{encoding:"utf8",timeout:15000}));assert.equal(support.families.find(row=>row.family==="REP").submit,"refused");assert.equal(support.families.find(row=>row.family==="MR").submit,"refused");}
 const invalidHistory=spawnSync(process.execPath,[cli,"list","--fechaDesde","2026-01-01","--json"],{encoding:"utf8",timeout:15000});
 assert.equal(invalidHistory.status,1);assert.match(JSON.parse(invalidHistory.stdout).error,/Unsupported history option/);
 const transport=new StdioClientTransport({command:process.execPath,args:["./node_modules/@dojocoding/hacienda-mcp/dist/cli.js"],stderr:"pipe"});
@@ -517,6 +530,7 @@ try {
   const numericExact=await client.callTool({name:"create_invoice_exact",arguments:exactToolArgs});assert.equal(numericExact.isError,true,JSON.stringify(numericExact.content));
   const unknownExact=await client.callTool({name:"create_invoice_exact",arguments:{...exactToolArgs,lineItems:[{...exactToolArgs.lineItems[0],precioUnitario:"100000"}],totalComprobante:"1"}});assert.equal(unknownExact.isError,true,JSON.stringify(unknownExact.content));
 
+  const familyResource=JSON.parse((await client.readResource({uri:"hacienda://reference/family-support"})).contents[0].text);assert.equal(familyResource.families.find(row=>row.family==="REP").submit,"refused");
   const resource=await client.readResource({uri:"hacienda://schemas/factura"});
   const schema=JSON.parse(resource.contents[0].text);
   assert.deepEqual(schema.required,tools.tools.find(tool=>tool.name==="create_invoice").inputSchema.required);

@@ -21,6 +21,8 @@ import {
   validateDocumentXml,
   signAndEncode,
   submitAndWait,
+  assertSubmittableDocument,
+  UnsupportedDocumentFamilyError,
 } from "@dojocoding/hacienda-sdk";
 import { success, error, detail, info, outputJson } from "../utils/format.js";
 import { createAuthenticatedClient } from "../utils/api-client.js";
@@ -187,6 +189,10 @@ export const submitCommand = defineCommand({
       if (!xmlValidation.valid)
         throw new Error(`XML schema validation failed: ${xmlValidation.issues.join("; ")}`);
 
+      // REP and MensajeReceptor have no verified submission contract: refuse
+      // them before signing (docs/support-matrix.md). Dry runs still build XML.
+      if (!args["dry-run"]) assertSubmittableDocument({ clave: document.clave, xml });
+
       if (args["dry-run"]) {
         if (args.json) {
           outputJson({
@@ -314,7 +320,17 @@ export const submitCommand = defineCommand({
     } catch (err) {
       const message = err instanceof Error ? err.message : "Unknown error occurred";
       if (args.json) {
-        outputJson({ success: false, error: message });
+        outputJson(
+          err instanceof UnsupportedDocumentFamilyError
+            ? {
+                success: false,
+                error: message,
+                code: err.code,
+                family: err.family,
+                docsUrl: err.docsUrl,
+              }
+            : { success: false, error: message },
+        );
       } else {
         error(`Submit failed: ${message}`);
       }

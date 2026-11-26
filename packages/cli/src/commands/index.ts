@@ -11,3 +11,4 @@ export { signCommand } from "./sign.js";
 export { validateCommand } from "./validate.js";
 export { lookupCommand } from "./lookup.js";
 export { draftCommand } from "./draft.js";
+export { supportCommand } from "./support.js";

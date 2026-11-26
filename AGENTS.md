@@ -71,6 +71,7 @@ ambiguous submission failure, query the same clave before deciding to resubmit.
 
 ## Documentation map
 
+- [Support matrix](docs/support-matrix.md): per-family build, XSD, signing, submit and real evidence status; REP and MR submission are refused (`UnsupportedDocumentFamilyError`); FEC POST party mapping is an open question. Keep it in step with `getFamilySupport()`.
 - [Forge reachability and nested-DER regression](docs/forge-reachability-audit.md): historical source trace and native response-verifier boundary; fixed in Forge 1.4.1, floor `^1.4.4` since 0.14.0.
 
 - [0.14.0 preparation](docs/release-0140-readiness.md): included and excluded PRs, migration notes, audit before/after and mutation finding.

@@ -11,6 +11,7 @@ import { registerFacturaExactSchemaResource } from "./factura-exact-schema.js";
 import { registerDocumentTypesResource } from "./document-types.js";
 import { registerTaxCodesResource } from "./tax-codes.js";
 import { registerIdTypesResource } from "./id-types.js";
+import { registerFamilySupportResource } from "./family-support.js";
 
 /**
  * Register all resources with the MCP server.
@@ -21,4 +22,5 @@ export function registerResources(server: McpServer): void {
   registerDocumentTypesResource(server);
   registerTaxCodesResource(server);
   registerIdTypesResource(server);
+  registerFamilySupportResource(server);
 }

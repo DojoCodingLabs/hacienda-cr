@@ -19,6 +19,7 @@ import {
   validateCommand,
   lookupCommand,
   draftCommand,
+  supportCommand,
 } from "./commands/index.js";
 
 export const PACKAGE_NAME = "@dojocoding/hacienda-cli" as const;
@@ -44,5 +45,6 @@ export const main = defineCommand({
     validate: validateCommand,
     lookup: lookupCommand,
     draft: draftCommand,
+    support: supportCommand,
   },
 });

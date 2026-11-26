@@ -22,6 +22,7 @@ import {
 import type { SubmissionIdentityStore } from "../delivery/submission-identity.js";
 import type { HttpClient } from "./http-client.js";
 import type { ParsedStatusResponse } from "./submission.js";
+import { assertSubmittableRequest } from "./family-support.js";
 import {
   submitDocument,
   getStatus,
@@ -276,6 +277,8 @@ export async function submitAndWait(
   request: SubmissionRequest,
   options?: SubmitAndWaitOptions,
 ): Promise<SubmitAndWaitResult> {
+  // REP and MensajeReceptor are refused before persistence or any POST.
+  assertSubmittableRequest(request);
   if (!options?.persist && !options?.store && !options?.resumePending)
     return submitAndWaitLegacy(httpClient, request, options);
   const timeoutMs = options?.timeoutMs ?? DEFAULTS.timeoutMs;

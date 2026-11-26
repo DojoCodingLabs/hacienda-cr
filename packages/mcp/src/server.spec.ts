@@ -157,7 +157,8 @@ describe("MCP Server", () => {
       expect(uris).toContain("hacienda://reference/document-types");
       expect(uris).toContain("hacienda://reference/tax-codes");
       expect(uris).toContain("hacienda://reference/id-types");
-      expect(resources.length).toBe(5);
+      expect(uris).toContain("hacienda://reference/family-support");
+      expect(resources.length).toBe(6);
     });
 
     it("should have descriptions for all resources", async () => {
@@ -1010,6 +1011,22 @@ describe("MCP Server", () => {
       const factura = docTypes.find((dt) => dt.code === "01");
       expect(factura).toBeDefined();
       expect(factura?.name).toContain("Factura");
+    });
+  });
+
+  // -------------------------------------------------------------------------
+  // Resource: family-support
+  // -------------------------------------------------------------------------
+
+  describe("resource: family-support", () => {
+    it("returns the SDK support matrix with REP and MR refused", async () => {
+      const data = (await readJsonResource(client, "hacienda://reference/family-support")) as {
+        docsUrl: string;
+        families: { family: string; submit: string }[];
+      };
+      expect(data.docsUrl).toMatch(/support-matrix\.md$/);
+      const submit = Object.fromEntries(data.families.map((row) => [row.family, row.submit]));
+      expect(submit).toMatchObject({ REP: "refused", MR: "refused", FEC: "unverified" });
     });
   });
 
