@@ -125,6 +125,38 @@ export type SendResult =
   | { type: "link_down"; state: "ALMACENADO"; error: Error }
   | { type: "ambiguous"; state: "PENDIENTE"; error: Error };
 
+/**
+ * Status-query observation classified by {@link classifyOutcome}.
+ *
+ * Accepts either the parsed shape returned by `getStatus` (`status`) or the
+ * raw `GET /recepcion/{clave}` body (`ind-estado`).
+ */
+export interface StatusObservation {
+  readonly clave?: string;
+  readonly status?: unknown;
+  readonly "ind-estado"?: unknown;
+  readonly responseXml?: string;
+}
+
+/**
+ * Delivery outcome derived from a status query.
+ *
+ * - `success`: Hacienda reports `aceptado`.
+ * - `rejected`: Hacienda reports `rechazado` (fiscal rejection).
+ * - `pending`: Hacienda received the document (`recibido`/`procesando`) and has
+ *   not finished; query the same clave again later. Never resubmit.
+ * - `transport_error`: the status query itself failed (network, timeout or
+ *   HTTP error); nothing is known about the document. Query again.
+ * - `unknown`: a response arrived but does not establish an outcome (missing
+ *   or unrecognized `ind-estado`, Hacienda `error`, or a different clave).
+ */
+export type DeliveryOutcome =
+  | { kind: "success"; status: "aceptado"; response: StatusObservation }
+  | { kind: "rejected"; status: "rechazado"; response: StatusObservation }
+  | { kind: "pending"; status: "recibido" | "procesando"; response: StatusObservation }
+  | { kind: "transport_error"; error: Error }
+  | { kind: "unknown"; reason: string; response?: StatusObservation };
+
 /** Error de transición inválida. */
 export class InvalidTransitionError extends Error {
   constructor(

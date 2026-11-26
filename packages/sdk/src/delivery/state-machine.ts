@@ -3,6 +3,7 @@ import { parseClave } from "../clave/parse-clave.js";
  * Máquina de estados de entrega y evaluación de plazos.
  */
 
+import { HaciendaStatus } from "@dojocoding/hacienda-shared";
 import { checkBusinessDayDeadline } from "../calendar/index.js";
 import {
   type StoredDocument,
@@ -13,6 +14,8 @@ import {
   InvalidTransitionError,
   ClaveSituationMismatchError,
   type SendResult,
+  type DeliveryOutcome,
+  type StatusObservation,
   isValidTransition,
   DEFAULT_DEADLINE_BUSINESS_DAYS,
   DELIVERY_SITUATION_FROM_DIGIT,
@@ -219,12 +222,50 @@ function makeAmbiguous(error: Error): SendResult {
   return { type: "ambiguous", state: "PENDIENTE", error };
 }
 
+/**
+ * Classifies a status query by clave into a delivery outcome.
+ *
+ * Reads Hacienda's `ind-estado` exactly as `getStatus` does (`status` on the
+ * parsed response, or `"ind-estado"` on the raw body). `recibido` and
+ * `procesando` are `pending`, distinct from `unknown`: the document was
+ * received, so it must not be resubmitted. A thrown query is a
+ * `transport_error`; it never implies the document was rejected or lost.
+ *
+ * @param response - Parsed or raw status response, or null if none arrived.
+ * @param error - Error thrown by the status query, if any.
+ * @param options.expectedClave - When set, a response for another clave is `unknown`.
+ */
 export function classifyOutcome(
-  error: Error | null,
-  httpStatus?: number,
-  haciendaResponse?: { estado?: string; detalle?: string } | null,
-): SendResult {
-  return classifySendResult(error, httpStatus, haciendaResponse);
+  response: StatusObservation | null | undefined,
+  error?: unknown,
+  options: { expectedClave?: string } = {},
+): DeliveryOutcome {
+  if (error !== undefined && error !== null) {
+    return {
+      kind: "transport_error",
+      error: error instanceof Error ? error : new Error("Status query failed"),
+    };
+  }
+  if (!response || typeof response !== "object") {
+    return { kind: "unknown", reason: "No status response" };
+  }
+  if (options.expectedClave !== undefined && response.clave !== options.expectedClave) {
+    return { kind: "unknown", reason: "Status response clave does not match", response };
+  }
+  const status = response.status ?? response["ind-estado"];
+  switch (status) {
+    case HaciendaStatus.ACEPTADO:
+      return { kind: "success", status, response };
+    case HaciendaStatus.RECHAZADO:
+      return { kind: "rejected", status, response };
+    case HaciendaStatus.RECIBIDO:
+    case HaciendaStatus.PROCESANDO:
+      return { kind: "pending", status, response };
+    case HaciendaStatus.ERROR:
+      return { kind: "unknown", reason: "Hacienda reported a processing error", response };
+    default:
+      return { kind: "unknown", reason: "Unrecognized ind-estado", response };
+  }
 }
 
 export function classifySendResult(
