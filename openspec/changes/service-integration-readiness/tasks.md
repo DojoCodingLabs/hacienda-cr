@@ -29,12 +29,12 @@
 
 ## 4. Durable recovery and callbacks
 
-- [x] 4.1 Add `reconcileByClave` returning `found` / `not_found` (404) / `unknown` (5xx, network, timeout), validating the clave with the shared schema before any network access.
+- [x] 4.1 Add `reconcileByClave` returning `found` / `not_found` (404) / `unknown` (5xx, network, timeout), validating the clave with the shared schema before any network access. Later: `not_found` is inconclusive (`conclusive: false`, `httpStatus`, `evidence`, `observedAt`) and also covers the sandbox 400 with `X-Error-Cause` "no ha sido recibido"; any other 400 stays `unknown`.
 - [x] 4.2 Add `classifyOutcome` for success/rejected/pending/transport_error/unknown, distinguishing pending from unknown.
 - [x] 4.3 Add a callback payload parser for the JSON envelope (`clave`, `fecha`, `ind-estado`, optional `respuesta-xml` Base64) with strict Base64, byte caps, a required signed `MensajeHacienda` root, and clave binding.
 - [x] 4.4 Document the callback receiver contract and idempotency by clave.
 - [x] 4.5 Add tests for malformed callback payloads, the mock's real callback body, and mocked-HTTP reconciliation.
-- [ ] 4.6 Reject a retry that sends different document bytes for the same clave (not done in this change).
+- [x] 4.6 Reject a retry that sends different document bytes for the same clave: opt-in `identityStore` on `submitDocument`/`submitAndWait` (`FileSubmissionIdentityStore` default, pluggable `SubmissionIdentityStore`) records `sha256(signed bytes)` per clave and throws `SubmissionIdentityError` (`DIFFERENT_BYTES` / `ALREADY_ATTEMPTED`) before any network call; a same-byte resend needs explicit `retrySameBytes: true`. The persistent `DocumentStore` path raises the same typed error. The CLI `submit` command does not use the guard yet.
 
 ## 5. Documentation and verification
 

@@ -45,3 +45,21 @@ export {
   ImmutableSituationError,
   ClaveSituationMismatchError,
 } from "./types.js";
+
+export {
+  FileSubmissionIdentityStore,
+  createDefaultSubmissionIdentityStore,
+  guardSubmissionIdentity,
+  signedXmlSha256,
+  SubmissionIdentityError,
+} from "./submission-identity.js";
+
+export type {
+  SubmissionIdentityRecord,
+  SubmissionIdentityStore,
+  SubmissionIdentityMode,
+  SubmissionIdentityClaim,
+  SubmissionIdentityErrorReason,
+  GuardSubmissionIdentityOptions,
+  FileSubmissionIdentityStoreOptions,
+} from "./submission-identity.js";

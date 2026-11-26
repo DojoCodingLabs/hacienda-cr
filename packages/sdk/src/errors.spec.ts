@@ -83,6 +83,24 @@ describe("ValidationError", () => {
 // ---------------------------------------------------------------------------
 
 describe("ApiError", () => {
+  it("keeps a bounded, redacted X-Error-Cause and omits an empty one", () => {
+    expect(new ApiError("x", 400).errorCause).toBeUndefined();
+    expect(new ApiError("x", 400, undefined, undefined, { errorCause: "" }).errorCause).toBe(
+      undefined,
+    );
+    expect(new ApiError("x", 400, undefined, undefined, { errorCause: null }).errorCause).toBe(
+      undefined,
+    );
+    const cause = new ApiError("x", 400, undefined, undefined, {
+      errorCause: "El comprobante no ha sido recibido. Authorization: Bearer fixture.jwt.value",
+    }).errorCause;
+    expect(cause).toContain("no ha sido recibido");
+    expect(cause).not.toContain("fixture.jwt.value");
+    const long = new ApiError("x", 400, undefined, undefined, { errorCause: "a".repeat(5000) });
+    expect(long.errorCause?.length).toBeGreaterThan(0);
+    expect(long.errorCause?.length).toBeLessThanOrEqual(1024);
+  });
+
   it("is an instance of HaciendaError", () => {
     const err = new ApiError("Request failed");
 

@@ -227,6 +227,11 @@ export type {
 export {
   FileDocumentStore,
   createDefaultStore,
+  FileSubmissionIdentityStore,
+  createDefaultSubmissionIdentityStore,
+  guardSubmissionIdentity,
+  signedXmlSha256,
+  SubmissionIdentityError,
   createStoredDocument,
   transitionDocument,
   evaluateDeadline,
@@ -259,6 +264,13 @@ export type {
   DeliverySubmitAndWaitOptions,
   CreateStoredDocumentOptions,
   FileStoreOptions,
+  SubmissionIdentityRecord,
+  SubmissionIdentityStore,
+  SubmissionIdentityMode,
+  SubmissionIdentityClaim,
+  SubmissionIdentityErrorReason,
+  GuardSubmissionIdentityOptions,
+  FileSubmissionIdentityStoreOptions,
 } from "./delivery/index.js";
 
 // ---------------------------------------------------------------------------
@@ -315,6 +327,8 @@ export type {
   RateLimiterOptions,
   ParsedStatusResponse,
   ReconcileResult,
+  ReconcileNotFound,
+  SubmitDocumentOptions,
   ParsedCallbackPayload,
   CallbackEnvelope,
   SubmitAndWaitOptions,

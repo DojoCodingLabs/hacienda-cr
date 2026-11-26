@@ -105,17 +105,37 @@ operación cancelada y detiene sus siguientes requests, pero un transporte que
 ignore la señal puede continuar su propio I/O. Una cancelación después del POST
 sigue siendo un resultado incierto que requiere consultar la misma clave.
 
-| Situación                       | Recuperación de la aplicación                                                                |
-| ------------------------------- | -------------------------------------------------------------------------------------------- |
-| Red o 5xx después del POST      | Guardar incertidumbre y consultar la clave original antes de decidir otro envío              |
-| 409                             | Consultar la clave existente y reconciliar con el documento guardado; no asignar otra clave  |
-| 404 inmediato durante consulta  | Reprogramar con backoff; el documento puede no estar indexado todavía                        |
-| 401 o autenticación fallida     | Revisar credenciales/ambiente y renovar autenticación antes de continuar                     |
-| 400 o rechazo                   | Conservar el detalle; corregir la causa sin reintentar ciegamente la misma entrada           |
-| 429                             | Reprogramar desde la aplicación y respetar `Retry-After` si tu capa de transporte lo captura |
-| Tiempo de envío/polling agotado | Continuar consultas desde el trabajo durable con la misma clave                              |
+| Situación                                             | Recuperación de la aplicación                                                                 |
+| ----------------------------------------------------- | --------------------------------------------------------------------------------------------- |
+| Red o 5xx después del POST                            | Guardar incertidumbre y consultar la clave original antes de decidir otro envío               |
+| 409                                                   | Consultar la clave existente y reconciliar con el documento guardado; no asignar otra clave   |
+| 404 (o 400 sandbox "no ha sido recibido") en consulta | Reprogramar con backoff; el documento puede no estar indexado todavía; no habilita un reenvío |
+| 401 o autenticación fallida                           | Revisar credenciales/ambiente y renovar autenticación antes de continuar                      |
+| 400 o rechazo                                         | Conservar el detalle; corregir la causa sin reintentar ciegamente la misma entrada            |
+| 429                                                   | Reprogramar desde la aplicación y respetar `Retry-After` si tu capa de transporte lo captura  |
+| Tiempo de envío/polling agotado                       | Continuar consultas desde el trabajo durable con la misma clave                               |
 
-Un 404 aislado no confirma que el POST nunca llegó. Definí una ventana de reconciliación y revisión operativa para resultados que no se puedan confirmar. Si decidís repetir un envío, conservá la misma identidad y solicitud; no generes un comprobante nuevo automáticamente para resolver la incertidumbre.
+Un 404 aislado no confirma que el POST nunca llegó. El sandbox responde a una clave desconocida con 400 y `X-Error-Cause: El comprobante [...] no ha sido recibido.` en lugar de 404 ([evidencia](testing/sandbox-403-debug.md)); ninguna de las dos respuestas es concluyente. El SDK no define la ventana de reconciliación: definila vos, junto con una revisión operativa para resultados que no se puedan confirmar. Si al vencerla decidís repetir un envío, reenviá los **mismos** bytes firmados con la **misma** clave y la misma solicitud; no generes un comprobante nuevo automáticamente para resolver la incertidumbre.
+
+### Guard de identidad de envío
+
+Para que un reenvío nunca lleve bytes distintos bajo una clave existente, pasá un `identityStore` a `submitDocument()` o `submitAndWait()`. Antes de cualquier llamada de red, el SDK registra `sha256` de los bytes firmados (decodificados desde el Base64 estricto de `comprobanteXml`) para esa clave y rechaza con `SubmissionIdentityError`:
+
+- `reason: "DIFFERENT_BYTES"`: la clave ya está asociada a otros bytes. Nunca se envía, ni siquiera con `retrySameBytes`. Reconciliá el original por clave; una corrección requiere un documento nuevo con su propio consecutivo y clave.
+- `reason: "ALREADY_ATTEMPTED"`: esos mismos bytes ya tuvieron un POST autorizado (aunque haya fallado localmente o se haya perdido la respuesta). Reconciliá por clave; si tu política decide reenviar, hacelo explícitamente con `{ identityStore, retrySameBytes: true }`.
+
+```ts
+import { createDefaultSubmissionIdentityStore, submitDocument } from "@dojocoding/hacienda-sdk";
+
+const identityStore = createDefaultSubmissionIdentityStore(configDir); // <configDir>/submission-identity
+await submitDocument(httpClient, request, { identityStore });
+// Más tarde, después de reconciliar y solo por decisión explícita:
+await submitDocument(httpClient, request, { identityStore, retrySameBytes: true });
+```
+
+`FileSubmissionIdentityStore` sigue las convenciones de `FileDocumentStore` y del ledger de consecutivos: un lock de proceso (un timeout nunca roba el lock de otro escritor), registros con modo 0600 escritos con fsync, rename y fsync del directorio, y registros corruptos reportados en lugar de ignorados. Cubre un disco local POSIX. Con varias réplicas, implementá `SubmissionIdentityStore` sobre un almacén transaccional compartido: `claim()` debe ser atómico por clave y nunca borrar ni cambiar el digest de un registro. El SDK vuelve a validar cada respuesta del store y falla cerrado ante una respuesta inconsistente.
+
+El guard es opt-in: sin `identityStore`, `submitDocument()` y `submitAndWait()` conservan el comportamiento anterior, porque el SDK no puede elegir por vos dónde persistir. `retrySameBytes` sin `identityStore` se rechaza. El `submitAndWait()` persistente con `DocumentStore` ya asocia los bytes a la clave, así que ahí la protección está activa por defecto: bytes distintos fallan con `SubmissionIdentityError` (`DIFFERENT_BYTES`), y una reanudación solo consulta, nunca repite el POST, por lo que rechaza `retrySameBytes`. Si además le pasás un `identityStore`, se verifica antes de que el documento salga de `FIRMADO`. El comando `submit` de la CLI firma de nuevo en cada ejecución y todavía no usa este guard: no lo ejecutes otra vez para la misma clave después de un resultado incierto; consultá con `status`.
 
 El rate limiter del SDK pertenece a cada `HttpClient`. Con varias réplicas, tu aplicación debe coordinar límites globales; crear más clientes no ofrece una cuota global compartida.
 
@@ -143,7 +163,7 @@ El SDK exporta `Scope` (`tenantId` opcional, `environment` e `issuer` con `idTyp
 
 Para recuperar después de un envío incierto:
 
-- Consultá siempre por la clave original con `reconcileByClave()`. Valida la clave antes de usar la red y devuelve `{ kind: "found", status }`, `{ kind: "not_found" }` si Hacienda respondió 404 (no prueba que el POST nunca llegó: el documento puede no estar indexado todavía; reconsultá con backoff dentro de una ventana de reconciliación y, solo al vencerla y si tu política lo permite, reenviá el **mismo** XML firmado con la **misma** clave) o `{ kind: "unknown", error }` ante 5xx, error de red o timeout (volvé a consultar más tarde y no reenvíes). Nunca generes un documento ni un consecutivo nuevo para la misma intención.
+- Consultá siempre por la clave original con `reconcileByClave()`. Valida la clave antes de usar la red y devuelve `{ kind: "found", status }`, `{ kind: "not_found", conclusive: false, httpStatus, evidence, observedAt }` o `{ kind: "unknown", error }`. `not_found` cubre exactamente dos respuestas: un 404 (`evidence: "http_404"`) y el 400 del sandbox cuyo `X-Error-Cause` dice que el comprobante "no ha sido recibido" (`evidence: "x_error_cause_not_received"`, con `errorCause`). `conclusive` siempre es `false`: no prueba que el POST nunca llegó ni autoriza un reenvío; reconsultá con backoff dentro de tu ventana de reconciliación. Cualquier otro 400 (sin ese header, con otro texto o que nombre otra clave), otro 4xx, 5xx, error de red, timeout o una respuesta de otra clave es `unknown`: volvé a consultar más tarde y no reenvíes. Si al final decidís reenviar, usá el [guard de identidad de envío](#guard-de-identidad-de-envío) con `retrySameBytes: true`. Nunca generes un documento ni un consecutivo nuevo para la misma intención.
 - Clasificá la respuesta de estado con `classifyOutcome()`: `success` (`aceptado`), `rejected` (`rechazado`), `pending` (`recibido` o `procesando`: Hacienda lo recibió, seguí consultando y no reenvíes), `transport_error` (falló la consulta) o `unknown` (estado ausente o no reconocido, `error` de Hacienda o una clave distinta). Un timeout nunca equivale a un rechazo.
 - El callback llega como JSON con `clave`, `fecha`, `ind-estado` y, opcionalmente, `respuesta-xml` en Base64, las mismas claves que `GET /recepcion/{clave}`. `parseCallbackPayload()` lo valida, decodifica `respuesta-xml` y exige un `MensajeHacienda` con firma y con la misma clave que el sobre. Esa validación es estructural: autenticá la respuesta con `verifyHaciendaResponseXml()` antes de confiar en ella. No dependas del callback; si no llega, consultá por clave.
 

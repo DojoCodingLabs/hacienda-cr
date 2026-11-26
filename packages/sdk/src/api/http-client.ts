@@ -255,6 +255,8 @@ export class HttpClient {
           `${options.method} ${options.path} failed (${String(response.status)}): ${description}`,
           response.status,
           data,
+          undefined,
+          { errorCause: response.headers.get("X-Error-Cause") },
         );
       }
 
