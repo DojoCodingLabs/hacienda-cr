@@ -21,7 +21,6 @@ import {
   buildExactNotaCreditoPartialXml,
   buildExactNotaDebitoXml,
   buildExactFacturaCompraXml,
-  buildExactMensajeReceptorXml,
 } from "../packages/sdk/dist/index.js";
 import {
   ExactFeInputSchema,
@@ -30,7 +29,6 @@ import {
   ExactNcPartialInputSchema,
   ExactNdInputSchema,
   ExactFecInputSchema,
-  ExactRecipientMessageInputSchema,
 } from "../shared/dist/index.js";
 
 const [command, runPath, ...extra] = process.argv.slice(2);
@@ -128,56 +126,56 @@ async function authenticatedClient() {
   });
 }
 
+// `type` is the document-type segment of clave/consecutivo. `owner` is the
+// taxpayer embedded in the clave: the issuer for every family except FEC,
+// which is generated and signed by its buyer (the XML Receptor).
+const issuer = (input) => input.emisor;
+const originalIssuer = (input) => input.original.emisor;
 const FAMILY_SPECS = {
-  FE: {
-    schema: ExactFeInputSchema,
-    builder: buildExactFacturaXml,
-    emisor: (input) => input.emisor,
-    receptor: (input) => input.receptor,
-    fecha: (input) => input.fechaEmision,
-    clave: (input) => input.clave,
-  },
-  TE: {
-    schema: ExactTeInputSchema,
-    builder: buildExactTiqueteXml,
-    emisor: (input) => input.emisor,
-    receptor: (input) => input.receptor,
-    fecha: (input) => input.fechaEmision,
-    clave: (input) => input.clave,
-  },
+  FE: { type: "01", schema: ExactFeInputSchema, builder: buildExactFacturaXml, emisor: issuer },
+  TE: { type: "04", schema: ExactTeInputSchema, builder: buildExactTiqueteXml, emisor: issuer },
   NC: {
+    type: "03",
     schema: ExactNcTotalInputSchema,
     builder: buildExactNotaCreditoTotalXml,
-    emisor: (input) => input.original.emisor,
+    emisor: originalIssuer,
     receptor: (input) => input.original.receptor,
-    fecha: (input) => input.fechaEmision,
-    clave: (input) => input.clave,
   },
   NCP: {
+    type: "03",
     schema: ExactNcPartialInputSchema,
     builder: buildExactNotaCreditoPartialXml,
-    emisor: (input) => input.original.emisor,
+    emisor: originalIssuer,
     receptor: (input) => input.original.receptor,
-    fecha: (input) => input.fechaEmision,
-    clave: (input) => input.clave,
   },
   ND: {
+    type: "02",
     schema: ExactNdInputSchema,
     builder: buildExactNotaDebitoXml,
-    emisor: (input) => input.original.emisor,
+    emisor: originalIssuer,
     receptor: (input) => input.original.receptor,
-    fecha: (input) => input.fechaEmision,
-    clave: (input) => input.clave,
   },
   FEC: {
+    type: "08",
     schema: ExactFecInputSchema,
     builder: buildExactFacturaCompraXml,
-    emisor: (input) => input.emisor,
-    receptor: (input) => input.receptor,
-    fecha: (input) => input.fechaEmision,
-    clave: (input) => input.clave,
+    emisor: issuer,
+    owner: (input) => input.receptor?.identificacion?.numero,
   },
 };
+
+/** Binds the clave to its taxpayer, consecutive and document type (fail closed). */
+function assertIdentity({ clave, numeroConsecutivo, owner, type }) {
+  if (
+    typeof clave !== "string" ||
+    typeof numeroConsecutivo !== "string" ||
+    typeof owner !== "string" ||
+    clave.slice(9, 21) !== owner.padStart(12, "0") ||
+    clave.slice(21, 41) !== numeroConsecutivo ||
+    (type !== undefined && numeroConsecutivo.slice(8, 10) !== type)
+  )
+    throw new Error("IDENTITY_MISMATCH");
+}
 
 async function documentRun() {
   if (!runPath) throw new Error("RUN_DIRECTORY_REQUIRED");
@@ -191,7 +189,6 @@ async function documentRun() {
   let serialized;
   let family;
   let input;
-  let legacy = false;
   try {
     serialized = await readFile(join(directory, "document.json"), "utf8");
     const doc = JSON.parse(serialized);
@@ -204,11 +201,11 @@ async function documentRun() {
     const invoice = JSON.parse(serialized);
     const result = validateFacturaInput(invoice);
     if (!result.valid) throw new Error("INVALID_INVOICE_INPUT");
-    if (
-      invoice.clave.slice(9, 21) !== invoice.emisor.identificacion.numero.padStart(12, "0") ||
-      invoice.clave.slice(21, 41) !== invoice.numeroConsecutivo
-    )
-      throw new Error("IDENTITY_MISMATCH");
+    assertIdentity({
+      clave: invoice.clave,
+      numeroConsecutivo: invoice.numeroConsecutivo,
+      owner: invoice.emisor.identificacion.numero,
+    });
     const xml = buildFacturaXml(invoice);
     if (!(await validateDocumentXml(xml)).valid) throw new Error("INVALID_UNSIGNED_XSD");
     return {
@@ -221,19 +218,25 @@ async function documentRun() {
     };
   }
 
-  const spec = FAMILY_SPECS[family];
+  const spec = Object.hasOwn(FAMILY_SPECS, family) ? FAMILY_SPECS[family] : undefined;
   if (!spec) throw new Error("UNKNOWN_FAMILY");
   const parsed = spec.schema.safeParse(input);
   if (!parsed.success) throw new Error("INVALID_DOCUMENT_INPUT");
   const validated = parsed.data;
+  const emisor = spec.emisor(validated);
+  assertIdentity({
+    clave: validated.clave,
+    numeroConsecutivo: validated.numeroConsecutivo,
+    owner: spec.owner ? spec.owner(validated) : emisor?.identificacion?.numero,
+    type: spec.type,
+  });
   const xml = spec.builder(validated);
   if (!(await validateDocumentXml(xml)).valid) throw new Error("INVALID_UNSIGNED_XSD");
-  const clave = spec.clave(validated);
   const normalizedInvoice = {
-    clave,
-    fechaEmision: spec.fecha(validated),
-    emisor: spec.emisor(validated),
-    receptor: spec.receptor(validated),
+    clave: validated.clave,
+    fechaEmision: validated.fechaEmision,
+    emisor,
+    receptor: (spec.receptor ?? ((input) => input.receptor))(validated),
   };
   return {
     directory,

@@ -22,7 +22,8 @@
 - [ ] 2.7 Align runner console output for submission results to status and identity hash only (no response bodies, tokens or secrets); preflight/auth/sign keep their existing minimal fields.
 - [ ] 2.8 Record SDK/package versions and hashes in the manifest for each run, including the hash of the accepted FE XML/response used as reference.
 - [ ] 2.9 Reconcile the runner artifact contract with `sandbox-evidence-bundle` (if adopted): document how `document.json` relates to `invoice.json`, and how `manifest.json` maps to that spec's required files.
-- [x] 2.10 Add offline regression tests for the runner and integrated tooling: `document.json`/`invoice.json` detection, NC/ND/FEC modes, manifest/verify, `PREVIOUS_SUBMISSION_REQUIRES_STATUS` on second submit, and `SANDBOX_ENDPOINT_MISMATCH` on bad host/IdP/client id (via a test seam or injected config). Integrate the branch's `sandbox-outcome.test.mjs` and `coherent-reference-rehearsal.test.mjs`.
+- [x] 2.10a Add offline regression tests for the runner's `document.json` path: missing family, unknown family, invalid input, clave↔issuer/consecutive/document-type binding (`IDENTITY_MISMATCH`, with the FEC buyer as the clave taxpayer), and one positive build+sign run per family (FE, TE, NC, NCP, ND, FEC) that reports `networkRequests: 0`.
+- [ ] 2.10b Add the remaining offline regression tests: legacy `invoice.json` fallback alongside `document.json`, manifest/verify, `PREVIOUS_SUBMISSION_REQUIRES_STATUS` on second submit, and `SANDBOX_ENDPOINT_MISMATCH` on bad host/IdP/client id (via a test seam or injected config). Integrate the branch's `sandbox-outcome.test.mjs` and `coherent-reference-rehearsal.test.mjs`.
 
 ## 3. NC Acceptance
 
