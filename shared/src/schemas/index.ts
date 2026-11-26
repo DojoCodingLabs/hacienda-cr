@@ -167,6 +167,7 @@ export {
   DecimalExoneratedRateSchema,
   DecimalProportionSchema,
   DecimalSpecificQuantitySchema,
+  DecimalSpecificPercentageSchema,
   DecimalExchangeRateSchema,
   DecimalDatosImpuestoEspecificoSchema,
   DecimalExonerationInputSchema,

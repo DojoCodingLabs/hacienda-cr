@@ -219,7 +219,8 @@ try {
       '\nimport { calculateExactNd, buildExactNotaDebitoXml, type ExactNdInput } from "@dojocoding/hacienda-sdk";\nimport { ExactNdInputSchema } from "@dojocoding/hacienda-shared";\nexport const exactNdContract = (input: ExactNdInput) => ({ calculated: calculateExactNd(ExactNdInputSchema.parse(input)), xml: buildExactNotaDebitoXml(input) });\n' +
       '\nimport { calculateExactNcPartial, buildExactNotaCreditoPartialXml, type ExactNcPartialInput, calculateExactFeReplacement, buildExactFacturaReplacementXml, type ExactFeReplacementInput } from "@dojocoding/hacienda-sdk";\nimport { ExactNcPartialInputSchema, ExactFeReplacementInputSchema } from "@dojocoding/hacienda-shared";\nexport const partialContract = (input: ExactNcPartialInput) => ({calculated: calculateExactNcPartial(ExactNcPartialInputSchema.parse(input)), xml: buildExactNotaCreditoPartialXml(input)});\nexport const replacementContract = (input: ExactFeReplacementInput) => ({calculated: calculateExactFeReplacement(ExactFeReplacementInputSchema.parse(input)), xml: buildExactFacturaReplacementXml(input)});\n' +
       '\nimport { buildExactMensajeReceptorXml, type ExactRecipientMessageInput } from "@dojocoding/hacienda-sdk";\nimport { ExactRecipientMessageInputSchema } from "@dojocoding/hacienda-shared";\nexport const recipientContract = (input: ExactRecipientMessageInput) => buildExactMensajeReceptorXml(ExactRecipientMessageInputSchema.parse(input));\n' +
-      '\nimport { calculateExactNcTotal, buildExactNotaCreditoTotalXml, type ExactNcTotalInput } from "@dojocoding/hacienda-sdk";\nimport { ExactNcTotalInputSchema } from "@dojocoding/hacienda-shared";\nexport const exactNcContract = (input: ExactNcTotalInput) => ({ calculated: calculateExactNcTotal(ExactNcTotalInputSchema.parse(input)), xml: buildExactNotaCreditoTotalXml(input) });\n',
+      '\nimport { calculateExactNcTotal, buildExactNotaCreditoTotalXml, type ExactNcTotalInput } from "@dojocoding/hacienda-sdk";\nimport { ExactNcTotalInputSchema } from "@dojocoding/hacienda-shared";\nexport const exactNcContract = (input: ExactNcTotalInput) => ({ calculated: calculateExactNcTotal(ExactNcTotalInputSchema.parse(input)), xml: buildExactNotaCreditoTotalXml(input) });\n' +
+      '\nimport { calculateDecimalDocument, calculateDecimalLineItemTotals, calculateDecimalInvoiceSummary, buildDecimalDocumentXml, buildDecimalFacturaXml, type DecimalLineSource } from "@dojocoding/hacienda-sdk";\nimport { DecimalDocumentInputSchema, DecimalDocumentCalculatedSchema, DecimalMoneySchema, DecimalExoneratedRateSchema, DecimalSpecificPercentageSchema, DecimalTaxInputSchema, type DecimalDocumentInput, type DecimalDocumentCalculated, type DecimalCurrency } from "@dojocoding/hacienda-shared";\nexport const decimalContract = (input: DecimalDocumentInput): { calculated: DecimalDocumentCalculated; xml: string } => ({ calculated: DecimalDocumentCalculatedSchema.parse(calculateDecimalDocument(DecimalDocumentInputSchema.parse(input))), xml: buildDecimalDocumentXml(input) });\nexport const decimalLineContract = (line: DecimalLineSource, currency: DecimalCurrency) => calculateDecimalInvoiceSummary([calculateDecimalLineItemTotals(line)], currency).totalComprobante;\nexport const decimalSchemas = { buildDecimalFacturaXml, DecimalMoneySchema, DecimalExoneratedRateSchema, DecimalSpecificPercentageSchema, DecimalTaxInputSchema };\n',
   );
   await writeFile(
     join(consumer, "history-consumer.ts"),
@@ -291,7 +292,8 @@ import {createServer} from "@dojocoding/hacienda-mcp";
 import {Client} from "@modelcontextprotocol/sdk/client/index.js";
 import {StdioClientTransport} from "@modelcontextprotocol/sdk/client/stdio.js";
 import {isBusinessDay,addBusinessDays,verifySignedDocumentXml,parseDocumentXml,FileDocumentStore} from "@dojocoding/hacienda-sdk";
-import {MoneyInputSchema,MonetaryTextSchema} from "@dojocoding/hacienda-shared";
+import {MoneyInputSchema,MonetaryTextSchema,DecimalDocumentInputSchema,DecimalDocumentCalculatedSchema,DecimalMoneySchema,DecimalExoneratedRateSchema,DecimalSpecificPercentageSchema,DecimalTaxInputSchema} from "@dojocoding/hacienda-shared";
+import {calculateDecimalDocument,calculateDecimalLineItemTotals,calculateDecimalInvoiceSummary,buildDecimalDocumentXml,buildDecimalFacturaXml} from "@dojocoding/hacienda-sdk";
 assert.equal(isBusinessDay("2026-01-01"),false);
 assert.equal(isBusinessDay("2026-04-02"),false);
 assert.equal(isBusinessDay("2026-08-31"),false);
@@ -327,6 +329,25 @@ assert.ok(exactXml.includes("<TotalComprobante>9999999999999.99999</TotalComprob
 assert.ok((await validateDocumentXml(exactXml)).valid);
 assert.equal(buildExactFacturaXml(JSON.parse(JSON.stringify(exact))),exactXml);
 assert.throws(()=>buildExactFacturaXml({...exact,resumenFactura:{totalComprobante:"0"}}));
+const {caseCode:_decimalCase,...decimalFacts}=exact;
+const decimalSource={...decimalFacts,tipoDocumento:"01"};
+const decimalParsed=DecimalDocumentInputSchema.parse(JSON.parse(JSON.stringify(decimalSource)));
+const decimalResult=calculateDecimalDocument(decimalParsed);
+assert.equal(decimalResult.resumenFactura.totalComprobante,"9999999999999.99999");
+assert.deepEqual(DecimalDocumentCalculatedSchema.parse(JSON.parse(JSON.stringify(decimalResult))),decimalResult);
+const decimalXml=buildDecimalDocumentXml(decimalParsed);
+assert.ok(decimalXml.includes("<TotalComprobante>9999999999999.99999</TotalComprobante>"));
+assert.ok((await validateDocumentXml(decimalXml)).valid);
+assert.equal(buildDecimalFacturaXml(decimalParsed),decimalXml);
+const decimalLine=calculateDecimalLineItemTotals(decimalParsed.detalleServicio[0]);
+assert.equal(decimalLine.montoTotalLinea,"9999999999999.99999");
+assert.equal(calculateDecimalInvoiceSummary([decimalLine],decimalParsed.codigoTipoMoneda).totalComprobante,"9999999999999.99999");
+assert.throws(()=>buildDecimalDocumentXml({...decimalSource,detalleServicio:[{...decimalSource.detalleServicio[0],precioUnitario:8849557522123.89}]}));
+assert.equal(DecimalDocumentInputSchema.safeParse({...decimalSource,detalleServicio:[{...decimalSource.detalleServicio[0],precioUnitario:1}]}).success,false);
+assert.equal(DecimalMoneySchema.safeParse(1).success,false);
+assert.equal(DecimalExoneratedRateSchema.safeParse("12.345").success,false);assert.equal(DecimalExoneratedRateSchema.parse("100"),"100");
+assert.equal(DecimalSpecificPercentageSchema.safeParse("100").success,false);assert.equal(DecimalSpecificPercentageSchema.parse("99.99"),"99.99");
+assert.equal(DecimalTaxInputSchema.safeParse({codigo:"01",codigoTarifaIVA:"08",tarifa:"12"}).success,false);
 for(const condition of ["02","10"]){
  for(const days of [undefined,"0","00000","100000"]){const credit={...exact,condicionVenta:condition,...(days===undefined?{}:{plazoCredito:days})};assert.equal(ExactFeInputSchema.safeParse(credit).success,false);assert.throws(()=>buildExactFacturaXml(credit));}
  for(const days of ["1","00030","99999"]){const credit={...exact,condicionVenta:condition,plazoCredito:days};assert.equal(ExactFeInputSchema.parse(credit).plazoCredito,days);assert.ok(buildExactFacturaXml(credit).includes("<PlazoCredito>"+days+"</PlazoCredito>"));}
@@ -462,6 +483,10 @@ try {
   const tools=await client.listTools(); assert.equal(tools.tools.length,7);
   const historyTool=tools.tools.find(tool=>tool.name==="list_documents");assert.equal(historyTool.inputSchema.additionalProperties,false);assert.ok(historyTool.inputSchema.properties.emisor);assert.equal(historyTool.inputSchema.properties.fechaDesde,undefined);
   const invalidHistoryTool=await client.callTool({name:"list_documents",arguments:{fechaDesde:"2026-01-01"}});assert.equal(invalidHistoryTool.isError,true);assert.match(JSON.stringify(invalidHistoryTool.content),/Unrecognized|unrecognized/);
+  const exactTool=tools.tools.find(tool=>tool.name==="create_invoice_exact");assert.equal(exactTool.inputSchema.additionalProperties,false);
+  const exactToolArgs={proveedorSistemas:"3101234567",codigoActividadEmisor:"620100",emisor:{nombre:"Packed exact issuer",identificacion:{tipo:"02",numero:"3101234567"},ubicacion:{provincia:"1",canton:"01",distrito:"01",otrasSenas:"Packed synthetic address"},correoElectronico:"exact@example.test"},receptor:{nombre:"Packed exact receiver",identificacion:{tipo:"02",numero:"3109876543"},correoElectronico:"receiver@example.test"},lineItems:[{codigoCabys:"4321000000000",cantidad:"1",unidadMedida:"Sp",detalle:"Packed exact service",precioUnitario:100000,esServicio:true,impuesto:[{codigo:"01",codigoTarifaIVA:"08",tarifa:"13"}]}]};
+  const numericExact=await client.callTool({name:"create_invoice_exact",arguments:exactToolArgs});assert.equal(numericExact.isError,true,JSON.stringify(numericExact.content));
+  const unknownExact=await client.callTool({name:"create_invoice_exact",arguments:{...exactToolArgs,lineItems:[{...exactToolArgs.lineItems[0],precioUnitario:"100000"}],totalComprobante:"1"}});assert.equal(unknownExact.isError,true,JSON.stringify(unknownExact.content));
 
   const resource=await client.readResource({uri:"hacienda://schemas/factura"});
   const schema=JSON.parse(resource.contents[0].text);

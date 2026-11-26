@@ -18,6 +18,7 @@ import {
   type DecimalDocumentInput,
   type DecimalMoney,
   type DecimalTaxInput,
+  type FacturaElectronica,
 } from "@dojocoding/hacienda-shared";
 import { calculateDecimalDocument, type FacturaValidationError } from "@dojocoding/hacienda-sdk";
 import { formatDraftMoney, normalizeDraftQuantity } from "./draft-money.js";
@@ -44,9 +45,60 @@ function withoutTemplateMarker(value: unknown): unknown {
   return rest;
 }
 
-/** Full factura draft with shared bounded decimal quantities and money. */
+const PLAIN_RATE_TEXT = /^(?:0|[1-9]\d*)(?:\.\d+)?$/;
+
+function legacyTaxes(input: unknown): Record<string, unknown>[] {
+  if (typeof input !== "object" || input === null) return [];
+  const lines = (input as { detalleServicio?: unknown }).detalleServicio;
+  if (!Array.isArray(lines)) return [];
+  return lines.flatMap((line: unknown) => {
+    if (typeof line !== "object" || line === null) return [];
+    const taxes = (line as { impuesto?: unknown }).impuesto;
+    if (!Array.isArray(taxes)) return [];
+    return taxes.filter(
+      (tax: unknown): tax is Record<string, unknown> => typeof tax === "object" && tax !== null,
+    );
+  });
+}
+
+/**
+ * Whether a decimal-text draft was saved by 0.13.0 or earlier.
+ *
+ * Those drafts carry decimal-text money but a JSON-number IVA `tarifa`
+ * (`"tarifa": 13`). They keep loading, and `submit` keeps their verbatim XML
+ * bytes; see {@link draftForXml}.
+ */
+export function isLegacyNumericTarifaDraft(input: unknown): boolean {
+  return legacyTaxes(input).some((tax) => typeof tax.tarifa === "number");
+}
+
+/**
+ * Convert a legacy JSON-number `tarifa` to the decimal text it denotes.
+ *
+ * The conversion is exact: `String(n)` is the shortest round-trip text of the
+ * saved number, and it is only accepted when it is plain decimal notation.
+ * Anything else (exponent, negative, non-finite) is left unchanged so the
+ * strict decimal schema rejects it instead of rounding it.
+ */
+function withLegacyTarifaAsText(input: unknown): unknown {
+  if (!isLegacyNumericTarifaDraft(input)) return input;
+  const copy = structuredClone(input);
+  for (const tax of legacyTaxes(copy)) {
+    if (typeof tax.tarifa !== "number" || !Number.isFinite(tax.tarifa)) continue;
+    const text = String(tax.tarifa);
+    if (PLAIN_RATE_TEXT.test(text)) tax.tarifa = text;
+  }
+  return copy;
+}
+
+/**
+ * Full factura draft with shared bounded decimal quantities and money.
+ *
+ * A 0.13.0 draft's numeric `tarifa` is converted exactly to text before the
+ * strict shared schema runs.
+ */
 export const DraftFacturaSchema = z.preprocess(
-  withoutTemplateMarker,
+  (value) => withLegacyTarifaAsText(withoutTemplateMarker(value)),
   DecimalFacturaCalculatedSchema,
 );
 
@@ -279,6 +331,20 @@ export function validateDraftFactura(input: DraftFactura): FacturaValidationErro
   }
 
   return issues;
+}
+
+/**
+ * View a validated 0.13.0 draft as the legacy XML builder's input.
+ *
+ * 0.13.0 serialized a validated draft's decimal text verbatim through
+ * `buildFacturaXml`. `submit` keeps that path for legacy numeric-tarifa drafts
+ * so a saved draft produces the same XML bytes after upgrading. Call it only
+ * after {@link validateDraftFactura} has proven every amount equals the exact
+ * recalculation; the XML mapper only serializes the values and never performs
+ * arithmetic on them.
+ */
+export function draftForXml(input: DraftFactura): FacturaElectronica {
+  return input as unknown as FacturaElectronica;
 }
 
 /** Re-export the exact formatter for callers that print a validated draft. */

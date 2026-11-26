@@ -209,11 +209,25 @@ does not promote 1.0.
 | tariff `number`        | `string` rate          | 2 decimals, 0..99.99                                  |
 | factor `number`        | `string` factor        | 4 decimals, 0..9.9999                                 |
 | percentage `number`    | `string` percentage    | 2 decimals, 0..100                                    |
+| `tarifaExonerada`      | `string` rate          | 4 digits, 2 decimals, 0..100                          |
+| alcohol `porcentaje`   | `string` percentage    | 4 digits, 2 decimals, 0..99.99                        |
 | exchange rate `number` | `string` exchange rate | positive money scale                                  |
+
+An IVA `tarifa` must equal the percentage of its `codigoTarifaIVA` (for example
+`"13"` for `08`), compared exactly.
 
 Source DTOs contain only facts; calculated DTOs expose derived totals. The builder
 recalculates all totals and rejects supplied totals. Calculated JSON is canonical
-trimmed text; XML money uses exactly 5 decimals. CLI `draft`, `validate`, and
-`submit` use the shared exact path; MCP gains `create_invoice_exact`. Legacy
-`Number` bytes and calculations are unchanged. Schema/XSD validity is not fiscal
-acceptance.
+trimmed text; XML money uses exactly 5 decimals.
+
+The adapters accept exact input for **Factura Electrónica (01) only**: CLI
+`draft`, `validate`, and `submit` use the shared exact path for decimal-text FE
+drafts, and MCP gains `create_invoice_exact` (FE only, strict keys). The other
+documents are reachable through the shared/SDK API, not the CLI or MCP.
+
+Drafts saved by 0.13.0 (decimal-text money with a JSON-number `"tarifa": 13`)
+keep loading: the number is converted exactly to text, the draft is checked
+against the exact recalculation, and `submit` keeps their verbatim 0.13.0 XML
+bytes. New text-`tarifa` drafts are rebuilt by `buildDecimalDocumentXml`, so
+their XML money uses 5 decimals. Legacy `Number` bytes and calculations are
+unchanged. Schema/XSD validity is not fiscal acceptance.

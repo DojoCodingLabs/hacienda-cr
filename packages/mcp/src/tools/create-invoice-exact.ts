@@ -108,24 +108,17 @@ function sourceLines(input: ExactInput) {
 }
 
 export function registerCreateInvoiceExactTool(server: McpServer): void {
-  server.tool(
+  server.registerTool(
     "create_invoice_exact",
-    "Create a Factura Electronica using exact decimal-text amounts. " +
-      "Rejects JSON numbers, exponent notation, signs, leading zeros and excess precision. " +
-      "Calculates taxes and totals with the shared exact kernel and returns unsigned XML.",
     {
-      environment: CreateInvoiceExactInputSchema.shape.environment,
-      emisor: CreateInvoiceExactInputSchema.shape.emisor,
-      receptor: CreateInvoiceExactInputSchema.shape.receptor,
-      proveedorSistemas: CreateInvoiceExactInputSchema.shape.proveedorSistemas,
-      codigoActividadEmisor: CreateInvoiceExactInputSchema.shape.codigoActividadEmisor,
-      condicionVenta: CreateInvoiceExactInputSchema.shape.condicionVenta,
-      medioPago: CreateInvoiceExactInputSchema.shape.medioPago,
-      codigoTipoMoneda: CreateInvoiceExactInputSchema.shape.codigoTipoMoneda,
-      lineItems: CreateInvoiceExactInputSchema.shape.lineItems,
-      plazoCredito: CreateInvoiceExactInputSchema.shape.plazoCredito,
-      otrosCargos: CreateInvoiceExactInputSchema.shape.otrosCargos,
-      informacionReferencia: CreateInvoiceExactInputSchema.shape.informacionReferencia,
+      description:
+        "Create a Factura Electronica (document type 01 only) using exact decimal-text amounts. " +
+        "Rejects JSON numbers, exponent notation, signs, leading zeros, excess precision and unknown keys. " +
+        "Calculates taxes and totals with the shared exact kernel and returns unsigned XML.",
+      // Register the strict object itself, not its raw shape: a raw shape is
+      // wrapped in a non-strict object that silently strips unknown keys before
+      // the handler can re-parse them.
+      inputSchema: CreateInvoiceExactInputSchema,
     },
     async (raw) => {
       try {

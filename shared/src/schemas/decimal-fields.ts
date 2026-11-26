@@ -13,7 +13,7 @@
 
 import { z } from "zod";
 import { MONETARY_TEXT_PATTERN, scaledFromPlainDecimal } from "../monetary/index.js";
-import { ExonerationType } from "../constants/index.js";
+import { ExonerationType, IVA_RATE_PERCENTAGES } from "../constants/index.js";
 import {
   CURRENCY_CODES,
   DISCOUNT_CODES,
@@ -32,6 +32,8 @@ interface DecimalBounds {
   max?: string;
   totalDigits?: number;
   positive?: boolean;
+  /** Syntax gate; defaults to the shared 13-integer-digit monetary pattern. */
+  pattern?: RegExp;
 }
 
 function significantDigits(text: string): number {
@@ -54,7 +56,7 @@ function decimalText(bounds: DecimalBounds): z.ZodString {
   return z
     .string()
     .regex(
-      MONETARY_TEXT_PATTERN,
+      bounds.pattern ?? MONETARY_TEXT_PATTERN,
       `${bounds.label} must be unsigned plain decimal text without exponent or sign`,
     )
     .refine(
@@ -105,10 +107,11 @@ export const DecimalPositiveMoneySchema = decimalText({
   positive: true,
 });
 
-/** Positive quantity: 16 significant digits and at most 3 decimals. */
+/** Positive quantity: XSD `Cantidad` is totalDigits 16 / fractionDigits 3. */
 export const DecimalQuantitySchema = decimalText({
   label: "Quantity",
-  maxWholeDigits: 13,
+  pattern: /^(?:0|[1-9]\d{0,15})(?:\.\d{1,5})?$/,
+  maxWholeDigits: 16,
   maxFractionDigits: 3,
   totalDigits: 16,
   positive: true,
@@ -138,11 +141,15 @@ export const DecimalPercentageSchema = decimalText({
   max: "100",
 });
 
-/** Exonerated tariff percentage: 0..100 with at most 5 decimals. */
+/**
+ * Exonerated tariff percentage: XSD `TarifaExonerada` is totalDigits 4 /
+ * fractionDigits 2, bounded to 0..100.
+ */
 export const DecimalExoneratedRateSchema = decimalText({
   label: "Exonerated rate",
   maxWholeDigits: 3,
-  maxFractionDigits: 5,
+  maxFractionDigits: 2,
+  totalDigits: 4,
   max: "100",
 });
 
@@ -153,6 +160,18 @@ export const DecimalProportionSchema = decimalText({
   maxFractionDigits: 5,
   totalDigits: 10,
   max: "99999.99999",
+});
+
+/**
+ * Alcohol specific-tax percentage: XSD `DatosImpuestoEspecifico/Porcentaje`
+ * is totalDigits 4 / fractionDigits 2, so 0..99.99.
+ */
+export const DecimalSpecificPercentageSchema = decimalText({
+  label: "Specific-tax percentage",
+  maxWholeDigits: 2,
+  maxFractionDigits: 2,
+  totalDigits: 4,
+  max: "99.99",
 });
 
 /** Specific-tax quantity/volume: 7 total digits and at most 2 decimals. */
@@ -171,7 +190,7 @@ export const DecimalExchangeRateSchema = DecimalPositiveMoneySchema;
 export const DecimalDatosImpuestoEspecificoSchema = z
   .object({
     cantidadUnidadMedida: DecimalSpecificQuantitySchema,
-    porcentaje: DecimalSpecificQuantitySchema.optional(),
+    porcentaje: DecimalSpecificPercentageSchema.optional(),
     proporcion: DecimalProportionSchema.optional(),
     volumenUnidadConsumo: DecimalSpecificQuantitySchema.optional(),
     impuestoUnidad: DecimalMoneySchema,
@@ -284,6 +303,23 @@ function refineDecimalTax(
     issue(["codigoTarifaIVA"], "IVA taxes require an official rate code");
   if (TAX_IVA_CODES.has(tax.codigo) && tax.tarifa === undefined)
     issue(["tarifa"], "IVA taxes require a percentage rate");
+  // Same rule as the legacy SDK validator: ordinary IVA (01) must use the
+  // percentage of its official rate code (Anexos v4.4, nota 8.1).
+  if (tax.codigo === "01" && tax.codigoTarifaIVA && tax.tarifa !== undefined) {
+    const expected = IVA_RATE_PERCENTAGES[tax.codigoTarifaIVA as keyof typeof IVA_RATE_PERCENTAGES];
+    // The catalog holds finite two-decimal percentages; compare exactly at scale 2.
+    let matches = true;
+    try {
+      matches = expected === undefined || scaled(tax.tarifa, 2) === scaled(String(expected), 2);
+    } catch {
+      // A malformed or over-scaled rate is already reported by DecimalRateSchema.
+    }
+    if (!matches)
+      issue(
+        ["tarifa"],
+        `IVA tarifa must match codigoTarifaIVA ${tax.codigoTarifaIVA} (${String(expected)}%)`,
+      );
+  }
   const specific = TAX_SPECIFIC_CODES.has(tax.codigo);
   if (specific && !tax.datosImpuestoEspecifico)
     issue(["datosImpuestoEspecifico"], "Specific-tax calculation data is required");

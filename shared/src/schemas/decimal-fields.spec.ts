@@ -1,7 +1,9 @@
 import { describe, expect, it } from "vitest";
 import {
   DecimalCurrencySchema,
+  DecimalDatosImpuestoEspecificoSchema,
   DecimalDiscountSchema,
+  DecimalExoneratedRateSchema,
   DecimalExonerationInputSchema,
   DecimalFactorSchema,
   DecimalMoneySchema,
@@ -12,6 +14,7 @@ import {
   DecimalProportionSchema,
   DecimalQuantitySchema,
   DecimalRateSchema,
+  DecimalSpecificPercentageSchema,
   DecimalSpecificQuantitySchema,
   DecimalTaxInputSchema,
   DecimalTaxTotalSchema,
@@ -41,7 +44,10 @@ describe("decimal fields", () => {
 
   it("enforces quantity, rate, factor, percentage and proportion scales", () => {
     expect(DecimalQuantitySchema.parse("9999999999999.999")).toBe("9999999999999.999");
-    expect(DecimalQuantitySchema.safeParse("9999999999999999").success).toBe(false);
+    // XSD Cantidad is totalDigits 16 / fractionDigits 3: 16 integer digits are valid.
+    expect(DecimalQuantitySchema.parse("9999999999999999")).toBe("9999999999999999");
+    expect(DecimalQuantitySchema.safeParse("99999999999999999").success).toBe(false);
+    expect(DecimalQuantitySchema.safeParse("99999999999999.999").success).toBe(false);
     expect(DecimalQuantitySchema.safeParse("1.0001").success).toBe(false);
     expect(DecimalRateSchema.parse("99.99")).toBe("99.99");
     expect(DecimalRateSchema.safeParse("100").success).toBe(false);
@@ -49,6 +55,48 @@ describe("decimal fields", () => {
     expect(DecimalPercentageSchema.parse("100")).toBe("100");
     expect(DecimalProportionSchema.parse("99999.99999")).toBe("99999.99999");
     expect(DecimalSpecificQuantitySchema.parse("99999.99")).toBe("99999.99");
+  });
+
+  it("bounds TarifaExonerada to the XSD totalDigits 4 / fractionDigits 2", () => {
+    expect(DecimalExoneratedRateSchema.parse("100")).toBe("100");
+    expect(DecimalExoneratedRateSchema.parse("12.34")).toBe("12.34");
+    expect(DecimalExoneratedRateSchema.safeParse("12.345").success).toBe(false);
+    expect(DecimalExoneratedRateSchema.safeParse("100.01").success).toBe(false);
+    expect(
+      DecimalExonerationInputSchema.safeParse({
+        tipoDocumento: "01",
+        numeroDocumento: "123",
+        nombreInstitucion: "01",
+        fechaEmision: "2025-01-01",
+        tarifaExonerada: "12.345",
+      }).success,
+    ).toBe(false);
+  });
+
+  it("bounds the alcohol specific-tax Porcentaje to the XSD totalDigits 4 / fractionDigits 2", () => {
+    expect(DecimalSpecificPercentageSchema.parse("99.99")).toBe("99.99");
+    expect(DecimalSpecificPercentageSchema.safeParse("100").success).toBe(false);
+    expect(DecimalSpecificPercentageSchema.safeParse("12.345").success).toBe(false);
+    const datos = { cantidadUnidadMedida: "1", proporcion: "1", impuestoUnidad: "1" };
+    expect(
+      DecimalDatosImpuestoEspecificoSchema.safeParse({ ...datos, porcentaje: "40" }).success,
+    ).toBe(true);
+    // 7,2 quantity text is not a valid 4,2 percentage.
+    expect(
+      DecimalDatosImpuestoEspecificoSchema.safeParse({ ...datos, porcentaje: "99999.99" }).success,
+    ).toBe(false);
+  });
+
+  it("requires tarifa to match the official IVA rate code", () => {
+    const tax = (codigoTarifaIVA: string, tarifa: string) =>
+      DecimalTaxInputSchema.safeParse({ codigo: "01", codigoTarifaIVA, tarifa }).success;
+    expect(tax("08", "13")).toBe(true);
+    expect(tax("08", "13.00")).toBe(true);
+    expect(tax("09", "0.5")).toBe(true);
+    expect(tax("01", "0")).toBe(true);
+    expect(tax("08", "12")).toBe(false);
+    expect(tax("01", "13")).toBe(false);
+    expect(tax("02", "13")).toBe(false);
   });
 
   it("rejects JSON numbers and out-of-bound values in monetary fields", () => {

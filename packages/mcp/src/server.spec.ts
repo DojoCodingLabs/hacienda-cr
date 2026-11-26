@@ -225,6 +225,16 @@ describe("MCP Server", () => {
       const text = (result.content as { text: string }[])[0]?.text ?? "";
       expect(text).toMatch(/expected string|invalid|number/i);
     });
+
+    it("rejects an unknown top-level key instead of stripping it", async () => {
+      const result = await client.callTool({
+        name: "create_invoice_exact",
+        arguments: { ...exactArgs, totalComprobante: "1" },
+      });
+      expect(result.isError).toBe(true);
+      const text = (result.content as { text: string }[])[0]?.text ?? "";
+      expect(text).toMatch(/unrecognized|totalComprobante/i);
+    });
   });
 
   // -------------------------------------------------------------------------

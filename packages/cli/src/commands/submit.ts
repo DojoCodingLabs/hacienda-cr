@@ -26,8 +26,10 @@ import { success, error, detail, info, outputJson } from "../utils/format.js";
 import { createAuthenticatedClient } from "../utils/api-client.js";
 import {
   DraftFacturaSchema,
+  draftForXml,
   draftToSource,
   hasDecimalTextMoney,
+  isLegacyNumericTarifaDraft,
   validateDraftFactura,
   type DraftFactura,
 } from "../utils/draft-document.js";
@@ -126,7 +128,6 @@ export const submitCommand = defineCommand({
         emisor: { identificacion: Identificacion };
         receptor?: { identificacion?: Identificacion };
       };
-      let exactSource: DecimalDocumentInput | undefined;
       if (exactDraft) {
         const exact = validation.data as DraftFactura;
         const exactErrors = validateDraftFactura(exact);
@@ -146,9 +147,17 @@ export const submitCommand = defineCommand({
           process.exitCode = 1;
           return;
         }
-        exactSource = draftToSource(exact);
-        xml = buildDecimalDocumentXml(exactSource);
-        document = exactSource;
+        if (isLegacyNumericTarifaDraft(invoiceData)) {
+          // A 0.13.0 draft (numeric tarifa) keeps its published verbatim XML
+          // bytes; every amount was just proven equal to the exact recalculation.
+          const legacyDraft = draftForXml(exact);
+          xml = buildFacturaXml(legacyDraft);
+          document = legacyDraft;
+        } else {
+          const exactSource: DecimalDocumentInput = draftToSource(exact);
+          xml = buildDecimalDocumentXml(exactSource);
+          document = exactSource;
+        }
       } else {
         // Legacy Number contract: keep the published SDK validator unchanged.
         const sdkValidation = validateFacturaInput(validation.data);
