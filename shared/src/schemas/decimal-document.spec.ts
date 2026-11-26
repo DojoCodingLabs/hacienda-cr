@@ -114,7 +114,8 @@ describe("decimal document schemas", () => {
           ],
           codigoTipoMoneda: { codigoMoneda: "CRC", tipoCambio: "1" },
           medioPago: [{ tipoMedioPago: "04", totalMedioPago: "113" }],
-          informacionReferencia: [REFERENCE],
+          // The REP XSD requires Numero.
+          informacionReferencia: [{ ...REFERENCE, numero: CLAVE }],
         },
       ],
     ];

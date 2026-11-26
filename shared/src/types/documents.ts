@@ -311,9 +311,12 @@ export interface InformacionReferencia {
 /** Reference to another document for Recibo Electronico de Pago.
  *
  * Same shape as InformacionReferencia but admits reason code "17" (pago de comprobante)
- * via RepReferenceCode. `codigo` is optional (XSD: `Codigo minOccurs="0"`).
+ * via RepReferenceCode. `codigo` is optional (XSD: `Codigo minOccurs="0"`); `numero`
+ * is required (REP XSD: `Numero` has no `minOccurs="0"`).
  */
-export interface RepInformacionReferencia extends Omit<InformacionReferencia, "codigo"> {
+export interface RepInformacionReferencia extends Omit<InformacionReferencia, "codigo" | "numero"> {
+  /** Referenced document clave or consecutive number (max 50 chars). */
+  numero: string;
   codigo?: RepReferenceCode;
 }
 

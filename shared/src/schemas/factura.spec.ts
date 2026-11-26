@@ -8,6 +8,7 @@ import {
   RepInformacionReferenciaSchema,
   TotalDesgloseImpuestoSchema,
 } from "./factura.js";
+import { DecimalReferenceSchema } from "./decimal-fields.js";
 
 const validLineItem = {
   numeroLinea: 1,
@@ -749,6 +750,7 @@ describe("RepInformacionReferenciaSchema", () => {
   it("should accept tipoDoc 01 sin codigo in REP (XSD allows Codigo to be absent)", () => {
     const result = RepInformacionReferenciaSchema.safeParse({
       tipoDoc: "01",
+      numero: "50601072500012345678900100001010000000001199999998",
       fechaEmision: "2025-07-20T10:30:00-06:00",
     });
     expect(result.success).toBe(true);
@@ -757,8 +759,54 @@ describe("RepInformacionReferenciaSchema", () => {
   it("should accept tipoDoc 13 sin codigo in REP", () => {
     const result = RepInformacionReferenciaSchema.safeParse({
       tipoDoc: "13",
+      numero: "50601072500012345678900100001010000000001199999998",
       fechaEmision: "2025-07-20T10:30:00-06:00",
     });
     expect(result.success).toBe(true);
+  });
+
+  it("should require numero in REP (REP XSD Numero is mandatory)", () => {
+    const { numero: _numero, ...withoutNumero } = validRepReferencia;
+    const result = RepInformacionReferenciaSchema.safeParse({ ...withoutNumero, codigo: "17" });
+    expect(result.success).toBe(false);
+    expect(result.error?.issues[0]?.path).toEqual(["numero"]);
+    expect(
+      RepInformacionReferenciaSchema.safeParse({ ...validRepReferencia, numero: "" }).success,
+    ).toBe(false);
+  });
+
+  it("should reject unknown keys in REP", () => {
+    expect(
+      RepInformacionReferenciaSchema.safeParse({ ...validRepReferencia, foo: "bar" }).success,
+    ).toBe(false);
+  });
+});
+
+describe("InformacionReferencia strictness", () => {
+  const reference = {
+    tipoDoc: "01",
+    numero: "50601072500012345678900100001010000000001199999998",
+    fechaEmision: "2025-07-20T10:30:00-06:00",
+    codigo: "04",
+    razon: "Referencia a otro documento",
+  };
+
+  it("keeps stripping unknown keys in the legacy schemas", () => {
+    const parsed = InformacionReferenciaSchema.parse({ ...reference, foo: "bar" });
+    expect(parsed).toEqual(reference);
+    expect(parsed).not.toHaveProperty("foo");
+
+    const factura = FacturaElectronicaSchema.parse({
+      ...validFactura,
+      informacionReferencia: [{ ...reference, foo: "bar" }],
+    });
+    expect(factura.informacionReferencia?.[0]).toEqual(reference);
+    expect(factura.informacionReferencia?.[0]).not.toHaveProperty("foo");
+  });
+
+  it("rejects unknown keys in the exact DecimalReferenceSchema", () => {
+    expect(DecimalReferenceSchema.safeParse(reference).success).toBe(true);
+    expect(DecimalReferenceSchema.safeParse({ ...reference, foo: "bar" }).success).toBe(false);
+    expect(DecimalReferenceSchema.safeParse({ ...reference, tipoDoc: "99" }).success).toBe(false);
   });
 });
