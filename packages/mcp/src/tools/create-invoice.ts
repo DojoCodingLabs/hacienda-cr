@@ -150,14 +150,29 @@ export const ReceptorInputSchema = z.object({
   correoElectronico: z.string().optional().describe("Email address"),
 });
 
+/**
+ * `ProveedorSistemas`: Anexos y Estructuras v4.4 (Encabezado, String 20) asks
+ * for the identification of the invoicing-system provider ("En caso de ser un
+ * desarrollo propio o comprado a la medida, se deberá indicar la
+ * identificación del mismo obligado tributario") and "Permite ingresar números
+ * y letras para personas jurídicas" (alphanumeric cédulas jurídicas, April
+ * 2026 revision). 9 is the shortest Nota 4 identification (cédula física).
+ */
+export const ProveedorSistemasInputSchema = z
+  .string()
+  .regex(/^[A-Za-z0-9]{9,20}$/)
+  .describe(
+    "Identification of the invoicing-system provider (ProveedorSistemas, Anexos y " +
+      "Estructuras v4.4): 9-20 letters or digits; letters are allowed for an " +
+      "alphanumeric cédula jurídica. Use the issuer's own identification only for a " +
+      "self-developed or custom-built system.",
+  );
+
 export const CreateInvoiceInputSchema = z.object({
   environment: z.enum(["sandbox", "production"]).default("sandbox"),
   emisor: EmisorInputSchema.describe("Invoice issuer (emisor)"),
   receptor: ReceptorInputSchema.describe("Invoice receiver (receptor)"),
-  proveedorSistemas: z
-    .string()
-    .regex(/^\d{9,12}$/)
-    .describe("Actual invoicing-system provider identification number (ProveedorSistemas)"),
+  proveedorSistemas: ProveedorSistemasInputSchema,
   codigoActividadEmisor: z.string().describe("Issuer economic activity code (6 digits)"),
   condicionVenta: z
     .string()

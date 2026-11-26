@@ -28,7 +28,18 @@ import {
   UnitOfMeasure,
   parseMonetaryText,
 } from "@dojocoding/hacienda-shared";
-import { success, error, detail, info, outputJson, bold, cyan, dim } from "../utils/format.js";
+import {
+  success,
+  error,
+  detail,
+  info,
+  outputJson,
+  bold,
+  cyan,
+  dim,
+  yellow,
+} from "../utils/format.js";
+import { resolveProveedorSistemas } from "../utils/provider-id.js";
 import {
   buildDraftSummary,
   calculateDraftLineMoney,
@@ -332,6 +343,11 @@ export const draftCommand = defineCommand({
       description: "Run in interactive mode with step-by-step prompts (default: true)",
       default: true,
     },
+    profile: {
+      type: "string",
+      description: "Config profile whose provider_id is used as proveedorSistemas",
+      default: "default",
+    },
   },
   async run({ args }) {
     // Non-interactive mode: generate a blank template
@@ -397,11 +413,19 @@ export const draftCommand = defineCommand({
       // Build the summary (v4.4: payment methods live inside the summary)
       const resumenFactura = buildResumenFactura(lineItems, medioPago);
 
+      // ProveedorSistemas is the software provider's identification (Anexos
+      // v4.4); the issuer's own ID is only a fallback, with a warning.
+      const proveedor = await resolveProveedorSistemas(
+        emisor.identificacion.numero,
+        args.profile as string,
+      );
+      if (proveedor.warning) console.error(`${yellow("!")} ${proveedor.warning}`);
+
       // Assemble the draft document
       const now = new Date();
       const draft = {
         clave: "<<GENERATE_ON_SUBMIT>>",
-        proveedorSistemas: emisor.identificacion.numero,
+        proveedorSistemas: proveedor.value,
         codigoActividadEmisor,
         numeroConsecutivo: "<<GENERATE_ON_SUBMIT>>",
         fechaEmision: now.toISOString(),
@@ -414,7 +438,11 @@ export const draftCommand = defineCommand({
 
       // Output
       if (args.json) {
-        outputJson({ success: true, draft });
+        outputJson({
+          success: true,
+          draft,
+          ...(proveedor.warning ? { warnings: [proveedor.warning] } : {}),
+        });
         return;
       }
 
@@ -459,7 +487,7 @@ export const draftCommand = defineCommand({
 function generateBlankTemplate(templateType: string): Record<string, unknown> {
   const base = {
     clave: "<<GENERATE_ON_SUBMIT>>",
-    proveedorSistemas: "<<YOUR_CEDULA>>",
+    proveedorSistemas: "<<SYSTEM_PROVIDER_ID>>",
     codigoActividadEmisor: "620100",
     numeroConsecutivo: "<<GENERATE_ON_SUBMIT>>",
     fechaEmision: new Date().toISOString(),

@@ -11,6 +11,12 @@ import { parseClave, getStatus, extractRejectionReason } from "@dojocoding/hacie
 import { error, detail, info, outputJson, colorStatus } from "../utils/format.js";
 import { createAuthenticatedClient } from "../utils/api-client.js";
 
+/** Shown when the positional clave does not have the v4.4 (2026) shape. */
+export const CLAVE_FORMAT_ERROR =
+  "Invalid clave. Expected 50 characters: digits only, except the 12-character " +
+  "taxpayer ID segment (characters 10-21), which may also contain letters " +
+  "(alphanumeric cédula jurídica, Anexos y Estructuras v4.4 revision of April 2026).";
+
 export const statusCommand = defineCommand({
   meta: {
     name: "status",
@@ -37,11 +43,11 @@ export const statusCommand = defineCommand({
     try {
       const clave = args.clave;
 
-      // Validate clave format
+      // Validate clave format. Since the April 2026 revision of Anexos y
+      // Estructuras v4.4 (mandatory 2026-11-01) the taxpayer segment may hold
+      // an alphanumeric cédula jurídica; every other segment stays numeric.
       if (!/^\d{9}[A-Za-z0-9]{12}\d{29}$/.test(clave)) {
-        error(
-          "Invalid clave. Must be a 50-character clave with letters only in the taxpayer ID segment.",
-        );
+        error(CLAVE_FORMAT_ERROR);
         process.exitCode = 1;
         return;
       }

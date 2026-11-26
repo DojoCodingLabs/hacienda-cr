@@ -47,29 +47,33 @@ export async function extractCodes({ schemasDir, seams = {}, stderr = process.st
     );
   }
 
-  if (typeof manifest.currentSet !== "string" || manifest.currentSet === "") {
-    throw fatal("manifest.json sin currentSet");
+  // `codesSet` names the set whose XSD **and** auxiliaries (Anexos PDF,
+  // currency PDF, location RAR) are vendored; it defaults to `currentSet`.
+  // The 2026/v4.4 set is current but only its nine XSD are vendored, so the
+  // manifest pins `codesSet` to 2024/v4.4 until its auxiliaries are vendored
+  // (see docs/specs/v4-4-schema-provenance.md).
+  const codesSet = manifest.codesSet ?? manifest.currentSet;
+  if (typeof codesSet !== "string" || codesSet === "") {
+    throw fatal("manifest.json sin codesSet ni currentSet");
   }
 
-  const setDir = join(dir, manifest.currentSet);
+  const setDir = join(dir, codesSet);
   let setFiles;
   try {
     setFiles = readdirSync(setDir);
   } catch {
-    throw fatal(
-      `directorio del set vigente inexistente: packages/sdk/schemas/${manifest.currentSet}`,
-    );
+    throw fatal(`directorio del set vigente inexistente: packages/sdk/schemas/${codesSet}`);
   }
 
   const xsdNames = setFiles.filter((name) => name.endsWith(".xsd")).sort();
   if (xsdNames.length === 0) {
-    throw fatal(`sin archivos .xsd en packages/sdk/schemas/${manifest.currentSet}`);
+    throw fatal(`sin archivos .xsd en packages/sdk/schemas/${codesSet}`);
   }
 
   const fileResults = [];
   for (const name of xsdNames) {
     const abs = join(setDir, name);
-    const relPath = join(manifest.currentSet, name).replaceAll("\\", "/");
+    const relPath = join(codesSet, name).replaceAll("\\", "/");
     let content;
     try {
       content = readFileSync(abs, "utf8");
@@ -88,9 +92,9 @@ export async function extractCodes({ schemasDir, seams = {}, stderr = process.st
   const { tables: xsTables, warnings: xsWarnings } = mergeTables(fileResults);
 
   const auxPaths = {
-    anexos: join(manifest.currentSet, "ANEXOS Y ESTRUCTURAS_V4.4.pdf").replaceAll("\\", "/"),
-    moneda: join(manifest.currentSet, "Codigodemoneda_V4.4.pdf").replaceAll("\\", "/"),
-    ubicacion: join(manifest.currentSet, "Codificacionubicacion_V4.4.rar").replaceAll("\\", "/"),
+    anexos: join(codesSet, "ANEXOS Y ESTRUCTURAS_V4.4.pdf").replaceAll("\\", "/"),
+    moneda: join(codesSet, "Codigodemoneda_V4.4.pdf").replaceAll("\\", "/"),
+    ubicacion: join(codesSet, "Codificacionubicacion_V4.4.rar").replaceAll("\\", "/"),
   };
   const { runPdftotext, extractRar, readXlsx } = await resolveSeams(seams);
 
@@ -136,13 +140,13 @@ export async function extractCodes({ schemasDir, seams = {}, stderr = process.st
   }
 
   const generatedFrom = [
-    ...xsdNames.map((name) => join(manifest.currentSet, name).replaceAll("\\", "/")),
+    ...xsdNames.map((name) => join(codesSet, name).replaceAll("\\", "/")),
     auxPaths.anexos,
     auxPaths.moneda,
     auxPaths.ubicacion,
   ];
   const output = renderCodesJson({
-    currentSet: manifest.currentSet,
+    codesSet,
     generatedFrom,
     tables,
   });
@@ -157,7 +161,7 @@ export async function extractCodes({ schemasDir, seams = {}, stderr = process.st
     throw error;
   }
 
-  return { currentSet: manifest.currentSet, generatedFrom, outPath };
+  return { codesSet, generatedFrom, outPath };
 }
 
 const invokedDirectly =

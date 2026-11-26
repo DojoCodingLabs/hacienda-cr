@@ -3,18 +3,26 @@
 Official "Anexos y Estructuras" v4.4 XSD schemas, used by the test suite as the
 conformance gate for generated XML (`src/__testing__/xsd.ts`).
 
-- `2024/v4.4/` — the base v4.4 package, downloaded 2026-08-24 from
-  `https://atv.hacienda.go.cr/ATV/ComprobanteElectronico/docs/esquemas/2024/v4.4/`.
-- `2026/v4.4/` — the April 22, 2026 revision (files Last-Modified 2026-04-22;
-  mandatory 2026-11-01), downloaded 2026-08-24 from
+- `2026/v4.4/` — the **current** set (`manifest.json` → `currentSet`): the
+  April 22, 2026 revision (files Last-Modified 2026-04-22), mandatory since
+  2026-11-01 per Hacienda's communication
+  [ActualizacionAnexosyEstructurasVersion4.4CEv2.pdf](https://www.hacienda.go.cr/docs/ActualizacionAnexosyEstructurasVersion4.4CEv2.pdf).
+  Downloaded 2026-08-24 and re-verified byte-for-byte on 2026-11-26 from
   `https://www.hacienda.go.cr/docs/<File>_V4.4.xsd` — the URLs linked from the
   TRIBU-CR OVi portal (`https://ovitribucr.hacienda.go.cr/comprobantes-electronicos`
   → "Anexos y Estructuras" → "Estructuras XML y Anexos Versión 4.4"; public,
   no login). Note: the host's WAF blocks browser-like User-Agents from CLI
-  clients — plain `curl`/`wget` default agents work.
+  clients — plain `curl`/`wget` default agents work. Only the nine XSDs are
+  vendored for this set; its auxiliaries are not (see `codesSet` below).
+- `2024/v4.4/` — the **previous** set: the base v4.4 package, downloaded
+  2026-08-24 from
+  `https://atv.hacienda.go.cr/ATV/ComprobanteElectronico/docs/esquemas/2024/v4.4/`
+  (the legacy ATV portal; it still lists those links but answers 404 for every
+  file as of 2026-11-26). Kept for historical comparison and as the source of
+  `codes.json`, which needs its vendored auxiliaries.
 - Files are vendored byte-for-byte as published (do not reformat).
 - The per-file evidence behind both sets — exact URLs, `Last-Modified`, SHA-256,
-  declared authority and the open question about `2026/v4.4` — is recorded in
+  the declared authority and the primary sources that establish it — is recorded in
   [v4.4 schema provenance](../../../docs/specs/v4-4-schema-provenance.md).
 - `xmldsig-core-schema.xsd` — W3C XML-DSig core schema referenced by every
   Hacienda XSD via `../../xmldsig-core-schema.xsd` (hence the directory layout).
@@ -34,7 +42,11 @@ copied into the published npm package.
 Derived catalog of the official code enumerations embedded in the XSDs **and
 in the vendored auxiliary sources** (`ANEXOS Y ESTRUCTURAS_V4.4.pdf`,
 `Codigodemoneda_V4.4.pdf`, `Codificacionubicacion_V4.4.rar`) of the
-**current** set (`manifest.json` → `currentSet`). Generated offline by
+set named by `manifest.json` → `codesSet` (defaults to `currentSet`). Today
+`codesSet` is `2024/v4.4` because the auxiliaries of the current `2026/v4.4`
+set are not vendored yet; the reference catalogs that the 2026 revision
+changed (codes 13–17, 19–20) are curated by hand from the 2026 XSDs and locked
+by `packages/sdk/src/xml/reference-catalog.spec.ts`. Generated offline by
 `pnpm codes:extract`; committed so consumers can diff it like any other
 vendored artifact.
 
@@ -130,15 +142,27 @@ Field semantics:
   committed to this repository. It would be `false` only for a file declared
   but intentionally not committed (none today).
 
-- `currentSet` — the set **in force today** (`2024/v4.4`; the April 2026
-  revision becomes mandatory 2026-11-01). `nextSet` — published but not yet
-  mandatory, with `effectiveFrom`; the key is omitted (never `null`) when there
-  is no upcoming set, and after the switch `2024/v4.4` stays in `sets[]` (only
-  the pointer moves).
+- `currentSet` — the set **in force today**: `2026/v4.4` since 2026-11-01. The
+  SDK build embeds exactly this set (locked by
+  `packages/sdk/src/xml/schemas/schema-authority.spec.ts`). `nextSet` —
+  published but not yet mandatory, with `effectiveFrom`; the key is omitted
+  (never `null`) when there is no upcoming set, as today. `2024/v4.4` stays in
+  `sets[]` as the previous set (only the pointer moved). `spec:verify` rejects a
+  `currentSet` outside `sets[]` or marked `policyOnly`, a `nextSet` equal to
+  `currentSet` or outside `sets[]`, and a non-ISO `effectiveFrom`.
+- `codesSet` (optional) — the set `codes:extract` reads; it must name a set in
+  `sets[]` and defaults to `currentSet`. It exists because `codes.json` needs
+  the vendored auxiliaries (Anexos PDF, currency PDF, location RAR) and only
+  `2024/v4.4` has them.
+- `sets[].effectiveFrom` / `sets[].authority` (informational) — the date a set
+  became mandatory and the primary sources for that claim: Hacienda's
+  communication and the official Anexos PDF (URLs, SHA-256 at `checkedAt`, and
+  the date of its "Bitácora de Ajustes"). Neither PDF is vendored.
 - `downloadedAt` (per set) — date of the last download from the set's surface
   whose bytes were confirmed identical to the vendored files. Initially
   2026-10-08 for both sets: fresh downloads on that date matched the repo
-  byte-for-byte.
+  byte-for-byte. `2026/v4.4` was re-confirmed on 2026-11-26; `2024/v4.4` can no
+  longer be re-downloaded (ATV answers 404), so its date stays.
 - `lastSyncedAt` — date of the **last `spec:update` run** (the only command
   that writes the manifest; `spec:check` is read-only and never touches
   `downloadedAt` or `lastSyncedAt`). The weekly drift job
@@ -154,9 +178,9 @@ Field semantics:
   change or when there is no baseline yet). The probe never enumerates: new
   files or versions appear only through the ATV listing.
 - `files[].lastModified` (optional, probe surfaces only) — `Last-Modified`
-  baseline recorded by the last `spec:update` download, used by `spec:check`
-  to skip downloads when HEAD confirms it; it is absent until the first
-  `spec:update` run records it.
+  baseline recorded by the last `spec:update` download (or, for the 2026 XSDs,
+  by the 2026-11-26 manual re-verification), used by `spec:check` to skip
+  downloads when HEAD confirms it.
 
 ## Watching the surfaces
 
@@ -169,7 +193,9 @@ this folder against what Hacienda publishes today (requires network; neither
 runs inside `pnpm verify`):
 
 - `pnpm spec:check` — read-only. Downloads/probes the declared surfaces,
-  compares hashes and versions, prints a report ordered by severity (1 new
+  compares the hashes of the **current set** (plus the signing policy) and the
+  versions; links of other sets are matched but not downloaded, so a retired
+  previous set cannot abort the check, prints a report ordered by severity (1 new
   version, 2 hash drift, 3 added/removed, 4 auxiliary changes), and exits `0`
   only when there are no differences and the canary passes; `1` on
   differences; `2` on operational failure (empty listing, below `MIN_LINKS`,

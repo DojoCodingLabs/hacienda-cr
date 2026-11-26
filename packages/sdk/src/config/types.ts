@@ -38,6 +38,22 @@ export const ProfileSchema = z.object({
   username: IdpUsernameSchema.optional(),
   /** Empty until a signing certificate is configured by the user. */
   p12_path: z.string(),
+  /**
+   * Identification of the provider of the invoicing system, emitted as
+   * `ProveedorSistemas`. Anexos y Estructuras v4.4 (Encabezado,
+   * "Proveedor de sistemas para emisión de Comprobantes", String 20): "Se debe
+   * indicar la identificación del proveedor de sistemas que esté utilizando
+   * para la emisión de comprobantes electrónicos. En caso de ser un desarrollo
+   * propio o comprado a la medida, se deberá indicar la identificación del
+   * mismo obligado tributario." The field "Permite ingresar números y letras
+   * para personas jurídicas"; 9 characters is the shortest Nota 4
+   * identification (cédula física). Optional: when absent, callers fall back
+   * to the issuer's own identification and must warn.
+   */
+  provider_id: z
+    .string()
+    .regex(/^[A-Za-z0-9]{9,20}$/, "provider_id must be 9-20 letters or digits")
+    .optional(),
 });
 
 export type Profile = z.infer<typeof ProfileSchema>;

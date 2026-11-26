@@ -15,6 +15,9 @@ import {
   IdType,
   saveConfig,
   ensureConfigDir,
+  listProfiles,
+  loadConfig,
+  ProfileSchema,
 } from "@dojocoding/hacienda-sdk";
 import type { CedulaType, Profile } from "@dojocoding/hacienda-sdk";
 import { success, error, detail, outputJson } from "../../utils/format.js";
@@ -55,6 +58,13 @@ export const loginCommand = defineCommand({
       description: "Profile name to save as",
       default: "default",
     },
+    "provider-id": {
+      type: "string",
+      description:
+        "Invoicing-system provider identification emitted as ProveedorSistemas " +
+        "(kept from the existing profile when omitted)",
+      required: false,
+    },
     json: {
       type: "boolean",
       description: "Output as JSON",
@@ -85,6 +95,16 @@ export const loginCommand = defineCommand({
 
       if (!password) {
         error("Missing password. Use --password or set HACIENDA_PASSWORD environment variable.");
+        process.exitCode = 1;
+        return;
+      }
+
+      const providerIdArg = args["provider-id"] as string | undefined;
+      if (
+        providerIdArg !== undefined &&
+        !ProfileSchema.shape.provider_id.safeParse(providerIdArg).success
+      ) {
+        error("Invalid --provider-id. Use the provider's identification: 9-20 letters or digits.");
         process.exitCode = 1;
         return;
       }
@@ -122,14 +142,21 @@ export const loginCommand = defineCommand({
       const tokenManager = new TokenManager({ envConfig });
       await tokenManager.authenticate(credentials);
 
-      // Save profile to config (excluding sensitive fields)
+      // Save profile to config (excluding sensitive fields). Re-running login
+      // must not silently drop a provider_id configured earlier.
       await ensureConfigDir();
+      const providerId =
+        providerIdArg ??
+        ((await listProfiles()).includes(profileName)
+          ? (await loadConfig(profileName)).profile.provider_id
+          : undefined);
       const profile: Profile = {
         environment: environment as "sandbox" | "production",
         cedula_type: cedulaType as CedulaType,
         cedula,
         ...(username !== undefined ? { username } : {}),
         p12_path: "", // Will be set during signing setup
+        ...(providerId !== undefined ? { provider_id: providerId } : {}),
       };
       await saveConfig(profile, profileName);
 

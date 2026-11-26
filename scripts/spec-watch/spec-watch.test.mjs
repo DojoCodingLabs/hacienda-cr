@@ -705,6 +705,91 @@ test("--set válido mueve currentSet y elimina nextSet", async (t) => {
   assert.ok(!("nextSet" in written));
 });
 
+// The legacy ATV portal keeps listing `docs/esquemas/2024/v4.4/` but answers
+// 404 for every file since TRIBU-CR replaced it (observed 2026-11-26). Once the
+// 2026 set is current, a retired previous set must not abort the check.
+const CURRENT_2026_SETS = [
+  { id: CURRENT, year: 2024, version: "4.4", sourceSurface: "atv" },
+  { id: NEXT, year: 2026, version: "4.4", sourceSurface: "ovi", current: true },
+];
+function withRetiredAtvFiles(world) {
+  // With the last set current there is no next set (the key is omitted).
+  delete world.manifest.nextSet;
+  for (const file of baseFiles()) {
+    if (file.surface === "atv") world.routes.delete(urlFor(file));
+  }
+  return world;
+}
+
+test("con 2026 vigente, un set previo que ATV ya no sirve no aborta el check", async () => {
+  const world = withRetiredAtvFiles(scenario({ sets: CURRENT_2026_SETS }));
+  assert.equal(world.manifest.currentSet, NEXT);
+  assert.ok(!("nextSet" in world.manifest));
+  const result = await runCheck({
+    manifest: world.manifest,
+    fetchFn: world.fetchFn,
+    minLinks: MIN,
+  });
+  assert.equal(result.code, 0, result.stdout + result.stderr);
+  assert.equal(result.stdout, "spec:check: sin cambios\n");
+  const atvFileGets = world.gets.filter((url) => url.startsWith(`${ATV.base}docs/`));
+  assert.deepEqual(atvFileGets, [], "no descarga archivos del set no vigente");
+});
+
+test("con 2026 vigente, un XSD del set vigente con otro hash sigue en la sección 2", async () => {
+  const world = withRetiredAtvFiles(
+    scenario({
+      sets: CURRENT_2026_SETS,
+      serve: { [oviUrl("FacturaElectronica_V4.4.xsd")]: "ovi-factura-NEW" },
+    }),
+  );
+  const result = await runCheck({
+    manifest: world.manifest,
+    fetchFn: world.fetchFn,
+    minLinks: MIN,
+  });
+  assert.equal(result.code, 1, result.stdout + result.stderr);
+  assert.match(result.stdout, /2\. Hash distinto/);
+  assert.match(result.stdout, /2026\/v4\.4\/FacturaElectronica_V4\.4\.xsd/);
+});
+
+test("con 2026 vigente, la política de firma se sigue comparando aunque pertenezca a 2024", async () => {
+  const world = withRetiredAtvFiles(
+    scenario({
+      sets: CURRENT_2026_SETS,
+      serve: { [cdnPolicyUrl(RESOLUCION)]: "atv-resolucion-NEW" },
+    }),
+  );
+  const result = await runCheck({
+    manifest: world.manifest,
+    fetchFn: world.fetchFn,
+    minLinks: MIN,
+  });
+  assert.equal(result.code, 1, result.stdout + result.stderr);
+  assert.match(result.stdout, /Resolucion_General.*\[revisión humana prioritaria\]/);
+});
+
+test("spec:update no adelanta downloadedAt de un set que no descargó", async (t) => {
+  const files = baseFiles();
+  const world = withRetiredAtvFiles(scenario({ files, sets: CURRENT_2026_SETS }));
+  const dir = tree(t, files);
+  writeFileSync(join(dir, "manifest.json"), `${JSON.stringify(world.manifest, null, 2)}\n`);
+  const result = await runUpdate({
+    manifest: world.manifest,
+    schemasDir: dir,
+    fetchFn: world.fetchFn,
+    minLinks: MIN,
+    now: new Date("2026-11-26T12:00:00Z"),
+    verifyFn: () => {},
+  });
+  assert.equal(result.code, 0, result.stderr);
+  const written = persisted(dir);
+  assert.equal(written.currentSet, NEXT);
+  const byId = Object.fromEntries(written.sets.map((set) => [set.id, set.downloadedAt]));
+  assert.equal(byId[NEXT], "2026-11-26");
+  assert.equal(byId[CURRENT], "2026-01-01");
+});
+
 test("--set desconocido falla sin escribir", async (t) => {
   const files = baseFiles();
   const world = scenario({ files });

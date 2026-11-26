@@ -48,6 +48,14 @@ hacienda auth login --cedula-type 01 --cedula 112345678 --environment sandbox
 | `--password`    | IDP password (prefer `HACIENDA_PASSWORD` env var)     | `$HACIENDA_PASSWORD` |
 | `--environment` | `sandbox` or `production`                             | `sandbox`            |
 | `--profile`     | Profile name                                          | `default`            |
+| `--provider-id` | Invoicing-system provider ID, saved as `provider_id`  | kept from profile    |
+
+`provider_id` is emitted as `ProveedorSistemas`. Anexos y Estructuras v4.4 asks
+for the identification of the provider of the invoicing system in use; only a
+self-developed or custom-built system uses the issuer's own identification
+("En caso de ser un desarrollo propio o comprado a la medida, se deberá indicar
+la identificación del mismo obligado tributario"). It accepts 9–20 letters or
+digits. Re-running `auth login` without `--provider-id` keeps the stored value.
 
 ### `hacienda auth status`
 
@@ -188,11 +196,18 @@ hacienda draft --template nota-credito            # Specific document type
 hacienda draft --output my-invoice.json           # Custom output path
 ```
 
-| Argument        | Description                                         | Default                 |
-| --------------- | --------------------------------------------------- | ----------------------- |
-| `--output`      | Output file path                                    | `draft-<template>.json` |
-| `--template`    | `factura`, `nota-credito`, `nota-debito`, `tiquete` | `factura`               |
-| `--interactive` | Step-by-step prompts                                | `true`                  |
+| Argument        | Description                                           | Default                 |
+| --------------- | ----------------------------------------------------- | ----------------------- |
+| `--output`      | Output file path                                      | `draft-<template>.json` |
+| `--template`    | `factura`, `nota-credito`, `nota-debito`, `tiquete`   | `factura`               |
+| `--interactive` | Step-by-step prompts                                  | `true`                  |
+| `--profile`     | Profile whose `provider_id` fills `proveedorSistemas` | `default`               |
+
+Interactive drafts set `proveedorSistemas` from the profile's `provider_id`.
+Without one, they fall back to the issuer's identification and print a warning
+on stderr (also returned as `warnings` with `--json`), since that default is
+correct only for a self-developed or custom-built system. Blank templates use the
+`<<SYSTEM_PROVIDER_ID>>` placeholder.
 
 Interactive drafts store `cantidad` and all monetary fields as bounded decimal
 text (at most 3 and 5 decimals respectively). Calculations use the SDK's BigInt

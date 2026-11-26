@@ -29,6 +29,10 @@ aparece en §11, no en el apéndice.
   PDF de códigos de moneda + `.rar` de ubicación + Resolución General.
 - `2026/v4.4/` — revisión de abril de 2026, **obligatoria desde 2026-11-01**: solo 9 XSD.
 
+> Estado a la fecha de lectura (2026-10-14). Desde el 2026-11-26 el manifiesto declara
+> `currentSet: "2026/v4.4"` y `2024/v4.4` queda como set previo y `codesSet`; ver
+> [procedencia de los sets v4.4](specs/v4-4-schema-provenance.md).
+
 ### 1.2 SHA-256 de cada archivo consultado
 
 ```

@@ -110,7 +110,7 @@ export async function runUpdate({
   for (const [path, link] of analysis.matched) {
     const file = analysis.files.find((candidate) => candidate.path === path);
     if (!file) continue;
-    if (file.set !== set.id) continue;
+    if (file.set !== set.id && link.isPolicy !== true) continue;
     const body = link.body;
     if (!body) continue;
     if (sha256Hex(body) === file.sha256) continue;
@@ -166,9 +166,13 @@ export async function runUpdate({
   manifest.files = manifestFiles.sort((a, b) => a.path.localeCompare(b.path));
 
   const downloadedSets = new Set([set.id]);
-  for (const path of analysis.matched.keys()) {
+  for (const [path, link] of analysis.matched) {
+    // `downloadedAt` means "set downloaded and confirmed". Only the current
+    // set is downloaded as a whole; a previous set (whose only fetched file
+    // may be the signing policy) keeps its previous date.
+    if (!link.body) continue;
     const file = analysis.files.find((candidate) => candidate.path === path);
-    if (file) downloadedSets.add(file.set);
+    if (file && file.set === set.id) downloadedSets.add(file.set);
   }
   for (const probe of discovery.probes ?? []) {
     if (probe.status === "ok" && probe.body && probe.entry) downloadedSets.add(probe.entry.set);

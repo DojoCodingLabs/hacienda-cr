@@ -44,8 +44,17 @@ export async function analyze({ manifest, discovery, http, download = false }) {
 
   const downloads = new Map();
   const addedBodies = new Map();
+  // Only the current set (plus the signing-policy link) is compared byte by
+  // byte, so only those links are downloaded. A previous set may stay listed
+  // on a surface that no longer serves it (the legacy ATV portal answers 404
+  // for `docs/esquemas/2024/v4.4/` since TRIBU-CR replaced it); fetching it
+  // would turn a retired set into an operational failure of the whole check.
+  const compared = (path, link) =>
+    link.isPolicy === true || files.find((file) => file.path === path)?.set === set.id;
+
   if (download) {
     for (const [path, link] of matched) {
+      if (!compared(path, link)) continue;
       const body = link.body ?? (await http.getBytes(link.url));
       link.body = body;
       downloads.set(path, body);
@@ -59,9 +68,8 @@ export async function analyze({ manifest, discovery, http, download = false }) {
 
   if (download) {
     for (const file of files) {
-      if (file.set !== set.id) continue;
       const link = matched.get(file.path);
-      if (!link) continue;
+      if (!link || !compared(file.path, link)) continue;
       const obtained = sha256Hex(downloads.get(file.path));
       if (obtained === file.sha256) continue;
       const auxiliary = isAuxiliaryBasename(file.basename);

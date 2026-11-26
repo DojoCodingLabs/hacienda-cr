@@ -196,6 +196,93 @@ test("3.2 un currentSet sin correspondencia en sets[] falla", (t) => {
   assert.match(result.stderr, /currentSet="1999\/v9\.9" sin correspondencia en sets\[\]/);
 });
 
+// Manifest otherwise valid (policy vendored) with two sets, so each test below
+// fails for exactly the field it mutates.
+function twoSetManifest(mutate) {
+  const manifest = manifestFor([policyEntry()]);
+  manifest.sets.push({ id: "2026/v4.4", sourceSurface: "atv" });
+  mutate(manifest);
+  return manifest;
+}
+function runManifest(t, manifest) {
+  const dir = fixture(t, {
+    rawManifest: JSON.stringify(manifest),
+    extra: { [POLICY_PATH]: POLICY_CONTENT },
+  });
+  return run(dir);
+}
+
+test("3.2 el set vigente 2026 sin nextSet y con codesSet declarado pasa", (t) => {
+  const result = runManifest(
+    t,
+    twoSetManifest((manifest) => {
+      manifest.currentSet = "2026/v4.4";
+      manifest.codesSet = "2024/v4.4";
+    }),
+  );
+  assert.equal(result.status, 0, result.stderr);
+});
+
+test("3.2 un currentSet policyOnly falla", (t) => {
+  const result = runManifest(
+    t,
+    twoSetManifest((manifest) => {
+      manifest.sets[1].policyOnly = true;
+      manifest.currentSet = "2026/v4.4";
+    }),
+  );
+  assert.equal(result.status, 1);
+  assert.match(result.stderr, /currentSet="2026\/v4\.4" es policyOnly/);
+});
+
+test("3.2 un nextSet igual a currentSet, ajeno a sets[] o sin fecha ISO falla", (t) => {
+  const same = runManifest(
+    t,
+    twoSetManifest((manifest) => {
+      manifest.nextSet = { id: "2024/v4.4", effectiveFrom: "2026-11-01" };
+    }),
+  );
+  assert.equal(same.status, 1);
+  assert.match(same.stderr, /nextSet\.id="2024\/v4\.4" igual a currentSet/);
+
+  const unknown = runManifest(
+    t,
+    twoSetManifest((manifest) => {
+      manifest.nextSet = { id: "2030/v5.0", effectiveFrom: "2030-01-01" };
+    }),
+  );
+  assert.equal(unknown.status, 1);
+  assert.match(unknown.stderr, /nextSet=.*sin correspondencia en sets\[\]/);
+
+  const badDate = runManifest(
+    t,
+    twoSetManifest((manifest) => {
+      manifest.nextSet = { id: "2026/v4.4", effectiveFrom: "1 de noviembre" };
+    }),
+  );
+  assert.equal(badDate.status, 1);
+  assert.match(badDate.stderr, /nextSet\.effectiveFrom="1 de noviembre" inválido/);
+
+  const nullNext = runManifest(
+    t,
+    twoSetManifest((manifest) => {
+      manifest.nextSet = null;
+    }),
+  );
+  assert.equal(nullNext.status, 1, "nextSet se omite, nunca es null");
+});
+
+test("3.2 un codesSet sin correspondencia en sets[] falla", (t) => {
+  const result = runManifest(
+    t,
+    twoSetManifest((manifest) => {
+      manifest.codesSet = "1999/v9.9";
+    }),
+  );
+  assert.equal(result.status, 1);
+  assert.match(result.stderr, /codesSet="1999\/v9\.9" sin correspondencia en sets\[\]/);
+});
+
 test("3.2 una entrada vendored: false cuyo archivo no existe no falla", (t) => {
   const content = "<xsd:schema/>schema contents</xsd:schema>";
   const dir = fixture(
