@@ -66,3 +66,29 @@ jobs:
           name: mutation-report-${{ matrix.name }}
           path: packages/sdk/reports/mutation/
           if-no-files-found: ignore
+
+  # Visibilidad de fallos: una corrida nocturna roja abre (o comenta) un único
+  # issue con la etiqueta "mutation-nightly" en vez de fallar en silencio.
+  report-failure:
+    name: Report nightly failure
+    needs: mutation
+    if: failure() && github.event_name == 'schedule'
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      GH_REPO: ${{ github.repository }}
+      RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+    steps:
+      - name: Open or update the tracking issue
+        run: |
+          label=mutation-nightly
+          gh label create "$label" --color B60205 --description "Nightly mutation workflow failure" 2>/dev/null || true
+          body="The nightly Mutation workflow failed on \`${GITHUB_SHA}\`: ${RUN_URL}"
+          issue=$(gh issue list --label "$label" --state open --limit 1 --json number --jq '.[0].number // empty')
+          if [ -n "$issue" ]; then
+            gh issue comment "$issue" --body "$body"
+          else
+            gh issue create --title "Nightly mutation testing is failing" --label "$label" --body "$body"
+          fi

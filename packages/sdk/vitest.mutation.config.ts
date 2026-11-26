@@ -10,6 +10,7 @@ export default defineConfig({
       "src/signing/document-policy-binding.spec.ts",
       "src/xml/fuzzing.spec.ts",
       "src/xml/hostile-inputs.spec.ts",
+      "src/xml/input-limits.spec.ts",
       "src/documents/parser.spec.ts",
       "src/documents/parser-boundary.spec.ts",
       "src/tax/exact-ordinary-compatibility.spec.ts",
