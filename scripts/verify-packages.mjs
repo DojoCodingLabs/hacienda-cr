@@ -233,6 +233,12 @@ export type Contract={page:ComprobantesListResponse;detail:ComprobanteDetail;opt
 const unsupported:Parameters<typeof listComprobantes>[1]={fechaEmisionDesde:"2026-01-01"};
 void unsupported;
 import {type Scope,fetchWithTimeout,type FetchWithTimeoutOptions,reconcileByClave,type ReconcileResult,classifyOutcome,type DeliveryOutcome,parseCallbackPayload,type ParsedCallbackPayload} from "@dojocoding/hacienda-sdk";
+import {FileSubmissionIdentityStore,createDefaultSubmissionIdentityStore,guardSubmissionIdentity,signedXmlSha256,SubmissionIdentityError,type SubmissionIdentityStore,type SubmissionIdentityRecord,type SubmissionIdentityClaim,type SubmissionIdentityErrorReason,type ReconcileNotFound,type SubmitDocumentOptions} from "@dojocoding/hacienda-sdk";
+export const identityContracts={FileSubmissionIdentityStore,createDefaultSubmissionIdentityStore,guardSubmissionIdentity,signedXmlSha256,SubmissionIdentityError};
+export type IdentityContract={store:SubmissionIdentityStore;record:SubmissionIdentityRecord;claim:SubmissionIdentityClaim;reason:SubmissionIdentityErrorReason;submit:SubmitDocumentOptions};
+// @ts-expect-error a not_found reconciliation can never be conclusive
+const conclusiveNotFound:ReconcileNotFound={kind:"not_found",conclusive:true,httpStatus:404,evidence:"http_404",observedAt:"2026-01-01T00:00:00.000Z"};
+void conclusiveNotFound;
 const timeoutOptions:FetchWithTimeoutOptions={timeoutMs:1000,redirect:"error"};
 export const serviceContracts={fetchWithTimeout,timeoutOptions,reconcileByClave,classifyOutcome,parseCallbackPayload};
 export type ServiceContract={scope:Scope;reconcile:ReconcileResult;outcome:DeliveryOutcome;callback:ParsedCallbackPayload;fetched:ReturnType<typeof fetchWithTimeout>};
@@ -325,6 +331,18 @@ assert.deepEqual(historyPage.comprobantes,[metadata]);assert.deepEqual(historyPa
 assert.equal(historyPage.totalRegistros,undefined);assert.equal(historyPage.comprobantes[0].estado,undefined);assert.equal(historyPage.comprobantes[0].comprobanteXml,undefined);
 assert.deepEqual(await getComprobante(historyClient,SIMPLE_INVOICE.clave),metadata);
 const fetchesBeforeReconcile=historyFetches;await assert.rejects(reconcileByClave(historyClient,"../recepcion/anything"));assert.equal(historyFetches,fetchesBeforeReconcile);
+{const sdk=await import("@dojocoding/hacienda-sdk");const {mkdtemp:mkd,rm:rmd}=await import("node:fs/promises");const {tmpdir:tmp}=await import("node:os");const {join:pj}=await import("node:path");
+const idDir=await mkd(pj(tmp(),"packed-identity-"));try{const identityStore=sdk.createDefaultSubmissionIdentityStore(idDir);assert.ok(identityStore instanceof sdk.FileSubmissionIdentityStore);
+let posts=0;const idClient=new HttpClient({envConfig:{name:"Synthetic",apiBaseUrl:"https://identity.example.test/v1",idpTokenUrl:"https://identity.example.test/token",clientId:"synthetic"},tokenManager:{getAccessToken:async()=>"synthetic"},fetchFn:async(_u,init)=>{if(init.method==="POST"){posts++;return new Response(null,{status:202})}return new Response("",{status:400,headers:{"X-Error-Cause":"El comprobante no ha sido recibido."}})},rateLimiterOptions:false,retryOptions:{maxRetries:0}});
+const idRequest=(xml)=>({clave:SIMPLE_INVOICE.clave,fecha:SIMPLE_INVOICE.fechaEmision,emisor:{tipoIdentificacion:"02",numeroIdentificacion:"3101234567"},comprobanteXml:Buffer.from(xml).toString("base64")});
+assert.equal((await sdk.submitDocument(idClient,idRequest("<a/>"),{identityStore})).status,202);
+await assert.rejects(sdk.submitDocument(idClient,idRequest("<b/>"),{identityStore,retrySameBytes:true}),(e)=>e instanceof sdk.SubmissionIdentityError&&e instanceof ValidationError&&e.reason==="DIFFERENT_BYTES");
+await assert.rejects(sdk.submitDocument(idClient,idRequest("<a/>"),{identityStore}),(e)=>e instanceof sdk.SubmissionIdentityError&&e.reason==="ALREADY_ATTEMPTED");
+assert.equal(posts,1);
+const notFound=await reconcileByClave(idClient,SIMPLE_INVOICE.clave);assert.equal(notFound.kind,"not_found");assert.equal(notFound.conclusive,false);assert.equal(notFound.httpStatus,400);assert.equal(notFound.evidence,"x_error_cause_not_received");assert.ok(!Number.isNaN(Date.parse(notFound.observedAt)));
+assert.equal((await sdk.submitDocument(idClient,idRequest("<a/>"),{identityStore,retrySameBytes:true})).status,202);assert.equal(posts,2);
+assert.equal(sdk.signedXmlSha256(Buffer.from("<a/>").toString("base64")).length,64);assert.equal(typeof sdk.guardSubmissionIdentity,"function");
+}finally{await rmd(idDir,{recursive:true,force:true})}}
 {let seen;const ok=await fetchWithTimeout("https://timeout.example.test/",{},{timeoutMs:1000,fetchFn:async(_u,init)=>{seen=init;return new Response("ok")}});assert.equal(await ok.text(),"ok");assert.equal(seen.redirect,"error");await assert.rejects(fetchWithTimeout("https://timeout.example.test/",{},{timeoutMs:10,fetchFn:()=>new Promise(()=>{})}),(e)=>e.name==="TimeoutError");await assert.rejects(fetchWithTimeout("https://timeout.example.test/",{},{timeoutMs:0}),RangeError);}
 {const scope={tenantId:"t1",environment:"sandbox",issuer:{idType:"02",idNumber:"3101234567"}};assert.deepEqual(ScopeSchema.parse(scope),scope);assert.equal(ScopeSchema.safeParse({...scope,issuer:{idType:"99",idNumber:"3101234567"}}).success,false);assert.notEqual(fingerprintScope(scope),fingerprintScope({...scope,tenantId:"t2"}));assert.equal(AuthErrorCode.SCOPE_IDENTITY_MISMATCH,"SCOPE_IDENTITY_MISMATCH");}
 const callbackClave=SIMPLE_INVOICE.clave;assert.deepEqual(validateCallbackPayload(JSON.stringify({clave:callbackClave,fecha:"2026-01-01T00:00:00-06:00","ind-estado":"recibido"})),{clave:callbackClave,fecha:"2026-01-01T00:00:00-06:00","ind-estado":"recibido"});assert.equal(CallbackEnvelopeSchema.safeParse({clave:callbackClave,fecha:"x",indEstado:"recibido"}).success,false);assert.throws(()=>validateCallbackPayload("{bad"),ValidationError);assert.equal((await parseCallbackPayload({clave:callbackClave,fecha:"x","ind-estado":"procesando"})).status,"procesando");await assert.rejects(parseCallbackPayload({clave:callbackClave,fecha:"x","ind-estado":"aceptado","respuesta-xml":Buffer.from("<MensajeHacienda/>").toString("base64")}),ValidationError);

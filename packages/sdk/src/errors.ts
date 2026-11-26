@@ -13,6 +13,9 @@
 
 import { sanitizeLogString, redactSecrets } from "./logging/redaction.js";
 
+/** Upper bound for a retained `X-Error-Cause` header value. */
+const MAX_ERROR_CAUSE_LENGTH = 1024;
+
 // ---------------------------------------------------------------------------
 // Error codes
 // ---------------------------------------------------------------------------
@@ -99,12 +102,28 @@ export class ApiError extends HaciendaError {
   readonly statusCode: number | undefined;
   /** Raw response body (parsed JSON or text), if available. */
   readonly responseBody: unknown;
+  /**
+   * Redacted `X-Error-Cause` response header, if the server sent one. Hacienda
+   * uses it to explain 4xx answers; its presence is not itself a fiscal outcome.
+   */
+  readonly errorCause: string | undefined;
 
-  constructor(message: string, statusCode?: number, responseBody?: unknown, cause?: unknown) {
+  constructor(
+    message: string,
+    statusCode?: number,
+    responseBody?: unknown,
+    cause?: unknown,
+    details?: { readonly errorCause?: string | null },
+  ) {
     super(HaciendaErrorCode.API_ERROR, message, cause);
     this.name = "ApiError";
     this.statusCode = statusCode;
     this.responseBody = redactSecrets(responseBody);
+    const errorCause = details?.errorCause;
+    this.errorCause =
+      typeof errorCause === "string" && errorCause.length > 0
+        ? sanitizeLogString(errorCause.slice(0, MAX_ERROR_CAUSE_LENGTH))
+        : undefined;
   }
 }
 

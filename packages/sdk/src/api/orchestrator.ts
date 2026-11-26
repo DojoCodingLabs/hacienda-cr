@@ -13,7 +13,13 @@ import type { StatusResponse, SubmissionRequest } from "@dojocoding/hacienda-sha
 import { HaciendaStatus } from "@dojocoding/hacienda-shared";
 
 import { sleep, withSignal } from "./cancellation.js";
-import { ApiError } from "../errors.js";
+import { ApiError, ValidationError } from "../errors.js";
+import {
+  SubmissionIdentityError,
+  guardSubmissionIdentity,
+  signedXmlSha256,
+} from "../delivery/submission-identity.js";
+import type { SubmissionIdentityStore } from "../delivery/submission-identity.js";
 import type { HttpClient } from "./http-client.js";
 import type { ParsedStatusResponse } from "./submission.js";
 import {
@@ -21,6 +27,7 @@ import {
   getStatus,
   isTerminalStatus,
   extractRejectionReason,
+  classifyNotYetReceived,
 } from "./submission.js";
 
 // ---------------------------------------------------------------------------
@@ -46,6 +53,19 @@ export interface SubmitAndWaitOptions {
   readonly onStateChange?: (clave: string, from: string, to: string) => void;
   /** Optional callback invoked on each poll iteration. */
   readonly onPoll?: (status: ParsedStatusResponse, attempt: number) => void;
+  /**
+   * Opt-in submission-identity guard for the POST (see `submitDocument`).
+   * Binds the clave to `sha256(signed bytes)` before any network call and
+   * refuses different bytes, or a second send of the same bytes without
+   * `retrySameBytes`, with a `SubmissionIdentityError`.
+   */
+  readonly identityStore?: SubmissionIdentityStore;
+  /**
+   * Explicitly resend the SAME signed bytes for a clave the identity guard
+   * already recorded. Requires `identityStore`; not supported with a
+   * persistent `DocumentStore`, which only resumes by status query.
+   */
+  readonly retrySameBytes?: boolean;
 }
 
 /** Final result of the submit-and-wait pipeline. */
@@ -152,12 +172,18 @@ async function submitAndWaitLegacy(
     let submissionResponse: { status: number };
     try {
       submissionResponse = await withSignal(
-        () => submitDocument(httpClient, request, { signal }),
+        () =>
+          submitDocument(httpClient, request, {
+            signal,
+            ...(options?.identityStore ? { identityStore: options.identityStore } : {}),
+            ...(options?.retrySameBytes ? { retrySameBytes: true } : {}),
+          }),
         signal,
       );
     } catch (error) {
       // Without a store, a resend of a clave Hacienda already accepted can come
       // back as 400 instead of 409. Query by clave before reporting failure (#127).
+      // A guard refusal (SubmissionIdentityError) is a ValidationError, never an ApiError.
       if (!(error instanceof ApiError) || error.statusCode !== 400) throw error;
       checkDeadline();
       let existing: ParsedStatusResponse;
@@ -201,8 +227,9 @@ async function submitAndWaitLegacy(
         );
         checkDeadline();
       } catch (error) {
-        // If we get a 404, the document may not be indexed yet — keep polling
-        if (error instanceof ApiError && error.statusCode === 404) {
+        // A 404, or the sandbox's 400 "no ha sido recibido", may mean the
+        // document is not indexed yet: keep polling until the deadline.
+        if (classifyNotYetReceived(error, request.clave)) {
           continue;
         }
         throw error;
@@ -270,9 +297,20 @@ export async function submitAndWait(
     throw new RangeError("Submission XML exceeds the bounded delivery input");
   const store = options?.store;
   if (!store) throw new Error("Persistent delivery requires an explicit DocumentStore");
+  if (options?.retrySameBytes)
+    throw new ValidationError(
+      "Persistent delivery never re-POSTs; resume by status, or resend explicitly with submitDocument and an identityStore.",
+    );
   const xml = Buffer.from(request.comprobanteXml, "base64").toString("utf8");
   let doc = await store.get(request.clave);
-  if (doc && doc.xml !== xml) throw new Error("Clave is already bound to different document bytes");
+  // The DocumentStore already binds bytes per clave: this guard is on by default here.
+  if (doc && doc.xml !== xml)
+    throw new SubmissionIdentityError(
+      "DIFFERENT_BYTES",
+      request.clave,
+      signedXmlSha256(Buffer.from(doc.xml, "utf8").toString("base64")),
+      signedXmlSha256(request.comprobanteXml),
+    );
   if (!doc) {
     if (options?.resumePending) throw new Error("No persisted document to resume");
     doc = createStoredDocument({
@@ -301,6 +339,9 @@ export async function submitAndWait(
   // The intent is durable before any network bytes. A crash afterwards is ambiguous.
   options?.signal?.throwIfAborted();
   if (!alreadyAttempted) {
+    // An optional identity store is checked before the intent leaves FIRMADO,
+    // so a refusal never strands the document in an ambiguous state.
+    if (options?.identityStore) await guardSubmissionIdentity(options.identityStore, request);
     // Claim the *original* FIRMADO state. An idempotent transition after rereading
     // PENDIENTE would let two first callers both POST the same document.
     await store.transition(request.clave, "FIRMADO", "PENDIENTE");
@@ -323,7 +364,9 @@ export async function submitAndWait(
       return result;
     },
   } as unknown as HttpClient;
-  const result = await submitAndWaitLegacy(transport, request, options);
+  // The identity guard already ran above, before the PENDIENTE claim.
+  const { identityStore: _guarded, ...rest } = options ?? {};
+  const result = await submitAndWaitLegacy(transport, request, rest);
   return {
     ...result,
     persisted: true,

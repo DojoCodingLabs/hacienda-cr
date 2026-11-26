@@ -15,6 +15,8 @@ import type {
 import { ClaveNumericaSchema, HaciendaStatus } from "@dojocoding/hacienda-shared";
 
 import { ApiError, ValidationError } from "../errors.js";
+import { guardSubmissionIdentity } from "../delivery/submission-identity.js";
+import type { SubmissionIdentityStore } from "../delivery/submission-identity.js";
 import type { HttpClient, HttpResponse } from "./http-client.js";
 import { getRejectionDescription } from "./error-codes.js";
 
@@ -36,6 +38,23 @@ export interface ParsedStatusResponse {
   readonly raw: StatusResponse;
 }
 
+/** Options for {@link submitDocument}. */
+export interface SubmitDocumentOptions {
+  /** Abort the authentication wait, request and response read. */
+  readonly signal?: AbortSignal;
+  /**
+   * Opt-in submission-identity guard: binds the clave to the SHA-256 of the
+   * signed bytes before the POST and refuses divergent or repeated sends.
+   */
+  readonly identityStore?: SubmissionIdentityStore;
+  /**
+   * Explicitly authorize another POST of the SAME signed bytes for a clave the
+   * guard already recorded. Requires `identityStore`. Use only after
+   * reconciling by clave; different bytes are refused regardless.
+   */
+  readonly retrySameBytes?: boolean;
+}
+
 // ---------------------------------------------------------------------------
 // Submission
 // ---------------------------------------------------------------------------
@@ -46,9 +65,16 @@ export interface ParsedStatusResponse {
  * Sends the signed, Base64-encoded XML document along with metadata
  * to the Hacienda API for processing.
  *
+ * With `options.identityStore`, the clave is bound to `sha256(signed bytes)`
+ * before any network call: a different digest for a recorded clave, or a
+ * second POST of the same digest without `retrySameBytes`, is refused with a
+ * {@link SubmissionIdentityError}. Without a store the legacy behavior is kept.
+ *
  * @param httpClient - The authenticated HTTP client.
  * @param request - The submission request payload.
+ * @param options - Cancellation and the optional submission-identity guard.
  * @returns The submission response with status and location.
+ * @throws {SubmissionIdentityError} When the identity guard refuses the POST.
  * @throws {ApiError} On HTTP errors:
  *   - 400: Bad request (malformed payload)
  *   - 401: Unauthorized (invalid token)
@@ -67,12 +93,20 @@ export interface ParsedStatusResponse {
 export async function submitDocument(
   httpClient: HttpClient,
   request: SubmissionRequest,
-  options?: { signal?: AbortSignal },
+  options?: SubmitDocumentOptions,
 ): Promise<SubmissionResponse> {
+  options?.signal?.throwIfAborted();
+  if (options?.retrySameBytes && !options.identityStore)
+    throw new ValidationError("retrySameBytes requires an identityStore.");
+  if (options?.identityStore)
+    await guardSubmissionIdentity(options.identityStore, request, {
+      retrySameBytes: options.retrySameBytes === true,
+    });
+  options?.signal?.throwIfAborted();
   let response: HttpResponse<SubmissionResponse>;
   try {
     response = await httpClient.post<SubmissionResponse>("/recepcion", request, {
-      ...options,
+      ...(options?.signal ? { signal: options.signal } : {}),
       skipRetry: true,
     });
   } catch (error) {
@@ -196,23 +230,78 @@ export function isTerminalStatus(status: HaciendaStatus): boolean {
 // ---------------------------------------------------------------------------
 
 /**
+ * The status endpoint did not find the clave at `observedAt`.
+ *
+ * This is never proof that the POST never arrived (`conclusive` is always
+ * `false`): a just-received document may not be indexed yet, and the answer
+ * says nothing about a request still in flight. It is not a permission to
+ * resubmit. Re-query with backoff inside a reconciliation window defined by
+ * your own policy; the SDK does not define one. Any later resend must carry
+ * the SAME signed bytes under the SAME clave. The submission-identity guard
+ * enforces that when you pass an `identityStore`, and requires an explicit
+ * `retrySameBytes: true` for the resend.
+ */
+export interface ReconcileNotFound {
+  readonly kind: "not_found";
+  /** Always `false`: absence from the status endpoint is not conclusive. */
+  readonly conclusive: false;
+  /** HTTP status of the response that reported the clave as unknown. */
+  readonly httpStatus: 404 | 400;
+  /**
+   * Which recognized response shape was observed: a plain 404, or the
+   * sandbox's 400 whose `X-Error-Cause` says the comprobante "no ha sido
+   * recibido" (see docs/testing/sandbox-403-debug.md).
+   */
+  readonly evidence: "http_404" | "x_error_cause_not_received";
+  /** When the response was observed (ISO 8601, local clock). */
+  readonly observedAt: string;
+  /** Redacted `X-Error-Cause` header, when present. */
+  readonly errorCause?: string;
+}
+
+/**
  * Result of {@link reconcileByClave}.
  *
  * - `found`: Hacienda knows the clave; `status` is its current state.
- * - `not_found`: Hacienda answered 404 for this clave. This is NOT proof that
- *   the POST never arrived: a just-received document may not be indexed yet.
- *   Re-query with backoff inside a bounded reconciliation window. Only after
- *   that window, and if your policy allows it, retry by resubmitting the SAME
- *   signed bytes with the SAME clave; never build a new document or allocate a
- *   new consecutive for the same intent.
- * - `unknown`: the query failed (5xx, network error or timeout) or the
+ * - `not_found`: see {@link ReconcileNotFound}. Inconclusive, and never a
+ *   permission to resubmit.
+ * - `unknown`: the query failed (5xx, network error, timeout, any other 4xx,
+ *   or a 400 that is not the recognized "no ha sido recibido" answer) or the
  *   response did not belong to the clave. Nothing is established; query
  *   again later and do not resubmit.
  */
 export type ReconcileResult =
   | { readonly kind: "found"; readonly status: ParsedStatusResponse }
-  | { readonly kind: "not_found" }
+  | ReconcileNotFound
   | { readonly kind: "unknown"; readonly error: Error };
+
+const CLAVE_TOKEN = /506\d{6}[A-Za-z0-9]{12}\d{29}/g;
+/** Observed sandbox wording: `El comprobante [...] no ha sido recibido.` */
+const NOT_RECEIVED_CAUSE = /^El comprobante\b[\s\S]{0,200}?\bno ha sido recibido\.?$/i;
+
+/**
+ * Classifies a status-query error as the "clave not found yet" answer.
+ *
+ * Recognizes exactly two shapes and fails closed on anything else: a 404, or
+ * a 400 whose `X-Error-Cause` matches the observed sandbox text
+ * "El comprobante [...] no ha sido recibido." and names no other clave.
+ *
+ * @internal Shared by {@link reconcileByClave} and the submit-and-wait poller.
+ */
+export function classifyNotYetReceived(
+  error: unknown,
+  clave: string,
+): Pick<ReconcileNotFound, "httpStatus" | "evidence" | "errorCause"> | undefined {
+  if (!(error instanceof ApiError)) return undefined;
+  const errorCause = error.errorCause?.trim();
+  if (error.statusCode === 404)
+    return { httpStatus: 404, evidence: "http_404", ...(errorCause ? { errorCause } : {}) };
+  if (error.statusCode !== 400 || !errorCause || !NOT_RECEIVED_CAUSE.test(errorCause))
+    return undefined;
+  const named = errorCause.match(CLAVE_TOKEN) ?? [];
+  if (named.some((other) => other !== clave)) return undefined;
+  return { httpStatus: 400, evidence: "x_error_cause_not_received", errorCause };
+}
 
 /**
  * Reconciles a document after an ambiguous submission by querying its
@@ -221,7 +310,8 @@ export type ReconcileResult =
  * This helper never submits a document or allocates a consecutive; it only
  * reads the server-side state of an existing clave. The clave is validated
  * before any network access. Cancellation through `options.signal` is
- * propagated rather than reported as `unknown`.
+ * propagated rather than reported as `unknown`. A `not_found` result is
+ * inconclusive by contract; see {@link ReconcileNotFound}.
  *
  * @param httpClient - The authenticated HTTP client.
  * @param clave - The 50-character clave (taxpayer segment may be alphanumeric).
@@ -248,7 +338,14 @@ export async function reconcileByClave(
     return { kind: "found", status };
   } catch (error) {
     if (options?.signal?.aborted) throw error;
-    if (error instanceof ApiError && error.statusCode === 404) return { kind: "not_found" };
+    const notFound = classifyNotYetReceived(error, clave);
+    if (notFound)
+      return {
+        kind: "not_found",
+        conclusive: false,
+        observedAt: new Date().toISOString(),
+        ...notFound,
+      };
     return {
       kind: "unknown",
       error: error instanceof Error ? error : new Error("Status query failed."),
