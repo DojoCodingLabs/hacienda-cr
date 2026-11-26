@@ -272,6 +272,7 @@ export type {
 // ---------------------------------------------------------------------------
 
 export {
+  fetchWithTimeout,
   HttpClient,
   RateLimiter,
   submitDocument,
@@ -292,6 +293,7 @@ export {
 } from "./api/index.js";
 export type {
   HistoryRequestOptions,
+  FetchWithTimeoutOptions,
   HttpClientOptions,
   RequestOptions,
   HttpResponse,

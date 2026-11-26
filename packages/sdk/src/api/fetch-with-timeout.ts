@@ -1,6 +1,14 @@
-/** Shared fetch wrapper with a bounded timeout and safe redirect defaults. */
+/**
+ * Shared fetch wrapper with a bounded timeout and safe redirect defaults.
+ *
+ * @module api/fetch-with-timeout
+ */
+
+import { withSignal } from "./cancellation.js";
+
+/** Options for {@link fetchWithTimeout}. */
 export interface FetchWithTimeoutOptions {
-  /** Per-request timeout in milliseconds (default: 30000). */
+  /** Timeout in milliseconds until response headers arrive (default: 30000). */
   readonly timeoutMs?: number;
   /** Fetch implementation to use (default: global fetch). */
   readonly fetchFn?: typeof fetch;
@@ -17,6 +25,20 @@ function validateTimeout(timeoutMs: number): void {
   }
 }
 
+/**
+ * Calls `fetch` with a timeout, `redirect: "error"` by default and support for
+ * an external `init.signal`.
+ *
+ * The timeout covers the request until the response headers arrive; the timer
+ * and the listener on `init.signal` are removed when this function settles.
+ * Reading the body is NOT covered: callers that read it must pass a
+ * request-scoped signal as `init.signal` and the same signal to the body
+ * reader (for example `readResponseText(response, max, signal)`), so a
+ * stalled body is still bounded.
+ *
+ * @throws The abort reason (a `TimeoutError` DOMException on timeout, or the
+ *   external signal's reason), or the underlying fetch error.
+ */
 export async function fetchWithTimeout(
   input: RequestInfo | URL,
   init: RequestInit = {},
@@ -26,40 +48,24 @@ export async function fetchWithTimeout(
   validateTimeout(timeoutMs);
   const fetchFn = options.fetchFn ?? globalThis.fetch;
   const redirect = options.redirect ?? "error";
+  const external = init.signal ?? undefined;
+  external?.throwIfAborted();
 
   const controller = new AbortController();
-  const combinedSignal = init.signal
-    ? AbortSignal.any([init.signal, controller.signal])
-    : controller.signal;
+  const onExternalAbort = () => controller.abort(external?.reason);
+  external?.addEventListener("abort", onExternalAbort, { once: true });
   const timer = setTimeout(
     () => controller.abort(new DOMException("HTTP request timed out.", "TimeoutError")),
     timeoutMs,
   );
 
-  const onAbort = () => {
-    // no-op; handled by the abort promise below
-  };
-  void onAbort;
-
-  const abortPromise = new Promise<never>((_, reject) => {
-    const rejectOnAbort = () => reject(combinedSignal.reason);
-    if (combinedSignal.aborted) {
-      rejectOnAbort();
-      return;
-    }
-    combinedSignal.addEventListener("abort", rejectOnAbort, { once: true });
-  });
-
   try {
-    return await Promise.race([
-      fetchFn(input, {
-        ...init,
-        redirect,
-        signal: combinedSignal,
-      }),
-      abortPromise,
-    ]);
+    return await withSignal(
+      () => fetchFn(input, { ...init, redirect, signal: controller.signal }),
+      controller.signal,
+    );
   } finally {
     clearTimeout(timer);
+    external?.removeEventListener("abort", onExternalAbort);
   }
 }
