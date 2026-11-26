@@ -135,6 +135,18 @@ En un ERP, almacená compras y mensajes de receptor como documentos relacionados
 
 En un asistente, completá los placeholders de `draft_invoice` y revisá proveedor, emisor, receptor, líneas y pagos antes de `create_invoice`. Esta herramienta genera XML sin firmar y consume un consecutivo local. Guardá el resultado antes del handoff y evitá llamar otra vez a `create_invoice` como reintento de envío. Integrá la firma y el POST en el backend con la identidad ya generada. La [guía MCP](../packages/mcp/README.md) explica qué consultas necesitan credenciales.
 
+## Scope multiempresa y recuperación durable
+
+El SDK exporta `Scope` (`tenantId` opcional, `environment` e `issuer` con `idType` e `idNumber`), validado con `ScopeSchema`, y `fingerprintScope()` para derivar una clave de caché estable. `Scope` está pensado para backends que consumen el SDK y atienden a varias empresas: llevalo junto a cada operación y usá su huella para separar clientes, tokens y registros por tenant. El CLI y el servidor MCP no reciben un scope de quien los invoca; cada solicitud lo deriva del perfil seleccionado. Internamente, el MCP rechaza con `SCOPE_IDENTITY_MISMATCH` un scope cuyo ambiente o emisor no coincide con el perfil, separa sus clientes autenticados por perfil y scope, los invalida cuando cambian el perfil o los secretos y conserva como máximo 16, descartando el menos usado.
+
+`Scope` no cambia cómo se numeran los documentos: `getNextSequence()` sigue usando la clave `documentType-branch-pos` descrita en [Consecutivos y aislamiento por empresa](#consecutivos-y-aislamiento-por-empresa). El `tenantId` sirve para autorización y auditoría; coordiná la numeración por emisor y ambiente, y si dos tenants representan al mismo emisor, deben compartir el contador.
+
+Para recuperar después de un envío incierto:
+
+- Consultá siempre por la clave original con `reconcileByClave()`. Valida la clave antes de usar la red y devuelve `{ kind: "found", status }`, `{ kind: "not_found" }` si Hacienda respondió 404 (nunca recibió el documento: reenviá el **mismo** XML firmado con la **misma** clave) o `{ kind: "unknown", error }` ante 5xx, error de red o timeout (volvé a consultar más tarde y no reenvíes). Nunca generes un documento ni un consecutivo nuevo para la misma intención.
+- Clasificá la respuesta de estado con `classifyOutcome()`: `success` (`aceptado`), `rejected` (`rechazado`), `pending` (`recibido` o `procesando`: Hacienda lo recibió, seguí consultando y no reenvíes), `transport_error` (falló la consulta) o `unknown` (estado ausente o no reconocido, `error` de Hacienda o una clave distinta). Un timeout nunca equivale a un rechazo.
+- El callback llega como JSON con `clave`, `fecha`, `ind-estado` y, opcionalmente, `respuesta-xml` en Base64, las mismas claves que `GET /recepcion/{clave}`. `parseCallbackPayload()` lo valida, decodifica `respuesta-xml` y exige un `MensajeHacienda` con firma y con la misma clave que el sobre. Esa validación es estructural: autenticá la respuesta con `verifyHaciendaResponseXml()` antes de confiar en ella. No dependas del callback; si no llega, consultá por clave.
+
 ## Gates contables y de producción
 
 ### Revisión contable (solo asientos)

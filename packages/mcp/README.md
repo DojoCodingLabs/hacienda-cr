@@ -220,6 +220,6 @@ Read the [migration guide](https://github.com/DojoCodingLabs/hacienda-cr/blob/ma
 
 If an old global `sequences.json` contains positive counters, creating a new unseeded issuer series fails closed. Stop writers, back up the old file, establish the issuer/environment that owns each series, and seed each corresponding scoped file with the last reserved number before resuming. Do not copy a mixed-company global file blindly, delete counters, or restart a production series at one. There is no automatic migration because the old file does not identify its owner.
 
-Authenticated clients are invalidated when the resolved profile, environment, issuer configuration, certificate path, password or PIN changes. Replacing certificate bytes at the same path still requires restarting the process or clearing the cache. Configure one profile per identity/environment.
+Authenticated clients are invalidated when the resolved profile, environment, issuer configuration, certificate path, password or PIN changes. Replacing certificate bytes at the same path still requires restarting the process or clearing the cache. Configure one profile per identity/environment. Tools do not accept a tenant scope: each request derives its scope (environment and issuer) from the selected profile, and at most 16 authenticated clients are kept, least recently used first evicted. The SDK `Scope` type is for services that call the SDK directly.
 
 See the [history contract migration](../../docs/history-contract.md); unsupported keys are rejected before authentication.
