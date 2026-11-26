@@ -182,7 +182,9 @@ export function applyDiscounts(
 
 /** Frozen historical discount rule for the read-only retained calculator:
  * every percentage is computed against the constant gross base. Kept separate
- * so historical retained math does not change with the current cascade. */
+ * so historical retained math does not change with the current cascade.
+ * The guard is cumulative, as in the published retained calculator: the line
+ * is rejected only when the sum of all discounts reaches the gross amount. */
 export function applyFrozenGrossDiscounts(
   gross: bigint,
   descuentos: readonly ExactDiscountEntry[],
@@ -195,9 +197,10 @@ export function applyFrozenGrossDiscounts(
       d.porcentaje !== undefined
         ? round(gross * scaled(d.porcentaje, 5), 100n * SCALE)
         : scaled(d.montoDescuento ?? "0", 5);
-    if (amount < 0n || amount >= gross) throw new RangeError(guardMessage);
+    if (amount < 0n) throw new RangeError(guardMessage);
     amounts.push(amount);
     base -= amount;
   }
+  if (base <= 0n) throw new RangeError(guardMessage);
   return { amounts, remaining: base };
 }

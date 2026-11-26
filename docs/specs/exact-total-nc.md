@@ -27,7 +27,11 @@ const credit = {
 ```
 
 The original is the sole source of parties, activities, source lines, discounts,
-currency/exchange rate, sale metadata and fully allocated payment facts. It must
+currency/exchange rate, sale metadata and payment facts. Its `medioPago` follows
+the current FE rule: required unless the original sale condition is 02, 08 or 10,
+and when supplied it must equal the total; without it the NC XML has no
+`MedioPago`. Discounts cascade on the remaining line base as in the
+[exact ordinary FE](exact-ordinary-fe.md) case. It must
 satisfy the existing strict ordinary IVA13 FE case, further restricted here to
 CRC/USD. No independent NC amounts/lines/party overrides, computed totals,
 negative money, inferred refund, partial credit or unknown fields are accepted.

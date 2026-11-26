@@ -113,6 +113,8 @@ export function classification(
 }
 export const ExactFeLineInputSchema = ExactFeLineBaseSchema.superRefine(classification);
 // Frozen read/output structure: historical allocations may contain zero.
+// Module-internal (shared by sibling schema modules); deliberately absent from
+// the package barrel and not part of the public API.
 export const RetainedExactFePaymentSchema = MedioPagoSchema.omit({ totalMedioPago: true })
   .extend({ totalMedioPago: ExactMoneySchema })
   .strict()
@@ -132,11 +134,13 @@ export const ExactFePaymentSchema = RetainedExactFePaymentSchema.safeExtend({
     "Supplied payment allocation must be positive",
   ),
 });
-/** Sale conditions that exempt a document from carrying MedioPago (Anexos v4.4:194). */
+/** Sale conditions that exempt a document from carrying MedioPago (Anexos v4.4:194).
+ * Module-internal: deliberately absent from the package barrel. */
 export function paymentOptionalFor(condicionVenta: string): boolean {
   return condicionVenta === "02" || condicionVenta === "08" || condicionVenta === "10";
 }
-/** Shared presence rule: at least one allocation unless the condition is exempt. */
+/** Shared presence rule: at least one allocation unless the condition is exempt.
+ * Module-internal: deliberately absent from the package barrel. */
 export function requirePaymentPresence(
   condicionVenta: string,
   medioPago: readonly unknown[] | undefined,
@@ -186,7 +190,7 @@ const ExactFeStructureBaseSchema = FacturaElectronicaSchema.omit({
     medioPago: z.array(RetainedExactFePaymentSchema).min(1).max(4),
   })
   .strict();
-export function refineExactFeStructure(
+function refineExactFeStructure(
   input: {
     condicionVenta: string;
     condicionVentaOtros?: string;
@@ -216,7 +220,7 @@ export function refineExactFeStructure(
     ctx.addIssue({
       code: "custom",
       path: ["codigoTipoMoneda", "tipoCambio"],
-      message: "CRC exchange rate must equal1",
+      message: "CRC exchange rate must equal 1",
     });
   input.detalleServicio.forEach((line: { numeroLinea: number }, index: number) => {
     if (line.numeroLinea !== index + 1)
@@ -227,8 +231,7 @@ export function refineExactFeStructure(
       });
   });
 }
-export const ExactFeStructureSchema =
-  ExactFeStructureBaseSchema.superRefine(refineExactFeStructure);
+const ExactFeStructureSchema = ExactFeStructureBaseSchema.superRefine(refineExactFeStructure);
 /** Read-only historical decimal-source shape for immutable 0.6–0.9 FE custody.
  * This preserves the former term acceptance, not current issuance readiness.
  * Callers must independently bind the exact reviewed producer and retained bytes.

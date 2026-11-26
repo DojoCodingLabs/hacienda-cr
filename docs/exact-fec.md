@@ -17,9 +17,13 @@ Only conditions 01/02 are supported by this first API ; 02 requires positive 1â€
 digit credit days, preserving lexemes such as 00030. Any supplied term must be
 positive. This is a deliberate case restriction, not a claim that native FEC
 prohibits every other condition. CRC/USD and explicit ordinary IVA13 lines are
-calculated independently by the existing BigInt monetary-only kernel. Each
-payment allocation is positive and their sum must equal the exact total. An
-allocation does not establish a cash receipt. Caller totals/Number amounts,
+calculated independently by the existing BigInt monetary-only kernel; line
+discounts cascade, each applying to the base remaining after the previous ones
+(100 with two 10% discounts yields 10.00000 + 9.00000, subtotal 81.00000).
+`medioPago` is required for condition 01 and may be omitted for 02, in which case
+the XML has no `MedioPago`. Each supplied payment allocation (1â€“4 entries) is
+positive and their sum must equal the exact total. An allocation does not
+establish a cash receipt. Caller totals/Number amounts,
 foreign/special/non-subject/exempt/exonerated/assumed/factory tax, gifts/free lines
 and unsupported transactions are rejected, not converted to ordinary 13.
 

@@ -11,7 +11,8 @@ source authenticity, credit, acceptance, tax payment or customer delivery.
 
 Actual supplier 06 stays XML Emisor; actual domestic buyer 01–04 owns clave 08 and
 signs. Condition 13 is required. Goods CABYS 0–4, IVA code 01 / tariff 11 / rate 0, actual
-supporting evidence and positive exact payment allocations are required. Known
+supporting evidence and positive exact payment allocations are required (condition
+13 is never exempt from `medioPago`). Known
 local supplier location is optional; no address/activity is invented. Reference
 06/07/99 uses reason 04; 99 requires its actual document-type description. No source
 clave/date, qualification boolean or total can be fabricated. Credit days are not
@@ -20,7 +21,9 @@ invented under condition 13. Allocation is a declaration, not proof of cash rece
 Ordinary commercial discounts reuse existing exact schemas: amount or percentage,
 up to five per line; gift/bonus codes 01/02/03 remain unsupported. Gross products
 and percentage discounts round HALF_UP to five decimals at their existing
-boundaries. A line's deductions must leave a positive net amount. Gross values
+boundaries. Each discount applies to the base remaining after the previous ones:
+100 with two 10% discounts yields 10.00000 + 9.00000, net and total 81.00000. A
+line's deductions must leave a positive net amount. Gross values
 sum into TotalMercNoSujeta, TotalNoSujeto and TotalVenta; discounts sum separately;
 TotalVentaNeta and TotalComprobante equal gross minus discounts. Mandatory line
 IVA nodes and the matching breakdown contain tariff 11 / zero. No gravado/exento,

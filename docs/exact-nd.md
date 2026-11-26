@@ -7,7 +7,8 @@ The named case `ND-domestic-ordinary-fe-increment-iva13-v1` contains:
 - `original`: actual unchanged current exact ordinary FE source; caller independently binds its immutable bytes, company and accepted evidence.
 - Own `clave`, `numeroConsecutivo` and `fechaEmision` for ND02, distinct from the referenced FE identity.
 - `adjustments`: ordered `{originalLineNumber,line}` entries. Each original line may appear at most once in this bounded API. The line retains the selected source CABYS/classification/unit/commercial/ordinary-transaction metadata. Its quantity, price, description and permitted ordinary discount are explicit incremental facts. Caller-provided ND line numbers must be 1..n in that order; the SDK does not sort or silently renumber them. Correlation metadata is not invented XML content.
-- Independent `medioPago`: every supplied allocation is positive, and their exact sum matches the delta total. This is not evidence of cash received, bank settlement or a REP.
+- Independent `medioPago`: required unless the original sale condition is 02, 08 or 10, in which case it may be omitted and the XML has no `MedioPago`. Every supplied allocation (1–4 entries) is positive, and their exact sum matches the delta total. This is not evidence of cash received, bank settlement or a REP.
+- Adjustment-line discounts cascade: each applies to the base remaining after the previous ones, so 100 with two 10% discounts yields 10.00000 + 9.00000 and subtotal 81.00000.
 - Exactly one `informacionReferencia` entry: `tipoDoc:'01'`, exact original clave/timestamp lexeme, `codigo:'02'` and required nonblank reason of 3–180 Unicode characters with no trim/normalization.
 
 ```ts

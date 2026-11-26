@@ -12,7 +12,10 @@ Shared exports `ExactNcPartialInputSchema`, `ExactNcPartialReferenceSchema` and
 
 Supply a valid ordinary original FE, an independent NC 03 identity/emission,
 positive exact adjustment lines with explicit `originalLineNumber`, positive
-payment allocations, and one FE 01 reference with code 02 and a real reason.
+payment allocations (required unless the original sale condition is 02, 08 or
+10; without them the XML has no `MedioPago`), and one FE 01 reference with code
+02 and a real reason. Adjustment-line discounts cascade on the remaining base
+(100 with two 10% discounts yields 10.00000 + 9.00000, subtotal 81.00000).
 Reference key/date, parties, currency, exchange rate and selected line
 classification/unit/commercial facts remain bound to the unchanged source.
 Each original line can occur once in this named correction; output numbers are
@@ -35,7 +38,8 @@ Shared exports `ExactFeReplacementInputSchema`,
 `FE-domestic-ordinary-rejected-replacement-iva13-v1`.
 
 `replacement` is an independently valid new ordinary FE with positive supplied
-payment allocations (allocation is not cash-receipt evidence). `rejected` contains
+payment allocations (allocation is not cash-receipt evidence); as for any current
+FE, `medioPago` may be omitted only when its sale condition is 02, 08 or 10. `rejected` contains
 only the retained old FE clave and emission timestamp. An old rejected document
 need not satisfy a valid FE input/math schema: preserving malformed facts as
 reference evidence must not require copying them into a new invoice. One

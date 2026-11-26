@@ -152,53 +152,58 @@ describe("kernel monetario", () => {
   );
 });
 
+/** A generated discount entry of the exact ordinary case. */
+type GeneratedDiscount =
+  { codigoDescuento: "04"; porcentaje: string } | { codigoDescuento: "05"; montoDescuento: string };
+
 /** A generated line of the exact ordinary case. */
 interface GeneratedLine {
   cantidad: string;
   precioUnitario: string;
   esServicio: boolean;
-  descuento?:
-    | { codigoDescuento: "04"; porcentaje: string }
-    | { codigoDescuento: "05"; montoDescuento: string };
+  descuento?: GeneratedDiscount[];
 }
 
+/** Percentage of `base`, rounded HALF_UP to five decimals, by the oracle. */
+function oraclePercent(base: string, rate: string): string {
+  return oracle.round(oracle.divide(oracle.multiply(base, rate), "100", 5), 5);
+}
+
+/** Raw material of one discount: kind, a percentage, and a fraction of the base. */
+const discountSeed = fc.tuple(
+  fc.boolean(),
+  fc.integer({ min: 1, max: 99 }),
+  fc.integer({ min: 0, max: 99_999 }),
+  fc.integer({ min: 0, max: 5 }),
+  fc.integer({ min: 1, max: 9 }),
+);
+
 const lineArbitrary: fc.Arbitrary<GeneratedLine> = fc
-  .tuple(
-    quantity,
-    unitPrice,
-    fc.boolean(),
-    fc.boolean(),
-    fc.integer({ min: 1, max: 99 }),
-    fc.integer({ min: 0, max: 99_999 }),
-    fc.integer({ min: 0, max: 5 }),
-  )
-  .chain(([cantidad, precioUnitario, esServicio, withPercentage, whole, fraction, decimals]) => {
-    const gross = oracle.round(oracle.multiply(cantidad, precioUnitario), 5);
-    if (!withPercentage) {
-      // An explicit amount discount is exact by construction; it is kept
-      // strictly below the gross so the net stays positive.
-      return fc.constant({
-        cantidad,
-        precioUnitario,
-        esServicio,
-        descuento: {
-          codigoDescuento: "05" as const,
-          montoDescuento: oracle.round(oracle.multiply(gross, "0.5"), 5),
-        },
-      });
+  .tuple(quantity, unitPrice, fc.boolean(), fc.array(discountSeed, { minLength: 1, maxLength: 5 }))
+  .map(([cantidad, precioUnitario, esServicio, seeds]) => {
+    // Entries are built against the base that remains after the previous
+    // ones, so every entry, in any order, leaves a positive net.
+    let base = oracle.round(oracle.multiply(cantidad, precioUnitario), 5);
+    const descuento: GeneratedDiscount[] = [];
+    for (const [withPercentage, whole, fraction, decimals, tenths] of seeds) {
+      if (withPercentage) {
+        const rate =
+          decimals === 0 ? `${whole}` : `${whole}.${String(fraction).padStart(decimals, "0")}`;
+        // A percentage that would eat the whole remaining base is replaced
+        // by the smallest one, which always leaves a positive net.
+        const safeRate = oracle.compare(oraclePercent(base, rate), base) < 0 ? rate : "1";
+        descuento.push({ codigoDescuento: "04", porcentaje: safeRate });
+        base = oracle.subtract(base, oraclePercent(base, safeRate));
+      } else {
+        // An explicit amount is exact by construction: a fraction of the
+        // remaining base, positive and strictly below it.
+        const amount = oracle.round(oracle.multiply(base, `0.${tenths}`), 5);
+        if (oracle.compare(amount, "0") <= 0 || oracle.compare(amount, base) >= 0) continue;
+        descuento.push({ codigoDescuento: "05", montoDescuento: amount });
+        base = oracle.subtract(base, amount);
+      }
     }
-    const rate =
-      decimals === 0 ? `${whole}` : `${whole}.${String(fraction).padStart(decimals, "0")}`;
-    const applied = oracle.round(oracle.divide(oracle.multiply(gross, rate), "100", 5), 5);
-    // A percentage that would eat the whole gross is replaced by the
-    // smallest one, which always leaves a positive net.
-    const safeRate = oracle.compare(applied, gross) < 0 ? rate : "1";
-    return fc.constant({
-      cantidad,
-      precioUnitario,
-      esServicio,
-      descuento: { codigoDescuento: "04" as const, porcentaje: safeRate },
-    });
+    return { cantidad, precioUnitario, esServicio, ...(descuento.length ? { descuento } : {}) };
   });
 
 /** Expected gross amount of a line, computed by the oracle. */
@@ -206,16 +211,23 @@ function oracleGross(line: GeneratedLine): string {
   return oracle.round(oracle.multiply(line.cantidad, line.precioUnitario), 5);
 }
 
-/** Expected discount of a line, computed by the oracle. */
+/** Expected per-entry discount amounts of a line: each entry applies to the
+ * base remaining after the previous one (Anexos v4.4), computed by the oracle. */
+function oracleDiscountAmounts(line: GeneratedLine, gross: string): string[] {
+  let base = gross;
+  return (line.descuento ?? []).map((entry) => {
+    const amount =
+      "porcentaje" in entry
+        ? oraclePercent(base, entry.porcentaje)
+        : oracle.round(entry.montoDescuento, 5);
+    base = oracle.subtract(base, amount);
+    return amount;
+  });
+}
+
+/** Expected total discount of a line, computed by the oracle. */
 function oracleDiscount(line: GeneratedLine, gross: string): string {
-  if (!line.descuento) return "0";
-  if ("porcentaje" in line.descuento) {
-    return oracle.round(
-      oracle.divide(oracle.multiply(gross, line.descuento.porcentaje), "100", 5),
-      5,
-    );
-  }
-  return oracle.round(line.descuento.montoDescuento, 5);
+  return oracle.sum(oracleDiscountAmounts(line, gross));
 }
 
 describe("camino exacto ordinary", () => {
@@ -236,7 +248,7 @@ describe("camino exacto ordinary", () => {
                 { codigo: "01" as const, codigoTarifaIVA: "08" as const, tarifa: "13" as const },
               ],
               esServicio: line.esServicio,
-              ...(line.descuento ? { descuento: [line.descuento] } : {}),
+              ...(line.descuento ? { descuento: line.descuento } : {}),
             })),
             codigoTipoMoneda: { codigoMoneda: "CRC" as const, tipoCambio: "1" },
             medioPago: [] as { tipoMedioPago: "01"; totalMedioPago: string }[],
@@ -272,6 +284,27 @@ describe("camino exacto ordinary", () => {
             expect(oracle.equal(calculatedLine?.montoTotalLinea ?? "0", oracle.add(net, tax))).toBe(
               true,
             );
+            // Per-entry cascade: amounts match the oracle, the remaining base
+            // only shrinks, absolute amounts are carried without rounding and
+            // the entries add up to the line deduction.
+            const amounts = (calculatedLine?.descuento ?? []).map((d) => d.montoDescuento);
+            const expectedAmounts = oracleDiscountAmounts(line, gross);
+            expect(amounts.length).toBe(expectedAmounts.length);
+            amounts.forEach((amount, i) => {
+              expect(oracle.equal(amount, expectedAmounts[i] ?? "")).toBe(true);
+            });
+            let remaining = gross;
+            (line.descuento ?? []).forEach((entry, i) => {
+              const amount = amounts[i] ?? "0";
+              if ("montoDescuento" in entry)
+                expect(oracle.equal(amount, entry.montoDescuento)).toBe(true);
+              const next = oracle.subtract(remaining, amount);
+              expect(oracle.compare(next, "0")).toBe(1);
+              expect(oracle.compare(next, remaining)).toBeLessThanOrEqual(0);
+              remaining = next;
+            });
+            expect(oracle.equal(oracle.sum(amounts), discount)).toBe(true);
+            expect(oracle.equal(remaining, net)).toBe(true);
           });
 
           const summary = calculated.resumenFactura;
@@ -459,16 +492,46 @@ describe("detección de mutaciones", () => {
     expect(oracle.equal(mutant, expected)).toBe(false);
   });
 
-  it("el oráculo distingue un descuento aplicado a la base equivocada", () => {
-    const gross = "100";
-    const rate = "10";
-    const correct = oracle.round(oracle.divide(oracle.multiply(gross, rate), "100", 5), 5);
-    // A sequential base: the discount is taken from the net instead of the gross.
-    const mutant = oracle.round(
-      oracle.divide(oracle.multiply(oracle.subtract(gross, correct), rate), "100", 5),
-      5,
-    );
-    expect(oracle.equal(correct, mutant)).toBe(false);
+  it("el oráculo distingue un segundo porcentaje aplicado al bruto en vez de la base remanente", () => {
+    const line: GeneratedLine = {
+      cantidad: "1",
+      precioUnitario: "100",
+      esServicio: true,
+      descuento: [
+        { codigoDescuento: "04", porcentaje: "10" },
+        { codigoDescuento: "04", porcentaje: "10" },
+      ],
+    };
+    const gross = oracleGross(line);
+    // Correct (Anexos v4.4): the second 10% applies to the remaining 90.
+    const correct = oracleDiscountAmounts(line, gross);
+    expect(correct.map((amount) => oracle.round(amount, 5))).toEqual(["10.00000", "9.00000"]);
+    // Mutant: the second percentage is reset to the gross base.
+    const first = oraclePercent(gross, "10");
+    const mutant = [first, oraclePercent(gross, "10")];
+    expect(oracle.equal(correct[1] ?? "", mutant[1] ?? "")).toBe(false);
+    expect(oracle.equal(oracle.sum(correct), oracle.sum(mutant))).toBe(false);
+    // The kernel agrees with the oracle, not with the mutant.
+    const calculated = calculateExactOrdinaryMoney({
+      detalleServicio: [
+        {
+          numeroLinea: 1,
+          codigoCabys: "8310100000000",
+          unidadMedida: "Sp",
+          detalle: "Línea sintética de prueba",
+          cantidad: line.cantidad,
+          precioUnitario: line.precioUnitario,
+          impuesto: [{ codigo: "01", codigoTarifaIVA: "08", tarifa: "13" }],
+          esServicio: true,
+          descuento: line.descuento ?? [],
+        },
+      ],
+      codigoTipoMoneda: { codigoMoneda: "CRC", tipoCambio: "1" },
+      medioPago: [{ tipoMedioPago: "01", totalMedioPago: "91.53" }],
+    });
+    const amounts = (calculated.detalleServicio[0]?.descuento ?? []).map((d) => d.montoDescuento);
+    expect(amounts.every((amount, i) => oracle.equal(amount, correct[i] ?? ""))).toBe(true);
+    expect(amounts.every((amount, i) => oracle.equal(amount, mutant[i] ?? ""))).toBe(false);
   });
 
   it("el oráculo distingue un total desplazado un céntimo", () => {

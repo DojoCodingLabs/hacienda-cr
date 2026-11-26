@@ -85,9 +85,13 @@ with localcontext() as ctx:
   rows=[]
   for line in doc['detalleServicio']:
    gross=rounded(Decimal(line['cantidad'])*Decimal(line['precioUnitario']))
-   discounts=[rounded(gross*Decimal(d['porcentaje'])/100) if 'porcentaje' in d else Decimal(d['montoDescuento']) for d in line.get('descuento',[])]
+   # Anexos v4.4: each discount applies to the base remaining after the previous one.
+   base=gross;discounts=[]
+   for d in line.get('descuento',[]):
+    amount=rounded(base*Decimal(d['porcentaje'])/100) if 'porcentaje' in d else Decimal(d['montoDescuento'])
+    discounts.append(amount);base-=amount
    deduction=sum(discounts,Decimal(0));net=gross-deduction;tax=rounded(net*Decimal('13')/100)
-   rows.append(dict(gross=str(gross),discount=str(rounded(deduction)),net=str(rounded(net)),tax=str(tax),total=str(rounded(net+tax))))
+   rows.append(dict(gross=str(gross),amounts=[str(rounded(a)) for a in discounts],discount=str(rounded(deduction)),net=str(rounded(net)),tax=str(tax),total=str(rounded(net+tax))))
   out.append(dict(rows=rows,total=str(rounded(sum((Decimal(r['total']) for r in rows),Decimal(0))))))
  print(json.dumps(out))
 `,
@@ -97,6 +101,7 @@ with localcontext() as ctx:
   ) as {
     rows: {
       gross: string;
+      amounts: string[];
       discount: string;
       net: string;
       tax: string;
@@ -110,6 +115,17 @@ function allocate(source: ExactFeInput) {
   return source;
 }
 describe("additive exact ordinary FE strings → BigInt → XML", () => {
+  it("rejects a CRC exchange rate other than 1 with a readable message", () => {
+    const source = allocate(input());
+    source.codigoTipoMoneda = { codigoMoneda: "CRC", tipoCambio: "1.00001" };
+    for (const schema of [ExactFeInputSchema, RetainedExactFeInputSchema])
+      expect(schema.safeParse(source).error?.issues).toEqual([
+        expect.objectContaining({
+          path: ["codigoTipoMoneda", "tipoCambio"],
+          message: "CRC exchange rate must equal 1",
+        }),
+      ]);
+  });
   it("round-trips source and computed JSON strings and emits deterministic exact decimal text", () => {
     const source = allocate(input());
     source.codigoTipoMoneda = { codigoMoneda: "USD", tipoCambio: "513.12345" };
@@ -168,6 +184,13 @@ describe("additive exact ordinary FE strings → BigInt → XML", () => {
           codigoDescuentoOtros: "Descuento explícito",
           montoDescuento: "0.00001",
         });
+      // Two to five mixed entries: an absolute amount before a percentage and
+      // further percentages make the remaining-base cascade observable.
+      if (n % 2 === 0) {
+        line.descuento.unshift({ codigoDescuento: "04", montoDescuento: `${n}.5` });
+        line.descuento.push({ codigoDescuento: "05", porcentaje: `${(n % 7) + 1}.33333` });
+      }
+      if (n % 4 === 0) line.descuento.push({ codigoDescuento: "06", porcentaje: "12.5" });
       const second = {
         ...line,
         numeroLinea: 2,
@@ -191,6 +214,7 @@ describe("additive exact ordinary FE strings → BigInt → XML", () => {
           row.tax,
           row.total,
         ]);
+        expect((line.descuento ?? []).map((d) => d.montoDescuento)).toEqual(row.amounts);
       });
     });
   });

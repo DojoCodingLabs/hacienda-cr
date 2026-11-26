@@ -32,8 +32,11 @@ Only conditions 01/02 are in this named case; 02 needs positive one-to-five digi
 credit days. Any supplied term must be positive, preserving actual leading-zero
 lexemes. Currency CRC/USD, exact service lines (declared services with CABYS
 service-prefix classification), quantities, unit prices, ordinary IVA13 and
-positive payment allocations remain explicit. Every supplied allocation must
-reconcile exactly. Allocation does not prove cash receipt or create a REP.
+positive payment allocations remain explicit. `medioPago` is required for
+condition 01 and may be omitted for 02 (no `MedioPago` in the XML). Every
+supplied allocation (1–4 entries) must reconcile exactly. Line discounts cascade
+on the remaining base, as in the [exact FEC](exact-fec.md). Allocation does not
+prove cash receipt or create a REP.
 Unsupported goods, non-service intangible classifications, zero/exempt/non-subject
 or other tax regimes, condition 13 and extra eligibility/credit booleans fail
 closed instead of silently becoming ordinary services. Real CABYS existence and

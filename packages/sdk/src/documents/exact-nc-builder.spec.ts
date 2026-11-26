@@ -207,7 +207,9 @@ it("independent Python Decimal preserves full-credit rounding, five-place money 
       input.original.detalleServicio[0].precioUnitario = price;
       if (index === 3)
         input.original.detalleServicio[0].descuento = [
+          { codigoDescuento: "05", montoDescuento: "1.5" },
           { codigoDescuento: "04", porcentaje: "6.25" },
+          { codigoDescuento: "06", porcentaje: "10.00001" },
         ];
       cases.push(input);
     }
@@ -230,8 +232,10 @@ with localcontext() as c:
  values=[]
  for nc in json.load(sys.stdin):
   l=nc['original']['detalleServicio'][0];g=r(Decimal(l['cantidad'])*Decimal(l['precioUnitario']))
-  d=sum((r(g*Decimal(x['porcentaje'])/100) if 'porcentaje' in x else Decimal(x['montoDescuento']) for x in l.get('descuento',[])),Decimal(0))
-  n=g-d;t=r(n*Decimal(13)/100);values.append(dict(gross=str(g),net=str(r(n)),tax=str(t),total=str(r(n+t))))
+  b=g
+  for x in l.get('descuento',[]):
+   b-=r(b*Decimal(x['porcentaje'])/100) if 'porcentaje' in x else Decimal(x['montoDescuento'])
+  n=b;t=r(n*Decimal(13)/100);values.append(dict(gross=str(g),net=str(r(n)),tax=str(t),total=str(r(n+t))))
  print(json.dumps(values))
 `,
       ],
