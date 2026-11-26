@@ -1,9 +1,9 @@
 ## 0. Base and integration
 
 - [ ] 0.1 Rebase the working tree onto `origin/main` (446e6a7) so the change sees the FE/TE sandbox acceptance recorded in `docs/testing/sandbox-403-debug.md` and merged PRs #126/#128.
-- [ ] 0.2 Integrate ONLY the evidence tooling from `feat/sandbox-evidence-coherent-rehearsal` (cherry-pick `8e420bc` restricted to `scripts/sandbox-outcome.mjs`, `scripts/coherent-reference-rehearsal.mjs` and the evidence-bundle portions of `scripts/validate-sdk-sandbox.mjs`). Explicitly exclude runtime changes from `3b2cba9` (#124), `16845ae` (#123) and `104b976` (exact DTOs/CLI), which are tracked separately. Verify `pnpm verify` passes after integration. If the `sandbox-evidence-bundle` capability is adopted, reconcile `document.json`/`invoice.json` and `manifest.json` naming with it (task 2.9).
+- [x] 0.2 Done from `41d23ba` (#132) instead of `8e420bc`: `scripts/sandbox-outcome.mjs`, `scripts/coherent-reference-rehearsal.mjs` and the evidence-bundle portions of the runner (moved into `scripts/sandbox-bundle.mjs`), with no SDK runtime changes. `pnpm verify` passes. Naming reconciliation remains task 2.9. Original wording: Integrate ONLY the evidence tooling from `feat/sandbox-evidence-coherent-rehearsal` (cherry-pick `8e420bc` restricted to `scripts/sandbox-outcome.mjs`, `scripts/coherent-reference-rehearsal.mjs` and the evidence-bundle portions of `scripts/validate-sdk-sandbox.mjs`). Explicitly exclude runtime changes from `3b2cba9` (#124), `16845ae` (#123) and `104b976` (exact DTOs/CLI), which are tracked separately. Verify `pnpm verify` passes after integration. If the `sandbox-evidence-bundle` capability is adopted, reconcile `document.json`/`invoice.json` and `manifest.json` naming with it (task 2.9).
 - [x] 0.3 Rebuild shared and SDK (`pnpm build`) before running the runner or tests.
-- [ ] 0.4 Decide whether to adopt the `sandbox-evidence-bundle` capability: if adopted, declare it as a modified capability and reconcile artifact naming (task 2.9); if not, do not integrate the bundle portions of the runner.
+- [ ] 0.4 Decide whether to adopt the `sandbox-evidence-bundle` capability: if adopted, declare it as a modified capability and reconcile artifact naming (task 2.9); if not, do not integrate the bundle portions of the runner. Decision so far: adopted, and the bundle portions are integrated. Declaring the modified capability and reconciling naming are still open.
 
 ## 1. Preparation and References
 
@@ -23,7 +23,8 @@
 - [ ] 2.8 Record SDK/package versions and hashes in the manifest for each run, including the hash of the accepted FE XML/response used as reference.
 - [ ] 2.9 Reconcile the runner artifact contract with `sandbox-evidence-bundle` (if adopted): document how `document.json` relates to `invoice.json`, and how `manifest.json` maps to that spec's required files.
 - [x] 2.10a Add offline regression tests for the runner's `document.json` path: missing family, unknown family, invalid input, clave↔issuer/consecutive/document-type binding (`IDENTITY_MISMATCH`, with the FEC buyer as the clave taxpayer), and one positive build+sign run per family (FE, TE, NC, NCP, ND, FEC) that reports `networkRequests: 0`.
-- [ ] 2.10b Add the remaining offline regression tests: legacy `invoice.json` fallback alongside `document.json`, manifest/verify, `PREVIOUS_SUBMISSION_REQUIRES_STATUS` on second submit, and `SANDBOX_ENDPOINT_MISMATCH` on bad host/IdP/client id (via a test seam or injected config). Integrate the branch's `sandbox-outcome.test.mjs` and `coherent-reference-rehearsal.test.mjs`.
+- [x] 2.10b Add offline manifest/verify tests (`scripts/sandbox-bundle.test.mjs`: VALID, CORRUPT per link, broken comprobante chain, INCOMPLETE, incoherent outcome, MANIFEST_REQUIRED, legacy `invoice.json` and FEC buyer identity). Add runner-level tests: `verify` on a signed FEC bundle and tampering, no manifest after pre-attempt failures. Integrate the branch's `sandbox-outcome.test.mjs` and `coherent-reference-rehearsal.test.mjs`.
+- [ ] 2.10c Add the remaining offline regression tests: legacy `invoice.json` sign path, `PREVIOUS_SUBMISSION_REQUIRES_STATUS` on second submit, the manifest written by an actual `submit` attempt, and `SANDBOX_ENDPOINT_MISMATCH` on bad host/IdP/client id. These need a test seam or injected config that does not require enabling real submission.
 
 ## 3. NC Acceptance
 
@@ -57,7 +58,7 @@
 
 ## 7. Evidence and Boundaries
 
-- [ ] 7.0 Update `docs/testing/sdk-sandbox-validation.md`, which still states that the runner only signs FE and that real submission is pending.
+- [ ] 7.0 Update `docs/testing/sdk-sandbox-validation.md`, which still states that the runner only signs FE and that real submission is pending. The runner and bundle sections are updated. The dated results table and the pending list are still the historical 2026-10-15 record.
 - [ ] 7.0a Add negative evidence cases: ND prepared without an accepted FE reference (must fail closed) and REP attempted before oracle review (must be refused), each recorded as evidence.
 - [ ] 7.1 Collect redacted evidence for every accepted or rejected family, recording custody location, owner, retention and the sandbox host actually used (including the discrepancy with the v4.4 annex host).
 - [ ] 7.2 Update DojoCodingLabs/facturador-dojo issue #12 with family-level outcomes and artifact references (do not use hacienda-cr PR numbers as issue references).

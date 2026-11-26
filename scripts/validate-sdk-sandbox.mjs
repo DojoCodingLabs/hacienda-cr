@@ -2,7 +2,6 @@
 import { readFile, writeFile, access, realpath } from "node:fs/promises";
 import { resolve, join, relative } from "node:path";
 import { fileURLToPath } from "node:url";
-import { createHash } from "node:crypto";
 import {
   Environment,
   getEnvironmentConfig,
@@ -30,6 +29,22 @@ import {
   ExactNdInputSchema,
   ExactFecInputSchema,
 } from "../shared/dist/index.js";
+import {
+  classifySubmissionResult,
+  classifyDeliveryError,
+  containsFiscalMarkers,
+  isDeliveryError,
+} from "./sandbox-outcome.mjs";
+import {
+  assertIdentity,
+  digest,
+  familyIdentity,
+  identityFacts,
+  readRunInput,
+  save,
+  verifyBundle,
+  writeRunManifest,
+} from "./sandbox-bundle.mjs";
 
 const [command, runPath, ...extra] = process.argv.slice(2);
 const environment = getEnvironmentConfig(Environment.Sandbox);
@@ -41,13 +56,24 @@ const required = (name) => {
   if (!value) throw new Error(`MISSING_${name}`);
   return value;
 };
-const digest = (value) => createHash("sha256").update(value).digest("hex");
-const save = (directory, name, value) =>
-  writeFile(join(directory, name), JSON.stringify(value, null, 2) + "\n", {
-    mode: 0o600,
-    flag: "wx",
-  });
 const report = (value) => console.log(JSON.stringify(value));
+
+/** Run identity for the failure-path manifest; set once the run input is bound. */
+let runState;
+/** Set once the exclusive attempt marker exists: only then is a POST possible. */
+let attemptStarted = false;
+/** Set once a manifest is persisted, so the failure path never overwrites it. */
+let manifestWritten = false;
+/** Evidence captured by `sdkFetch` for the delivery path of the current run. */
+const captured = {
+  lastReceiptBody: null,
+  lastErrorCause: null,
+  lastErrorType: null,
+  lastRequestId: null,
+  lastCfRay: null,
+  lastHttpStatus: null,
+  deliveryConfirmed: false,
+};
 
 function requireSandbox() {
   if (process.env.HACIENDA_SANDBOX_TEST !== "1") throw new Error("OPT_IN_REQUIRED");
@@ -77,6 +103,25 @@ const sdkFetch = async (input, init) => {
   if ((token && method !== "POST") || (receipt && !["GET", "POST"].includes(method))) {
     throw new Error("BLOCKED_METHOD");
   }
+  // Persist the exact bytes the SDK transmits (its compact JSON.stringify body)
+  // before the receipt POST travels. Token requests and status GETs have no
+  // submission body to bind.
+  if (receipt && method === "POST" && activeDirectory) {
+    if (typeof init?.body !== "string") throw new Error("POST_BODY_NOT_JSON");
+    let parsed;
+    try {
+      parsed = JSON.parse(init.body);
+    } catch {
+      throw new Error("POST_BODY_NOT_JSON");
+    }
+    if (typeof parsed !== "object" || parsed === null || typeof parsed.comprobanteXml !== "string")
+      throw new Error("POST_BODY_NOT_SUBMISSION");
+    await writeFile(join(activeDirectory, "request.body.json"), init.body, {
+      mode: 0o600,
+      flag: "wx",
+    });
+    await save(activeDirectory, "request.pretty.json", parsed);
+  }
   // Credentials must never be forwarded through an HTTP redirect.
   const response = await fetch(input, {
     ...init,
@@ -84,26 +129,39 @@ const sdkFetch = async (input, init) => {
     signal: AbortSignal.timeout(30_000),
   });
   if (activeDirectory) {
+    const headers = Object.fromEntries(
+      [
+        "content-type",
+        "server",
+        "location",
+        "x-error-cause",
+        "date",
+        "x-amzn-errortype",
+        "x-amzn-requestid",
+        "x-amz-apigw-id",
+        "cf-ray",
+        "via",
+      ].map((k) => [k, response.headers.get(k)]),
+    );
+    if (receipt) {
+      captured.lastHttpStatus = response.status;
+      captured.lastErrorCause = headers["x-error-cause"];
+      captured.lastErrorType = headers["x-amzn-errortype"];
+      captured.lastRequestId = headers["x-amzn-requestid"];
+      captured.lastCfRay = headers["cf-ray"];
+      // Delivery is confirmed only by an accepted receipt POST; a 4xx from the
+      // gateway (e.g. 403 IncompleteSignatureException) never reached Hacienda.
+      if (method === "POST" && response.status >= 200 && response.status < 400)
+        captured.deliveryConfirmed = true;
+      captured.lastReceiptBody = await response.clone().text();
+    }
     await save(activeDirectory, `validation-http-${Date.now()}-${++traceSequence}.json`, {
       phase: token ? "authentication" : "receipt",
       method,
       status: response.status,
-      headers: Object.fromEntries(
-        [
-          "content-type",
-          "server",
-          "location",
-          "x-error-cause",
-          "date",
-          "x-amzn-errortype",
-          "x-amzn-requestid",
-          "x-amz-apigw-id",
-          "cf-ray",
-          "via",
-        ].map((k) => [k, response.headers.get(k)]),
-      ),
+      headers,
       // Never persist OAuth responses, access tokens or request authorization.
-      ...(receipt ? { body: await response.clone().text() } : {}),
+      ...(receipt ? { body: captured.lastReceiptBody } : {}),
     });
   }
   return response;
@@ -126,56 +184,34 @@ async function authenticatedClient() {
   });
 }
 
-// `type` is the document-type segment of clave/consecutivo. `owner` is the
-// taxpayer embedded in the clave: the issuer for every family except FEC,
-// which is generated and signed by its buyer (the XML Receptor).
+// Clave identity (document type and taxpayer) lives in FAMILY_IDENTITY so that
+// `verify` applies the same binding offline; FEC's taxpayer is its buyer.
 const issuer = (input) => input.emisor;
 const originalIssuer = (input) => input.original.emisor;
+const originalReceptor = (input) => input.original.receptor;
 const FAMILY_SPECS = {
-  FE: { type: "01", schema: ExactFeInputSchema, builder: buildExactFacturaXml, emisor: issuer },
-  TE: { type: "04", schema: ExactTeInputSchema, builder: buildExactTiqueteXml, emisor: issuer },
+  FE: { schema: ExactFeInputSchema, builder: buildExactFacturaXml, emisor: issuer },
+  TE: { schema: ExactTeInputSchema, builder: buildExactTiqueteXml, emisor: issuer },
   NC: {
-    type: "03",
     schema: ExactNcTotalInputSchema,
     builder: buildExactNotaCreditoTotalXml,
     emisor: originalIssuer,
-    receptor: (input) => input.original.receptor,
+    receptor: originalReceptor,
   },
   NCP: {
-    type: "03",
     schema: ExactNcPartialInputSchema,
     builder: buildExactNotaCreditoPartialXml,
     emisor: originalIssuer,
-    receptor: (input) => input.original.receptor,
+    receptor: originalReceptor,
   },
   ND: {
-    type: "02",
     schema: ExactNdInputSchema,
     builder: buildExactNotaDebitoXml,
     emisor: originalIssuer,
-    receptor: (input) => input.original.receptor,
+    receptor: originalReceptor,
   },
-  FEC: {
-    type: "08",
-    schema: ExactFecInputSchema,
-    builder: buildExactFacturaCompraXml,
-    emisor: issuer,
-    owner: (input) => input.receptor?.identificacion?.numero,
-  },
+  FEC: { schema: ExactFecInputSchema, builder: buildExactFacturaCompraXml, emisor: issuer },
 };
-
-/** Binds the clave to its taxpayer, consecutive and document type (fail closed). */
-function assertIdentity({ clave, numeroConsecutivo, owner, type }) {
-  if (
-    typeof clave !== "string" ||
-    typeof numeroConsecutivo !== "string" ||
-    typeof owner !== "string" ||
-    clave.slice(9, 21) !== owner.padStart(12, "0") ||
-    clave.slice(21, 41) !== numeroConsecutivo ||
-    (type !== undefined && numeroConsecutivo.slice(8, 10) !== type)
-  )
-    throw new Error("IDENTITY_MISMATCH");
-}
 
 async function documentRun() {
   if (!runPath) throw new Error("RUN_DIRECTORY_REQUIRED");
@@ -186,72 +222,103 @@ async function documentRun() {
   activeDirectory = directory;
 
   // Prefer document.json (multi-family); fall back to legacy invoice.json (FE).
-  let serialized;
-  let family;
-  let input;
-  try {
-    serialized = await readFile(join(directory, "document.json"), "utf8");
-    const doc = JSON.parse(serialized);
-    family = String(doc.family || doc.documentFamily || doc.type || "").toUpperCase();
-    input = doc.input !== undefined ? doc.input : doc;
-    if (!family) throw new Error("MISSING_FAMILY");
-  } catch (error) {
-    if (error && error.code !== "ENOENT") throw error;
-    serialized = await readFile(join(directory, "invoice.json"), "utf8");
-    const invoice = JSON.parse(serialized);
+  const run = await readRunInput(directory);
+  const invoiceHash = digest(run.serialized);
+  if (run.legacy) {
+    const invoice = run.input;
     const result = validateFacturaInput(invoice);
     if (!result.valid) throw new Error("INVALID_INVOICE_INPUT");
-    assertIdentity({
-      clave: invoice.clave,
-      numeroConsecutivo: invoice.numeroConsecutivo,
-      owner: invoice.emisor.identificacion.numero,
-    });
+    assertIdentity(identityFacts(run));
     const xml = buildFacturaXml(invoice);
     if (!(await validateDocumentXml(xml)).valid) throw new Error("INVALID_UNSIGNED_XSD");
-    return {
-      directory,
-      family: "FE",
-      legacy: true,
-      invoice,
-      xml,
-      invoiceHash: digest(serialized),
-    };
+    return { directory, family: "FE", invoice, xml, invoiceHash };
   }
 
-  const spec = Object.hasOwn(FAMILY_SPECS, family) ? FAMILY_SPECS[family] : undefined;
-  if (!spec) throw new Error("UNKNOWN_FAMILY");
-  const parsed = spec.schema.safeParse(input);
+  const spec = Object.hasOwn(FAMILY_SPECS, run.family) ? FAMILY_SPECS[run.family] : undefined;
+  if (!spec || !familyIdentity(run.family)) throw new Error("UNKNOWN_FAMILY");
+  const parsed = spec.schema.safeParse(run.input);
   if (!parsed.success) throw new Error("INVALID_DOCUMENT_INPUT");
   const validated = parsed.data;
-  const emisor = spec.emisor(validated);
-  assertIdentity({
-    clave: validated.clave,
-    numeroConsecutivo: validated.numeroConsecutivo,
-    owner: spec.owner ? spec.owner(validated) : emisor?.identificacion?.numero,
-    type: spec.type,
-  });
+  assertIdentity(identityFacts({ ...run, input: validated }));
   const xml = spec.builder(validated);
   if (!(await validateDocumentXml(xml)).valid) throw new Error("INVALID_UNSIGNED_XSD");
-  const normalizedInvoice = {
+  const invoice = {
     clave: validated.clave,
     fechaEmision: validated.fechaEmision,
-    emisor,
+    emisor: spec.emisor(validated),
     receptor: (spec.receptor ?? ((input) => input.receptor))(validated),
   };
-  return {
-    directory,
-    family,
-    legacy: false,
-    invoice: normalizedInvoice,
-    xml,
-    invoiceHash: digest(serialized),
-  };
+  return { directory, family: run.family, invoice, xml, invoiceHash };
+}
+
+const outcomeObservation = () => ({
+  ...(Number.isInteger(captured.lastHttpStatus) ? { httpStatus: captured.lastHttpStatus } : {}),
+  ...(captured.lastErrorType ? { gatewayErrorType: captured.lastErrorType } : {}),
+  ...(captured.lastRequestId ? { requestId: captured.lastRequestId } : {}),
+  ...(captured.lastCfRay ? { cfRay: captured.lastCfRay } : {}),
+  ...(captured.lastErrorCause ? { errorCause: captured.lastErrorCause } : {}),
+  observedAt: new Date().toISOString(),
+});
+
+/** Persist `response.raw.json` (raw receipt body) when one was received. */
+async function persistRawResponse(directory) {
+  if (!captured.lastReceiptBody) return;
+  try {
+    await writeFile(join(directory, "response.raw.json"), captured.lastReceiptBody, {
+      mode: 0o600,
+      flag: "wx",
+    });
+  } catch (error) {
+    if (error.code !== "EEXIST") throw error;
+  }
+}
+
+async function manifestFor(outcomeClass, missingReason) {
+  await persistRawResponse(runState.directory);
+  const manifest = await writeRunManifest({
+    ...runState,
+    outcomeClass,
+    observation: outcomeObservation(),
+    missingReason,
+  });
+  manifestWritten = true;
+  return manifest;
+}
+
+function classifyFailure(error) {
+  if (!isDeliveryError(error)) return "INVALID_LOCAL";
+  return classifyDeliveryError({
+    responseFiscal:
+      containsFiscalMarkers(error?.responseBody) || containsFiscalMarkers(captured.lastReceiptBody),
+    errorCauseHeader: captured.lastErrorCause,
+    deliveryConfirmed: captured.deliveryConfirmed,
+  });
+}
+
+async function verifyCommand() {
+  if (!runPath) throw new Error("RUN_DIRECTORY_REQUIRED");
+  const verdict = await verifyBundle(await realpath(resolve(runPath)));
+  if (verdict.manifestRequired) {
+    report({
+      ok: false,
+      code: "MANIFEST_REQUIRED",
+      recovery: "Directory has no manifest: keep it as legacy or pre-submission evidence.",
+    });
+  } else {
+    for (const check of verdict.checks) report(check);
+    report(verdict.summary);
+  }
+  process.exitCode = verdict.exitCode;
 }
 
 async function main() {
-  if (extra.length || !["preflight", "auth", "sign", "submit", "status"].includes(command)) {
-    throw new Error("USAGE_preflight_auth_sign_submit_status");
+  if (
+    extra.length ||
+    !["preflight", "auth", "sign", "submit", "status", "verify"].includes(command)
+  ) {
+    throw new Error("USAGE_preflight_auth_sign_submit_status_verify");
   }
+  if (command === "verify") return verifyCommand();
   if (["preflight", "auth"].includes(command)) {
     if (runPath) throw new Error("UNEXPECTED_DIRECTORY");
     requireSandbox();
@@ -267,6 +334,7 @@ async function main() {
   }
   const { directory, family, invoice, xml, invoiceHash } = await documentRun();
   const identityHash = digest(invoice.clave);
+  runState = { directory, clave: invoice.clave, identityHash, family };
   if (command === "sign") {
     const signed = await signXml(
       xml,
@@ -275,7 +343,13 @@ async function main() {
     );
     if (!(await validateDocumentXml(signed, { requireSignature: true })).valid)
       throw new Error("INVALID_SIGNED_XSD");
-    await writeFile(join(directory, "validation-signed.xml"), signed, { mode: 0o600, flag: "wx" });
+    // Canonical bundle names plus the validation-* files earlier runs used.
+    for (const [name, content] of [
+      ["unsigned.xml", xml],
+      ["signed.xml", signed],
+      ["validation-signed.xml", signed],
+    ])
+      await writeFile(join(directory, name), content, { mode: 0o600, flag: "wx" });
     await save(directory, "validation-signature.json", {
       invoiceHash,
       xmlHash: digest(signed),
@@ -301,6 +375,9 @@ async function main() {
     "validation-attempt.json",
     "validation-request.json",
     "validation-result.json",
+    "request.body.json",
+    "request.pretty.json",
+    "manifest.json",
   ]) {
     try {
       await access(join(directory, name));
@@ -344,19 +421,44 @@ async function main() {
     invoiceHash,
     startedAt: new Date().toISOString(),
   });
+  attemptStarted = true;
   const result = await submitAndWait(client, request, { timeoutMs: 90_000 });
-  await save(directory, "validation-result.json", result);
+  const outcomeClass = classifySubmissionResult(result);
+  if (outcomeClass === null) throw new Error("UNKNOWN_FISCAL_STATE");
+  await save(directory, "validation-result.json", {
+    environment: "sandbox",
+    class: outcomeClass,
+    result,
+  });
+  const manifest = await manifestFor(outcomeClass, "unresolved at manifest build");
   report({
     environment: "sandbox",
     status: result.status,
     accepted: result.accepted,
     identityHash,
+    ...(manifest.missing.length ? { missing: manifest.missing } : {}),
   });
   if (result.clave !== invoice.clave) throw new Error("RESPONSE_IDENTITY_MISMATCH");
   if (!result.accepted) process.exitCode = 1;
 }
 
 main().catch(async (error) => {
+  // Never print SDK errors/causes/response bodies, which may contain private account data.
+  const safeCode =
+    typeof error?.message === "string" && /^[A-Z_]+$/.test(error.message)
+      ? error.message
+      : "VALIDATION_FAILED";
+  // A manifest is evidence of an attempt: write one only after the exclusive
+  // attempt marker exists, so a local failure never blocks a later submit.
+  let outcomeClass;
+  if (attemptStarted && !manifestWritten) {
+    try {
+      outcomeClass = (await manifestFor(classifyFailure(error), `run failed: ${safeCode}`)).outcome
+        .class;
+    } catch {
+      outcomeClass = undefined;
+    }
+  }
   if (activeDirectory) {
     await save(activeDirectory, `validation-error-${Date.now()}.json`, {
       name: error?.name,
@@ -364,15 +466,11 @@ main().catch(async (error) => {
       responseBody: error?.responseBody,
     }).catch(() => {});
   }
-  // Never print SDK errors/causes/response bodies, which may contain private account data.
-  const safeCode =
-    typeof error?.message === "string" && /^[A-Z_]+$/.test(error.message)
-      ? error.message
-      : "VALIDATION_FAILED";
   report({
     ok: false,
     code: safeCode,
     ...(Number.isInteger(error?.statusCode) ? { httpStatus: error.statusCode } : {}),
+    ...(outcomeClass ? { outcome: { class: outcomeClass } } : {}),
     recovery:
       command === "submit"
         ? "Query status using the same run directory; do not submit again."
