@@ -103,6 +103,34 @@ describe("decimal document calculation", () => {
     expect(line.montoTotalLinea).toBe("101.7");
   });
 
+  it("cascades discounts on the remaining base and rejects one that consumes it", () => {
+    const line = (descuento: { codigoDescuento: "01"; montoDescuento: string }[]) => () =>
+      calculateDecimalLineItemTotals({
+        numeroLinea: 1,
+        codigoCabys: "4321000000000",
+        cantidad: "1",
+        unidadMedida: "Sp",
+        detalle: "Descuento",
+        precioUnitario: "100",
+        descuento,
+        impuesto: [{ codigo: "01", codigoTarifaIVA: "08", tarifa: "13" }],
+      });
+    expect(
+      line([
+        { codigoDescuento: "01", montoDescuento: "60" },
+        { codigoDescuento: "01", montoDescuento: "39.99999" },
+      ])().subTotal,
+    ).toBe("0.00001");
+    // The second discount equals the remaining 40, so nothing would remain.
+    expect(
+      line([
+        { codigoDescuento: "01", montoDescuento: "60" },
+        { codigoDescuento: "01", montoDescuento: "40" },
+      ]),
+    ).toThrow(/remaining line base/);
+    expect(line([{ codigoDescuento: "01", montoDescuento: "100" }])).toThrow(/remaining line base/);
+  });
+
   it("aggregates other charges and payment allocations", () => {
     const source: DecimalFacturaInput = DecimalFacturaInputSchema.parse({
       clave: "50601012500310123456700100001010000000001199999999",

@@ -216,6 +216,11 @@ does not promote 1.0.
 An IVA `tarifa` must equal the percentage of its `codigoTarifaIVA` (for example
 `"13"` for `08`), compared exactly.
 
+The decimal DTOs follow the current exact family: line discounts (explicit
+amounts) cascade on the remaining base, and each must be strictly smaller than
+it; `medioPago` is required unless the sale condition is `02`, `08` or `10`,
+where it may be omitted (0–4 entries) and the XML omits `MedioPago`.
+
 Source DTOs contain only facts; calculated DTOs expose derived totals. The builder
 recalculates all totals and rejects supplied totals. Calculated JSON is canonical
 trimmed text; XML money uses exactly 5 decimals.

@@ -29,7 +29,7 @@ import {
   type DecimalTaxCalculated,
   type DecimalTaxInput,
 } from "@dojocoding/hacienda-shared";
-import { multiply, percent, ratio, round, sum, text } from "./exact-decimal.js";
+import { applyDiscounts, multiply, percent, ratio, round, sum, text } from "./exact-decimal.js";
 
 const MONEY = 5;
 const QUANTITY = 3;
@@ -154,9 +154,13 @@ export function calculateDecimalLineItemTotals(line: DecimalLineSource) {
     MONEY,
   );
   const discounts = line.descuento?.map(canonicalDiscount);
-  const deduction = sum((discounts ?? []).map((discount) => sourceAmount(discount.montoDescuento)));
-  if (deduction > gross) throw new RangeError("Discounts cannot exceed the gross line amount");
-  const subTotal = gross - deduction;
+  // Same cascade as the current exact family: each discount applies to the
+  // remaining base and must be strictly smaller than it.
+  const { remaining: subTotal } = applyDiscounts(
+    gross,
+    discounts ?? [],
+    "Each discount must be strictly less than the remaining line base",
+  );
 
   const taxInputs: DecimalTaxInput[] =
     line.impuesto.length > 0
@@ -446,7 +450,7 @@ export function calculateDecimalInvoiceSummary(
     totalImpAsumEmisorFabrica: money(totalImpAsumEmisorFabrica),
     totalIVADevuelto: "0",
     totalOtrosCargos: money(totalOtrosCargos),
-    ...(payments
+    ...(payments && payments.length > 0
       ? {
           medioPago: payments.map((payment) => ({
             ...payment,

@@ -18,6 +18,7 @@ import { ReceptorSchema } from "./receptor.js";
 import { IdentificacionSchema } from "./identification.js";
 import { TelefonoSchema, UbicacionSchema } from "./common.js";
 import { FacturaElectronicaSchema } from "./factura.js";
+import { requirePaymentPresence } from "./exact-fe.js";
 import {
   DecimalCurrencySchema,
   DecimalDiscountSchema,
@@ -158,7 +159,8 @@ const decimalCommonSourceShape = {
   plazoCredito: z.string().optional(),
   detalleServicio: z.array(DecimalLineInputSchema).min(1).max(1000),
   codigoTipoMoneda: DecimalCurrencySchema,
-  medioPago: z.array(DecimalPaymentSchema).min(1).max(4),
+  /** Required unless the sale condition is 02, 08 or 10 (Anexos v4.4), as in the exact family. */
+  medioPago: z.array(DecimalPaymentSchema).max(4).optional(),
   otrosCargos: z.array(DecimalOtherChargeSchema).max(15).optional(),
   informacionReferencia: z.array(DecimalReferenceSchema).max(10).optional(),
   otros: z.array(DecimalOtherContenidoSchema).optional(),
@@ -201,6 +203,7 @@ function refineStandardSource(
     condicionVentaOtros?: string;
     plazoCredito?: string;
     codigoTipoMoneda: { codigoMoneda: string; tipoCambio: string };
+    medioPago?: readonly unknown[];
     detalleServicio: readonly { numeroLinea: number }[];
     receptor?: { identificacion?: unknown };
   },
@@ -212,6 +215,7 @@ function refineStandardSource(
 
   if (input.condicionVenta === "99" && !input.condicionVentaOtros)
     issue(["condicionVentaOtros"], "Explicit other-sale text is required for condition 99");
+  requirePaymentPresence(input.condicionVenta, input.medioPago, ctx);
   if (input.condicionVenta !== "99" && input.condicionVentaOtros)
     issue(["condicionVentaOtros"], "Other-sale text is only allowed for condition 99");
 
