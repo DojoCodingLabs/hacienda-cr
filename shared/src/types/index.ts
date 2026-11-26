@@ -18,6 +18,7 @@ export type {
   CodigoComercial,
   LineaDetalle,
   InformacionReferencia,
+  RepInformacionReferencia,
   OtroCargo,
   MedioPago,
   TotalDesgloseImpuesto,

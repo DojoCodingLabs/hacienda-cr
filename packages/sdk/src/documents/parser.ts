@@ -35,6 +35,7 @@ import type {
   ResumenFactura,
   OtroCargo,
   InformacionReferencia,
+  RepInformacionReferencia,
   MedioPago,
   TotalDesgloseImpuesto,
   CodigoTipoMoneda,
@@ -313,17 +314,26 @@ function decodeOtroCargo(o: Record<string, unknown>): OtroCargo {
   };
 }
 
-function decodeInfoRef(o: Record<string, unknown>): InformacionReferencia {
+/**
+ * Decode one InformacionReferencia node.
+ *
+ * The parser does not validate catalogs: a REP may carry reason "17" and its
+ * Numero is mandatory, while other documents reject "17". The per-document
+ * schemas and validator enforce those rules, so the decoded shape is cast once
+ * to the lax union both document families accept.
+ */
+function decodeInfoRef(
+  o: Record<string, unknown>,
+): InformacionReferencia | RepInformacionReferencia {
   return {
-    tipoDoc: String(o.TipoDocIR) as InformacionReferencia["tipoDoc"],
+    tipoDoc: String(o.TipoDocIR),
     tipoDocOtros: o.TipoDocRefOTRO !== undefined ? String(o.TipoDocRefOTRO) : undefined,
     numero: o.Numero !== undefined ? String(o.Numero) : undefined,
     fechaEmision: String(o.FechaEmisionIR),
-    codigo:
-      o.Codigo !== undefined ? (String(o.Codigo) as InformacionReferencia["codigo"]) : undefined,
+    codigo: o.Codigo !== undefined ? String(o.Codigo) : undefined,
     codigoOtros: o.CodigoReferenciaOTRO !== undefined ? String(o.CodigoReferenciaOTRO) : undefined,
     razon: o.Razon !== undefined ? String(o.Razon) : undefined,
-  };
+  } as InformacionReferencia | RepInformacionReferencia;
 }
 
 function decodeMedioPago(o: Record<string, unknown>): MedioPago {

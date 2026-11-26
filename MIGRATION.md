@@ -1,5 +1,38 @@
 # Migration guide
 
+## Next: endurecimiento de `InformacionReferencia` (referencias)
+
+Los paquetes `@dojocoding/hacienda-shared` y `@dojocoding/hacienda-sdk` endurecen la entrada aceptada para `InformacionReferencia`. Esta es una corrección de validación que rompe consumidores que dependían de la permisividad anterior (paquetes pre-1.0: cambio `minor`).
+
+Condiciones que ahora se rechazan:
+
+1. `tipoDoc === "99"` sin `tipoDocOtros` (5-100 caracteres), o `tipoDocOtros` con `tipoDoc !== "99"`.
+2. `codigo === "99"` sin `codigoOtros` (5-100 caracteres), o `codigoOtros` con `codigo !== "99"`.
+3. En un documento que no sea `ReciboElectronicoPago`, referencia con `codigo === "17"` (motivo exclusivo del REP).
+4. En el `ReciboElectronicoPago` exacto (`DecimalRepReferenceSchema` / `RepInformacionReferenciaSchema`), referencia sin `numero`: el XSD del REP exige `Numero`.
+
+Además, IVA `"07"` (cálculo especial) exige `codigoTarifaIVA`; IVA `"08"` (bienes usados) exige `factorCalculoIVA`. La correspondencia numérica `tarifa` ↔ `codigoTarifaIVA` solo aplica a `"01"`.
+
+`codigo` sigue siendo opcional para cualquier `tipoDoc` (XSD: `Codigo minOccurs="0"`), por lo que una referencia sin `codigo` sigue aceptándose. El esquema legado `InformacionReferenciaSchema` (y `FacturaElectronicaSchema`) sigue descartando claves desconocidas; solo la familia exacta (`DecimalReferenceSchema`) las rechaza.
+
+Corrección típica:
+
+```ts
+// Antes (ahora rechazado): tipoDoc 99 sin su texto libre.
+{ tipoDoc: "99", fechaEmision: "2025-07-27T10:30:00-06:00", codigo: "04" }
+
+// Después:
+{ tipoDoc: "99", tipoDocOtros: "Contrato de servicios", fechaEmision: "2025-07-27T10:30:00-06:00", codigo: "04" }
+
+// Sigue aceptado (codigo es opcional):
+{ tipoDoc: "01", fechaEmision: "2025-07-27T10:30:00-06:00" }
+
+// REP: Numero es obligatorio.
+{ tipoDoc: "01", numero: "<clave del comprobante pagado>", fechaEmision: "2025-07-27T10:30:00-06:00", codigo: "17" }
+```
+
+Consulta el change `fix-reference-catalog-semantics` y `docs/testing/sdk-robustness-audit.md` (Ítem 1) para el contexto completo.
+
 ## Next: reviewed additive SDK contracts
 
 - Legacy Number inputs/calculators remain unchanged. New shared monetary schemas accept bounded decimal text or explicit rounding of an already binary Number. SDK kernel helpers remain internal.

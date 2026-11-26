@@ -55,6 +55,7 @@ export {
 export {
   CodigoTipoMonedaSchema,
   InformacionReferenciaSchema,
+  RepInformacionReferenciaSchema,
   OtroCargoSchema,
   MedioPagoSchema,
   TotalDesgloseImpuestoSchema,
@@ -181,6 +182,7 @@ export {
   DecimalCurrencySchema,
   DecimalSummarySchema,
   DecimalReferenceSchema,
+  DecimalRepReferenceSchema,
   DecimalOtherContenidoSchema,
   type DecimalMoney,
   type DecimalDatosImpuestoEspecifico,

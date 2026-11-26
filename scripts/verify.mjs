@@ -1,5 +1,5 @@
 import { execFileSync } from "node:child_process";
-import { resolve } from "node:path";
+import { join, resolve } from "node:path";
 const root = resolve(import.meta.dirname, "..");
 const env = { ...process.env };
 // Default verification never enables live authentication or submission tests.
@@ -43,6 +43,18 @@ try {
   console.error(
     "verify: la regeneración produjo diff en shared/src/generated — ejecuta `pnpm spec:generate` y commitea el resultado.",
   );
+  process.exit(1);
+}
+
+// Guarda anti-regresión: sin casos esperados a fallar sin exceptuar.
+try {
+  execFileSync(process.execPath, [join(root, "scripts/check-no-expected-failures.mjs")], {
+    cwd: root,
+    env,
+    stdio: "inherit",
+  });
+} catch {
+  console.error("verify: guarda anti-`it.fails` falló.");
   process.exit(1);
 }
 

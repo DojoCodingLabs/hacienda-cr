@@ -262,6 +262,7 @@ describe("decimal document calculation", () => {
       informacionReferencia: [
         {
           tipoDoc: "01" as const,
+          numero: "50601012500310123456700100001010000000001199999999",
           fechaEmision: "2025-07-27T10:30:00-06:00",
           codigo: "04" as const,
           razon: "Pago",
