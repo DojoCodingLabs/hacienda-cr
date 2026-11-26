@@ -88,7 +88,7 @@ export const ImpuestoSchema = z
     /** Free-text tax type. Required when codigo is "99" (5-100 chars). */
     codigoImpuestoOtros: z.string().min(5).max(100).optional(),
 
-    /** IVA rate code (CodigoTarifaIVA). Required when tax code is IVA-related. */
+    /** IVA rate code (CodigoTarifaIVA). Required for tax codes 01 and 07 (Anexos v4.4, p. 38). */
     codigoTarifaIVA: IvaRateCodeSchema.optional(),
 
     /** Tax rate percentage. Optional for non-rate taxes. */

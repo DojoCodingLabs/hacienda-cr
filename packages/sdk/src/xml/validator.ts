@@ -51,11 +51,32 @@ export interface FacturaValidationResult {
 // ---------------------------------------------------------------------------
 
 /**
- * Check whether two numbers are equal within a small tolerance.
- * Accounts for floating-point precision issues.
+ * Implementation tolerance for comparing legacy `number` amounts.
+ *
+ * This is NOT a fiscal rule. Hacienda's Anexos y Estructuras v4.4 specify
+ * 5-decimal amounts rounded on the sixth decimal (p. 14) and publish no
+ * numeric comparison tolerance. The only related text is the v4.2 change-log
+ * note that "márgenes de error en los decimales" were introduced for
+ * two-decimal systems (p. 12), and it gives no value. The vendored XSDs carry
+ * no tolerance either.
+ *
+ * The legacy validator works on IEEE-754 doubles, which cannot hold every
+ * 5-decimal value exactly (from about 7e10 upward one ULP exceeds 0.00001), so
+ * it needs some epsilon to absorb binary rounding noise in sums of up to 1000
+ * lines. The value 0.001 is kept unchanged from earlier releases because no
+ * smaller bound is provably safe across the full 18,5 range on `number`.
+ * Consequence: this path can accept amounts that differ from the recomputed
+ * value by less than 0.001. Use the exact `Decimal*` / `Exact*` calculators,
+ * which compare scaled integers exactly at 5 decimals, when that matters.
+ */
+export const LEGACY_NUMBER_TOTALS_TOLERANCE = 0.001;
+
+/**
+ * Compare two legacy `number` amounts within {@link LEGACY_NUMBER_TOTALS_TOLERANCE}.
+ * The tolerance absorbs binary floating-point noise only; see its documentation.
  */
 function amountsEqual(a: number, b: number): boolean {
-  return Math.abs(a - b) < 0.001;
+  return Math.abs(a - b) < LEGACY_NUMBER_TOTALS_TOLERANCE;
 }
 
 /** Transitional IVA rate codes (Ley 9635), invalid for a new document. */
@@ -65,12 +86,25 @@ const TRANSITIONAL_IVA_RATE_CODES: readonly IvaRateCode[] = [
   IvaRateCode.TRANSITORIO_8,
 ];
 
-/** IVA-related tax codes. */
+/**
+ * IVA-related tax codes (nota 8: 01, 07 and 08). Used only to choose the IVA
+ * base (baseImponible) for the tax-amount check. It is not the set that
+ * requires CodigoTarifaIVA.
+ */
 const IVA_TAX_CODES: string[] = [
   TaxCode.IVA,
   TaxCode.IVA_CALCULO_ESPECIAL,
   TaxCode.IVA_BIENES_USADOS,
 ];
+
+/**
+ * Tax codes that require CodigoTarifaIVA. Anexos y Estructuras v4.4, p. 38
+ * (ImpuestoType, CodigoTarifaIVA): "Se convierte en obligatorio para los
+ * Códigos 01, 07. de la nota 8." The XSDs declare the element minOccurs="0".
+ * Code 08 (IVA Régimen de Bienes Usados, factor) requires FactorCalculoIVA
+ * instead (p. 39), which is checked separately below.
+ */
+const IVA_RATE_CODE_REQUIRED_TAX_CODES: string[] = [TaxCode.IVA, TaxCode.IVA_CALCULO_ESPECIAL];
 
 // ---------------------------------------------------------------------------
 // Business Rule Validation
@@ -220,8 +254,8 @@ function validateBusinessRules(input: FacturaElectronicaInput): FacturaValidatio
           }
         }
 
-        // IVA tax codes must have codigoTarifaIVA
-        if (IVA_TAX_CODES.includes(tax.codigo) && !tax.codigoTarifaIVA) {
+        // Codes 01 and 07 must have codigoTarifaIVA (Anexos v4.4, p. 38); 08 need not.
+        if (IVA_RATE_CODE_REQUIRED_TAX_CODES.includes(tax.codigo) && !tax.codigoTarifaIVA) {
           errors.push({
             path: `${prefix}.impuesto.${taxIndex}.codigoTarifaIVA`,
             message: `IVA tax (code ${tax.codigo}) must specify a codigoTarifaIVA (rate code)`,
@@ -245,7 +279,8 @@ function validateBusinessRules(input: FacturaElectronicaInput): FacturaValidatio
             });
         }
 
-        // IVA bienes usados requires factor de calculo (XSD: obligatorio para bienes usados)
+        // IVA bienes usados requires FactorCalculoIVA (Anexos v4.4, p. 39: "En caso de
+        // utilizar el código 08 de la nota 08, se verificará que este campo se encuentre")
         if (tax.codigo === TaxCode.IVA_BIENES_USADOS && tax.factorCalculoIVA === undefined)
           errors.push({
             path: `${prefix}.impuesto.${taxIndex}.factorCalculoIVA`,

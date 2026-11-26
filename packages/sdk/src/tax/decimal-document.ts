@@ -35,6 +35,8 @@ const MONEY = 5;
 const QUANTITY = 3;
 const RATE = 5;
 const MAX = 999999999999999999n;
+// IVA codes taxed on baseImponible. This only selects the base; CodigoTarifaIVA
+// is required for 01/07 alone (Anexos v4.4, p. 38), enforced in the shared schema.
 const IVA_TAX_CODES = new Set(["01", "07", "08"]);
 const SPECIFIC_BASE_CODES = new Set(["02", "04", "05"]);
 

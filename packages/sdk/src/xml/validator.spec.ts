@@ -3,7 +3,10 @@
  */
 
 import { describe, it, expect } from "vitest";
-import { validateFacturaInput } from "./validator.js";
+import type { FacturaElectronica } from "@dojocoding/hacienda-shared";
+import { LEGACY_NUMBER_TOTALS_TOLERANCE, validateFacturaInput } from "./validator.js";
+import { buildFacturaXml } from "../documents/factura-builder.js";
+import { SCHEMA_GENERATIONS, validateAgainstXsd, xmllintAvailable } from "../__testing__/xsd.js";
 import {
   SIMPLE_INVOICE,
   MULTI_ITEM_INVOICE,
@@ -752,32 +755,90 @@ describe("validateFacturaInput — business rules", () => {
     expect(result.errors.some((e) => e.message.includes("codigoTarifaIVA"))).toBe(true);
   });
 
-  it.each([["07"], ["08"]] as const)(
-    "should require codigoTarifaIVA for IVA-related code %s",
-    (codigo) => {
-      const baseLine = firstLineItem(SIMPLE_INVOICE);
-      const badInput = {
-        ...SIMPLE_INVOICE,
-        detalleServicio: [
-          {
-            ...baseLine,
-            impuesto: [
-              {
-                codigo,
-                tarifa: 13,
-                monto: 13000,
-              },
-            ],
-          },
-        ],
-      };
-      const result = validateFacturaInput(badInput);
-      expect(result.valid).toBe(false);
-      expect(
-        result.errors.some((e) => e.path === "detalleServicio.0.impuesto.0.codigoTarifaIVA"),
-      ).toBe(true);
+  // Anexos y Estructuras v4.4, p. 38: CodigoTarifaIVA "Se convierte en
+  // obligatorio para los Códigos 01, 07. de la nota 8." Code 01 is covered above.
+  it.each([["07"]] as const)("should require codigoTarifaIVA for IVA-related code %s", (codigo) => {
+    const baseLine = firstLineItem(SIMPLE_INVOICE);
+    const badInput = {
+      ...SIMPLE_INVOICE,
+      detalleServicio: [
+        {
+          ...baseLine,
+          impuesto: [
+            {
+              codigo,
+              tarifa: 13,
+              monto: 13000,
+            },
+          ],
+        },
+      ],
+    };
+    const result = validateFacturaInput(badInput);
+    expect(result.valid).toBe(false);
+    expect(
+      result.errors.some((e) => e.path === "detalleServicio.0.impuesto.0.codigoTarifaIVA"),
+    ).toBe(true);
+  });
+
+  // Regression (P0-4a): code 08 (IVA Régimen de Bienes Usados, factor) needs
+  // FactorCalculoIVA (Anexos v4.4, p. 39), not CodigoTarifaIVA, which the XSD
+  // declares minOccurs="0" and the Anexo makes mandatory only for 01 and 07.
+  const USED_GOODS_WITHOUT_RATE_CODE: FacturaElectronica = {
+    ...SIMPLE_INVOICE,
+    detalleServicio: [
+      {
+        ...firstLineItem(SIMPLE_INVOICE),
+        impuesto: [{ codigo: "08", tarifa: 13, factorCalculoIVA: 0.95, monto: 13000 }],
+      },
+    ],
+  };
+
+  it("should accept IVA 08 without codigoTarifaIVA", () => {
+    const result = validateFacturaInput(USED_GOODS_WITHOUT_RATE_CODE);
+    expect(result.errors).toEqual([]);
+    expect(result.valid).toBe(true);
+  });
+
+  it.skipIf(!xmllintAvailable()).each(SCHEMA_GENERATIONS)(
+    "should build IVA 08 without CodigoTarifaIVA as XSD-valid XML (%s schemas)",
+    (generation) => {
+      const xml = buildFacturaXml(USED_GOODS_WITHOUT_RATE_CODE);
+      expect(xml).toContain("<FactorCalculoIVA>");
+      expect(xml).not.toContain("<CodigoTarifaIVA>");
+      const result = validateAgainstXsd(xml, "FacturaElectronica_V4.4.xsd", {
+        allowMissingSignature: true,
+        generation,
+      });
+      expect(result.errors).toBe("");
+      expect(result.valid).toBe(true);
     },
   );
+});
+
+// ---------------------------------------------------------------------------
+// Legacy Number tolerance (implementation tolerance, not a fiscal rule)
+// ---------------------------------------------------------------------------
+
+describe("validateFacturaInput — legacy Number totals tolerance", () => {
+  it("names the documented 0.001 implementation tolerance", () => {
+    expect(LEGACY_NUMBER_TOTALS_TOLERANCE).toBe(0.001);
+  });
+
+  it("absorbs differences below the tolerance and rejects differences at it", () => {
+    const withTotal = (delta: number) =>
+      validateFacturaInput({
+        ...SIMPLE_INVOICE,
+        resumenFactura: {
+          ...SIMPLE_INVOICE.resumenFactura,
+          totalComprobante: SIMPLE_INVOICE.resumenFactura.totalComprobante + delta,
+        },
+      });
+    expect(withTotal(0.00001).valid).toBe(true);
+    const rejected = withTotal(LEGACY_NUMBER_TOTALS_TOLERANCE);
+    expect(rejected.valid).toBe(false);
+    expect(rejected.errors.some((e) => e.path === "resumenFactura.totalComprobante")).toBe(true);
+  });
 });
 
 // ---------------------------------------------------------------------------

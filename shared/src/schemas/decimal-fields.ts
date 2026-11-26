@@ -279,6 +279,13 @@ export const DecimalExonerationCalculatedSchema = z
   });
 
 const TAX_IVA_CODES = new Set(["01", "07", "08"]);
+/**
+ * Tax codes that require CodigoTarifaIVA. Anexos y Estructuras v4.4, p. 38
+ * (ImpuestoType, CodigoTarifaIVA): "Se convierte en obligatorio para los
+ * Códigos 01, 07. de la nota 8." The XSDs declare it minOccurs="0", so code 08
+ * (IVA Régimen de Bienes Usados, factor) may omit it.
+ */
+const TAX_IVA_RATE_CODE_REQUIRED = new Set(["01", "07"]);
 const TAX_SPECIFIC_CODES = new Set(["03", "04", "05", "06"]);
 
 function refineDecimalTax(
@@ -303,7 +310,7 @@ function refineDecimalTax(
     issue(["codigoImpuestoOtros"], "Explicit other-tax text is required for code 99");
   if (tax.codigo !== "99" && tax.codigoImpuestoOtros)
     issue(["codigoImpuestoOtros"], "Other-tax text is only allowed for code 99");
-  if (TAX_IVA_CODES.has(tax.codigo) && !tax.codigoTarifaIVA)
+  if (TAX_IVA_RATE_CODE_REQUIRED.has(tax.codigo) && !tax.codigoTarifaIVA)
     issue(["codigoTarifaIVA"], "IVA taxes require an official rate code");
   if (TAX_IVA_CODES.has(tax.codigo) && tax.tarifa === undefined)
     issue(["tarifa"], "IVA taxes require a percentage rate");

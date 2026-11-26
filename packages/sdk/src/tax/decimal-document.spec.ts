@@ -274,3 +274,125 @@ describe("decimal document calculation", () => {
     );
   });
 });
+
+// Regression (P0-4b): the exact path compares scaled integers at 5 decimals.
+// Hacienda publishes no numeric comparison tolerance (Anexos v4.4 p. 14 fixes
+// 5-decimal rounding on the sixth decimal only), so one unit in the fifth
+// decimal is a mismatch. The legacy Number validator keeps a separate
+// implementation tolerance (LEGACY_NUMBER_TOTALS_TOLERANCE) that does not
+// apply here.
+describe("exact 5-decimal comparison (no tolerance)", () => {
+  const party = {
+    emisor: {
+      nombre: "Empresa",
+      identificacion: { tipo: "02" as const, numero: "3101234567" },
+      ubicacion: { provincia: "1", canton: "01", distrito: "01", otrasSenas: "direccion" },
+      correoElectronico: "a@b.com",
+    },
+    receptor: {
+      nombre: "Cliente",
+      identificacion: { tipo: "02" as const, numero: "3109876543" },
+      correoElectronico: "c@d.com",
+    },
+  };
+
+  const invoicePaying = (totalMedioPago: string) =>
+    calculateDecimalDocument({
+      ...DecimalFacturaInputSchema.parse({
+        clave: "50601012500310123456700100001010000000001199999999",
+        proveedorSistemas: "3101234567",
+        codigoActividadEmisor: "620100",
+        numeroConsecutivo: "00100001010000000001",
+        fechaEmision: "2025-07-27T10:30:00-06:00",
+        ...party,
+        condicionVenta: "01",
+        detalleServicio: [
+          {
+            numeroLinea: 1,
+            codigoCabys: "4321000000000",
+            cantidad: "1",
+            unidadMedida: "Sp",
+            detalle: "Servicio",
+            precioUnitario: "100",
+            impuesto: [{ codigo: "01", codigoTarifaIVA: "08", tarifa: "13" }],
+            esServicio: true,
+          },
+        ],
+        codigoTipoMoneda: { codigoMoneda: "CRC", tipoCambio: "1" },
+        medioPago: [{ tipoMedioPago: "01", totalMedioPago }],
+      }),
+      tipoDocumento: "01",
+    });
+
+  it("accepts a payment allocation equal to the total", () => {
+    expect(invoicePaying("113").resumenFactura.totalComprobante).toBe("113");
+  });
+
+  it.each(["113.00001", "112.99999"])(
+    "rejects a payment allocation off by 0.00001 (%s)",
+    (totalMedioPago) => {
+      expect(() => invoicePaying(totalMedioPago)).toThrow(/Payment allocations/);
+    },
+  );
+
+  it("rejects a supplied tax amount off by 0.00001", () => {
+    const line = (monto: string) => () =>
+      calculateDecimalLineItemTotals({
+        numeroLinea: 1,
+        codigoCabys: "4321000000000",
+        cantidad: "1",
+        unidadMedida: "Sp",
+        detalle: "ISC",
+        precioUnitario: "100",
+        impuesto: [{ codigo: "02", tarifa: "10", monto }],
+      });
+    expect(line("10")()).toMatchObject({ montoTotalLinea: "110" });
+    expect(line("10.00001")).toThrow(/does not match its percentage rate/);
+    expect(line("9.99999")).toThrow(/does not match its percentage rate/);
+  });
+
+  it.each([
+    ["montoTotalLinea", { montoTotalLinea: "113.00001" }, /REP line total/],
+    ["impuestoNeto", { impuestoNeto: "13.00001" }, /REP line impuestoNeto/],
+    ["subTotal", { subTotal: "100.00001" }, /REP line subTotal/],
+  ] as const)("rejects a REP %s off by 0.00001", (_field, override, message) => {
+    const source = {
+      clave: "50601012500310123456700100001010000000001199999999",
+      tipoDocumento: "10" as const,
+      proveedorSistemas: "3101234567",
+      numeroConsecutivo: "00100001100000000001",
+      fechaEmision: "2025-07-27T10:30:00-06:00",
+      ...party,
+      condicionVenta: "11" as const,
+      detalleServicio: [
+        {
+          numeroLinea: 1,
+          codigoCabys: "4321000000000",
+          detalle: "Pago",
+          montoTotal: "100",
+          subTotal: "100",
+          impuesto: [
+            { codigo: "01" as const, codigoTarifaIVA: "08" as const, tarifa: "13", monto: "13" },
+          ],
+          impuestoNeto: "13",
+          montoTotalLinea: "113",
+          ...override,
+        },
+      ],
+      codigoTipoMoneda: { codigoMoneda: "CRC" as const, tipoCambio: "1" },
+      medioPago: [{ tipoMedioPago: "04" as const, totalMedioPago: "113" }],
+      informacionReferencia: [
+        {
+          tipoDoc: "01" as const,
+          numero: "50601012500310123456700100001010000000001199999999",
+          fechaEmision: "2025-07-27T10:30:00-06:00",
+          codigo: "04" as const,
+          razon: "Pago",
+        },
+      ],
+    };
+    expect(() => calculateDecimalDocument(DecimalDocumentInputSchema.parse(source))).toThrow(
+      message,
+    );
+  });
+});

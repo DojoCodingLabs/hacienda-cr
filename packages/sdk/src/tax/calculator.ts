@@ -92,7 +92,7 @@ export interface LineItemTaxInput {
   /** Tax type code (e.g., "01" for IVA). */
   codigo: string;
 
-  /** IVA rate code (CodigoTarifaIVA). Required for IVA taxes. */
+  /** IVA rate code (CodigoTarifaIVA). Required for tax codes 01 and 07; optional for 08. */
   codigoTarifaIVA?: string;
 
   /** Tax rate percentage (e.g., 13 for 13%). */
@@ -222,7 +222,10 @@ export interface CalculatedLineItem {
   esServicio: boolean;
 }
 
-/** IVA-related tax codes. */
+/**
+ * IVA-related tax codes taxed on baseImponible. This only selects the base;
+ * CodigoTarifaIVA is required for 01/07 alone (Anexos v4.4, p. 38).
+ */
 const IVA_TAX_CODES: string[] = [
   TaxCode.IVA,
   TaxCode.IVA_CALCULO_ESPECIAL,
