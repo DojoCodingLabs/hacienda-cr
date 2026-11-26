@@ -232,6 +232,10 @@ export type Contract={page:ComprobantesListResponse;detail:ComprobanteDetail;opt
 // @ts-expect-error unsupported history dates must migrate before authentication
 const unsupported:Parameters<typeof listComprobantes>[1]={fechaEmisionDesde:"2026-01-01"};
 void unsupported;
+import {type Scope,fetchWithTimeout,type FetchWithTimeoutOptions,reconcileByClave,type ReconcileResult,classifyOutcome,type DeliveryOutcome,parseCallbackPayload,type ParsedCallbackPayload} from "@dojocoding/hacienda-sdk";
+const timeoutOptions:FetchWithTimeoutOptions={timeoutMs:1000,redirect:"error"};
+export const serviceContracts={fetchWithTimeout,timeoutOptions,reconcileByClave,classifyOutcome,parseCallbackPayload};
+export type ServiceContract={scope:Scope;reconcile:ReconcileResult;outcome:DeliveryOutcome;callback:ParsedCallbackPayload;fetched:ReturnType<typeof fetchWithTimeout>};
 `,
   );
   for (const resolution of ["NodeNext", "Bundler"]) {
@@ -291,7 +295,7 @@ import {ExactFecUsedPersonalGoodsNonSubjectInputSchema,ExactRecipientMessageInpu
 import {createServer} from "@dojocoding/hacienda-mcp";
 import {Client} from "@modelcontextprotocol/sdk/client/index.js";
 import {StdioClientTransport} from "@modelcontextprotocol/sdk/client/stdio.js";
-import {isBusinessDay,addBusinessDays,verifySignedDocumentXml,parseDocumentXml,FileDocumentStore} from "@dojocoding/hacienda-sdk";
+import {isBusinessDay,addBusinessDays,verifySignedDocumentXml,parseDocumentXml,FileDocumentStore,classifyOutcome,reconcileByClave,parseCallbackPayload,validateCallbackPayload,CallbackEnvelopeSchema,ValidationError,fetchWithTimeout,ScopeSchema,fingerprintScope,AuthErrorCode} from "@dojocoding/hacienda-sdk";
 import {MoneyInputSchema,MonetaryTextSchema,DecimalDocumentInputSchema,DecimalDocumentCalculatedSchema,DecimalMoneySchema,DecimalExoneratedRateSchema,DecimalSpecificPercentageSchema,DecimalTaxInputSchema} from "@dojocoding/hacienda-shared";
 import {calculateDecimalDocument,calculateDecimalLineItemTotals,calculateDecimalInvoiceSummary,buildDecimalDocumentXml,buildDecimalFacturaXml} from "@dojocoding/hacienda-sdk";
 assert.equal(isBusinessDay("2026-01-01"),false);
@@ -302,6 +306,7 @@ assert.throws(()=>addBusinessDays("2031-01-01",0));
 assert.equal(MoneyInputSchema.parse("0.10000"),"0.1");
 assert.equal(MonetaryTextSchema.safeParse("1e2").success,false);
 assert.equal(typeof FileDocumentStore,"function");
+assert.deepEqual([classifyOutcome({status:"procesando"}).kind,classifyOutcome({"ind-estado":"aceptado"}).kind,classifyOutcome(null,new Error("timeout")).kind,classifyOutcome({status:"error"}).kind],["pending","success","transport_error","unknown"]);
 const issuedUsername="cpf-01-1234-5678@stag.comprobanteselectronicos.go.cr";
 assert.deepEqual(loadCredentials({username:issuedUsername,password:"synthetic"}),{username:issuedUsername,password:"synthetic"});
 let tokenRequests=0;
@@ -319,6 +324,10 @@ const historyPage=await listComprobantes(historyClient,{limit:10,emisor:"0200310
 assert.deepEqual(historyPage.comprobantes,[metadata]);assert.deepEqual(historyPage.pagination,{httpStatus:206,acceptRange:"resource 50",contentRange:"0-10/100"});
 assert.equal(historyPage.totalRegistros,undefined);assert.equal(historyPage.comprobantes[0].estado,undefined);assert.equal(historyPage.comprobantes[0].comprobanteXml,undefined);
 assert.deepEqual(await getComprobante(historyClient,SIMPLE_INVOICE.clave),metadata);
+const fetchesBeforeReconcile=historyFetches;await assert.rejects(reconcileByClave(historyClient,"../recepcion/anything"));assert.equal(historyFetches,fetchesBeforeReconcile);
+{let seen;const ok=await fetchWithTimeout("https://timeout.example.test/",{},{timeoutMs:1000,fetchFn:async(_u,init)=>{seen=init;return new Response("ok")}});assert.equal(await ok.text(),"ok");assert.equal(seen.redirect,"error");await assert.rejects(fetchWithTimeout("https://timeout.example.test/",{},{timeoutMs:10,fetchFn:()=>new Promise(()=>{})}),(e)=>e.name==="TimeoutError");await assert.rejects(fetchWithTimeout("https://timeout.example.test/",{},{timeoutMs:0}),RangeError);}
+{const scope={tenantId:"t1",environment:"sandbox",issuer:{idType:"02",idNumber:"3101234567"}};assert.deepEqual(ScopeSchema.parse(scope),scope);assert.equal(ScopeSchema.safeParse({...scope,issuer:{idType:"99",idNumber:"3101234567"}}).success,false);assert.notEqual(fingerprintScope(scope),fingerprintScope({...scope,tenantId:"t2"}));assert.equal(AuthErrorCode.SCOPE_IDENTITY_MISMATCH,"SCOPE_IDENTITY_MISMATCH");}
+const callbackClave=SIMPLE_INVOICE.clave;assert.deepEqual(validateCallbackPayload(JSON.stringify({clave:callbackClave,fecha:"2026-01-01T00:00:00-06:00","ind-estado":"recibido"})),{clave:callbackClave,fecha:"2026-01-01T00:00:00-06:00","ind-estado":"recibido"});assert.equal(CallbackEnvelopeSchema.safeParse({clave:callbackClave,fecha:"x",indEstado:"recibido"}).success,false);assert.throws(()=>validateCallbackPayload("{bad"),ValidationError);assert.equal((await parseCallbackPayload({clave:callbackClave,fecha:"x","ind-estado":"procesando"})).status,"procesando");await assert.rejects(parseCallbackPayload({clave:callbackClave,fecha:"x","ind-estado":"aceptado","respuesta-xml":Buffer.from("<MensajeHacienda/>").toString("base64")}),ValidationError);
 const beforeInvalid=[historyAuth,historyFetches];await assert.rejects(listComprobantes(historyClient,{fechaEmisionDesde:"2026-01-01"}));await assert.rejects(getComprobante(historyClient,"../recepcion/anything"));await assert.rejects(listComprobantes(historyClient,{}, {signal:AbortSignal.abort()}));assert.deepEqual([historyAuth,historyFetches],beforeInvalid);
 const xml=buildFacturaXml(SIMPLE_INVOICE);
 const exact={caseCode:"FE-domestic-ordinary-iva13-v1",clave:SIMPLE_INVOICE.clave,proveedorSistemas:SIMPLE_INVOICE.proveedorSistemas,codigoActividadEmisor:SIMPLE_INVOICE.codigoActividadEmisor,numeroConsecutivo:SIMPLE_INVOICE.numeroConsecutivo,fechaEmision:SIMPLE_INVOICE.fechaEmision,emisor:SIMPLE_INVOICE.emisor,receptor:SIMPLE_INVOICE.receptor,condicionVenta:"01",detalleServicio:[{numeroLinea:1,codigoCabys:"8310100000000",cantidad:"1",unidadMedida:"Sp",detalle:"Packed exact decimal fixture",precioUnitario:"8849557522123.89380",esServicio:true,impuesto:[{codigo:"01",codigoTarifaIVA:"08",tarifa:"13"}]}],codigoTipoMoneda:{codigoMoneda:"USD",tipoCambio:"513.12345"},medioPago:[{tipoMedioPago:"01",totalMedioPago:"9999999999999.99999"}]};

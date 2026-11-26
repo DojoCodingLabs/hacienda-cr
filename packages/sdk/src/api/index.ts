@@ -6,6 +6,8 @@
  */
 
 // HTTP client
+export { fetchWithTimeout } from "./fetch-with-timeout.js";
+export type { FetchWithTimeoutOptions } from "./fetch-with-timeout.js";
 export { HttpClient } from "./http-client.js";
 export type { HttpClientOptions, RequestOptions, HttpResponse } from "./http-client.js";
 
@@ -19,8 +21,9 @@ export {
   getStatus,
   isTerminalStatus,
   extractRejectionReason,
+  reconcileByClave,
 } from "./submission.js";
-export type { ParsedStatusResponse } from "./submission.js";
+export type { ParsedStatusResponse, ReconcileResult } from "./submission.js";
 
 // Orchestrator
 export { submitAndWait } from "./orchestrator.js";
@@ -37,6 +40,16 @@ export type { HistoryRequestOptions } from "./comprobantes.js";
 // Taxpayer lookup
 export { lookupTaxpayer } from "./taxpayer.js";
 export type { TaxpayerInfo, LookupTaxpayerOptions } from "./taxpayer.js";
+
+// Callback parsing
+export {
+  parseCallbackPayload,
+  validateCallbackPayload,
+  CallbackEnvelopeSchema,
+  MAX_CALLBACK_BODY_BYTES,
+  MAX_CALLBACK_RESPONSE_XML_BYTES,
+} from "./callback.js";
+export type { ParsedCallbackPayload, CallbackEnvelope } from "./callback.js";
 
 // Error codes
 export {

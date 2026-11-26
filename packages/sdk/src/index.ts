@@ -14,6 +14,14 @@ export const PACKAGE_NAME = "@dojocoding/hacienda-sdk" as const;
 export { HaciendaClient, HaciendaClientOptionsSchema } from "./client.js";
 export type { HaciendaClientOptions } from "./client.js";
 
+export {
+  ScopeSchema,
+  ScopeEnvironmentSchema,
+  ScopeIssuerSchema,
+  fingerprintScope,
+} from "./scope.js";
+export type { Scope } from "./scope.js";
+
 // ---------------------------------------------------------------------------
 // Bootstrap — convenience auth helper for CLI / MCP consumers
 // ---------------------------------------------------------------------------
@@ -216,6 +224,7 @@ export {
   transitionDocument,
   evaluateDeadline,
   classifySendResult,
+  classifyOutcome,
   situationFromClave,
   assertClaveSituationMatch,
   createObligation,
@@ -238,6 +247,8 @@ export type {
   DocumentStore,
   DeadlineEvaluation,
   SendResult,
+  DeliveryOutcome,
+  StatusObservation,
   DeliverySubmitAndWaitOptions,
   CreateStoredDocumentOptions,
   FileStoreOptions,
@@ -269,25 +280,36 @@ export type {
 // ---------------------------------------------------------------------------
 
 export {
+  fetchWithTimeout,
   HttpClient,
   RateLimiter,
   submitDocument,
   getStatus,
   isTerminalStatus,
   extractRejectionReason,
+  reconcileByClave,
   submitAndWait,
   withRetry,
   listComprobantes,
   getComprobante,
   lookupTaxpayer,
+  parseCallbackPayload,
+  validateCallbackPayload,
+  CallbackEnvelopeSchema,
+  MAX_CALLBACK_BODY_BYTES,
+  MAX_CALLBACK_RESPONSE_XML_BYTES,
 } from "./api/index.js";
 export type {
   HistoryRequestOptions,
+  FetchWithTimeoutOptions,
   HttpClientOptions,
   RequestOptions,
   HttpResponse,
   RateLimiterOptions,
   ParsedStatusResponse,
+  ReconcileResult,
+  ParsedCallbackPayload,
+  CallbackEnvelope,
   SubmitAndWaitOptions,
   SubmitAndWaitResult,
   RetryOptions,

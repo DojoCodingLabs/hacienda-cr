@@ -1,4 +1,4 @@
-import { withSignal } from "../api/cancellation.js";
+import { fetchWithTimeout } from "../api/fetch-with-timeout.js";
 import { readResponseText } from "../api/response-limits.js";
 /**
  * OAuth2 ROPC token manager with auto-refresh for the Hacienda IDP.
@@ -238,9 +238,14 @@ export class TokenManager {
 
   /**
    * Sends a token request to the IDP and stores the result.
+   *
+   * One request-scoped controller and timer span the fetch and every body
+   * read, so a server that sends headers and then stalls the body is still
+   * bounded by `requestTimeoutMs`.
    */
   private async requestToken(body: URLSearchParams): Promise<void> {
     const controller = new AbortController();
+    const signal = controller.signal;
     const timer = setTimeout(
       () => controller.abort(new DOMException("Token request timed out.", "TimeoutError")),
       this.requestTimeoutMs,
@@ -248,18 +253,21 @@ export class TokenManager {
     try {
       let response: Response;
       try {
-        response = await withSignal(
-          () =>
-            this.fetchFn(this.envConfig.idpTokenUrl, {
-              method: "POST",
-              signal: controller.signal,
-              redirect: "error",
-              headers: {
-                "Content-Type": "application/x-www-form-urlencoded",
-              },
-              body: body.toString(),
-            }),
-          controller.signal,
+        response = await fetchWithTimeout(
+          this.envConfig.idpTokenUrl,
+          {
+            method: "POST",
+            signal,
+            headers: {
+              "Content-Type": "application/x-www-form-urlencoded",
+            },
+            body: body.toString(),
+          },
+          {
+            timeoutMs: this.requestTimeoutMs,
+            fetchFn: this.fetchFn,
+            redirect: "error",
+          },
         );
       } catch (error) {
         throw new AuthError(
@@ -272,9 +280,10 @@ export class TokenManager {
       if (!response.ok) {
         let detail = "";
         try {
-          const errorBody = JSON.parse(
-            await readResponseText(response, 65536, controller.signal),
-          ) as Record<string, unknown>;
+          const errorBody = JSON.parse(await readResponseText(response, 65536, signal)) as Record<
+            string,
+            unknown
+          >;
           const code = errorBody["error"];
           if (typeof code === "string" && /^[a-z_]{1,64}$/.test(code)) detail = ` — ${code}`;
         } catch {
@@ -287,7 +296,7 @@ export class TokenManager {
         );
       }
 
-      const text = await readResponseText(response, 65536, controller.signal);
+      const text = await readResponseText(response, 65536, signal);
       let json: unknown;
       try {
         json = JSON.parse(text);
