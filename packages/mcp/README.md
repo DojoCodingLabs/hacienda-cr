@@ -129,6 +129,7 @@ unsigned XML. Local validation does not imply Hacienda acceptance.
 - `medioPago` -- Single payment-method string (default: `"01"` = cash); emitted with its amount inside `ResumenFactura`
 - `lineItems` -- Array of 1–1000 items with `codigoCabys`, `cantidad`, `unidadMedida`, `detalle`, `precioUnitario`, optional `impuesto` (up to 10), `descuento` (up to 5), and `esServicio` (defaults to `false`; set `true` for services)
 - `plazoCredito` -- Credit term in days (optional)
+- `roundingMode` -- `"legacy-tofixed"` (default, the same bytes as earlier releases) or `"half-up"` (decimal HALF_UP per Anexos y Estructuras v4.4, p. 13-14). They differ only on exact sixth-decimal halves, for example `0.999 × 1802.455` gives `1800.65254` with `"legacy-tofixed"` and `1800.65255` with `"half-up"`. Switching changes those bytes. `create_invoice_exact` already rounds HALF_UP on decimal text and is the recommended path
 
 `plazoCredito` is a string and is required for credit sales (`condicionVenta: "02"`).
 Tax inputs contain `codigo`, `tarifa`, and optional `codigoTarifaIVA`; discount

@@ -121,6 +121,19 @@ examples and compatibility details.
 | `calculateLineItemTotals()` | Function | Computes all totals for a single line item        |
 | `calculateInvoiceSummary()` | Function | Aggregates all line items into a ResumenFactura   |
 | `round5()`                  | Function | Rounds to 5 decimal places (Hacienda requirement) |
+| `round5HalfUp()`            | Function | Rounds to 5 decimal places, decimal HALF_UP       |
+| `createLegacyCalculator()`  | Function | Legacy calculators bound to a `roundingMode`      |
+
+The legacy Number calculators round with `Number.toFixed(5)` by default
+(`roundingMode: "legacy-tofixed"`), so their bytes do not change between
+releases. That rounds an exact sixth-decimal half down when its binary value is
+just below it (`20.203515` → `20.20351`). Hacienda's rule is decimal HALF_UP
+(Anexos y Estructuras v4.4, p. 13-14). The exact `calculateDecimal*` path
+already follows it and is the recommended choice. On the legacy path you can opt in with
+`createLegacyCalculator({ roundingMode: "half-up" })`. Switching changes the
+bytes of exact-half amounts, so keep the default when regenerating historical
+documents. `"legacy-tofixed"` may stop being the default only in 1.0. See
+[MIGRATION.md](../../MIGRATION.md).
 
 ### Signing
 

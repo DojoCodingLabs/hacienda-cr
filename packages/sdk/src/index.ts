@@ -139,6 +139,10 @@ export {
 // Tax calculation module
 export {
   round5,
+  round5HalfUp,
+  createLegacyCalculator,
+  LEGACY_ROUNDING_MODES,
+  DEFAULT_LEGACY_ROUNDING_MODE,
   calculateLineItemTotals,
   calculateInvoiceSummary,
   calculateDecimalDocument,
@@ -154,6 +158,9 @@ export {
   type LineItemInput,
   type CalculatedLineItem,
   type InvoiceSummary,
+  type LegacyRoundingMode,
+  type LegacyCalculationOptions,
+  type LegacyCalculator,
   type DecimalLineSource,
   type DecimalCalculatedLine,
 } from "./tax/index.js";

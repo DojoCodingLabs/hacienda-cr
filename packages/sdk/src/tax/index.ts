@@ -5,12 +5,19 @@
 
 export {
   round5,
+  round5HalfUp,
+  createLegacyCalculator,
+  LEGACY_ROUNDING_MODES,
+  DEFAULT_LEGACY_ROUNDING_MODE,
   calculateLineItemTotals,
   calculateInvoiceSummary,
   type LineItemTaxInput,
   type LineItemInput,
   type CalculatedLineItem,
   type InvoiceSummary,
+  type LegacyRoundingMode,
+  type LegacyCalculationOptions,
+  type LegacyCalculator,
 } from "./calculator.js";
 
 /**

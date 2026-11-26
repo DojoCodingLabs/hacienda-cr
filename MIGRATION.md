@@ -1,5 +1,74 @@
 # Migration guide
 
+## Next: opt-in HALF_UP rounding for the legacy Number calculators
+
+Nothing changes unless you opt in. `round5`, `calculateTaxAmount`,
+`calculateLineItemTotals`, `calculateInvoiceSummary` and MCP `create_invoice`
+keep producing the same bytes as before.
+
+**Background.** The legacy Number calculators round with `Number.toFixed(5)`,
+which rounds the binary value. When the nearest double of an exact
+sixth-decimal half lies just below the half, it rounds down: `20.203515`
+becomes `20.20351`. Hacienda's rule is decimal HALF_UP at five decimals
+("Anexos y Estructuras" v4.4, section II, p. 13-14), which gives `20.20352`.
+The Anexo's own example (`20.203518 → 20.20352`) is not an exact half, so it
+comes out the same under both rules. In a 2-million-case fuzz, 13% IVA on
+2-decimal bases never diverged, 13% IVA on 5-decimal bases diverged in 0.32%
+of cases (`80074.1975` → `10409.64567` instead of `10409.64568`), and
+3-decimal quantity × price diverged in 2.9% (`0.999 × 1802.455` →
+`1800.65254` instead of `1800.65255`).
+
+**Recommended: the exact path.** `calculateDecimalDocument`,
+`calculateDecimalLineItemTotals`, `calculateDecimalInvoiceSummary`,
+`buildDecimalDocumentXml`, the `calculateExact*` builders, MCP
+`create_invoice_exact` and `hacienda draft` already compute on bounded decimal
+text with BigInt and round HALF_UP. Prefer them for new integrations; they need
+no rounding option.
+
+**Opt-in on the legacy path.** If you must stay on the Number API, select the
+mode explicitly:
+
+```ts
+import { createLegacyCalculator } from "@dojocoding/hacienda-sdk";
+
+const calculator = createLegacyCalculator({ roundingMode: "half-up" });
+const lines = items.map(calculator.calculateLineItemTotals);
+const summary = calculator.calculateInvoiceSummary(lines);
+```
+
+- `roundingMode: "legacy-tofixed"` (the default) is byte-identical to the
+  standalone functions. `"half-up"` uses `round5HalfUp`, the shared exact
+  kernel (`scaledFromNumber` + `formatScaledDecimal`).
+- Use one calculator for the lines and the summary of a document, so modes
+  never mix.
+- In `"half-up"`, `NaN` and `±Infinity` throw `MonetaryValueError`. In
+  `"legacy-tofixed"` they still pass through (`round5(NaN)` is `NaN`).
+  Negative values round half away from zero.
+- The existing consistency checks use the selected mode. In `"half-up"`, a
+  caller-supplied IVA `monto` next to its `tarifa`, or an alcohol
+  `proporcion`, must equal the HALF_UP result (within the same `0.000001`).
+  A value precomputed with `toFixed` on an exact half is rejected.
+- MCP `create_invoice` accepts `roundingMode: "legacy-tofixed" | "half-up"`
+  (default `"legacy-tofixed"`).
+- The CLI has no flag: `hacienda draft` already uses the exact HALF_UP path,
+  and `hacienda submit`/`validate` do not recompute legacy Number amounts.
+- `validateFacturaInput` still recomputes with `round5` and its existing
+  `0.001` tolerance. HALF_UP documents differ by at most `0.00001` per rounded
+  field, so they pass today. This interacts with the planned removal of that
+  tolerance; the validator will need the same mode before it compares exactly.
+
+**When to choose `"half-up"`.** Choose it for new documents whose amounts
+come from fractional quantities or prices or 5-decimal bases, when you cannot
+yet move to the exact path. Keep `"legacy-tofixed"` when you regenerate,
+reconcile or re-sign historical documents: switching changes the bytes of
+exact-half amounts, so a regenerated XML would no longer match what was
+originally issued and accepted.
+
+**Deprecation.** `"legacy-tofixed"` remains the default for every 0.x release.
+It may stop being the default only in a future major release (1.0). If it
+does, pass `{ roundingMode: "legacy-tofixed" }` explicitly wherever you need
+historical bytes, and the release notes will say so.
+
 ## Next: endurecimiento de `InformacionReferencia` (referencias)
 
 Los paquetes `@dojocoding/hacienda-shared` y `@dojocoding/hacienda-sdk` endurecen la entrada aceptada para `InformacionReferencia`. Esta es una corrección de validación que rompe consumidores que dependían de la permisividad anterior (paquetes pre-1.0: cambio `minor`).

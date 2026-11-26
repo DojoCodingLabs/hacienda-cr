@@ -421,6 +421,68 @@ describe("MCP Server", () => {
       expect(text).toContain("Total: 10000");
     });
 
+    describe("roundingMode", () => {
+      const exactHalfArgs = {
+        emisor: {
+          nombre: "Redondeo S.A.",
+          identificacion: { tipo: "02", numero: "3101234567" },
+          ubicacion: { provincia: "1", canton: "01", distrito: "01", otrasSenas: "Test address" },
+          correoElectronico: "redondeo@empresa.com",
+        },
+        receptor: {
+          nombre: "Cliente Redondeo",
+          identificacion: { tipo: "02", numero: "3109876543" },
+        },
+        proveedorSistemas: "3101234567",
+        codigoActividadEmisor: "620100",
+        lineItems: [
+          {
+            codigoCabys: "2111100000000",
+            cantidad: 0.999,
+            unidadMedida: "Kg",
+            detalle: "Producto fraccionado",
+            precioUnitario: 1802.455,
+            impuesto: [{ codigo: "01", codigoTarifaIVA: "08", tarifa: 13 }],
+          },
+        ],
+      };
+
+      it.each([
+        // [roundingMode argument, MontoTotal, TotalComprobante]
+        [undefined, "1800.65254", "2034.73737"],
+        ["legacy-tofixed", "1800.65254", "2034.73737"],
+        ["half-up", "1800.65255", "2034.73738"],
+      ])("roundingMode %s pins the exact-half bytes", async (roundingMode, monto, total) => {
+        const result = await client.callTool({
+          name: "create_invoice",
+          arguments: { ...exactHalfArgs, ...(roundingMode ? { roundingMode } : {}) },
+        });
+        expect(result.isError, JSON.stringify(result.content)).not.toBe(true);
+        const text = getTextContent(result.content as { type: string; text: string }[]);
+        expect(text).toContain(`<MontoTotal>${monto}</MontoTotal>`);
+        expect(text).toContain(`<TotalComprobante>${total}</TotalComprobante>`);
+        expect(text).toContain(`Total: ${total}`);
+      });
+
+      it("rejects an unknown roundingMode", async () => {
+        const result = await client.callTool({
+          name: "create_invoice",
+          arguments: { ...exactHalfArgs, roundingMode: "half-even" },
+        });
+        expect(result.isError).toBe(true);
+      });
+
+      it("advertises roundingMode with the legacy default", async () => {
+        const { tools } = await client.listTools();
+        const createInvoice = tools.find((tool) => tool.name === "create_invoice");
+        const property = (
+          createInvoice?.inputSchema.properties as Record<string, { enum?: string[] }>
+        ).roundingMode;
+        expect(property?.enum).toEqual(["legacy-tofixed", "half-up"]);
+        expect(createInvoice?.inputSchema.required ?? []).not.toContain("roundingMode");
+      });
+    });
+
     it("should create an invoice with IVA 13% and TotalImpuesto > 0", async () => {
       const result = await client.callTool({
         name: "create_invoice",

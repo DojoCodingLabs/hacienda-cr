@@ -20,13 +20,18 @@ import {
   buildClave,
   DocumentType,
   Situation,
-  calculateLineItemTotals,
-  calculateInvoiceSummary,
+  createLegacyCalculator,
+  LEGACY_ROUNDING_MODES,
+  DEFAULT_LEGACY_ROUNDING_MODE,
   sanitizeLogString,
   DEFAULT_BRANCH,
   DEFAULT_POS,
 } from "@dojocoding/hacienda-sdk";
-import type { LineItemInput, CalculatedLineItem } from "@dojocoding/hacienda-sdk";
+import type {
+  LineItemInput,
+  CalculatedLineItem,
+  LegacyRoundingMode,
+} from "@dojocoding/hacienda-sdk";
 import {
   DISCOUNT_CODES,
   SaleCondition,
@@ -173,6 +178,15 @@ export const CreateInvoiceInputSchema = z.object({
     .string()
     .optional()
     .describe("Credit term in days (required when condicionVenta is 02)"),
+  roundingMode: z
+    .enum(LEGACY_ROUNDING_MODES as [LegacyRoundingMode, ...LegacyRoundingMode[]])
+    .default(DEFAULT_LEGACY_ROUNDING_MODE)
+    .describe(
+      'Rounding of the computed amounts to 5 decimals. "legacy-tofixed" (default) keeps the ' +
+        "bytes of earlier releases (Number.toFixed, which can round an exact sixth-decimal half " +
+        'down). "half-up" applies the decimal HALF_UP rule of Anexos y Estructuras v4.4 ' +
+        "(p. 13-14) and changes exact-half results. For exact decimal text use create_invoice_exact.",
+    ),
 });
 
 // ---------------------------------------------------------------------------
@@ -196,6 +210,7 @@ export function registerCreateInvoiceTool(server: McpServer): void {
       medioPago: CreateInvoiceInputSchema.shape.medioPago,
       lineItems: CreateInvoiceInputSchema.shape.lineItems,
       plazoCredito: CreateInvoiceInputSchema.shape.plazoCredito,
+      roundingMode: CreateInvoiceInputSchema.shape.roundingMode,
     },
     async (args) => {
       try {
@@ -212,10 +227,14 @@ export function registerCreateInvoiceTool(server: McpServer): void {
           descuento: item.descuento as LineItemInput["descuento"],
         }));
 
-        const calculatedItems: CalculatedLineItem[] = lineItemInputs.map(calculateLineItemTotals);
+        // One calculator for lines and summary so rounding modes never mix.
+        const calculator = createLegacyCalculator({ roundingMode: args.roundingMode });
+        const calculatedItems: CalculatedLineItem[] = lineItemInputs.map((item) =>
+          calculator.calculateLineItemTotals(item),
+        );
 
         // 2. Calculate invoice summary
-        const summary = calculateInvoiceSummary(calculatedItems);
+        const summary = calculator.calculateInvoiceSummary(calculatedItems);
 
         // 3. Get next sequence number and generate clave numerica
         const now = new Date();
