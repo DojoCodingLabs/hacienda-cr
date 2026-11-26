@@ -2,6 +2,8 @@
 
 Status: **production readiness remains unproven**. The implementation has substantive fixes and repeated offline verification. Real sandbox authentication and signing succeed; receipt submission and status queries return HTTP 403. No production fiscal request was made.
 
+Update: the evidence-preservation item of [the robustness audit](sdk-robustness-audit.md) is implemented in the sandbox runner: per-attempt bundles (`request.body.json` byte-exact, `unsigned.xml`/`signed.xml`, `response.raw.json`, `manifest.json` hashes), the offline `verify` command and derived result classes. A gateway 403 is classified `TRANSPORT_BLOCKED`, no longer conflated with local validation failures. The 403 itself was resolved on 2026-10-31 by using the correct sandbox host, after which an FE and a TE reached `aceptado` ([investigation](sandbox-403-debug.md)); NC, ND, FEC and REP still lack real acceptance evidence. The offline coherent-reference rehearsal (`scripts/coherent-reference-rehearsal.mjs`) builds FE → {NC, ND, FEC, MR} scenarios but is not wired into the runner.
+
 This report supersedes the execution counts and open-defect status in the earlier robustness audit and sandbox report. Those documents remain historical records.
 
 ## Changes under verification

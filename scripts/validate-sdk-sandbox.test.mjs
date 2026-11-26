@@ -7,6 +7,7 @@ import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "no
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { buildClave, Situation } from "../packages/sdk/dist/index.js";
+import { digest, writeRunManifest } from "./sandbox-bundle.mjs";
 
 const root = resolve(import.meta.dirname, "..");
 const runner = fileURLToPath(new URL("./validate-sdk-sandbox.mjs", import.meta.url));
@@ -332,4 +333,81 @@ test("document run refuses a document type that does not match the family", () =
   withRun({ "document.json": { family: "TE", input } }, (dir) =>
     assert.equal(run("sign", signEnv(), [dir]).code, "IDENTITY_MISMATCH"),
   );
+});
+
+test("sign writes the canonical bundle files and no manifest", () => {
+  withRun({ "document.json": { family: "FE", input: feInput() } }, (dir) => {
+    runOk("sign", signEnv(), [dir]);
+    const signed = readFileSync(join(dir, "signed.xml"), "utf8");
+    assert.equal(readFileSync(join(dir, "validation-signed.xml"), "utf8"), signed);
+    assert.match(readFileSync(join(dir, "unsigned.xml"), "utf8"), /<FacturaElectronica/);
+    assert.ok(!existsSync(join(dir, "manifest.json")));
+  });
+});
+
+test("local failures before an attempt leave no manifest that would block a later submit", () => {
+  withRun({ "document.json": { family: "FE", input: feInput() } }, (dir) => {
+    // MISSING_HACIENDA_P12_PATH contains digits, so the safe-code filter reduces it.
+    assert.equal(run("sign", {}, [dir]).code, "VALIDATION_FAILED");
+    assert.ok(!existsSync(join(dir, "signed.xml")));
+    // Submission opt-in is deliberately absent: the runner stops before any network step.
+    const refused = run("submit", { HACIENDA_SANDBOX_TEST: "1" }, [dir]);
+    assert.equal(refused.code, "SUBMIT_OPT_IN_REQUIRED");
+    assert.equal(refused.outcome, undefined);
+    assert.ok(!existsSync(join(dir, "manifest.json")));
+    assert.ok(!existsSync(join(dir, "validation-attempt.json")));
+  });
+});
+
+test("verify reports MANIFEST_REQUIRED for a directory without a manifest", () => {
+  withRun({ "document.json": { family: "FE", input: feInput() } }, (dir) =>
+    assert.equal(run("verify", {}, [dir]).code, "MANIFEST_REQUIRED"),
+  );
+});
+
+test("verify re-audits a signed FEC bundle offline and detects tampering", async () => {
+  const dir = tempRun();
+  try {
+    const input = fecInput();
+    writeFileSync(join(dir, "document.json"), JSON.stringify({ family: "FEC", input }));
+    runOk("sign", signEnv(), [dir]);
+    // Synthetic stand-ins for the artifacts a submit would capture; no POST happens here.
+    const signed = readFileSync(join(dir, "signed.xml"));
+    writeFileSync(
+      join(dir, "request.body.json"),
+      JSON.stringify({ clave: input.clave, comprobanteXml: signed.toString("base64") }),
+    );
+    writeFileSync(join(dir, "response.raw.json"), JSON.stringify({ "ind-estado": "aceptado" }));
+    writeFileSync(
+      join(dir, "validation-result.json"),
+      JSON.stringify({ class: "ACCEPTED", result: { status: "aceptado" } }),
+    );
+    await writeRunManifest({
+      directory: dir,
+      clave: input.clave,
+      identityHash: digest(input.clave),
+      family: "FEC",
+      outcomeClass: "ACCEPTED",
+      missingReason: "unresolved at manifest build",
+    });
+    const valid = spawnRunner("verify", {}, [dir]);
+    assert.equal(valid.status, 0, valid.stdout);
+    const lines = valid.stdout
+      .trim()
+      .split("\n")
+      .map((line) => JSON.parse(line));
+    assert.deepEqual(lines.at(-1), { ok: true, result: "VALID", causedBy: null });
+    writeFileSync(join(dir, "signed.xml"), signed.toString("utf8").replace("<", "< "));
+    const corrupt = spawnRunner("verify", {}, [dir]);
+    assert.equal(corrupt.status, 1);
+    const summary = JSON.parse(corrupt.stdout.trim().split("\n").at(-1));
+    assert.equal(summary.result, "CORRUPT");
+    assert.equal(summary.causedBy, "signedXmlHash");
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test("verify takes exactly one directory argument", () => {
+  assert.equal(run("verify", {}, ["/tmp", "extra"]).code, "VALIDATION_FAILED");
 });
