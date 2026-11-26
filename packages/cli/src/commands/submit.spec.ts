@@ -5,18 +5,30 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { createTestP12 } from "../../../sdk/src/__fixtures__/signing.js";
 import { SIMPLE_INVOICE } from "../../../sdk/src/__fixtures__/invoices.js";
+import { SIMPLE_RECIBO_PAGO } from "../../../sdk/src/__fixtures__/document-fixtures.js";
 import type { FacturaElectronica } from "@dojocoding/hacienda-shared";
 import { submitCommand } from "./submit.js";
 import { validateCommand } from "./validate.js";
+import { supportCommand } from "./support.js";
 import { DraftFacturaSchema, type DraftFactura } from "../utils/draft-document.js";
 import { buildDraftSummary, calculateDraftLineMoney } from "../utils/draft-money.js";
 
-const mocks = vi.hoisted(() => ({ submitAndWait: vi.fn(), signAndEncode: vi.fn() }));
-vi.mock("@dojocoding/hacienda-sdk", async (original) => ({
-  ...(await original<typeof HaciendaSdk>()),
-  submitAndWait: mocks.submitAndWait,
-  signAndEncode: mocks.signAndEncode,
+const mocks = vi.hoisted(() => ({
+  submitAndWait: vi.fn(),
+  signAndEncode: vi.fn(),
+  /** When set, replaces the built XML so a refused family reaches the gate. */
+  xmlOverride: undefined as string | undefined,
 }));
+vi.mock("@dojocoding/hacienda-sdk", async (original) => {
+  const sdk = await original<typeof HaciendaSdk>();
+  return {
+    ...sdk,
+    submitAndWait: mocks.submitAndWait,
+    signAndEncode: mocks.signAndEncode,
+    buildFacturaXml: (...args: Parameters<typeof sdk.buildFacturaXml>) =>
+      mocks.xmlOverride ?? sdk.buildFacturaXml(...args),
+  };
+});
 vi.mock("../utils/api-client.js", () => ({
   createAuthenticatedClient: vi.fn(async () => ({
     httpClient: {},
@@ -109,6 +121,7 @@ describe("CLI submission and XML validation", () => {
     vi.spyOn(console, "error").mockImplementation(() => undefined);
     mocks.submitAndWait.mockReset();
     mocks.signAndEncode.mockReset();
+    mocks.xmlOverride = undefined;
   });
   afterEach(async () => {
     process.exitCode = originalExitCode;
@@ -148,6 +161,28 @@ describe("CLI submission and XML validation", () => {
         success: false,
         status: "rechazado",
       });
+  });
+
+  it("refuses a REP document before signing or submitting", async () => {
+    const file = join(dir, "invoice.json");
+    const p12 = join(dir, "cert.p12");
+    await writeFile(file, JSON.stringify(SIMPLE_INVOICE));
+    await writeFile(p12, "mock-certificate");
+    const { buildReciboPagoXml } = await import("@dojocoding/hacienda-sdk");
+    mocks.xmlOverride = buildReciboPagoXml(SIMPLE_RECIBO_PAGO);
+    await submitCommand.run?.({
+      args: { file, p12, json: true, profile: "default", "dry-run": false },
+      rawArgs: [],
+      cmd: submitCommand,
+    });
+    expect(mocks.signAndEncode).not.toHaveBeenCalled();
+    expect(mocks.submitAndWait).not.toHaveBeenCalled();
+    expect(process.exitCode).toBe(1);
+    expect(JSON.parse(String(vi.mocked(console.log).mock.calls.at(-1)?.[0]))).toMatchObject({
+      success: false,
+      code: "UNSUPPORTED_FAMILY",
+      family: "REP",
+    });
   });
 
   it("rejects malformed XML with the actual validate command", async () => {
@@ -235,5 +270,27 @@ describe("CLI submission and XML validation", () => {
     expect(JSON.parse(String(vi.mocked(console.log).mock.calls.at(-1)?.[0]))).toMatchObject({
       success: false,
     });
+  });
+});
+
+describe("hacienda support", () => {
+  it("prints the SDK support matrix as JSON", async () => {
+    const { getFamilySupport } = await import("@dojocoding/hacienda-sdk");
+    const log = vi.spyOn(console, "log").mockImplementation(() => undefined);
+    try {
+      await supportCommand.run?.({
+        args: { json: true, _: [] },
+        rawArgs: [],
+        cmd: supportCommand,
+      });
+      const output = JSON.parse(String(log.mock.calls.at(-1)?.[0])) as {
+        families: { family: string; submit: string }[];
+      };
+      expect(output.families).toEqual(JSON.parse(JSON.stringify(getFamilySupport())));
+      expect(output.families.find((row) => row.family === "REP")?.submit).toBe("refused");
+      expect(output.families.find((row) => row.family === "MR")?.submit).toBe("refused");
+    } finally {
+      log.mockRestore();
+    }
   });
 });

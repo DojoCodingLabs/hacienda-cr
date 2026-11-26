@@ -359,6 +359,28 @@ test("local failures before an attempt leave no manifest that would block a late
   });
 });
 
+test("a live FEC submit requires the party-mapping acknowledgement before any opt-in or network", () => {
+  withRun({ "document.json": { family: "FEC", input: fecInput() } }, (dir) => {
+    const refused = run("submit", { HACIENDA_SANDBOX_TEST: "1" }, [dir]);
+    assert.equal(refused.code, "FEC_PARTY_MAPPING_UNVERIFIED");
+    const wrongValue = run("submit", { HACIENDA_SANDBOX_FEC_ACK: "1" }, [dir]);
+    assert.equal(wrongValue.code, "FEC_PARTY_MAPPING_UNVERIFIED");
+    // With the acknowledgement the runner reaches the ordinary submit opt-in.
+    const acknowledged = run("submit", { HACIENDA_SANDBOX_FEC_ACK: "party-mapping-unverified" }, [
+      dir,
+    ]);
+    assert.equal(acknowledged.code, "SUBMIT_OPT_IN_REQUIRED");
+    assert.ok(!existsSync(join(dir, "validation-attempt.json")));
+    assert.ok(!existsSync(join(dir, "manifest.json")));
+  });
+});
+
+test("the FEC acknowledgement does not gate other families", () => {
+  withRun({ "document.json": { family: "FE", input: feInput() } }, (dir) => {
+    assert.equal(run("submit", {}, [dir]).code, "SUBMIT_OPT_IN_REQUIRED");
+  });
+});
+
 test("verify reports MANIFEST_REQUIRED for a directory without a manifest", () => {
   withRun({ "document.json": { family: "FE", input: feInput() } }, (dir) =>
     assert.equal(run("verify", {}, [dir]).code, "MANIFEST_REQUIRED"),

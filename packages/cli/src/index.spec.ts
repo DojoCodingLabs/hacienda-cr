@@ -34,6 +34,7 @@ describe("@dojocoding/hacienda-cli", () => {
       "sign",
       "status",
       "submit",
+      "support",
       "validate",
     ]);
   });

@@ -30,6 +30,21 @@ export type {
   SubmitDocumentOptions,
 } from "./submission.js";
 
+// Document-family support matrix and submission gate
+export {
+  getFamilySupport,
+  detectDocumentFamily,
+  familyFromDocumentType,
+  assertSubmittableDocument,
+  SUPPORT_MATRIX_URL,
+} from "./family-support.js";
+export type {
+  DocumentFamily,
+  FamilySubmitStatus,
+  FamilySupport,
+  SubmittableDocumentFacts,
+} from "./family-support.js";
+
 // Orchestrator
 export { submitAndWait } from "./orchestrator.js";
 export type { SubmitAndWaitOptions, SubmitAndWaitResult } from "./orchestrator.js";

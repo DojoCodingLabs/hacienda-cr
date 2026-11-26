@@ -177,11 +177,19 @@ Herramientas: `draft_invoice`, `create_invoice`, `lookup_taxpayer`, `check_statu
 | Recibo Electrónico de Pago              | `buildReciboPagoXml()`         |
 | Mensaje Receptor (aceptación o rechazo) | `buildMensajeReceptorXml()`    |
 
+Tener un builder no implica poder enviar el comprobante. El SDK, la CLI y el MCP
+rechazan el envío de REP y Mensaje Receptor con `UnsupportedDocumentFamilyError`;
+la FEC se envía, pero su mapeo de partes en el POST sigue sin verificar. Solo FE y
+TE tienen aceptación real en sandbox, y ninguna familia la tiene en producción.
+Consultá la [matriz de soporte](docs/support-matrix.md) (también `hacienda support`
+y `getFamilySupport()`).
+
 ## Documentación
 
 - [Tu primera factura en sandbox](docs/sandbox-guide.md): ejemplo ejecutable desde los datos de una venta hasta la respuesta de Hacienda, con recuperación de estado.
 - [Integrar facturación en tu producto](docs/production-integration.md): pedidos, workers, persistencia, empresas, consecutivos y reintentos en producción.
 - [Migración de entradas a v4.4](packages/sdk/MIGRATION-v4.4.md): campos requeridos, pagos, descuentos y validación XSD.
+- [Matriz de soporte por familia](docs/support-matrix.md): qué se puede construir, validar, firmar y enviar, con la evidencia real de Hacienda de cada familia.
 - [Investigación del REP exacto](docs/rep-monetary-oracle-research.md): fuentes oficiales, límites del oráculo monetario y contrato propuesto; no implica un productor exacto disponible.
 - [Referencia completa del SDK](docs/reference.md#sdk--documentación-completa): autenticación, XML, impuestos, claves, firma, API, configuración, logging y errores.
 - [Referencia de comandos](docs/reference.md#cli--referencia-de-comandos): opciones y ejemplos de la CLI.

@@ -41,6 +41,7 @@ export {
   AuthenticationError,
   SigningError,
   ResponseVerificationError,
+  UnsupportedDocumentFamilyError,
 } from "./errors.js";
 
 // ---------------------------------------------------------------------------
@@ -317,8 +318,17 @@ export {
   CallbackEnvelopeSchema,
   MAX_CALLBACK_BODY_BYTES,
   MAX_CALLBACK_RESPONSE_XML_BYTES,
+  getFamilySupport,
+  detectDocumentFamily,
+  familyFromDocumentType,
+  assertSubmittableDocument,
+  SUPPORT_MATRIX_URL,
 } from "./api/index.js";
 export type {
+  DocumentFamily,
+  FamilySubmitStatus,
+  FamilySupport,
+  SubmittableDocumentFacts,
   HistoryRequestOptions,
   FetchWithTimeoutOptions,
   HttpClientOptions,

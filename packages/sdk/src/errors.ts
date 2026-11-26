@@ -37,6 +37,8 @@ export enum HaciendaErrorCode {
   SIGNING_FAILED = "SIGNING_FAILED",
   /** Response XML authentication or expected-context failure. */
   RESPONSE_VERIFICATION_FAILED = "RESPONSE_VERIFICATION_FAILED",
+  /** The document family has no verified submission contract in this SDK. */
+  UNSUPPORTED_FAMILY = "UNSUPPORTED_FAMILY",
   /** A catch-all for unexpected internal errors. */
   INTERNAL_ERROR = "INTERNAL_ERROR",
 }
@@ -151,6 +153,40 @@ export class SigningError extends HaciendaError {
   constructor(message: string, cause?: unknown) {
     super(HaciendaErrorCode.SIGNING_FAILED, message, cause);
     this.name = "SigningError";
+  }
+}
+
+/**
+ * Thrown before signing or any POST when a document family has no verified
+ * submission contract (see `docs/support-matrix.md`).
+ *
+ * - `REP` (Recibo Electrónico de Pago): the exact monetary projection of a real
+ *   partial payment into the reduced REP line and summary is unresolved
+ *   (`docs/rep-monetary-oracle-research.md`).
+ * - `MR` (MensajeReceptor): POST /recepcion requires `consecutivoReceptor`,
+ *   which `SubmissionRequest` does not carry, and there is no receiver-specific
+ *   outcome oracle (`docs/mr-transport-correlation-research.md`).
+ *
+ * The XML builders for these families stay available for source/XSD work; only
+ * submission is refused.
+ */
+export class UnsupportedDocumentFamilyError extends HaciendaError {
+  /** Short family label, e.g. `"REP"` or `"MR"`. */
+  readonly family: string;
+  /** Why the family cannot be submitted. */
+  readonly reason: string;
+  /** Documentation explaining the gate and what would lift it. */
+  readonly docsUrl: string;
+
+  constructor(family: string, reason: string, docsUrl: string) {
+    super(
+      HaciendaErrorCode.UNSUPPORTED_FAMILY,
+      `Submission of ${family} documents is not supported: ${reason} See ${docsUrl}`,
+    );
+    this.name = "UnsupportedDocumentFamilyError";
+    this.family = family;
+    this.reason = reason;
+    this.docsUrl = docsUrl;
   }
 }
 

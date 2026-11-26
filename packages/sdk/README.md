@@ -145,20 +145,28 @@ documents. `"legacy-tofixed"` may stop being the default only in 1.0. See
 
 ### API Client
 
-| Export                     | Type     | Description                                                  |
-| -------------------------- | -------- | ------------------------------------------------------------ |
-| `HttpClient`               | Class    | Typed HTTP client with auth header injection                 |
-| `bootstrapClient()`        | Function | Creates an authenticated HTTP client from a saved profile    |
-| `RateLimiter`              | Class    | Request rate limiter                                         |
-| `submitDocument()`         | Function | Submits a document (POST /recepcion)                         |
-| `getStatus()`              | Function | Gets document status (GET /recepcion/{clave})                |
-| `submitAndWait()`          | Function | Submits and polls until terminal status                      |
-| `withRetry()`              | Function | Wraps an async operation with retry logic                    |
-| `listComprobantes()`       | Function | Lists one observed metadata page with combined party filters |
-| `getComprobante()`         | Function | Gets observed metadata/references by clave (not XML/status)  |
-| `lookupTaxpayer()`         | Function | Looks up taxpayer by cedula (public API)                     |
-| `isTerminalStatus()`       | Function | Checks if a status is final                                  |
-| `extractRejectionReason()` | Function | Extracts rejection reason from response XML                  |
+| Export                        | Type     | Description                                                  |
+| ----------------------------- | -------- | ------------------------------------------------------------ |
+| `HttpClient`                  | Class    | Typed HTTP client with auth header injection                 |
+| `bootstrapClient()`           | Function | Creates an authenticated HTTP client from a saved profile    |
+| `RateLimiter`                 | Class    | Request rate limiter                                         |
+| `submitDocument()`            | Function | Submits a document (POST /recepcion)                         |
+| `getStatus()`                 | Function | Gets document status (GET /recepcion/{clave})                |
+| `submitAndWait()`             | Function | Submits and polls until terminal status                      |
+| `withRetry()`                 | Function | Wraps an async operation with retry logic                    |
+| `listComprobantes()`          | Function | Lists one observed metadata page with combined party filters |
+| `getComprobante()`            | Function | Gets observed metadata/references by clave (not XML/status)  |
+| `lookupTaxpayer()`            | Function | Looks up taxpayer by cedula (public API)                     |
+| `isTerminalStatus()`          | Function | Checks if a status is final                                  |
+| `extractRejectionReason()`    | Function | Extracts rejection reason from response XML                  |
+| `getFamilySupport()`          | Function | Read-only per-family build/sign/submit/evidence matrix       |
+| `assertSubmittableDocument()` | Function | Throws for REP/MR before signing; submit paths also call it  |
+| `detectDocumentFamily()`      | Function | Family from an XML root element                              |
+
+`submitDocument()` and `submitAndWait()` refuse REP and MensajeReceptor
+documents with `UnsupportedDocumentFamilyError` before persistence or any
+network access. Their builders remain available but are not submittable. See
+the [support matrix](https://github.com/DojoCodingLabs/hacienda-cr/blob/main/docs/support-matrix.md).
 
 ### Configuration
 
@@ -188,14 +196,15 @@ multiple hosts. See [sequence allocation](https://github.com/DojoCodingLabs/haci
 
 ### Errors
 
-| Export                | Type  | Description                                                 |
-| --------------------- | ----- | ----------------------------------------------------------- |
-| `HaciendaError`       | Class | Base error class for all SDK errors                         |
-| `ValidationError`     | Class | Input validation failures                                   |
-| `ApiError`            | Class | HTTP/network errors (includes `statusCode`, `responseBody`) |
-| `AuthenticationError` | Class | Auth/token lifecycle failures                               |
-| `SigningError`        | Class | XAdES-EPES signing failures                                 |
-| `HaciendaErrorCode`   | Enum  | Error category codes                                        |
+| Export                           | Type  | Description                                                                     |
+| -------------------------------- | ----- | ------------------------------------------------------------------------------- |
+| `HaciendaError`                  | Class | Base error class for all SDK errors                                             |
+| `ValidationError`                | Class | Input validation failures                                                       |
+| `ApiError`                       | Class | HTTP/network errors (includes `statusCode`, `responseBody`)                     |
+| `AuthenticationError`            | Class | Auth/token lifecycle failures                                                   |
+| `SigningError`                   | Class | XAdES-EPES signing failures                                                     |
+| `UnsupportedDocumentFamilyError` | Class | REP/MR submission refused (`UNSUPPORTED_FAMILY`, `family`, `reason`, `docsUrl`) |
+| `HaciendaErrorCode`              | Enum  | Error category codes                                                            |
 
 ### Error Codes (API)
 

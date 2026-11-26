@@ -198,12 +198,17 @@ accepted by CLI `submit`.
 
 ## Resources
 
-| URI                                   | Description                                |
-| ------------------------------------- | ------------------------------------------ |
-| `hacienda://schemas/factura`          | JSON schema for invoice creation input     |
-| `hacienda://reference/document-types` | Document types, codes, and descriptions    |
-| `hacienda://reference/tax-codes`      | Tax codes, IVA rates, and units of measure |
-| `hacienda://reference/id-types`       | Identification types and validation rules  |
+| URI                                   | Description                                 |
+| ------------------------------------- | ------------------------------------------- |
+| `hacienda://schemas/factura`          | JSON schema for invoice creation input      |
+| `hacienda://reference/document-types` | Document types, codes, and descriptions     |
+| `hacienda://reference/tax-codes`      | Tax codes, IVA rates, and units of measure  |
+| `hacienda://reference/id-types`       | Identification types and validation rules   |
+| `hacienda://reference/family-support` | Per-family build/sign/submit support matrix |
+
+This server has no signing or submission tool. The SDK refuses REP and
+MensajeReceptor submission; see the
+[support matrix](https://github.com/DojoCodingLabs/hacienda-cr/blob/main/docs/support-matrix.md).
 
 ## Full Documentation
 

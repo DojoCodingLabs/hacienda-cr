@@ -57,6 +57,9 @@ const required = (name) => {
   return value;
 };
 const report = (value) => console.log(JSON.stringify(value));
+/** Acknowledgement required before a live FEC POST (party mapping unverified). */
+const FEC_ACK_NAME = "HACIENDA_SANDBOX_FEC_ACK";
+const FEC_ACK_VALUE = "party-mapping-unverified";
 
 /** Run identity for the failure-path manifest; set once the run input is bound. */
 let runState;
@@ -186,6 +189,9 @@ async function authenticatedClient() {
 
 // Clave identity (document type and taxpayer) lives in FAMILY_IDENTITY so that
 // `verify` applies the same binding offline; FEC's taxpayer is its buyer.
+// The POST `emisor` for FEC is the XML Emisor (supplier). Whether Hacienda
+// expects the supplier or the buyer there is an open question; see
+// docs/support-matrix.md#fec-post-party-mapping-open-question.
 const issuer = (input) => input.emisor;
 const originalIssuer = (input) => input.original.emisor;
 const originalReceptor = (input) => input.original.receptor;
@@ -366,6 +372,12 @@ async function main() {
     report({ environment: "sandbox", status: result.status, identityHash, submitted: false });
     return;
   }
+  // FEC POST party mapping is unverified (docs/support-matrix.md, roadmap P0-7):
+  // the request below sends the XML Emisor (supplier) as `emisor`, while the
+  // buyer issues/signs the FEC and owns its clave. A live FEC POST therefore
+  // needs this explicit acknowledgement on top of the submit opt-in.
+  if (family === "FEC" && process.env[FEC_ACK_NAME] !== FEC_ACK_VALUE)
+    throw new Error("FEC_PARTY_MAPPING_UNVERIFIED");
   if (process.env.HACIENDA_SANDBOX_SUBMIT !== "1") throw new Error("SUBMIT_OPT_IN_REQUIRED");
   requireSandbox();
   for (const name of [

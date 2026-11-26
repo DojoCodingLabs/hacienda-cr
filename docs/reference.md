@@ -685,6 +685,21 @@ Para envío real necesitás `HACIENDA_PASSWORD`, certificado y PIN. Ante un
 resultado incierto, consultá la misma clave con el mismo perfil antes de
 decidir otro envío. Ver el [recorrido completo](sandbox-guide.md).
 
+Antes de leer el certificado o firmar, el comando rechaza un REP o un Mensaje
+Receptor con `UNSUPPORTED_FAMILY` (en `--json`: `code`, `family` y `docsUrl`).
+Ver la [matriz de soporte](support-matrix.md).
+
+### `hacienda support`
+
+Mostrar la matriz de soporte por familia del SDK (`getFamilySupport()`): qué se
+puede construir, validar, firmar y enviar, y qué evidencia real de Hacienda
+existe. No usa red ni credenciales.
+
+```bash
+hacienda support          # Tabla
+hacienda support --json   # Matriz completa
+```
+
 ### `hacienda status`
 
 Consultar el estado de procesamiento de un comprobante por su clave.
@@ -812,11 +827,12 @@ Agregá esto al `claude_desktop_config.json`:
 
 ### Recursos disponibles
 
-| URI                                   | Descripción                                              |
-| ------------------------------------- | -------------------------------------------------------- |
-| `hacienda://schemas/factura`          | Esquema JSON para creación de facturas                   |
-| `hacienda://reference/document-types` | Tipos de comprobante, códigos y descripciones            |
-| `hacienda://reference/tax-codes`      | Códigos de impuesto, tarifas de IVA y unidades de medida |
-| `hacienda://reference/id-types`       | Tipos de identificación y reglas de validación           |
+| URI                                   | Descripción                                                  |
+| ------------------------------------- | ------------------------------------------------------------ |
+| `hacienda://schemas/factura`          | Esquema JSON para creación de facturas                       |
+| `hacienda://reference/document-types` | Tipos de comprobante, códigos y descripciones                |
+| `hacienda://reference/tax-codes`      | Códigos de impuesto, tarifas de IVA y unidades de medida     |
+| `hacienda://reference/id-types`       | Tipos de identificación y reglas de validación               |
+| `hacienda://reference/family-support` | Matriz de soporte por familia ([detalle](support-matrix.md)) |
 
 ---

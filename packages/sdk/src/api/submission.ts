@@ -19,6 +19,7 @@ import { guardSubmissionIdentity } from "../delivery/submission-identity.js";
 import type { SubmissionIdentityStore } from "../delivery/submission-identity.js";
 import type { HttpClient, HttpResponse } from "./http-client.js";
 import { getRejectionDescription } from "./error-codes.js";
+import { assertSubmittableRequest } from "./family-support.js";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -74,6 +75,8 @@ export interface SubmitDocumentOptions {
  * @param request - The submission request payload.
  * @param options - Cancellation and the optional submission-identity guard.
  * @returns The submission response with status and location.
+ * @throws {UnsupportedDocumentFamilyError} Before any network access, for a
+ *   REP or MensajeReceptor document (see `docs/support-matrix.md`).
  * @throws {SubmissionIdentityError} When the identity guard refuses the POST.
  * @throws {ApiError} On HTTP errors:
  *   - 400: Bad request (malformed payload)
@@ -95,6 +98,7 @@ export async function submitDocument(
   request: SubmissionRequest,
   options?: SubmitDocumentOptions,
 ): Promise<SubmissionResponse> {
+  assertSubmittableRequest(request);
   options?.signal?.throwIfAborted();
   if (options?.retrySameBytes && !options.identityStore)
     throw new ValidationError("retrySameBytes requires an identityStore.");
