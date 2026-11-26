@@ -1,5 +1,5 @@
 import { execFileSync } from "node:child_process";
-import { resolve } from "node:path";
+import { join, resolve } from "node:path";
 const root = resolve(import.meta.dirname, "..");
 const env = { ...process.env };
 // Default verification never enables live authentication or submission tests.
@@ -48,7 +48,7 @@ try {
 
 // Guarda anti-regresión: sin casos esperados a fallar sin exceptuar.
 try {
-  execFileSync("node", ["scripts/check-no-expected-failures.mjs"], {
+  execFileSync(process.execPath, [join(root, "scripts/check-no-expected-failures.mjs")], {
     cwd: root,
     env,
     stdio: "inherit",
