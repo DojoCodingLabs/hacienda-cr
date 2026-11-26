@@ -44,7 +44,7 @@
   },
   "homepage": "https://github.com/DojoCodingLabs/hacienda-cr#readme",
   "engines": {
-    "node": ">=22"
+    "node": ">=22.12"
   },
   "publishConfig": {
     "access": "public"

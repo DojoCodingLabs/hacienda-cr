@@ -15,7 +15,7 @@ const artifact = {
   integrity: integrity(Buffer.from("verified bytes")),
 };
 const metadata = { ...artifact, dist: { integrity: artifact.integrity } };
-const pkg = { ...artifact, engines: { node: ">=22" }, publishConfig: { access: "public" } };
+const pkg = { ...artifact, engines: { node: ">=22.12" }, publishConfig: { access: "public" } };
 test("release rejects mismatched tags and pending changesets", () => {
   validateRelease("v0.4.0", [pkg], []);
   for (const tag of ["../unsafe", "v0.3.0", "v0.4.0-beta.1", undefined])
