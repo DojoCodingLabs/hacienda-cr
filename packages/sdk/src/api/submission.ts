@@ -199,9 +199,12 @@ export function isTerminalStatus(status: HaciendaStatus): boolean {
  * Result of {@link reconcileByClave}.
  *
  * - `found`: Hacienda knows the clave; `status` is its current state.
- * - `not_found`: Hacienda answered 404, so it never received the document.
- *   It is safe to resubmit the SAME signed document with the SAME clave;
- *   never allocate a new consecutive for it.
+ * - `not_found`: Hacienda answered 404 for this clave. This is NOT proof that
+ *   the POST never arrived: a just-received document may not be indexed yet.
+ *   Re-query with backoff inside a bounded reconciliation window. Only after
+ *   that window, and if your policy allows it, retry by resubmitting the SAME
+ *   signed bytes with the SAME clave; never build a new document or allocate a
+ *   new consecutive for the same intent.
  * - `unknown`: the query failed (5xx, network error or timeout) or the
  *   response did not belong to the clave. Nothing is established; query
  *   again later and do not resubmit.
