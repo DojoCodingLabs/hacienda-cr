@@ -46,6 +46,16 @@ production evidence.
 Roadmap item P0-9 refers to "family 09/10 (REP)". Code 09 is the export invoice
 (FEE), not REP. FEE is not gated; it is unverified.
 
+## Tax-code caveats
+
+IVA 08 (IVA Régimen de Bienes Usados, factor) is computed as
+`factorCalculoIVA × subtotal` (Anexos v4.4, pp. 37, 39, 42) by the legacy
+Number calculators, the decimal-text `DecimalDocument*` path, the legacy
+validator and MCP `create_invoice`. `Tarifa` and `CodigoTarifaIVA` are optional
+for 08. Exoneración on an 08 line is refused on every path because the Anexo
+does not define its amount ([roadmap](roadmap.md) P0-4c). No exact builder has
+an 08 named case, and no 08 document has sandbox evidence.
+
 ## Refused families
 
 The SDK throws `UnsupportedDocumentFamilyError` (code

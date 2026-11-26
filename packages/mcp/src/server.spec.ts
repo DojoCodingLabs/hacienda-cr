@@ -516,6 +516,56 @@ describe("MCP Server", () => {
         expect(text).toContain(`Total: ${total}`);
       });
 
+      // IVA 08: Monto = factor × subtotal (Anexos v4.4, p. 42) in both modes:
+      // 80074.1975 × 0.13 = 10409.645675, an exact sixth-decimal half.
+      it.each([
+        ["legacy-tofixed", "10409.64567"],
+        ["half-up", "10409.64568"],
+      ])("computes IVA 08 from factorCalculoIVA (%s)", async (roundingMode, monto) => {
+        const result = await client.callTool({
+          name: "create_invoice",
+          arguments: {
+            ...exactHalfArgs,
+            roundingMode,
+            lineItems: [
+              {
+                codigoCabys: "2111100000000",
+                cantidad: 1,
+                unidadMedida: "Unid",
+                detalle: "Vehiculo usado",
+                precioUnitario: 80074.1975,
+                impuesto: [{ codigo: "08", factorCalculoIVA: 0.13 }],
+              },
+            ],
+          },
+        });
+        expect(result.isError, JSON.stringify(result.content)).not.toBe(true);
+        const text = getTextContent(result.content as { type: string; text: string }[]);
+        expect(text).toContain("<FactorCalculoIVA>0.13</FactorCalculoIVA>");
+        expect(text).toContain(`<Monto>${monto}</Monto>`);
+      });
+
+      it("rejects IVA 08 without factorCalculoIVA", async () => {
+        const result = await client.callTool({
+          name: "create_invoice",
+          arguments: {
+            ...exactHalfArgs,
+            lineItems: [
+              {
+                codigoCabys: "2111100000000",
+                cantidad: 1,
+                unidadMedida: "Unid",
+                detalle: "Vehiculo usado",
+                precioUnitario: 1000,
+                impuesto: [{ codigo: "08", codigoTarifaIVA: "08", tarifa: 13 }],
+              },
+            ],
+          },
+        });
+        expect(result.isError).toBe(true);
+        expect(JSON.stringify(result.content)).toContain("requires factorCalculoIVA");
+      });
+
       it("rejects an unknown roundingMode", async () => {
         const result = await client.callTool({
           name: "create_invoice",

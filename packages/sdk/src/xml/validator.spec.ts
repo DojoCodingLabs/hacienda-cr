@@ -345,7 +345,31 @@ describe("validateFacturaInput — resumenFactura.medioPago", () => {
       expect(result.errors.some((e) => e.path.includes("factorCalculoIVA"))).toBe(true);
     });
 
+    // Monto = factor × subtotal (Anexos v4.4, p. 42): 0.13 × 100000 = 13000.
     it("should accept IVA 08 con factorCalculoIVA", () => {
+      const result = validateFacturaInput({
+        ...SIMPLE_INVOICE,
+        detalleServicio: [
+          {
+            ...baseLine,
+            impuesto: [
+              {
+                codigo: "08",
+                codigoTarifaIVA: "08",
+                tarifa: 13,
+                monto: 13000,
+                factorCalculoIVA: 0.13,
+              },
+            ],
+          },
+        ],
+      });
+      expect(result.errors).toEqual([]);
+      expect(result.valid).toBe(true);
+    });
+
+    // Regression: 13000 is 13% of the subtotal, but 0.95 × 100000 = 95000.
+    it("should rechazar IVA 08 whose monto is not factor × subtotal", () => {
       const result = validateFacturaInput({
         ...SIMPLE_INVOICE,
         detalleServicio: [
@@ -363,7 +387,11 @@ describe("validateFacturaInput — resumenFactura.medioPago", () => {
           },
         ],
       });
-      expect(result.valid).toBe(true);
+      expect(result.valid).toBe(false);
+      expect(result.errors).toContainEqual({
+        path: "detalleServicio.0.impuesto.0.monto",
+        message: "Tax amount must match its applicable calculation (95000)",
+      });
     });
 
     it.each([["05"], ["06"], ["07"]] as const)(
@@ -789,23 +817,57 @@ describe("validateFacturaInput — business rules", () => {
     detalleServicio: [
       {
         ...firstLineItem(SIMPLE_INVOICE),
-        impuesto: [{ codigo: "08", tarifa: 13, factorCalculoIVA: 0.95, monto: 13000 }],
+        // Tarifa is optional for 08 (XSD minOccurs="0"; Anexo p. 38 validates
+        // it only for 01, 02 and 99). Monto = 0.13 × 100000 (p. 42).
+        impuesto: [{ codigo: "08", factorCalculoIVA: 0.13, monto: 13000 }],
       },
     ],
   };
 
-  it("should accept IVA 08 without codigoTarifaIVA", () => {
+  it("should accept IVA 08 without codigoTarifaIVA or tarifa", () => {
     const result = validateFacturaInput(USED_GOODS_WITHOUT_RATE_CODE);
     expect(result.errors).toEqual([]);
     expect(result.valid).toBe(true);
+  });
+
+  it("should reject an exoneración on IVA 08 (amount undefined by the Anexo)", () => {
+    const line = firstLineItem(USED_GOODS_WITHOUT_RATE_CODE);
+    const tax = line.impuesto[0];
+    if (!tax) throw new Error("Expected one tax");
+    const exonerated = firstLineItem(EXONERATED_INVOICE).impuesto[0]?.exoneracion;
+    if (!exonerated) throw new Error("Expected an exoneration fixture");
+    const result = validateFacturaInput({
+      ...USED_GOODS_WITHOUT_RATE_CODE,
+      detalleServicio: [{ ...line, impuesto: [{ ...tax, exoneracion: exonerated }] }],
+    });
+    expect(result.valid).toBe(false);
+    expect(result.errors.some((e) => e.path === "detalleServicio.0.impuesto.0.exoneracion")).toBe(
+      true,
+    );
+  });
+
+  it("should reject factorCalculoIVA on a non-08 tax", () => {
+    const line = firstLineItem(SIMPLE_INVOICE);
+    const tax = line.impuesto[0];
+    if (!tax) throw new Error("Expected one tax");
+    const result = validateFacturaInput({
+      ...SIMPLE_INVOICE,
+      detalleServicio: [{ ...line, impuesto: [{ ...tax, factorCalculoIVA: 0.13 }] }],
+    });
+    expect(result.valid).toBe(false);
+    expect(result.errors).toContainEqual({
+      path: "detalleServicio.0.impuesto.0.monto",
+      message: "factorCalculoIVA is only valid for IVA bienes usados (codigo 08)",
+    });
   });
 
   it.skipIf(!xmllintAvailable()).each(SCHEMA_GENERATIONS)(
     "should build IVA 08 without CodigoTarifaIVA as XSD-valid XML (%s schemas)",
     (generation) => {
       const xml = buildFacturaXml(USED_GOODS_WITHOUT_RATE_CODE);
-      expect(xml).toContain("<FactorCalculoIVA>");
+      expect(xml).toContain("<FactorCalculoIVA>0.13</FactorCalculoIVA>");
       expect(xml).not.toContain("<CodigoTarifaIVA>");
+      expect(xml).not.toContain("<Tarifa>");
       const result = validateAgainstXsd(xml, "FacturaElectronica_V4.4.xsd", {
         allowMissingSignature: true,
         generation,

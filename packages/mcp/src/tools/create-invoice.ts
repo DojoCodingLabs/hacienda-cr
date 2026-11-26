@@ -54,6 +54,14 @@ const ImpuestoInputSchema = z.object({
   codigoTarifaIVA: z.string().optional().describe('IVA rate code (e.g. "08" for 13%)'),
   tarifa: z.number().min(0).optional().describe("Percentage rate; omit for amount-only ISC"),
   monto: z.number().min(0).optional().describe("Explicit ISC amount (code 02), instead of tarifa"),
+  factorCalculoIVA: z
+    .number()
+    .min(0)
+    .max(9.9999)
+    .optional()
+    .describe(
+      "IVA 08 (bienes usados) only, required there: decimal factor (not a percentage, max 4 decimals); monto = subtotal × factor",
+    ),
   datosImpuestoEspecifico: z
     .object({
       cantidadUnidadMedida: z.number().min(0),

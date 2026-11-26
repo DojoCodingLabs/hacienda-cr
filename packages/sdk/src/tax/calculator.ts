@@ -131,7 +131,14 @@ function resolveRounder(options: LegacyCalculationOptions | undefined): {
   );
 }
 
-/** Compute a tax amount without prematurely rounding the specific-tax factors. */
+/**
+ * Compute a tax amount without prematurely rounding the specific-tax factors.
+ *
+ * `base` is the taxable base the caller selected: the subtotal for IVA 08 and
+ * the non-IVA codes, the base imponible for IVA 01/07. IVA 08 (Régimen de Bienes
+ * Usados) uses `factorCalculoIVA` instead of `tarifa` (factor × subtotal,
+ * Anexos v4.4, pp. 37, 39 and 42).
+ */
 export function calculateTaxAmount(tax: TaxAmountInput, base: number, cantidad: number): number {
   return taxAmountWith(round5, tax, base, cantidad);
 }
@@ -139,8 +146,38 @@ export function calculateTaxAmount(tax: TaxAmountInput, base: number, cantidad: 
 /** Tax fields read by {@link calculateTaxAmount}. */
 type TaxAmountInput = Pick<
   LineItemTaxInput,
-  "codigo" | "tarifa" | "monto" | "datosImpuestoEspecifico"
+  "codigo" | "tarifa" | "factorCalculoIVA" | "monto" | "datosImpuestoEspecifico"
 >;
+
+/**
+ * IVA 08 (IVA Régimen de Bienes Usados, factor) amount: `subtotal × factor`,
+ * rounded to 5 decimals with the calculator's rounder.
+ *
+ * Anexos y Estructuras v4.4:
+ * - p. 37 (Codigo): "Al utilizar el código 08, se debe utilizar para el
+ *   cálculo de factor del IVA por el subtotal."
+ * - p. 39 (FactorCalculoIVA): "Validación: En caso de utilizar el código 08
+ *   de la nota 08, se verificará que este campo se encuentre en el
+ *   comprobante, caso contario se rechazará." It is a decimal (XSD 5,4), not
+ *   a percentage ("Debe expresarse en formato decimal"), so there is no `/ 100`.
+ * - p. 42 (Monto): "En caso de utilizar el factor establecido para el régimen
+ *   de bienes usados, este campo se obtiene de la multiplicación del factor
+ *   por el subtotal."
+ *
+ * `Tarifa` is optional for 08 (XSD minOccurs="0"; the Anexo validates it only
+ * for 01, 02 and 99) and never enters the amount.
+ */
+function usedGoodsIvaAmount(round: Rounder, tax: TaxAmountInput, subTotal: number): number {
+  const factor: unknown = tax.factorCalculoIVA;
+  if (factor === undefined)
+    throw new Error("IVA bienes usados (codigo 08) requires factorCalculoIVA");
+  if (typeof factor !== "number" || !Number.isFinite(factor) || factor < 0)
+    throw new Error("factorCalculoIVA must be a finite, non-negative number");
+  const amount = round(subTotal * factor);
+  if (tax.monto !== undefined && Math.abs(amount - tax.monto) > 0.000001)
+    throw new Error("Tax amount does not match factorCalculoIVA × subtotal");
+  return amount;
+}
 
 function taxAmountWith(
   round: Rounder,
@@ -148,6 +185,9 @@ function taxAmountWith(
   base: number,
   cantidad: number,
 ): number {
+  if (tax.codigo === TaxCode.IVA_BIENES_USADOS) return usedGoodsIvaAmount(round, tax, base);
+  if (tax.factorCalculoIVA !== undefined)
+    throw new Error("factorCalculoIVA is only valid for IVA bienes usados (codigo 08)");
   const data = tax.datosImpuestoEspecifico;
   if (["03", "04", "05", "06"].includes(tax.codigo)) {
     if (!data) throw new Error(`Specific tax ${tax.codigo} requires datosImpuestoEspecifico`);
@@ -194,8 +234,15 @@ export interface LineItemTaxInput {
   /** IVA rate code (CodigoTarifaIVA). Required for tax codes 01 and 07; optional for 08. */
   codigoTarifaIVA?: string;
 
-  /** Tax rate percentage (e.g., 13 for 13%). */
+  /** Tax rate percentage (e.g., 13 for 13%). Optional and informational for 08. */
   tarifa?: number;
+
+  /**
+   * FactorCalculoIVA, required for IVA 08 (bienes usados) and only valid there.
+   * A decimal factor, not a percentage: Monto = subtotal × factor
+   * (Anexos v4.4, pp. 37, 39, 42). At most 4 decimals, 0..9.9999 (XSD 5,4).
+   */
+  factorCalculoIVA?: number;
 
   /** Explicit amount for ISC (02) or product-specific tax 05. */
   monto?: number;
@@ -322,14 +369,11 @@ export interface CalculatedLineItem {
 }
 
 /**
- * IVA-related tax codes taxed on baseImponible. This only selects the base;
- * CodigoTarifaIVA is required for 01/07 alone (Anexos v4.4, p. 38).
+ * IVA tax codes taxed on baseImponible. CodigoTarifaIVA is required for 01/07
+ * alone (Anexos v4.4, p. 38). IVA 08 is not here: its amount is factor ×
+ * subtotal (Anexos v4.4, pp. 37 and 42), so it is taxed on the subtotal.
  */
-const IVA_TAX_CODES: string[] = [
-  TaxCode.IVA,
-  TaxCode.IVA_CALCULO_ESPECIAL,
-  TaxCode.IVA_BIENES_USADOS,
-];
+const IVA_TAX_CODES: string[] = [TaxCode.IVA, TaxCode.IVA_CALCULO_ESPECIAL];
 
 /**
  * Calculate all computed fields for a single line item.
@@ -396,6 +440,14 @@ function lineItemTotalsWith(round: Rounder, item: LineItemInput): CalculatedLine
     let taxAmount = fullTaxAmount;
     let exoneracion: Exoneracion | undefined;
 
+    // The Anexo defines MontoExoneracion as TarifaExonerada × subtotal (p. 46)
+    // and the summary split needs the full Tarifa; neither is defined for the
+    // factor-based 08. Fail closed until Hacienda clarifies (docs/roadmap.md).
+    if (tax.exoneracion && tax.codigo === TaxCode.IVA_BIENES_USADOS)
+      throw new Error(
+        "Exoneración on IVA bienes usados (codigo 08) is not supported: Anexos v4.4 does not define its amount",
+      );
+
     // Handle exoneration: the exonerated amount is the portion of the
     // taxable base covered by the exonerated tariff points.
     if (tax.exoneracion) {
@@ -426,6 +478,9 @@ function lineItemTotalsWith(round: Rounder, item: LineItemInput): CalculatedLine
     const calculatedTax: Impuesto = {
       codigo: tax.codigo as Impuesto["codigo"],
       ...(tax.tarifa !== undefined ? { tarifa: tax.tarifa } : {}),
+      ...(tax.codigo === TaxCode.IVA_BIENES_USADOS
+        ? { factorCalculoIVA: tax.factorCalculoIVA }
+        : {}),
       ...(tax.datosImpuestoEspecifico
         ? { datosImpuestoEspecifico: tax.datosImpuestoEspecifico }
         : {}),
@@ -545,12 +600,15 @@ function classifyLineItem(
 
   // A positive rate/factor remains taxable even if its computed tax rounds to zero.
   // Amount-only taxes use their supplied amount to determine taxability.
+  // IVA 08 is rated by its factor, never by an informational Tarifa.
   const allZeroRate = item.impuesto.every((tax: Impuesto) =>
-    tax.tarifa !== undefined
-      ? tax.tarifa === 0
-      : tax.factorCalculoIVA !== undefined
-        ? tax.factorCalculoIVA === 0
-        : tax.monto === 0,
+    tax.codigo === TaxCode.IVA_BIENES_USADOS && tax.factorCalculoIVA !== undefined
+      ? tax.factorCalculoIVA === 0
+      : tax.tarifa !== undefined
+        ? tax.tarifa === 0
+        : tax.factorCalculoIVA !== undefined
+          ? tax.factorCalculoIVA === 0
+          : tax.monto === 0,
   );
   if (allZeroRate) {
     return { gravado: 0, exento: grossAmount, exonerado: 0 };
