@@ -1,8 +1,8 @@
 # Contributing
 
-Use Node.js 22.13+ and the pnpm version in package.json. With Corepack available,
+Use Node.js 22.22.1+ and the pnpm version in package.json. With Corepack available,
 run `corepack enable`; otherwise install pnpm 12.10.1 using the supported pnpm
-[installation instructions](https://pnpm.io/installation). Node.js 22.13+ is the repository tooling baseline (including installation of pnpm through npm); published packages keep their existing Node.js >=22 runtime engines. Clone the repository, then:
+[installation instructions](https://pnpm.io/installation). Node.js 22.22.1+ is the repository tooling baseline (including installation of pnpm through npm); published packages keep their existing Node.js >=22 runtime engines. Clone the repository, then:
 
 ```sh
 pnpm install --frozen-lockfile

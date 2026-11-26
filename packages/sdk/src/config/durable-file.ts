@@ -12,7 +12,9 @@ export async function withFileLock<T>(path: string, work: () => Promise<T>): Pro
     } catch (error) {
       if ((error as NodeJS.ErrnoException).code !== "EEXIST") throw error;
       if (Date.now() >= until)
-        throw new Error("Store is locked; verify the writer before manual recovery");
+        throw new Error("Store is locked; verify the writer before manual recovery", {
+          cause: error,
+        });
       await new Promise((resolve) => setTimeout(resolve, 10));
     }
   }

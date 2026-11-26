@@ -27,7 +27,7 @@ nonauthentication settings from the workspace, and its default already preserves
 that false value. No machine configuration, registry authentication or global
 package manager is changed by this migration.
 
-The private root manifest requires Node.js >=22.13 for repository tooling.
+The private root manifest requires Node.js >=22.22.1 for repository tooling (lint-staged 17 needs 22.22.1, tsup 9 needs 22.18 and ESLint 10 needs 22.13).
 [Official installation guidance](https://pnpm.io/installation) requires 22.13+
 for npm-based pnpm installation; pnpm 12 itself is a native executable.
 All four **published** packages retain their existing Node.js >=22 engines.

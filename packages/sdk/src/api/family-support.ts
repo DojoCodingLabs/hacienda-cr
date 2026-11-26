@@ -239,7 +239,7 @@ export function detectDocumentFamily(xml: string): DocumentFamily | undefined {
   let i = xml.charCodeAt(0) === 0xfeff ? 1 : 0;
   for (;;) {
     while (i < xml.length && /\s/.test(xml[i] ?? "")) i++;
-    let end = -1;
+    let end: number;
     if (xml.startsWith("<?", i)) end = xml.indexOf("?>", i + 2) + 2;
     else if (xml.startsWith("<!--", i)) end = xml.indexOf("-->", i + 4) + 3;
     else if (xml.startsWith("<!", i)) end = xml.indexOf(">", i + 2) + 1;

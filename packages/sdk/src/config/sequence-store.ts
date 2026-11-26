@@ -56,6 +56,7 @@ async function acquireLock(lockPath: string): Promise<() => Promise<void>> {
           throw new Error(
             `Failed to acquire sequence lock at ${lockPath} after ${String(LOCK_TIMEOUT_MS)}ms. ` +
               `Check that no writer is running before manually removing the lock directory.`,
+            { cause: error },
           );
         }
         await new Promise((resolve) => setTimeout(resolve, LOCK_RETRY_MS));
