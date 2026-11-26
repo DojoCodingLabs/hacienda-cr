@@ -95,6 +95,20 @@ El XSD del REP reutiliza `TipoDocReferenciaType` (todos los códigos 01-20 y 99)
 - **WHEN** se valida una factura cuya referencia tiene `codigo = "17"`
 - **THEN** la validación reporta un error en `informacionReferencia.N.codigo`
 
+### Requirement: La referencia del REP exige `numero`
+
+El XSD del Recibo Electrónico de Pago declara `InformacionReferencia/Numero` como obligatorio (sin `minOccurs="0"`). El esquema REP (`RepInformacionReferenciaSchema`, y `DecimalRepReferenceSchema` en la familia exacta) SHALL exigir `numero` (1-50 caracteres). En el resto de documentos `numero` SHALL seguir siendo opcional.
+
+#### Scenario: REP sin numero es inválido
+
+- **WHEN** se parsea una referencia REP sin `numero`
+- **THEN** el esquema REP la rechaza con un error en `numero`
+
+#### Scenario: Factura sin numero sigue siendo válida
+
+- **WHEN** se parsea una referencia de factura con `tipoDoc = "01"`, `fechaEmision` y sin `numero`
+- **THEN** `InformacionReferenciaSchema` la acepta
+
 ### Requirement: Correspondencia tarifa↔código para los impuestos IVA
 
 Para todo impuesto cuyo código sea `"01"` (IVA), `validateFacturaInput` SHALL exigir `codigoTarifaIVA` y SHALL verificar que `tarifa` coincida con `IVA_RATE_PERCENTAGES[codigoTarifaIVA]`. Para el impuesto `"07"` (IVA cálculo especial), SHALL exigir la presencia de `codigoTarifaIVA` (la correspondencia numérica con `tarifa` NO se exige, pues la tarifa es editable sobre la base imponible recalculada). Para el impuesto `"08"` (IVA bienes usados), SHALL exigir `factorCalculoIVA`. Los códigos transitorios de tarifa `"05"`, `"06"` y `"07"` SHALL seguir prohibidos para una Factura Electrónica nueva.

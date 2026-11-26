@@ -44,11 +44,13 @@ El XSD del REP admite todos los `TipoDocReferenciaType` del base (01–20, 99) �
 
 ### D3 — Espejo en el validador de negocio
 
-`validateFacturaInput` valida 99↔Otros, la condición tipoDoc 13 (si `tipoDoc` está presente y `tipoDoc !== "13"`, entonces `codigo` debe estar presente) y las reglas de tarifa en el mismo loop de `informacionReferencia`/`impuesto`, para cubrir inputs que no pasan por Zod (p. ej. XML parseado). El builder REP emite `CodigoReferenciaOTRO` solo si `codigoOtros` está presente; el parser REP tipa `codigo` como `RepReferenceCode`.
+`validateFacturaInput` valida 99↔Otros, el rechazo del motivo 17 fuera del REP y las reglas de tarifa en el mismo loop de `informacionReferencia`/`impuesto`, para cubrir inputs que no pasan por Zod (p. ej. XML parseado). `codigo` no se exige para ningún `tipoDoc` (la condición tipoDoc 13 se descartó, ver D8). El builder REP emite `CodigoReferenciaOTRO` solo si `codigoOtros` está presente; el parser decodifica la referencia con un único cast a la unión laxa base/REP.
 
-Los campos `numero`, `codigo` y `razon` permanecen opcionales en el esquema (XSD: `minOccurs="0"` para los tres). El XSD no documenta ninguna obligatoriedad condicional para `codigo` (en particular, no la excepción `tipoDoc === "13"`). El ítem 1 del audit no menciona `numero`/`razon`/`codigo` como obligatorios (se centra en 99↔Otros y en el catálogo REP). Se deja su enforcement como follow-up explícito para no expandir el scope del change; la regla `codigo` obligatorio salvo `tipoDoc === "13"` se descartó por no tener respaldo en el XSD ni en los Anexos 2026. Un lector no debe confundir "decidido" con "olvidado": `numero`, `codigo` y `razon` no cambian en este change.
+En el esquema base, `numero`, `codigo` y `razon` permanecen opcionales (XSD de FE/NC/ND/FEC/FEE/TE: `minOccurs="0"` para los tres). En la variante REP, `numero` es **obligatorio**: el XSD del REP declara `Numero` sin `minOccurs="0"`; `codigo` y `razon` siguen opcionales. El XSD no documenta ninguna obligatoriedad condicional para `codigo` (en particular, no la excepción `tipoDoc === "13"`). El ítem 1 del audit no menciona `numero`/`razon`/`codigo` como obligatorios (se centra en 99↔Otros y en el catálogo REP). Se deja su enforcement como follow-up explícito para no expandir el scope del change; la regla `codigo` obligatorio salvo `tipoDoc === "13"` se descartó por no tener respaldo en el XSD ni en los Anexos 2026. Un lector no debe confundir "decidido" con "olvidado": fuera del REP, `numero`, `codigo` y `razon` no cambian en este change.
 
 La prohibición preexistente de tarifas transitorias 05/06/07 para FE nueva se preserva y se cubre con test de regresión en Task 5.2; no es scope nuevo.
+
+El validador preexistente también exige `codigoTarifaIVA` para el impuesto `"08"` (`IVA_TAX_CODES` = 01, 07, 08). Es más estricto que los Anexos v4.4 (campo `CodigoTarifaIVA`: "Se convierte en obligatorio para los Códigos 01, 07") y que el XSD (`minOccurs="0"`). Este change no lo modifica; queda como follow-up explícito.
 
 ### D4 (bis) — Fallback para el código 17 en el catálogo base
 
