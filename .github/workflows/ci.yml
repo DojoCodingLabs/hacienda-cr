@@ -4,7 +4,8 @@ on:
   push:
     branches: [main]
   pull_request:
-    branches: [main]
+    # Every PR gets CI, including stacked PRs whose base is another branch.
+    types: [opened, synchronize, reopened, edited, ready_for_review]
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -40,6 +41,9 @@ jobs:
 
       - name: Verify source and installed consumers
         run: pnpm verify
+
+      - name: Audit production dependencies (fail on high/critical)
+        run: pnpm audit --prod --audit-level high
 
   packages:
     name: Packed ESM & MCP (Node ${{ matrix.node }})

@@ -35,13 +35,25 @@ jobs:
         run: node --test scripts/update-npm-downloads.test.mjs
       - name: Fetch complete npm download history
         run: node scripts/update-npm-downloads.mjs
-      - name: Commit updated counter
+      - name: Publish counter to the metrics branch
+        # main is protected by a ruleset that requires CI, so the daily counter
+        # lives on the unprotected `metrics` branch that the README badge reads.
         run: |
+          cp docs/npm-downloads.json "$RUNNER_TEMP/npm-downloads.json"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          if git ls-remote --exit-code --heads origin metrics >/dev/null; then
+            git fetch --depth=1 origin metrics
+            git switch -C metrics FETCH_HEAD
+          else
+            git switch --orphan metrics
+            git rm -rf --quiet . || true
+          fi
+          mkdir -p docs
+          cp "$RUNNER_TEMP/npm-downloads.json" docs/npm-downloads.json
           git add docs/npm-downloads.json
           if git diff --cached --quiet; then
             exit 0
           fi
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git commit -m "docs: update npm lifetime downloads"
-          git push origin HEAD:main
+          git push origin HEAD:metrics

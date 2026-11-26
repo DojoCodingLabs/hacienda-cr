@@ -11,7 +11,7 @@
 Toolkit open-source en TypeScript para trabajar con comprobantes electrónicos v4.4 del Ministerio de Hacienda: autenticación OAuth2, generación de XML, firma XAdES-EPES, cálculo de IVA y consulta de estados.
 
 [![npm](https://img.shields.io/npm/v/@dojocoding/hacienda-sdk?color=FF7151&labelColor=201E3D)](https://www.npmjs.com/package/@dojocoding/hacienda-sdk)
-[![Descargas históricas en npm](https://img.shields.io/endpoint?url=https%3A%2F%2Fraw.githubusercontent.com%2FDojoCodingLabs%2Fhacienda-cr%2Fmain%2Fdocs%2Fnpm-downloads.json)](docs/npm-downloads.json)
+[![Descargas históricas en npm](https://img.shields.io/endpoint?url=https%3A%2F%2Fraw.githubusercontent.com%2FDojoCodingLabs%2Fhacienda-cr%2Fmetrics%2Fdocs%2Fnpm-downloads.json)](https://github.com/DojoCodingLabs/hacienda-cr/blob/metrics/docs/npm-downloads.json)
 [![CI](https://github.com/DojoCodingLabs/hacienda-cr/actions/workflows/ci.yml/badge.svg)](https://github.com/DojoCodingLabs/hacienda-cr/actions/workflows/ci.yml)
 [![Licencia MIT](https://img.shields.io/badge/Licencia-MIT-FF7151?labelColor=201E3D)](LICENSE)
 [![Node.js 22+](https://img.shields.io/badge/Node.js-22%2B-201E3D)](https://nodejs.org)
@@ -226,7 +226,7 @@ Los perfiles se guardan en `~/.hacienda-cr/config.toml`. Las contraseñas y PINs
 
 El contador suma las descargas de **SDK, CLI, MCP y shared**, desde la creación de cada paquete hasta el último día disponible en npm. Son descargas del registro, incluyendo CI y dependencias transitivas; no representan instalaciones únicas ni personas.
 
-[Ver totales por paquete y fecha de corte](docs/npm-downloads.json). El [workflow de actualización](.github/workflows/npm-downloads.yml) actualiza el contador diariamente y también puede ejecutarse manualmente.
+[Ver totales por paquete y fecha de corte](https://github.com/DojoCodingLabs/hacienda-cr/blob/metrics/docs/npm-downloads.json). El [workflow de actualización](.github/workflows/npm-downloads.yml) actualiza diariamente el contador en la rama `metrics` (main exige CI y no acepta pushes directos) y también puede ejecutarse manualmente.
 
 ## Desarrollo y contribuciones
 
