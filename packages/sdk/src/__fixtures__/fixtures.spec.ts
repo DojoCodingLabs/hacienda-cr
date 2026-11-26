@@ -35,6 +35,12 @@ interface FixtureOwner {
   identificacion: { numero: string };
 }
 
+/** FEC's owner is the receptor, whose identificacion is optional in the type. */
+function identified(party: { identificacion?: { numero: string } }): FixtureOwner {
+  if (!party.identificacion) throw new Error("Fixture owner has no identificacion");
+  return { identificacion: party.identificacion };
+}
+
 const CASES: {
   name: string;
   fixture: FixtureWithClave;
@@ -68,7 +74,7 @@ const CASES: {
   {
     name: "SIMPLE_FACTURA_COMPRA",
     fixture: SIMPLE_FACTURA_COMPRA,
-    owner: SIMPLE_FACTURA_COMPRA.receptor,
+    owner: identified(SIMPLE_FACTURA_COMPRA.receptor),
     expectedDocType: "08",
   },
   {

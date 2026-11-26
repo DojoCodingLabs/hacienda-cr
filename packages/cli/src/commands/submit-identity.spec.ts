@@ -16,6 +16,7 @@ import { createAuthenticatedClient } from "../utils/api-client.js";
 import { openSubmissionStores } from "../utils/submission-state.js";
 import { useTemporaryConfigHome } from "../__testing__/config-home.js";
 import { submitCommand } from "./submit.js";
+import { runCommand, type CommandArgs } from "../__fixtures__/run-command.js";
 
 const http = vi.hoisted(() => ({ post: vi.fn(), get: vi.fn() }));
 vi.mock("../utils/api-client.js", () => ({
@@ -54,13 +55,18 @@ describe("hacienda submit submission identity", () => {
   let p12: string;
   let originalExitCode: typeof process.exitCode;
 
-  async function submit(extra: Record<string, unknown> = {}): Promise<number | undefined> {
+  async function submit(
+    extra: CommandArgs<typeof submitCommand> = {},
+  ): Promise<number | undefined> {
     process.exitCode = undefined;
-    await submitCommand.run?.({
-      args: { file, p12, json: true, profile: "default", "dry-run": false, ...extra },
-      rawArgs: [],
-      cmd: submitCommand,
-    } as never);
+    await runCommand(submitCommand, {
+      file,
+      p12,
+      json: true,
+      profile: "default",
+      "dry-run": false,
+      ...extra,
+    });
     const code = process.exitCode;
     process.exitCode = undefined;
     return code;
@@ -176,11 +182,7 @@ describe("hacienda submit submission identity", () => {
 
   it("keeps --dry-run free of submission state", async () => {
     process.exitCode = undefined;
-    await submitCommand.run?.({
-      args: { file, json: true, profile: "default", "dry-run": true },
-      rawArgs: [],
-      cmd: submitCommand,
-    } as never);
+    await runCommand(submitCommand, { file, json: true, profile: "default", "dry-run": true });
     expect(process.exitCode).toBeUndefined();
     expect(lastJson()).toMatchObject({ success: true, dryRun: true });
     expect(await readdir(join(dir, ".hacienda-cr"))).toEqual(["config.toml"]);

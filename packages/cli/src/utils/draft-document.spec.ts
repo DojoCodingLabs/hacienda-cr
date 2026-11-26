@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildDecimalFacturaXml, validateDocumentXml } from "@dojocoding/hacienda-sdk";
+import { buildDecimalDocumentXml, validateDocumentXml } from "@dojocoding/hacienda-sdk";
 import { SIMPLE_INVOICE } from "../../../sdk/src/__fixtures__/invoices.js";
 import {
   DraftFacturaSchema,
@@ -79,7 +79,8 @@ describe("draft decimal-text document", () => {
 
   it("builds XML with the text amounts unchanged and passes the XSD", async () => {
     const draft = exactDraftFixture();
-    const xml = buildDecimalFacturaXml(draftToSource(draft));
+    // Same builder path as `hacienda submit` (draftToSource yields tipoDocumento "01").
+    const xml = buildDecimalDocumentXml(draftToSource(draft));
     const validation = await validateDocumentXml(xml);
 
     expect(xml).toContain("<MontoTotal>100.00000</MontoTotal>");

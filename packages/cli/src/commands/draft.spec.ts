@@ -1,5 +1,6 @@
 import { describe, expect, it, vi, afterEach } from "vitest";
 import { draftCommand } from "./draft.js";
+import { runCommand } from "../__fixtures__/run-command.js";
 
 describe("draft command output contract", () => {
   afterEach(() => {
@@ -9,10 +10,11 @@ describe("draft command output contract", () => {
   it("emits blank-template money and quantities as decimal text", async () => {
     const log = vi.spyOn(console, "log").mockImplementation(() => undefined);
 
-    await draftCommand.run?.({
-      args: { json: true, interactive: false, template: "factura", output: "unused.json" },
-      rawArgs: [],
-      cmd: draftCommand,
+    await runCommand(draftCommand, {
+      json: true,
+      interactive: false,
+      template: "factura",
+      output: "unused.json",
     });
 
     const output = JSON.parse(String(log.mock.calls.at(-1)?.[0])) as {

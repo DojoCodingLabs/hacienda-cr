@@ -336,18 +336,19 @@ describe("buildFacturaXml", () => {
     });
 
     it("should emit TipoDocRefOTRO when tipoDoc is 99", async () => {
-      const ref = REFERENCE_INVOICE.informacionReferencia[0];
+      const [ref] = REFERENCE_INVOICE.informacionReferencia ?? [];
+      if (!ref) throw new Error("REFERENCE_INVOICE must carry an informacionReferencia");
       const input = {
         ...REFERENCE_INVOICE,
         informacionReferencia: [
-          { ...ref, tipoDoc: "99", tipoDocOtros: "Documento interno de prueba" },
+          { ...ref, tipoDoc: "99" as const, tipoDocOtros: "Documento interno de prueba" },
         ],
       };
       const xml = buildFacturaXml(input);
       expectContains(xml, "<TipoDocIR>99</TipoDocIR>");
       expectContains(xml, "<TipoDocRefOTRO>Documento interno de prueba</TipoDocRefOTRO>");
       const result = await validateDocumentXml(xml);
-      expect(result.valid).toBe(true, result.issues.join(", "));
+      expect(result.valid, result.issues.join(", ")).toBe(true);
     });
   });
 

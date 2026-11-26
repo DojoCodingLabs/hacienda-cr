@@ -6,8 +6,9 @@ import { FileDocumentStore } from "./file-store.js";
 import { createStoredDocument, situationFromClave, classifySendResult } from "./state-machine.js";
 import { submitAndWait } from "../api/orchestrator.js";
 import type { HttpClient } from "../api/http-client.js";
+import type { SubmissionRequest } from "@dojocoding/hacienda-shared";
 const clave = "50621102600310123456700100001010000000001112345678";
-const request = {
+const request: SubmissionRequest = {
   clave,
   fecha: "2026-10-21T10:00:00-06:00",
   emisor: { tipoIdentificacion: "02", numeroIdentificacion: "3101234567" },

@@ -86,7 +86,8 @@ describe("documented history metadata", () => {
     },
   );
   it("does not infer total, next offset or completeness from an empty page or absent/malformed ranges", async () => {
-    for (const headers of [{}, { "Content-Range": "unexpected-range" }]) {
+    const headerCases: Record<string, string>[] = [{}, { "Content-Range": "unexpected-range" }];
+    for (const headers of headerCases) {
       const c = client([], 206, headers);
       const r = await listComprobantes(c.http, { offset: 100, limit: 5 });
       expect(r.comprobantes).toEqual([]);

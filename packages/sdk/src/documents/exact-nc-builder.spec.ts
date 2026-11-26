@@ -204,9 +204,9 @@ it("independent Python Decimal preserves full-credit rounding, five-place money 
         codigoMoneda: currency,
         tipoCambio: currency === "CRC" ? "1" : "513.12345",
       };
-      input.original.detalleServicio[0].precioUnitario = price;
+      required(input.original.detalleServicio[0]).precioUnitario = price;
       if (index === 3)
-        input.original.detalleServicio[0].descuento = [
+        required(input.original.detalleServicio[0]).descuento = [
           { codigoDescuento: "05", montoDescuento: "1.5" },
           { codigoDescuento: "04", porcentaje: "6.25" },
           { codigoDescuento: "06", porcentaje: "10.00001" },
@@ -215,8 +215,8 @@ it("independent Python Decimal preserves full-credit rounding, five-place money 
     }
   }
   const big = exactNcFixture();
-  big.original.detalleServicio[0].cantidad = "9999999999999999";
-  big.original.detalleServicio[0].precioUnitario = "0.00001";
+  required(big.original.detalleServicio[0]).cantidad = "9999999999999999";
+  required(big.original.detalleServicio[0]).precioUnitario = "0.00001";
   cases.push(big);
   const totals = JSON.parse(
     execFileSync(
@@ -244,7 +244,7 @@ with localcontext() as c:
   ) as { gross: string; net: string; tax: string; total: string }[];
   cases.forEach((input, index) => {
     const expected = required(totals[index]);
-    required(input.original.medioPago[0]).totalMedioPago = expected.total;
+    required(input.original.medioPago?.[0]).totalMedioPago = expected.total;
     const result = calculateExactNcTotal(input),
       line = required(result.detalleServicio[0]);
     expect([

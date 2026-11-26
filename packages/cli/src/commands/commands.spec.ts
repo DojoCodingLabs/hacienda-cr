@@ -77,7 +77,7 @@ describe("auth command group", () => {
       const args = switchCmd.args as Record<string, { type: string; required?: boolean }>;
 
       expect(args.name).toBeDefined();
-      expect(args.name.type).toBe("positional");
+      expect(args.name?.type).toBe("positional");
     });
   });
 });
@@ -98,8 +98,8 @@ describe("submit command", () => {
     const resolved = await resolveCommand(submitCommand);
     const args = resolved.args as Record<string, { type: string; required?: boolean }>;
     expect(args.file).toBeDefined();
-    expect(args.file.type).toBe("positional");
-    expect(args.file.required).toBe(true);
+    expect(args.file?.type).toBe("positional");
+    expect(args.file?.required).toBe(true);
   });
 
   it("has dry-run and json flags", async () => {
@@ -133,8 +133,8 @@ describe("status command", () => {
     const resolved = await resolveCommand(statusCommand);
     const args = resolved.args as Record<string, { type: string; required?: boolean }>;
     expect(args.clave).toBeDefined();
-    expect(args.clave.type).toBe("positional");
-    expect(args.clave.required).toBe(true);
+    expect(args.clave?.type).toBe("positional");
+    expect(args.clave?.required).toBe(true);
   });
 
   it("has profile arg", async () => {
@@ -184,8 +184,8 @@ describe("get command", () => {
     const resolved = await resolveCommand(getCommand);
     const args = resolved.args as Record<string, { type: string; required?: boolean }>;
     expect(args.clave).toBeDefined();
-    expect(args.clave.type).toBe("positional");
-    expect(args.clave.required).toBe(true);
+    expect(args.clave?.type).toBe("positional");
+    expect(args.clave?.required).toBe(true);
   });
 
   it("has profile arg", async () => {
@@ -211,8 +211,8 @@ describe("sign command", () => {
     const resolved = await resolveCommand(signCommand);
     const args = resolved.args as Record<string, { type: string; required?: boolean }>;
     expect(args.file).toBeDefined();
-    expect(args.file.type).toBe("positional");
-    expect(args.file.required).toBe(true);
+    expect(args.file?.type).toBe("positional");
+    expect(args.file?.required).toBe(true);
   });
 
   it("has p12, pin, and output args", async () => {
@@ -239,8 +239,8 @@ describe("validate command", () => {
     const resolved = await resolveCommand(validateCommand);
     const args = resolved.args as Record<string, { type: string; required?: boolean }>;
     expect(args.file).toBeDefined();
-    expect(args.file.type).toBe("positional");
-    expect(args.file.required).toBe(true);
+    expect(args.file?.type).toBe("positional");
+    expect(args.file?.required).toBe(true);
   });
 });
 
@@ -260,8 +260,8 @@ describe("lookup command", () => {
     const resolved = await resolveCommand(lookupCommand);
     const args = resolved.args as Record<string, { type: string; required?: boolean }>;
     expect(args.cedula).toBeDefined();
-    expect(args.cedula.type).toBe("positional");
-    expect(args.cedula.required).toBe(true);
+    expect(args.cedula?.type).toBe("positional");
+    expect(args.cedula?.required).toBe(true);
   });
 });
 
@@ -281,7 +281,7 @@ describe("draft command", () => {
     const resolved = await resolveCommand(draftCommand);
     const args = resolved.args as Record<string, { type: string; default?: string | boolean }>;
     expect(args.template).toBeDefined();
-    expect(args.template.default).toBe("factura");
+    expect(args.template?.default).toBe("factura");
   });
 
   it("has output, json, and interactive args", async () => {
@@ -290,6 +290,6 @@ describe("draft command", () => {
     expect(args.output).toBeDefined();
     expect(args.json).toBeDefined();
     expect(args.interactive).toBeDefined();
-    expect(args.interactive.default).toBe(true);
+    expect(args.interactive?.default).toBe(true);
   });
 });

@@ -382,14 +382,17 @@ describe.each(CASCADE_FAMILIES.map((family) => [family.name, family] as const))(
 );
 
 /** FE line of 100 with the given discounts and the given allocation. */
-function feWith(descuento: unknown[], total: string): ExactFeInput {
+/** An FE input with an explicit payment, so both current and retained calculators accept its shape. */
+function feWith(
+  descuento: unknown[],
+  total: string,
+): ExactFeInput & Required<Pick<ExactFeInput, "medioPago">> {
   const source = exactNcFixture().original;
   const line = source.detalleServicio[0] as unknown as Line;
   line.cantidad = "1";
   line.precioUnitario = "100";
   line.descuento = descuento;
-  source.medioPago = [{ tipoMedioPago: "01", totalMedioPago: total }];
-  return source;
+  return { ...source, medioPago: [{ tipoMedioPago: "01", totalMedioPago: total }] };
 }
 const amountsOf = (calculated: Calculated) =>
   calculated.detalleServicio[0]?.descuento?.map((d) => d.montoDescuento);

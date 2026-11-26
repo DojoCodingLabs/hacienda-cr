@@ -18,6 +18,11 @@ script regressions, and installed-tarball tests. It removes `HACIENDA_USERNAME`,
 `HACIENDA_PASSWORD`, and `HACIENDA_SANDBOX_E2E` from its child environment so live
 credential tests stay disabled. CI also checks packed consumers on Node 22 and 24.
 
+Each package's `typecheck` script also runs `tsc -p tsconfig.spec.json`, which
+type-checks every `src/**/*.ts` file, specs included, with Vitest globals. A type
+error in a test therefore fails `pnpm verify`. When a spec deliberately passes
+invalid input, use an explicit `as unknown as T` with a comment saying why.
+
 ## Focused development
 
 Package tests invoked directly do not run Turbo's dependency builds. Build first

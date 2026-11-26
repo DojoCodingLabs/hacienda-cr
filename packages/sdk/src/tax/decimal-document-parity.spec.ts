@@ -114,10 +114,10 @@ describe("decimal calculation parity with Number path", () => {
         numeroLinea: 1,
         codigoCabys: "4321000000000",
         cantidad: 1,
-        unidadMedida: "Sp",
+        unidadMedida: "Sp" as const,
         detalle: "Servicio",
         precioUnitario: 100,
-        impuesto: [{ codigo: "01", codigoTarifaIVA: "08", tarifa: 13 }],
+        impuesto: [{ codigo: "01" as const, codigoTarifaIVA: "08" as const, tarifa: 13 }],
         esServicio: true,
       },
     ];

@@ -12,6 +12,13 @@ import { mkdtempSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import forge from "node-forge";
+
+// @types/node-forge 1.3 declares fromDer(bytes, strict?: boolean), but node-forge's
+// lib/asn1.js also accepts an options object; this test needs parseAllBytes.
+const fromDerWithOptions = forge.asn1.fromDer.bind(forge.asn1) as unknown as (
+  bytes: string,
+  options: { strict: boolean; parseAllBytes: boolean },
+) => forge.asn1.Asn1;
 // Exercise the public SDK barrel, not an alternate verification implementation.
 import { type ResponseVerificationError, verifyHaciendaResponseXml } from "../index.js";
 
@@ -127,7 +134,7 @@ it("rejects advisory-shaped extra nested DigestAlgorithm children through the ex
           Buffer.concat([Buffer.from("06096086480165030402010500", "hex"), extra]),
         ),
         malformed = der(0x30, Buffer.concat([algorithm, der(0x04, digest)])),
-        parsed = forge.asn1.fromDer(malformed.toString("binary"), {
+        parsed = fromDerWithOptions(malformed.toString("binary"), {
           strict: true,
           parseAllBytes: true,
         }),

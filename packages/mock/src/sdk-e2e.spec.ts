@@ -6,7 +6,7 @@
  * misma suite al sandbox real (suite `e2e-pipeline.spec.ts` del SDK).
  */
 import { describe, it, expect, beforeAll, afterAll } from "vitest";
-import { HaciendaStatus } from "@dojocoding/hacienda-shared";
+import { HaciendaStatus, type SubmissionRequest } from "@dojocoding/hacienda-shared";
 import {
   TokenManager,
   HttpClient,
@@ -17,7 +17,8 @@ import {
 } from "@dojocoding/hacienda-sdk";
 import { MOCK_INVOICE } from "./__fixtures__/invoice.js";
 
-import { createMockServer, type MockServer } from "./server.js";
+import { createMockServer } from "./server.js";
+import type { MockServer } from "./types.js";
 
 const TARGET = process.env["HACIENDA_E2E_TARGET"] ?? "mock";
 const EXTERNAL_URL = process.env["HACIENDA_MOCK_URL"];
@@ -47,7 +48,7 @@ async function clientFor(mock: MockServer): Promise<HttpClient> {
   return new HttpClient({ envConfig, tokenManager: tokens });
 }
 
-function submissionBody(): Record<string, unknown> {
+function submissionBody(): SubmissionRequest {
   return {
     clave: CLAVE,
     fecha: MOCK_INVOICE.fechaEmision,
@@ -71,7 +72,7 @@ describe.skipIf(TARGET !== "mock")("E2E del SDK contra el mock de Hacienda", () 
   });
 
   it("envia bytes sintéticos y observa el estado simulado en loopback", async () => {
-    const result = await submitAndWait(await clientFor(mock), submissionBody() as never, {
+    const result = await submitAndWait(await clientFor(mock), submissionBody(), {
       pollIntervalMs: 10,
       timeoutMs: 10_000,
     });
@@ -91,7 +92,7 @@ describe.skipIf(TARGET !== "mock")("E2E del SDK contra el mock de Hacienda", () 
       outcome: { status: "rechazado", codigo: "05" },
     });
     try {
-      const result = await submitAndWait(await clientFor(rejecting), submissionBody() as never, {
+      const result = await submitAndWait(await clientFor(rejecting), submissionBody(), {
         pollIntervalMs: 10,
         timeoutMs: 10_000,
       });
@@ -127,10 +128,10 @@ describe.skipIf(TARGET !== "mock")("E2E del SDK contra el mock de Hacienda", () 
         body = submissionBody();
       const store = new FileDocumentStore({ baseDir: directory });
       await expect(
-        submitAndWait(client, body as never, { store, pollIntervalMs: 0, timeoutMs: 1000 }),
+        submitAndWait(client, body, { store, pollIntervalMs: 0, timeoutMs: 1000 }),
       ).rejects.toThrow();
       expect(await store.getState(body.clave)).toBe("PENDIENTE");
-      await expect(submitAndWait(client, body as never, { store })).rejects.toThrow(/resume/);
+      await expect(submitAndWait(client, body, { store })).rejects.toThrow(/resume/);
       expect(linkDownMock.submissions()).toHaveLength(0);
     } finally {
       await linkDownMock.close();

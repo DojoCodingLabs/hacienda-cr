@@ -639,7 +639,7 @@ describe("InformacionReferenciaSchema", () => {
       tipoDoc: "99",
     });
     expect(result.success).toBe(false);
-    expect(result.error?.issues[0].path).toContain("tipoDocOtros");
+    expect(result.error?.issues[0]?.path).toContain("tipoDocOtros");
   });
 
   it("should reject tipoDocOtros without tipoDoc 99", () => {
@@ -649,7 +649,7 @@ describe("InformacionReferenciaSchema", () => {
       tipoDocOtros: "Documento interno",
     });
     expect(result.success).toBe(false);
-    expect(result.error?.issues[0].path).toContain("tipoDocOtros");
+    expect(result.error?.issues[0]?.path).toContain("tipoDocOtros");
   });
 
   it("should reject codigo 99 without codigoOtros", () => {
@@ -658,7 +658,7 @@ describe("InformacionReferenciaSchema", () => {
       codigo: "99",
     });
     expect(result.success).toBe(false);
-    expect(result.error?.issues[0].path).toContain("codigoOtros");
+    expect(result.error?.issues[0]?.path).toContain("codigoOtros");
   });
 
   it("should reject codigoOtros without codigo 99", () => {
@@ -668,7 +668,7 @@ describe("InformacionReferenciaSchema", () => {
       codigoOtros: "Razon especial",
     });
     expect(result.success).toBe(false);
-    expect(result.error?.issues[0].path).toContain("codigoOtros");
+    expect(result.error?.issues[0]?.path).toContain("codigoOtros");
   });
 
   it("should accept the April 2026 tipoDoc codes 19 and 20", () => {

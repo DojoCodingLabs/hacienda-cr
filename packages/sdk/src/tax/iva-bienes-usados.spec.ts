@@ -42,6 +42,7 @@ import {
   calculateDecimalTaxAmount,
 } from "./decimal-document.js";
 import { validateFacturaInput } from "../xml/validator.js";
+import { toLineaDetalle } from "../__fixtures__/linea-detalle.js";
 import { buildFacturaXml } from "../documents/factura-builder.js";
 import { buildDecimalDocumentXml } from "../documents/decimal-document-builder.js";
 import { SCHEMA_GENERATIONS, validateAgainstXsd, xmllintAvailable } from "../__testing__/xsd.js";
@@ -284,7 +285,7 @@ function legacyInvoice(precioUnitario: number, factorCalculoIVA: number): Factur
   const summary = calculateInvoiceSummary([{ ...line, esServicio: false }]);
   return {
     ...SIMPLE_INVOICE,
-    detalleServicio: [line],
+    detalleServicio: [toLineaDetalle(line)],
     resumenFactura: {
       ...summary,
       medioPago: [{ tipoMedioPago: "01", totalMedioPago: summary.totalComprobante }],

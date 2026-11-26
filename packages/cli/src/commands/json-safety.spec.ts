@@ -6,6 +6,7 @@ import { SIMPLE_INVOICE } from "../../../sdk/src/__fixtures__/invoices.js";
 import { submitCommand } from "./submit.js";
 import { validateCommand } from "./validate.js";
 import { createAuthenticatedClient } from "../utils/api-client.js";
+import { runCommand } from "../__fixtures__/run-command.js";
 
 vi.mock("../utils/api-client.js", () => ({
   createAuthenticatedClient: vi.fn(() => {
@@ -38,12 +39,11 @@ describe("CLI machine-readable local failures and dry-run boundary", () => {
   ] as const)("%s --json returns parseable JSON for %s input", async (name, condition) => {
     const file = join(directory, "invoice.json");
     if (condition === "malformed") await writeFile(file, "{not valid JSON");
-    const command = name === "submit" ? submitCommand : validateCommand;
-    await command.run?.({
-      args: { file, json: true, "dry-run": true, profile: "default" },
-      rawArgs: [],
-      cmd: command,
-    });
+    if (name === "submit") {
+      await runCommand(submitCommand, { file, json: true, "dry-run": true, profile: "default" });
+    } else {
+      await runCommand(validateCommand, { file, json: true });
+    }
     expect(process.exitCode).toBe(1);
     expect(console.log).toHaveBeenCalledOnce();
     const result = JSON.parse(String(vi.mocked(console.log).mock.calls[0]?.[0]));
@@ -54,11 +54,7 @@ describe("CLI machine-readable local failures and dry-run boundary", () => {
   it("submit --dry-run validates real XML without authentication or signing", async () => {
     const file = join(directory, "invoice.json");
     await writeFile(file, JSON.stringify(SIMPLE_INVOICE));
-    await submitCommand.run?.({
-      args: { file, json: true, "dry-run": true, profile: "nonexistent" },
-      rawArgs: [],
-      cmd: submitCommand,
-    });
+    await runCommand(submitCommand, { file, json: true, "dry-run": true, profile: "nonexistent" });
     expect(process.exitCode).toBeUndefined();
     const result = JSON.parse(String(vi.mocked(console.log).mock.calls[0]?.[0]));
     expect(result).toMatchObject({ success: true, dryRun: true });

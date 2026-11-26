@@ -23,7 +23,7 @@ function enumerationValues(xsd: string, typeName: string): string[] {
     ...new Set(
       (m[0].match(/<xs:enumeration[^>]*value="([0-9]+)"/g) || []).map((v) => {
         const match = v.match(/([0-9]+)/);
-        return match ? match[1] : "";
+        return match?.[1] ?? "";
       }),
     ),
   ].sort();

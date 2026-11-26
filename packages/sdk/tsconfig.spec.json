@@ -1,0 +1,14 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "rootDir": "../..",
+    "types": ["node", "vitest/globals"],
+    // Specs that self-import the package type-check against source, so `typecheck`
+    // never depends on this package's own (concurrently rebuilt) dist. At runtime
+    // vitest still resolves the import to dist.
+    "paths": { "@dojocoding/hacienda-sdk": ["./src/index.ts"] }
+  },
+  "include": ["src/**/*.ts"],
+  "exclude": ["node_modules", "dist"]
+}

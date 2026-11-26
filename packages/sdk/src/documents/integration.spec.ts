@@ -6,6 +6,7 @@
 import { fixtureClave } from "../__fixtures__/identity.js";
 import { describe, it, expect } from "vitest";
 import { calculateLineItemTotals, calculateInvoiceSummary } from "../tax/calculator.js";
+import { toLineaDetalle } from "../__fixtures__/linea-detalle.js";
 import { buildFacturaXml } from "./factura-builder.js";
 import { validateFacturaInput } from "../xml/validator.js";
 import type { FacturaElectronica } from "@dojocoding/hacienda-shared";
@@ -75,7 +76,7 @@ function buildFullInvoice(overrides?: Partial<FacturaElectronica>): FacturaElect
       },
     },
     condicionVenta: "01",
-    detalleServicio: items,
+    detalleServicio: items.map(toLineaDetalle),
     resumenFactura: {
       ...summary,
       medioPago: [{ tipoMedioPago: "01", totalMedioPago: summary.totalComprobante }],
@@ -194,7 +195,7 @@ describe("Full pipeline: calculate -> validate -> build XML", () => {
         identificacion: { tipo: "01", numero: "123456789" },
       },
       condicionVenta: "01",
-      detalleServicio: [discountedLine],
+      detalleServicio: [toLineaDetalle(discountedLine)],
       resumenFactura: {
         ...summary,
         medioPago: [{ tipoMedioPago: "01", totalMedioPago: summary.totalComprobante }],
@@ -247,7 +248,7 @@ describe("Full pipeline: calculate -> validate -> build XML", () => {
 
     const xml = buildFacturaXml(
       buildFullInvoice({
-        detalleServicio: [exoneratedLine],
+        detalleServicio: [toLineaDetalle(exoneratedLine)],
         resumenFactura: {
           ...summary,
           medioPago: [{ tipoMedioPago: "01", totalMedioPago: summary.totalComprobante }],
