@@ -1,5 +1,86 @@
 # @dojocoding/hacienda-cli
 
+## 0.15.0
+
+### Minor Changes
+
+- 0126c4c: `hacienda submit` now signs a clave only once and uses the SDK
+  submission-identity guard.
+
+  XAdES embeds a signing time, so every earlier `submit` run produced different
+  signed bytes under the same clave: a retry after a lost POST was exactly the
+  divergent resubmit the guard exists to stop. The first run now stores the
+  signed XML and its delivery state (SDK `FileDocumentStore`) and records the
+  attempt (`FileSubmissionIdentityStore`) under
+  `~/.hacienda-cr/submissions/<environment>/` before the POST. Later runs for the
+  same clave never sign again and check local state before authenticating or any
+  network call:
+
+  - an already-attempted clave is refused (`SUBMISSION_ALREADY_ATTEMPTED`) until
+    you query `hacienda status <clave>` and rerun with the new
+    `--retry-same-bytes` flag, which resends the exact stored bytes (no
+    certificate or PIN needed);
+  - an input that no longer matches the stored document is refused
+    (`SUBMISSION_DRAFT_CHANGED`), even with the flag;
+  - a clave stored as accepted, rejected or expired is refused (`SUBMISSION_FINAL`).
+
+  First submissions behave as before, except that a contingencia clave (situation
+  digit 2) must now carry an `informacionReferencia` with `codigo` `05` and the
+  provisional comprobante `numero` (Anexos y Estructuras v4.4, Información de
+  Referencia). `--dry-run` writes no state. Claves submitted by earlier CLI
+  versions have no local record and are not protected.
+
+- 3492938: Raise `engines.node` from `>=22` to `>=22.12`. The XAdES signing dependencies (xadesjs/xmldsigjs 3) require Node `^20.19 || >=22.12`, so the declared range now matches what actually runs. The four linked packages move together.
+- ea02791: Declare `2026/v4.4` as the current schema set and stop defaulting `ProveedorSistemas` silently.
+
+  - The vendored schema manifest now declares `currentSet: "2026/v4.4"`, the April 2026 revision of Anexos y Estructuras v4.4 that is mandatory since 2026-11-01 (Hacienda communication `ActualizacionAnexosyEstructurasVersion4.4CEv2.pdf`). `2024/v4.4` stays as the previous set. The SDK already embedded the 2026 XSDs, so runtime validation does not change.
+  - SDK: config profiles accept an optional `provider_id` (9–20 letters or digits), the identification of the invoicing-system provider emitted as `ProveedorSistemas`.
+  - CLI: `hacienda auth login --provider-id <id>` stores it (re-running login keeps it), `hacienda auth status` shows it, and `hacienda draft --profile <name>` uses it. Without `provider_id`, drafts keep the issuer's identification and print a warning (also returned as `warnings` with `--json`): per the Anexo, that value is correct only for a self-developed or custom-built system. Blank templates use the `<<SYSTEM_PROVIDER_ID>>` placeholder. `hacienda status` explains the clave format correctly (letters allowed only in the taxpayer ID segment).
+  - MCP: `create_invoice` and `create_invoice_exact` accept an alphanumeric `proveedorSistemas` of 9–20 characters (previously 9–12 digits only), matching the Anexo's "Permite ingresar números y letras para personas jurídicas", and describe the field as the software provider's identification.
+
+- 3c60672: Refuse REP and MensajeReceptor submission and publish a per-family support matrix.
+
+  - `submitDocument()` and `submitAndWait()` now throw `UnsupportedDocumentFamilyError`
+    (code `UNSUPPORTED_FAMILY`, with `family`, `reason` and `docsUrl`) for a
+    `ReciboElectronicoPago` or `MensajeReceptor` document, or for a request carrying
+    `consecutivoReceptor`, before persistence or any network access. When the XML
+    root is not a known Hacienda document, a clave document type of 10 or 05–07 is
+    refused instead. REP has no resolved monetary projection; MR has no
+    `consecutivoReceptor` in `SubmissionRequest` and no receiver-specific outcome
+    oracle. **Migration:** code that submitted REP or MR documents through the SDK
+    now fails fast. Their XML builders are unchanged and stay available for source,
+    XSD and archive work.
+  - New SDK exports: `getFamilySupport()`, `assertSubmittableDocument()`,
+    `detectDocumentFamily()`, `familyFromDocumentType()`, `SUPPORT_MATRIX_URL`,
+    `UnsupportedDocumentFamilyError`, `HaciendaErrorCode.UNSUPPORTED_FAMILY` and
+    the `FamilySupport`, `FamilySubmitStatus`, `DocumentFamily` and
+    `SubmittableDocumentFacts` types.
+  - CLI: `hacienda submit` refuses REP/MR before reading the certificate or
+    signing, and `--json` reports `code`, `family` and `docsUrl`. The new
+    `hacienda support [--json]` prints the matrix.
+  - MCP: the new `hacienda://reference/family-support` resource exposes the
+    matrix. The server still has no signing or submission tool.
+
+  FEC stays submittable but is marked `unverified`: Hacienda's API documentation
+  does not settle whether the POST `emisor` is the XML Emisor (supplier) or the
+  buyer that issues the FEC. See `docs/support-matrix.md`.
+
+### Patch Changes
+
+- Updated dependencies [3492938]
+- Updated dependencies [49eb3b7]
+- Updated dependencies [d97da4f]
+- Updated dependencies [1560046]
+- Updated dependencies [a7be832]
+- Updated dependencies [ffa2193]
+- Updated dependencies [ea02791]
+- Updated dependencies [ffa2193]
+- Updated dependencies [3c60672]
+- Updated dependencies [3492938]
+- Updated dependencies [740a2b7]
+  - @dojocoding/hacienda-shared@0.15.0
+  - @dojocoding/hacienda-sdk@0.15.0
+
 ## 0.14.0
 
 ### Minor Changes
