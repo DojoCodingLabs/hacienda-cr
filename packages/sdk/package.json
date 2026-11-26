@@ -39,11 +39,11 @@
     "@dojocoding/hacienda-shared": "workspace:*",
     "@xmldom/xmldom": "^0.9.12",
     "fast-xml-parser": "^5.12.0",
-    "smol-toml": "^1.9.0",
-    "xadesjs": "^2.6.8",
-    "xmldsigjs": "^2.8.8",
+    "smol-toml": "^1.9.1",
+    "xadesjs": "^3.1.0",
+    "xmldsigjs": "^3.1.0",
     "xmllint-wasm": "^5.3.0",
-    "xpath": "^0.0.34",
+    "xpath": "^0.1.0",
     "zod": "^4.6.7"
   },
   "peerDependencies": {
