@@ -238,74 +238,95 @@ export class TokenManager {
 
   /**
    * Sends a token request to the IDP and stores the result.
+   *
+   * One request-scoped controller and timer span the fetch and every body
+   * read, so a server that sends headers and then stalls the body is still
+   * bounded by `requestTimeoutMs`.
    */
   private async requestToken(body: URLSearchParams): Promise<void> {
-    let response: Response;
+    const controller = new AbortController();
+    const signal = controller.signal;
+    const timer = setTimeout(
+      () => controller.abort(new DOMException("Token request timed out.", "TimeoutError")),
+      this.requestTimeoutMs,
+    );
     try {
-      response = await fetchWithTimeout(
-        this.envConfig.idpTokenUrl,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/x-www-form-urlencoded",
-          },
-          body: body.toString(),
-        },
-        {
-          timeoutMs: this.requestTimeoutMs,
-          fetchFn: this.fetchFn,
-          redirect: "error",
-        },
-      );
-    } catch (error) {
-      throw new AuthError(
-        AuthErrorCode.TOKEN_REQUEST_FAILED,
-        `Token request failed: network error.`,
-        error,
-      );
-    }
-
-    if (!response.ok) {
-      let detail = "";
+      let response: Response;
       try {
-        const errorBody = JSON.parse(await readResponseText(response, 65536, undefined)) as Record<
-          string,
-          unknown
-        >;
-        const code = errorBody["error"];
-        if (typeof code === "string" && /^[a-z_]{1,64}$/.test(code)) detail = ` — ${code}`;
-      } catch {
-        detail = "";
+        response = await fetchWithTimeout(
+          this.envConfig.idpTokenUrl,
+          {
+            method: "POST",
+            signal,
+            headers: {
+              "Content-Type": "application/x-www-form-urlencoded",
+            },
+            body: body.toString(),
+          },
+          {
+            timeoutMs: this.requestTimeoutMs,
+            fetchFn: this.fetchFn,
+            redirect: "error",
+          },
+        );
+      } catch (error) {
+        throw new AuthError(
+          AuthErrorCode.TOKEN_REQUEST_FAILED,
+          `Token request failed: network error.`,
+          error,
+        );
       }
 
-      throw new AuthError(
-        AuthErrorCode.TOKEN_REQUEST_FAILED,
-        `Token request failed with status ${response.status.toString()}${detail}`,
-      );
+      if (!response.ok) {
+        let detail = "";
+        try {
+          const errorBody = JSON.parse(await readResponseText(response, 65536, signal)) as Record<
+            string,
+            unknown
+          >;
+          const code = errorBody["error"];
+          if (typeof code === "string" && /^[a-z_]{1,64}$/.test(code)) detail = ` — ${code}`;
+        } catch {
+          detail = "";
+        }
+
+        throw new AuthError(
+          AuthErrorCode.TOKEN_REQUEST_FAILED,
+          `Token request failed with status ${response.status.toString()}${detail}`,
+        );
+      }
+
+      const text = await readResponseText(response, 65536, signal);
+      let json: unknown;
+      try {
+        json = JSON.parse(text);
+      } catch {
+        // JSON parse errors can include raw response fragments containing credentials.
+        throw new AuthError(
+          AuthErrorCode.INVALID_TOKEN_RESPONSE,
+          "Invalid token response from IDP.",
+        );
+      }
+
+      const parseResult = TokenResponseSchema.safeParse(json);
+      if (!parseResult.success) {
+        throw new AuthError(
+          AuthErrorCode.INVALID_TOKEN_RESPONSE,
+          "Invalid token response from IDP.",
+        );
+      }
+
+      const tokenData = parseResult.data;
+      const now = Date.now();
+
+      this.tokenState = {
+        accessToken: tokenData.access_token,
+        refreshToken: tokenData.refresh_token,
+        accessTokenExpiresAt: now + tokenData.expires_in * 1000,
+        refreshTokenExpiresAt: now + tokenData.refresh_expires_in * 1000,
+      };
+    } finally {
+      clearTimeout(timer);
     }
-
-    const text = await readResponseText(response, 65536, undefined);
-    let json: unknown;
-    try {
-      json = JSON.parse(text);
-    } catch {
-      // JSON parse errors can include raw response fragments containing credentials.
-      throw new AuthError(AuthErrorCode.INVALID_TOKEN_RESPONSE, "Invalid token response from IDP.");
-    }
-
-    const parseResult = TokenResponseSchema.safeParse(json);
-    if (!parseResult.success) {
-      throw new AuthError(AuthErrorCode.INVALID_TOKEN_RESPONSE, "Invalid token response from IDP.");
-    }
-
-    const tokenData = parseResult.data;
-    const now = Date.now();
-
-    this.tokenState = {
-      accessToken: tokenData.access_token,
-      refreshToken: tokenData.refresh_token,
-      accessTokenExpiresAt: now + tokenData.expires_in * 1000,
-      refreshTokenExpiresAt: now + tokenData.refresh_expires_in * 1000,
-    };
   }
 }
