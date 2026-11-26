@@ -12,6 +12,10 @@ npm install -g @dojocoding/hacienda-cli
 
 Requires **Node.js 22+**.
 
+The CLI installs `node-forge` as its own dependency for PKCS#12 (`.p12`)
+loading, so `hacienda sign` and `hacienda submit` work from a default install.
+(The SDK alone treats `node-forge` as an optional peer; see the SDK README.)
+
 ## Supported Inputs
 
 `lookup` accepts ten-character alphanumeric legal entity IDs. `get` and `status`

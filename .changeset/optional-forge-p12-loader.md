@@ -6,8 +6,10 @@ Load PKCS#12 credentials only when the parser is installed.
 
 `node-forge` is now an optional peer dependency instead of a required runtime
 dependency. Consumers that never call `loadP12` no longer install it and no
-longer inherit its open advisory in `npm audit --omit=dev`. Consumers that load
-`.p12` files must install it explicitly:
+longer inherit its open advisory in `npm audit --omit=dev`.
+
+**Action required:** consumers that call `loadP12` or `signXml` (which loads the
+`.p12` through `loadP12`) must now add `node-forge` to their own dependencies:
 
 ```bash
 npm install node-forge

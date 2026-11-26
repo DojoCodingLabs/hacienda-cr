@@ -9,23 +9,27 @@
 - Persistent submit requires an explicit store. After an uncertain POST, resume queries by the same clave and bytes; no automatic resend. Durable issuance uses one canonical ledger shared with legacy counters, and reset cannot reuse issued numbers. See docs/open-pr-remediation.md for recovery and operational limits.
 - Once durable issuance writes the versioned ledger, all writers sharing that config directory must use this SDK version. Older binaries only understand flat counters and must not share the upgraded directory; back up local state before deliberate adoption. There is no automatic downgrade or replay.
 
-### `node-forge` pasa a peer dependency opcional
+### `node-forge` becomes an optional peer dependency
 
-`node-forge` ya no es una dependencia runtime obligatoria del SDK: es un peer
-opcional y se resuelve de forma perezosa dentro de `loadP12`. Quien nunca carga
-un `.p12` no lo instala y no hereda su advisory abierto.
+`node-forge` is no longer a required runtime dependency of the SDK: it is an
+optional peer resolved lazily inside `loadP12`. Consumers that never load a
+`.p12` do not install it and do not inherit its open advisory.
 
-**Acción requerida** si llamás `loadP12` o `signXml`:
+**Action required** if you call `loadP12` or `signXml` directly: add
+`node-forge` to your project's dependencies.
 
 ```bash
 npm install node-forge
 ```
 
-Sin el parser, el paquete se instala e importa normalmente, pero `loadP12`
-rechaza con un `SigningError` accionable antes de leer el archivo. El parseo,
-las validaciones (1 MiB, RSA ≥ 2048, vigencia, correspondencia clave/certificado)
-y la firma no cambian cuando el parser está presente. El issue #69 sigue abierto:
-esto reduce la exposición, no reemplaza la librería ni cierra el hallazgo.
+The CLI declares `node-forge` as its own dependency, so `hacienda sign` and
+`hacienda submit` keep working from a default install.
+
+Without the parser, the SDK installs and imports normally, but `loadP12`
+rejects with an actionable `SigningError` before reading the file. Parsing, the
+validations (1 MiB, RSA >= 2048, validity period, key/certificate match) and
+signing are unchanged when the parser is present. Issue #69 remains open: this
+reduces exposure; it does not replace the library or close the finding.
 
 ### `hacienda draft` en texto decimal exacto
 

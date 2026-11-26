@@ -24,7 +24,7 @@ type ForgeModule = typeof forge;
 // ---------------------------------------------------------------------------
 
 const MISSING_PARSER_MESSAGE =
-  'PKCS#12 loading requires the optional "node-forge" package. Install it with: npm install node-forge';
+  'PKCS#12 loading requires the optional "node-forge" package: add node-forge to your project\'s dependencies (e.g. npm install node-forge).';
 
 let forgeModule: Promise<ForgeModule> | null = null;
 
