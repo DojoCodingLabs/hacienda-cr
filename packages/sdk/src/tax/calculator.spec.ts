@@ -1226,13 +1226,16 @@ describe("calculateLineItemTotals – edge cases", () => {
       precioUnitario: 10000,
       impuesto: [
         { codigo: "07", codigoTarifaIVA: "08", tarifa: 13 },
-        { codigo: "08", codigoTarifaIVA: "08", tarifa: 13 },
+        { codigo: "08", codigoTarifaIVA: "08", tarifa: 13, factorCalculoIVA: 0.05 },
       ],
     };
     const result = calculateLineItemTotals(item);
-    // Both are IVA-related: 1300 + 1300 = 2600
-    expect(result.impuestoNeto).toBe(2600);
-    expect(result.montoTotalLinea).toBe(12600);
+    // 07: 13% of 10000 = 1300. 08: factor × subtotal = 0.05 × 10000 = 500
+    // (Anexos v4.4, p. 42); the informational tarifa does not enter it.
+    expect(result.impuesto.map((t) => t.monto)).toEqual([1300, 500]);
+    expect(result.impuesto[1]?.factorCalculoIVA).toBe(0.05);
+    expect(result.impuestoNeto).toBe(1800);
+    expect(result.montoTotalLinea).toBe(11800);
   });
 
   it("should handle 100% exoneration with discount applied first", () => {

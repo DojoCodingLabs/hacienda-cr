@@ -94,8 +94,12 @@ export const ImpuestoSchema = z
     /** Tax rate percentage. Optional for non-rate taxes. */
     tarifa: z.number().min(0).max(99.99).optional(),
 
-    /** Calculation factor for the used-goods IVA regime (code 08). */
-    factorCalculoIVA: z.number().min(0).max(9.9999).optional(),
+    /**
+     * Calculation factor for the used-goods IVA regime (code 08). A decimal
+     * factor, not a percentage: Monto = subtotal × factor (Anexos v4.4,
+     * pp. 39, 42). XSD: xs:decimal, totalDigits 5, fractionDigits 4.
+     */
+    factorCalculoIVA: decimal(5, 4).max(9.9999).optional(),
 
     datosImpuestoEspecifico: DatosImpuestoEspecificoSchema.optional(),
 

@@ -80,6 +80,13 @@ Size: S ≤ 1 day, M ≤ 1 week, L > 1 week. "Dep" lists the items each depends 
 - Acceptance: regression tests for 08 without codigoTarifaIVA (accepted), 01 without it (rejected), and totals off by 0.00001 (rejected on the exact path). XSD/xmllint conformance still passes.
 - Size: S (a), M (b). Dep: (b) interacts with P0-5.
 
+**P0-4c IVA 08 amount is factor × subtotal (done in this change)**
+
+- Problem: the legacy calculator/validator and the exact `DecimalDocument*` path computed IVA 08 from `tarifa` on the base imponible, ignored `factorCalculoIVA`, and the exact schema required `tarifa` for 08.
+- Evidence (Anexos v4.4, vendored PDF): p. 37 Codigo "Al utilizar el código 08, se debe utilizar para el cálculo de factor del IVA por el subtotal"; p. 39 FactorCalculoIVA (Decimal 5,4) "Debe expresarse en formato decimal" and "En caso de utilizar el código 08 de la nota 08, se verificará que este campo se encuentre en el comprobante, caso contario se rechazará"; p. 42 Monto "este campo se obtiene de la multiplicación del factor por el subtotal". Every 2024/2026 v4.4 XSD: `Tarifa` and `FactorCalculoIVA` are `minOccurs="0"`, factor `totalDigits 5`, `fractionDigits 4`.
+- Fix: Monto = subtotal × factor (no `/ 100`, no base imponible), HALF_UP to 5 decimals on the exact path and the selected rounder on the legacy path; `tarifa` optional and informational for 08; 08 without a factor, a factor on any other code, and a mismatched amount are rejected.
+- Open questions (fail closed until Hacienda answers): (1) Exoneración on 08: MontoExoneracion is defined as TarifaExonerada × subtotal (p. 46) and the summary split needs the full Tarifa; neither is defined for a factor. All paths reject exoneración on 08. (2) Whether Hacienda rejects a `FactorCalculoIVA` on codes other than 08 is not stated; the SDK rejects it. (3) Whether an informational `Tarifa` on 08 is checked by Hacienda is not stated; the SDK accepts it and ignores it for the amount. (4) The 2026 Anexo is not vendored; the 2026 XSDs are identical to 2024 for these elements.
+
 **P0-5 Rounding decision (#124)**
 
 - Problem: the legacy Number calculators round with `toFixed`, not HALF_UP. Exact sixth-decimal halves diverge in 0.32% of 13% IVA cases on 5-decimal bases and 2.9% of 3-decimal quantity × price cases (2M-case fuzz). `round5(NaN)` changes from NaN to throwing.
@@ -201,6 +208,7 @@ Size: S ≤ 1 day, M ≤ 1 week, L > 1 week. "Dep" lists the items each depends 
 | Redistribution rights for the vendored government PDFs/RAR (`schemas/README.md` "Unverified assumptions")                                      | Legal                                      | Repo hygiene           |
 | Independent reviewer for special FEC (#91) and used-goods FEC (#93)                                                                            | Second engineer                            | P1-11                  |
 | FEC POST party rule, if no primary source settles it: Hacienda support query                                                                   | Maintainer → Hacienda                      | P0-7                   |
+| IVA 08: exoneración on a factor-based line; FactorCalculoIVA on other codes; informational Tarifa on 08 (P0-4c open questions)                 | Maintainer → Hacienda                      | P0-4c                  |
 
 ## Corrections to the brief's context
 

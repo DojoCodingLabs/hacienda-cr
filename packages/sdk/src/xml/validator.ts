@@ -87,15 +87,12 @@ const TRANSITIONAL_IVA_RATE_CODES: readonly IvaRateCode[] = [
 ];
 
 /**
- * IVA-related tax codes (nota 8: 01, 07 and 08). Used only to choose the IVA
- * base (baseImponible) for the tax-amount check. It is not the set that
- * requires CodigoTarifaIVA.
+ * IVA tax codes taxed on baseImponible (nota 8: 01 and 07). Used only to
+ * choose the base for the tax-amount check. It is not the set that requires
+ * CodigoTarifaIVA. IVA 08 is checked against factor × subtotal instead
+ * (Anexos v4.4, p. 37 Codigo and p. 42 Monto).
  */
-const IVA_TAX_CODES: string[] = [
-  TaxCode.IVA,
-  TaxCode.IVA_CALCULO_ESPECIAL,
-  TaxCode.IVA_BIENES_USADOS,
-];
+const IVA_TAX_CODES: string[] = [TaxCode.IVA, TaxCode.IVA_CALCULO_ESPECIAL];
 
 /**
  * Tax codes that require CodigoTarifaIVA. Anexos y Estructuras v4.4, p. 38
@@ -232,10 +229,19 @@ function validateBusinessRules(input: FacturaElectronicaInput): FacturaValidatio
 
       for (const tax of line.impuesto) {
         // Keep existing non-rate regime validation unchanged outside codes 02–06.
-        if (tax.tarifa !== undefined || ["02", "03", "04", "05", "06"].includes(tax.codigo)) {
+        // IVA 08 is always checked against factor × subtotal when its factor is
+        // present; a missing factor is reported below.
+        const usedGoods = tax.codigo === TaxCode.IVA_BIENES_USADOS;
+        if (
+          usedGoods
+            ? tax.factorCalculoIVA !== undefined
+            : tax.tarifa !== undefined || ["02", "03", "04", "05", "06"].includes(tax.codigo)
+        ) {
           try {
+            // Compare against the recomputed amount, not against tax.monto itself.
+            const { monto: _supplied, ...facts } = tax;
             const expected = calculateTaxAmount(
-              tax,
+              usedGoods ? facts : tax,
               IVA_TAX_CODES.includes(tax.codigo)
                 ? (line.baseImponible ?? line.subTotal)
                 : line.subTotal,
@@ -285,6 +291,15 @@ function validateBusinessRules(input: FacturaElectronicaInput): FacturaValidatio
           errors.push({
             path: `${prefix}.impuesto.${taxIndex}.factorCalculoIVA`,
             message: "IVA bienes usados (codigo 08) requires factorCalculoIVA",
+          });
+        // Fail closed: the Anexo defines MontoExoneracion as TarifaExonerada ×
+        // subtotal (p. 46) and gives no rule for the factor-based 08, so the
+        // amount cannot be verified (open question in docs/roadmap.md).
+        if (tax.codigo === TaxCode.IVA_BIENES_USADOS && tax.exoneracion)
+          errors.push({
+            path: `${prefix}.impuesto.${taxIndex}.exoneracion`,
+            message:
+              "Exoneración on IVA bienes usados (codigo 08) is not supported: Anexos v4.4 does not define its amount",
           });
         {
           let netAmount = tax.monto;

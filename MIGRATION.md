@@ -1,5 +1,34 @@
 # Migration guide
 
+## Next: IVA 08 (bienes usados) is factor × subtotal
+
+This fix changes the output for documents that use IVA tax code 08 and
+nothing else. Documents without code 08 keep their bytes.
+
+The Anexos y Estructuras v4.4 (p. 37, p. 39, p. 42) define the 08 amount as
+the multiplication of `FactorCalculoIVA` by the subtotal, and the document is
+rejected without the factor. Earlier releases computed 08 as `tarifa`% of the
+base imponible and ignored the factor.
+
+```ts
+// Before: 13% of the base imponible; the factor was dropped.
+{ codigo: "08", codigoTarifaIVA: "08", tarifa: 13 }
+
+// After: Monto = subtotal × factor. The factor is a decimal, not a
+// percentage (4 decimals max, 0..9.9999). Tarifa and CodigoTarifaIVA are optional.
+{ codigo: "08", factorCalculoIVA: 0.0565 } // legacy Number
+{ codigo: "08", factorCalculoIVA: "0.0565" } // exact DecimalDocument*
+```
+
+- Legacy calculators (both `roundingMode`s) and `calculateTaxAmount` throw for
+  08 without `factorCalculoIVA`. The base for 08 is the subtotal, even when an
+  ISC raises the base imponible.
+- `validateFacturaInput` rejects an 08 `monto` that is not factor × subtotal,
+  so a stored 08 document built by an earlier release may now fail validation.
+  Recalculate it with the factor before resubmitting.
+- Exoneración on 08 and `factorCalculoIVA` on any other code are rejected
+  until Hacienda clarifies them (docs/roadmap.md, P0-4c).
+
 ## Next: opt-in HALF_UP rounding for the legacy Number calculators
 
 Nothing changes unless you opt in. `round5`, `calculateTaxAmount`,

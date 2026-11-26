@@ -278,7 +278,15 @@ export const DecimalExonerationCalculatedSchema = z
       });
   });
 
-const TAX_IVA_CODES = new Set(["01", "07", "08"]);
+/**
+ * IVA codes that require a percentage Tarifa. IVA 08 (IVA Régimen de Bienes
+ * Usados, factor) is not one of them: its amount is factor × subtotal
+ * (Anexos v4.4, p. 37 Codigo, p. 42 Monto), its Tarifa is minOccurs="0" in
+ * every v4.4 XSD and the Anexo validates Tarifa only for codes 01, 02 and 99
+ * (p. 38). It requires FactorCalculoIVA instead (p. 39).
+ */
+const TAX_IVA_TARIFF_REQUIRED = new Set(["01", "07"]);
+const TAX_USED_GOODS_IVA = "08";
 /**
  * Tax codes that require CodigoTarifaIVA. Anexos y Estructuras v4.4, p. 38
  * (ImpuestoType, CodigoTarifaIVA): "Se convierte en obligatorio para los
@@ -294,7 +302,9 @@ function refineDecimalTax(
     codigoImpuestoOtros?: string;
     codigoTarifaIVA?: string;
     tarifa?: string;
+    factorCalculoIVA?: string;
     monto?: string;
+    exoneracion?: unknown;
     datosImpuestoEspecifico?: {
       porcentaje?: string;
       proporcion?: string;
@@ -312,8 +322,23 @@ function refineDecimalTax(
     issue(["codigoImpuestoOtros"], "Other-tax text is only allowed for code 99");
   if (TAX_IVA_RATE_CODE_REQUIRED.has(tax.codigo) && !tax.codigoTarifaIVA)
     issue(["codigoTarifaIVA"], "IVA taxes require an official rate code");
-  if (TAX_IVA_CODES.has(tax.codigo) && tax.tarifa === undefined)
+  if (TAX_IVA_TARIFF_REQUIRED.has(tax.codigo) && tax.tarifa === undefined)
     issue(["tarifa"], "IVA taxes require a percentage rate");
+  // Anexos v4.4, p. 39: "En caso de utilizar el código 08 de la nota 08, se
+  // verificará que este campo se encuentre en el comprobante, caso contario se
+  // rechazará." Only 08 defines a factor calculation, so the exact path also
+  // rejects a factor on any other code instead of silently ignoring it.
+  if (tax.codigo === TAX_USED_GOODS_IVA && tax.factorCalculoIVA === undefined)
+    issue(["factorCalculoIVA"], "IVA bienes usados (codigo 08) requires factorCalculoIVA");
+  if (tax.codigo !== TAX_USED_GOODS_IVA && tax.factorCalculoIVA !== undefined)
+    issue(["factorCalculoIVA"], "factorCalculoIVA is only valid for IVA bienes usados (codigo 08)");
+  // Fail closed: MontoExoneracion is TarifaExonerada × subtotal (p. 46) and
+  // the Anexo gives no rule for the factor-based 08 (open question, roadmap).
+  if (tax.codigo === TAX_USED_GOODS_IVA && tax.exoneracion !== undefined)
+    issue(
+      ["exoneracion"],
+      "Exoneración on IVA bienes usados (codigo 08) is not supported: Anexos v4.4 does not define its amount",
+    );
   // Same rule as the legacy SDK validator: ordinary IVA (01) must use the
   // percentage of its official rate code (Anexos v4.4, nota 8.1).
   if (tax.codigo === "01" && tax.codigoTarifaIVA && tax.tarifa !== undefined) {
