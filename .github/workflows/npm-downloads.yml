@@ -40,6 +40,7 @@ jobs:
         # lives on the unprotected `metrics` branch that the README badge reads.
         run: |
           cp docs/npm-downloads.json "$RUNNER_TEMP/npm-downloads.json"
+          git checkout -- docs/npm-downloads.json
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           if git ls-remote --exit-code --heads origin metrics >/dev/null; then
