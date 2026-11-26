@@ -16,20 +16,25 @@ Every input must explicitly name `caseCode: "FE-domestic-ordinary-iva13-v1"`.
 This case supports domestic FE parties, explicit service/goods classification,
 one ordinary IVA01/tariff08/13% tax per line, positive price/gross/net, existing nonfinancial line metadata,
 up to five explicit discounts, sale metadata, declared currency/exchange rate
-and up to four completely allocated payment entries. No party, provider,
+and up to four completely allocated payment entries (optional for sale
+conditions 02, 08 and 10). No party, provider,
 currency, payment, classification or tax is fabricated/defaulted. CRC requires
 an explicit exchange rate equal to1; other currencies retain the supplied
 positive rate without automatic conversion or an assertion of official-rate
-provenance. Payments must sum exactly to the computed total, including for a
-credit sale in this specifically fully allocated contract. Payment allocation
+provenance. `medioPago` is required unless the sale condition is 02, 08 or 10
+(Anexos v4.4); for those conditions it may be omitted, and the calculated summary
+and XML then carry no `MedioPago`. When payments are supplied (1–4 entries, also
+under 02/08/10) they must sum exactly to the computed total. Payment allocation
 is a declared invoice fact, not proof of collection. Credit requires explicit
 days; code99 sale/discount/payment entries require their companion text.
 
 Quantity, price, monetary discount, percentage discount, tax rate, exchange
 rate and payment amounts use decimal strings. The only supported tax-rate
 lexeme is the explicit string `"13"`. A discount has either `montoDescuento`
-or `porcentaje`, never both. Each percentage applies to the line's gross
-amount, not a silently assumed sequential discount base. Discount nature is
+or `porcentaje`, never both. Discounts apply in order: each one applies to the
+base remaining after the previous discounts (Anexos v4.4), so the first applies
+to the line gross. A line of 100 with two 10% discounts yields 10.00000 and
+9.00000, subtotal 81.00000, IVA 10.53000 and total 91.53000. Discount nature is
 optional and is omitted when absent. Gift/bonus discount codes01/02/03 are excluded; supported discount codes are04–09 and99. Transaction type may be omitted or explicitly01, never02–13. Declared service/goods classification must match CABYS prefix5–9/0–4 respectively; this does not establish actual CABYS existence or its applicable rate. Unknown root/nested fields, additional
 taxes, exonerations, other charges, references, foreign parties and unsupported
 regimes fail instead of being projected away. This scope is not all domestic
@@ -52,8 +57,9 @@ silently rounded. No monetary value passes through Number, `parseFloat`,
 `toFixed` or a Money-toNumber conversion. Internal arithmetic uses scaled BigInt:
 
 1. Quantity×unit price is rounded HALF_UP to five monetary decimal places; zero rounded gross is outside this case.
-2. Each percentage discount of the gross line amount is independently rounded
-   HALF_UP to five places; explicit monetary discounts are already exact.
+2. Each percentage discount of the base remaining after the previous discounts
+   is rounded HALF_UP to five places; explicit monetary discounts are already
+   exact. A discount that consumes the whole remaining base fails.
 3. Subtotal is gross minus the sum of discounts; zero or negative net fails. A100% discount or free line needs separate semantics, not automatic zero assumed-tax emission.
 4. Ordinary IVA is subtotal×13/100, rounded HALF_UP per line to five places.
 5. Aggregates sum the quantized integers without further floating-point steps.

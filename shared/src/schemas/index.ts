@@ -84,9 +84,11 @@ export {
   ExactFeCalculatedLineSchema,
   ExactFeSummarySchema,
   ExactFeCalculatedSchema,
+  RetainedExactFeCalculatedSchema,
   type ExactFeInput,
   type RetainedExactFeInput,
   type ExactFeCalculated,
+  type RetainedExactFeCalculated,
 } from "./exact-fe.js";
 
 export {

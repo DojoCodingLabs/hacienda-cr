@@ -10,6 +10,7 @@ import {
   ExactMoneySchema,
   ExactFeLineInputSchema,
   ExactFePaymentSchema,
+  requirePaymentPresence,
   type ExactFeCalculated,
 } from "./exact-fe.js";
 const domesticIdentity = IdentificacionSchema.safeExtend({
@@ -57,10 +58,11 @@ export const ExactTeInputSchema = FacturaElectronicaSchema.pick({
         ),
       })
       .strict(),
-    medioPago: z.array(ExactFePaymentSchema).min(1).max(4),
+    medioPago: z.array(ExactFePaymentSchema).max(4).optional(),
   })
   .strict()
   .superRefine((input, ctx) => {
+    requirePaymentPresence(input.condicionVenta, input.medioPago, ctx);
     if (["09", "11", "12", "13"].includes(input.condicionVenta))
       ctx.addIssue({
         code: "custom",

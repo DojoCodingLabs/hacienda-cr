@@ -6,6 +6,7 @@ import {
   ExactDiscountSchema,
   classification,
   ExactFeSummarySchema,
+  RetainedExactFePaymentSchema,
   ExactMoneySchema,
 } from "./exact-fe.js";
 import { exactPartyName } from "./exact-party-name.js";
@@ -109,6 +110,7 @@ const summary = ExactFeSummarySchema.omit({
         })
         .strict(),
     ]),
+    medioPago: z.array(RetainedExactFePaymentSchema).min(1).max(4),
   })
   .strict();
 export const ExactFecUsedPersonalGoodsNonSubjectCalculatedSchema = z

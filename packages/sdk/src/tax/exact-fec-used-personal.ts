@@ -5,7 +5,7 @@ import {
   type ExactFecUsedPersonalGoodsNonSubjectCalculated,
 } from "@dojocoding/hacienda-shared";
 import { assertDocumentIdentity } from "../xml/document-identity.js";
-import { scaled, round, money, sum } from "./exact-decimal.js";
+import { scaled, round, money, sum, applyDiscounts } from "./exact-decimal.js";
 /** Selected non-subject acquisition, not qualification, credit or resale authority. */
 export function calculateExactFecUsedPersonalGoodsNonSubject(
   source: ExactFecUsedPersonalGoodsNonSubjectInput,
@@ -19,22 +19,22 @@ export function calculateExactFecUsedPersonalGoodsNonSubject(
     const gross = round(scaled(line.cantidad, 3) * scaled(line.precioUnitario, 5), 1000n);
     m(gross);
     if (gross <= 0n) throw new RangeError("Zero-gross line is outside non-subject FEC");
-    const descuento = line.descuento?.map((d) => {
-      const amount =
-        "porcentaje" in d
-          ? round(gross * scaled(d.porcentaje, 5), 10000000n)
-          : scaled(d.montoDescuento, 5);
-      const { codigoDescuento, codigoDescuentoOtros, naturalezaDescuento } = d;
-      return {
-        codigoDescuento,
-        ...(codigoDescuentoOtros ? { codigoDescuentoOtros } : {}),
-        ...(naturalezaDescuento ? { naturalezaDescuento } : {}),
-        montoDescuento: m(amount),
-      };
-    });
-    const deduction = sum((descuento ?? []).map((d) => scaled(d.montoDescuento, 5)));
-    if (deduction >= gross)
-      throw new RangeError("Zero or negative net line is outside non-subject FEC");
+    const discountEntries = line.descuento ?? [];
+    const guardMessage = "Zero or negative net line is outside non-subject FEC";
+    const applied = applyDiscounts(gross, discountEntries, guardMessage);
+    const descuento = discountEntries.length
+      ? discountEntries.map((d, i) => {
+          const amount = applied.amounts[i] as bigint;
+          const { codigoDescuento, codigoDescuentoOtros, naturalezaDescuento } = d;
+          return {
+            codigoDescuento,
+            ...(codigoDescuentoOtros ? { codigoDescuentoOtros } : {}),
+            ...(naturalezaDescuento ? { naturalezaDescuento } : {}),
+            montoDescuento: m(amount),
+          };
+        })
+      : undefined;
+    const deduction = sum(applied.amounts);
     const net = gross - deduction;
     grossTotal += gross;
     discounts += deduction;
@@ -51,8 +51,11 @@ export function calculateExactFecUsedPersonalGoodsNonSubject(
     };
   });
   const net = grossTotal - discounts;
-  if (sum(input.medioPago.map((p) => scaled(p.totalMedioPago, 5))) !== net)
-    throw new RangeError("Exact non-subject FEC payment allocation must equal invoice total");
+  const payments = input.medioPago ?? [];
+  if (payments.length > 0) {
+    if (sum(payments.map((p) => scaled(p.totalMedioPago, 5))) !== net)
+      throw new RangeError("Exact non-subject FEC payment allocation must equal invoice total");
+  }
   return ExactFecUsedPersonalGoodsNonSubjectCalculatedSchema.parse({
     detalleServicio,
     resumenFactura: {
@@ -70,7 +73,7 @@ export function calculateExactFecUsedPersonalGoodsNonSubject(
       totalDesgloseImpuesto: [
         { codigo: "01", codigoTarifaIVA: "11", totalMontoImpuesto: "0.00000" },
       ],
-      medioPago: input.medioPago.map((p) => ({
+      medioPago: payments.map((p) => ({
         ...p,
         totalMedioPago: m(scaled(p.totalMedioPago, 5)),
       })),

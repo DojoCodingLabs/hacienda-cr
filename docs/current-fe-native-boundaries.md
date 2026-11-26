@@ -34,10 +34,17 @@ Native XSD admits zero structurally; passing XSD alone does not prove this rule.
 
 `RetainedExactFeInputSchema` and `calculateRetainedExactFe` retain their prior
 read-only source/math acceptance for independently bound historical 0.6–0.9
-producers. Their internal party/payment foundation is not the stricter current
+producers. The retained calculator keeps the frozen discount rule: every
+percentage applies to the line gross (100 with two 10% discounts is 10 + 10,
+subtotal 80, total 90.40), and a line is rejected with a `RangeError` when the
+sum of its discounts reaches the gross. Current exact APIs cascade each discount
+on the remaining base instead (10 + 9, subtotal 81, total 91.53). The retained
+calculator still requires at least one allocation, enforced on its output by
+`RetainedExactFeCalculatedSchema`. Their internal party/payment foundation is not the stricter current
 input. `ExactFeSummarySchema` / `ExactFeCalculatedSchema` also retain broad
 output-decoding shape, so an actual old zero-allocation calculated record is
-readable. Calculated-output parsing is not a current source or authority API.
+readable; `medioPago` is optional there because current exempt (02/08/10)
+documents carry none. Calculated-output parsing is not a current source or authority API.
 
 Historical readability does not make a short name native-conforming or establish
 fiscal compliance, signature authenticity, acceptance or ownership. The genuine

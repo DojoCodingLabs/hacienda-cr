@@ -40,7 +40,10 @@ with localcontext() as c:
  x=json.load(sys.stdin);q=D('0.00001');rows=[]
  for l in x['detalleServicio']:
   g=(D(l['cantidad'])*D(l['precioUnitario'])).quantize(q,rounding=ROUND_HALF_UP)
-  d=sum(((g*D(v['porcentaje'])/100).quantize(q,rounding=ROUND_HALF_UP) if 'porcentaje' in v else D(v['montoDescuento'])) for v in l.get('descuento',[]))
+  b=g
+  for v in l.get('descuento',[]):
+   b-=(b*D(v['porcentaje'])/100).quantize(q,rounding=ROUND_HALF_UP) if 'porcentaje' in v else D(v['montoDescuento'])
+  d=g-b
   rows.append({'gross':format(g,'.5f'),'discount':format(d,'.5f'),'net':format(g-d,'.5f')})
  print(json.dumps({'lines':rows,**{k:format(sum(D(r[k]) for r in rows),'.5f') for k in ['gross','discount','net']}}))`,
       ],
@@ -96,8 +99,9 @@ describe("explicit non-subject used personal goods FEC", () => {
       line.cantidad = quantity;
       line.precioUnitario = price;
       line.descuento = [
-        { codigoDescuento: "04", porcentaje: "1.23456" },
         { codigoDescuento: "05", montoDescuento: "0.00001" },
+        { codigoDescuento: "04", porcentaje: "1.23456" },
+        { codigoDescuento: "06", porcentaje: "10" },
       ];
       if (quantity === "0.001") delete line.descuento;
       if (quantity !== "1")
