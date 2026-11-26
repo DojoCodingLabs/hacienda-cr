@@ -12,6 +12,7 @@ import { validateCommand } from "./validate.js";
 import { supportCommand } from "./support.js";
 import { DraftFacturaSchema, type DraftFactura } from "../utils/draft-document.js";
 import { buildDraftSummary, calculateDraftLineMoney } from "../utils/draft-money.js";
+import { useTemporaryConfigHome } from "../__testing__/config-home.js";
 
 const mocks = vi.hoisted(() => ({
   submitAndWait: vi.fn(),
@@ -115,6 +116,8 @@ describe("CLI submission and XML validation", () => {
   let originalExitCode: typeof process.exitCode;
   beforeEach(async () => {
     dir = await mkdtemp(join(tmpdir(), "hacienda-cli-audit-"));
+    // submit reads the profile environment and keeps local submission state.
+    await useTemporaryConfigHome(dir);
     originalExitCode = process.exitCode;
     process.exitCode = undefined;
     vi.spyOn(console, "log").mockImplementation(() => undefined);
@@ -126,6 +129,7 @@ describe("CLI submission and XML validation", () => {
   afterEach(async () => {
     process.exitCode = originalExitCode;
     vi.restoreAllMocks();
+    vi.unstubAllEnvs();
     await rm(dir, { recursive: true, force: true });
   });
 

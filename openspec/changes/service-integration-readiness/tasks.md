@@ -34,7 +34,7 @@
 - [x] 4.3 Add a callback payload parser for the JSON envelope (`clave`, `fecha`, `ind-estado`, optional `respuesta-xml` Base64) with strict Base64, byte caps, a required signed `MensajeHacienda` root, and clave binding.
 - [x] 4.4 Document the callback receiver contract and idempotency by clave.
 - [x] 4.5 Add tests for malformed callback payloads, the mock's real callback body, and mocked-HTTP reconciliation.
-- [x] 4.6 Reject a retry that sends different document bytes for the same clave: opt-in `identityStore` on `submitDocument`/`submitAndWait` (`FileSubmissionIdentityStore` default, pluggable `SubmissionIdentityStore`) records `sha256(signed bytes)` per clave and throws `SubmissionIdentityError` (`DIFFERENT_BYTES` / `ALREADY_ATTEMPTED`) before any network call; a same-byte resend needs explicit `retrySameBytes: true`. The persistent `DocumentStore` path raises the same typed error. The CLI `submit` command does not use the guard yet.
+- [x] 4.6 Reject a retry that sends different document bytes for the same clave: opt-in `identityStore` on `submitDocument`/`submitAndWait` (`FileSubmissionIdentityStore` default, pluggable `SubmissionIdentityStore`) records `sha256(signed bytes)` per clave and throws `SubmissionIdentityError` (`DIFFERENT_BYTES` / `ALREADY_ATTEMPTED`) before any network call; a same-byte resend needs explicit `retrySameBytes: true`. The persistent `DocumentStore` path raises the same typed error. CLI `submit` always uses it with a `FileDocumentStore` under `~/.hacienda-cr/submissions/<environment>/`: it signs a clave once, refuses a changed draft or an already-attempted clave before any network call, and resends the stored bytes only with `--retry-same-bytes`. MCP has no submission tool.
 
 ## 5. Documentation and verification
 
