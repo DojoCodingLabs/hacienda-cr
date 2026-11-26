@@ -235,6 +235,30 @@ const resumen: InvoiceSummary = calculateInvoiceSummary([calculado]);
 // resumen.totalComprobante   = 254250
 ```
 
+**Modo de redondeo.** Estas funciones redondean con `Number.toFixed(5)`
+(`roundingMode: "legacy-tofixed"`, el valor por defecto) para conservar los bytes
+de versiones anteriores. `toFixed` redondea el valor binario, así que una mitad
+exacta en el sexto decimal puede bajar: `20.203515` da `20.20351`. La regla de
+Hacienda es HALF_UP decimal a cinco decimales (Anexos y Estructuras v4.4,
+p. 13-14), que da `20.20352`. La ruta exacta (`calculateDecimalDocument` y
+`calculateDecimal*`) ya aplica HALF_UP y es la recomendada. En la ruta legacy
+se puede optar por HALF_UP:
+
+```ts
+import { createLegacyCalculator } from "@dojocoding/hacienda-sdk";
+
+const calc = createLegacyCalculator({ roundingMode: "half-up" });
+const lineas = items.map(calc.calculateLineItemTotals);
+const resumen = calc.calculateInvoiceSummary(lineas);
+// 0.999 × 1802.455: montoTotal 1800.65255 (legacy-tofixed: 1800.65254)
+```
+
+Cambiar de modo cambia los bytes de los montos con mitad exacta. Mantené el
+modo por defecto si regenerás documentos históricos. En `"half-up"`, `NaN` e
+`±Infinity` lanzan `MonetaryValueError`; en `"legacy-tofixed"` se propagan como
+antes. `"legacy-tofixed"` solo podría dejar de ser el valor por defecto en una
+versión mayor futura (1.0). Ver [MIGRATION.md](../MIGRATION.md).
+
 **Exoneraciones de IVA:**
 
 ```ts
