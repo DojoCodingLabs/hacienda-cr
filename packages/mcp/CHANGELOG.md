@@ -1,5 +1,98 @@
 # @dojocoding/hacienda-mcp
 
+## 0.15.0
+
+### Minor Changes
+
+- 3492938: Raise `engines.node` from `>=22` to `>=22.12`. The XAdES signing dependencies (xadesjs/xmldsigjs 3) require Node `^20.19 || >=22.12`, so the declared range now matches what actually runs. The four linked packages move together.
+- 49eb3b7: Fix IVA tax code 08 (IVA Régimen de Bienes Usados, factor): its amount is now
+  `factorCalculoIVA × subtotal` on every path. This changes the output and the
+  validation of documents that use code 08. Documents without code 08 keep their
+  bytes.
+
+  Anexos y Estructuras v4.4: p. 37 (Codigo) "Al utilizar el código 08, se debe
+  utilizar para el cálculo de factor del IVA por el subtotal"; p. 39
+  (FactorCalculoIVA, Decimal 5,4) the factor "Debe expresarse en formato
+  decimal" and is validated as present for 08 "caso contario se rechazará";
+  p. 42 (Monto) "se obtiene de la multiplicación del factor por el subtotal".
+  The 2024 and 2026 v4.4 XSDs declare `Tarifa` and `FactorCalculoIVA`
+  `minOccurs="0"`, factor `totalDigits 5`, `fractionDigits 4`.
+
+  - Legacy Number (`calculateTaxAmount`, `calculateLineItemTotals`,
+    `createLegacyCalculator` in both rounding modes): `LineItemTaxInput` gains
+    `factorCalculoIVA`. Code 08 is taxed on the subtotal (not the base
+    imponible), rounded with the calculator's rounder, and the calculated
+    `Impuesto` carries `factorCalculoIVA`. Code 08 without a factor now throws
+    (it used to compute `tarifa` on the base imponible). Signatures are
+    unchanged.
+  - Exact `DecimalDocument*`: `subtotal × factor` on scaled integers, HALF_UP to
+    5 decimals. `DecimalTaxInputSchema` no longer requires `tarifa` for 08 and
+    requires `factorCalculoIVA` instead.
+  - `validateFacturaInput` checks the 08 amount against factor × subtotal; a
+    `tarifa` on 08 is informational and no longer enters the check.
+  - MCP `create_invoice` accepts `factorCalculoIVA` on a tax (required for 08).
+  - `ImpuestoSchema.factorCalculoIVA` now enforces the XSD's 4 decimals.
+  - Fail closed where the Anexo is silent (open questions in docs/roadmap.md,
+    P0-4c): exoneración on code 08 and `factorCalculoIVA` on any code other than
+    08 are rejected by the calculators, the exact schema and the validator.
+
+- 1560046: Add an opt-in decimal HALF_UP rounding mode for the legacy Number calculators. The default stays `"legacy-tofixed"`, so existing output is byte-identical.
+
+  - SDK: `createLegacyCalculator({ roundingMode })` returns `round5`, `calculateTaxAmount`, `calculateLineItemTotals` and `calculateInvoiceSummary` bound to `"legacy-tofixed"` (default, `Number.toFixed(5)`) or `"half-up"` (Anexos y Estructuras v4.4, p. 13-14). New exports: `round5HalfUp`, `LEGACY_ROUNDING_MODES`, `DEFAULT_LEGACY_ROUNDING_MODE` and the `LegacyRoundingMode`, `LegacyCalculationOptions` and `LegacyCalculator` types. The standalone functions keep their signatures and bytes.
+  - `"half-up"` changes only exact sixth-decimal halves, for example `0.999 × 1802.455` (`1800.65254` → `1800.65255`), 13% IVA on `80074.1975` (`10409.64567` → `10409.64568`) and `20.203515` (`20.20351` → `20.20352`). It throws `MonetaryValueError` for `NaN`/`±Infinity`; `"legacy-tofixed"` still passes them through.
+  - MCP: `create_invoice` accepts `roundingMode` (default `"legacy-tofixed"`).
+  - The exact `calculateDecimal*` path already rounds HALF_UP and remains the recommended path. `"legacy-tofixed"` may stop being the default only in a future major (1.0). See MIGRATION.md.
+
+- 3c60672: Refuse REP and MensajeReceptor submission and publish a per-family support matrix.
+
+  - `submitDocument()` and `submitAndWait()` now throw `UnsupportedDocumentFamilyError`
+    (code `UNSUPPORTED_FAMILY`, with `family`, `reason` and `docsUrl`) for a
+    `ReciboElectronicoPago` or `MensajeReceptor` document, or for a request carrying
+    `consecutivoReceptor`, before persistence or any network access. When the XML
+    root is not a known Hacienda document, a clave document type of 10 or 05–07 is
+    refused instead. REP has no resolved monetary projection; MR has no
+    `consecutivoReceptor` in `SubmissionRequest` and no receiver-specific outcome
+    oracle. **Migration:** code that submitted REP or MR documents through the SDK
+    now fails fast. Their XML builders are unchanged and stay available for source,
+    XSD and archive work.
+  - New SDK exports: `getFamilySupport()`, `assertSubmittableDocument()`,
+    `detectDocumentFamily()`, `familyFromDocumentType()`, `SUPPORT_MATRIX_URL`,
+    `UnsupportedDocumentFamilyError`, `HaciendaErrorCode.UNSUPPORTED_FAMILY` and
+    the `FamilySupport`, `FamilySubmitStatus`, `DocumentFamily` and
+    `SubmittableDocumentFacts` types.
+  - CLI: `hacienda submit` refuses REP/MR before reading the certificate or
+    signing, and `--json` reports `code`, `family` and `docsUrl`. The new
+    `hacienda support [--json]` prints the matrix.
+  - MCP: the new `hacienda://reference/family-support` resource exposes the
+    matrix. The server still has no signing or submission tool.
+
+  FEC stays submittable but is marked `unverified`: Hacienda's API documentation
+  does not settle whether the POST `emisor` is the XML Emisor (supplier) or the
+  buyer that issues the FEC. See `docs/support-matrix.md`.
+
+### Patch Changes
+
+- ea02791: Declare `2026/v4.4` as the current schema set and stop defaulting `ProveedorSistemas` silently.
+
+  - The vendored schema manifest now declares `currentSet: "2026/v4.4"`, the April 2026 revision of Anexos y Estructuras v4.4 that is mandatory since 2026-11-01 (Hacienda communication `ActualizacionAnexosyEstructurasVersion4.4CEv2.pdf`). `2024/v4.4` stays as the previous set. The SDK already embedded the 2026 XSDs, so runtime validation does not change.
+  - SDK: config profiles accept an optional `provider_id` (9–20 letters or digits), the identification of the invoicing-system provider emitted as `ProveedorSistemas`.
+  - CLI: `hacienda auth login --provider-id <id>` stores it (re-running login keeps it), `hacienda auth status` shows it, and `hacienda draft --profile <name>` uses it. Without `provider_id`, drafts keep the issuer's identification and print a warning (also returned as `warnings` with `--json`): per the Anexo, that value is correct only for a self-developed or custom-built system. Blank templates use the `<<SYSTEM_PROVIDER_ID>>` placeholder. `hacienda status` explains the clave format correctly (letters allowed only in the taxpayer ID segment).
+  - MCP: `create_invoice` and `create_invoice_exact` accept an alphanumeric `proveedorSistemas` of 9–20 characters (previously 9–12 digits only), matching the Anexo's "Permite ingresar números y letras para personas jurídicas", and describe the field as the software provider's identification.
+
+- Updated dependencies [3492938]
+- Updated dependencies [49eb3b7]
+- Updated dependencies [d97da4f]
+- Updated dependencies [1560046]
+- Updated dependencies [a7be832]
+- Updated dependencies [ffa2193]
+- Updated dependencies [ea02791]
+- Updated dependencies [ffa2193]
+- Updated dependencies [3c60672]
+- Updated dependencies [3492938]
+- Updated dependencies [740a2b7]
+  - @dojocoding/hacienda-shared@0.15.0
+  - @dojocoding/hacienda-sdk@0.15.0
+
 ## 0.14.0
 
 ### Minor Changes
