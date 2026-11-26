@@ -290,7 +290,7 @@ import {ExactFecUsedPersonalGoodsNonSubjectInputSchema,ExactRecipientMessageInpu
 import {createServer} from "@dojocoding/hacienda-mcp";
 import {Client} from "@modelcontextprotocol/sdk/client/index.js";
 import {StdioClientTransport} from "@modelcontextprotocol/sdk/client/stdio.js";
-import {isBusinessDay,addBusinessDays,verifySignedDocumentXml,parseDocumentXml,FileDocumentStore,classifyOutcome,reconcileByClave} from "@dojocoding/hacienda-sdk";
+import {isBusinessDay,addBusinessDays,verifySignedDocumentXml,parseDocumentXml,FileDocumentStore,classifyOutcome,reconcileByClave,parseCallbackPayload,validateCallbackPayload,CallbackEnvelopeSchema,ValidationError} from "@dojocoding/hacienda-sdk";
 import {MoneyInputSchema,MonetaryTextSchema} from "@dojocoding/hacienda-shared";
 assert.equal(isBusinessDay("2026-01-01"),false);
 assert.equal(isBusinessDay("2026-04-02"),false);
@@ -319,6 +319,7 @@ assert.deepEqual(historyPage.comprobantes,[metadata]);assert.deepEqual(historyPa
 assert.equal(historyPage.totalRegistros,undefined);assert.equal(historyPage.comprobantes[0].estado,undefined);assert.equal(historyPage.comprobantes[0].comprobanteXml,undefined);
 assert.deepEqual(await getComprobante(historyClient,SIMPLE_INVOICE.clave),metadata);
 const fetchesBeforeReconcile=historyFetches;await assert.rejects(reconcileByClave(historyClient,"../recepcion/anything"));assert.equal(historyFetches,fetchesBeforeReconcile);
+const callbackClave=SIMPLE_INVOICE.clave;assert.deepEqual(validateCallbackPayload(JSON.stringify({clave:callbackClave,fecha:"2026-01-01T00:00:00-06:00","ind-estado":"recibido"})),{clave:callbackClave,fecha:"2026-01-01T00:00:00-06:00","ind-estado":"recibido"});assert.equal(CallbackEnvelopeSchema.safeParse({clave:callbackClave,fecha:"x",indEstado:"recibido"}).success,false);assert.throws(()=>validateCallbackPayload("{bad"),ValidationError);assert.equal((await parseCallbackPayload({clave:callbackClave,fecha:"x","ind-estado":"procesando"})).status,"procesando");await assert.rejects(parseCallbackPayload({clave:callbackClave,fecha:"x","ind-estado":"aceptado","respuesta-xml":Buffer.from("<MensajeHacienda/>").toString("base64")}),ValidationError);
 const beforeInvalid=[historyAuth,historyFetches];await assert.rejects(listComprobantes(historyClient,{fechaEmisionDesde:"2026-01-01"}));await assert.rejects(getComprobante(historyClient,"../recepcion/anything"));await assert.rejects(listComprobantes(historyClient,{}, {signal:AbortSignal.abort()}));assert.deepEqual([historyAuth,historyFetches],beforeInvalid);
 const xml=buildFacturaXml(SIMPLE_INVOICE);
 const exact={caseCode:"FE-domestic-ordinary-iva13-v1",clave:SIMPLE_INVOICE.clave,proveedorSistemas:SIMPLE_INVOICE.proveedorSistemas,codigoActividadEmisor:SIMPLE_INVOICE.codigoActividadEmisor,numeroConsecutivo:SIMPLE_INVOICE.numeroConsecutivo,fechaEmision:SIMPLE_INVOICE.fechaEmision,emisor:SIMPLE_INVOICE.emisor,receptor:SIMPLE_INVOICE.receptor,condicionVenta:"01",detalleServicio:[{numeroLinea:1,codigoCabys:"8310100000000",cantidad:"1",unidadMedida:"Sp",detalle:"Packed exact decimal fixture",precioUnitario:"8849557522123.89380",esServicio:true,impuesto:[{codigo:"01",codigoTarifaIVA:"08",tarifa:"13"}]}],codigoTipoMoneda:{codigoMoneda:"USD",tipoCambio:"513.12345"},medioPago:[{tipoMedioPago:"01",totalMedioPago:"9999999999999.99999"}]};

@@ -44,6 +44,8 @@ export {
   parseCallbackPayload,
   validateCallbackPayload,
   CallbackEnvelopeSchema,
+  MAX_CALLBACK_BODY_BYTES,
+  MAX_CALLBACK_RESPONSE_XML_BYTES,
 } from "./callback.js";
 export type { ParsedCallbackPayload, CallbackEnvelope } from "./callback.js";
 

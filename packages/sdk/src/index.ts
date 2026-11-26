@@ -269,6 +269,9 @@ export {
   lookupTaxpayer,
   parseCallbackPayload,
   validateCallbackPayload,
+  CallbackEnvelopeSchema,
+  MAX_CALLBACK_BODY_BYTES,
+  MAX_CALLBACK_RESPONSE_XML_BYTES,
 } from "./api/index.js";
 export type {
   HistoryRequestOptions,
