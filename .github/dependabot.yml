@@ -23,7 +23,7 @@ updates:
       # xml-core@3 (via xadesjs/xmldsigjs 3) peers on xpath ^0.0.34 || ^0.0.35.
       # Revisit when xml-core widens that range.
       - dependency-name: xpath
-        versions: [">=0.1.0"]
+        versions: [">=0.0.36"]
   - package-ecosystem: github-actions
     directory: /
     schedule:
